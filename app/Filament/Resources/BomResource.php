@@ -156,7 +156,8 @@ class BomResource extends Resource
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn (Bom $record) => $record->status === BomStatus::PendingApproval)
+                    ->visible(fn (Bom $record) => $record->status === BomStatus::PendingApproval
+                        && auth()->user()?->can('boms.approve'))
                     ->action(function (Bom $record) {
                         $record->update([
                             'status' => BomStatus::Approved,

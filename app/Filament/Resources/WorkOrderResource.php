@@ -217,7 +217,8 @@ class WorkOrderResource extends Resource
                     ->icon('heroicon-o-play')
                     ->color('info')
                     ->requiresConfirmation()
-                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::Pending)
+                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::Pending
+                        && auth()->user()?->can('work_orders.start'))
                     ->action(function (WorkOrder $record) {
                         try {
                             app(WorkOrderService::class)->start($record);
@@ -232,7 +233,8 @@ class WorkOrderResource extends Resource
                     ->label('Submit QA')
                     ->icon('heroicon-o-shield-check')
                     ->color('warning')
-                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::InProgress)
+                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::InProgress
+                        && auth()->user()?->can('work_orders.submit_qa'))
                     ->form([
                         Forms\Components\TextInput::make('produced_quantity')
                             ->label('Produced Quantity')
@@ -262,7 +264,9 @@ class WorkOrderResource extends Resource
                     ->label('Approve QA')
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
-                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::QaReview && ! $record->isQaApproved())
+                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::QaReview
+                        && ! $record->isQaApproved()
+                        && auth()->user()?->can('work_orders.approve_qa'))
                     ->form([
                         Forms\Components\Textarea::make('qa_notes')
                             ->label('QA Notes')
@@ -282,7 +286,9 @@ class WorkOrderResource extends Resource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::QaReview && $record->isQaApproved())
+                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::QaReview
+                        && $record->isQaApproved()
+                        && auth()->user()?->can('work_orders.complete'))
                     ->action(function (WorkOrder $record) {
                         try {
                             app(WorkOrderService::class)->complete($record);

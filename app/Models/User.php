@@ -46,7 +46,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return $this->roles()->exists();
     }
 
     public function getActivitylogOptions(): LogOptions

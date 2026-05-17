@@ -1,0 +1,129 @@
+/* Premium Animated Background using subtle glowing orbs */
+html {
+    background-color: #f8fafc !important;
+}
+
+.dark html {
+    background-color: #0f172a !important;
+}
+
+body {
+    background-color: transparent !important;
+    position: relative;
+    z-index: 0;
+}
+
+body::before, body::after {
+    content: '';
+    position: fixed;
+    width: 80vw;
+    height: 80vw;
+    border-radius: 50%;
+    z-index: -1;
+    pointer-events: none;
+    animation: floatOrbs 15s infinite ease-in-out alternate;
+}
+
+body::before {
+    top: -25vw;
+    left: -20vw;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(59, 130, 246, 0) 65%);
+}
+
+body::after {
+    bottom: -25vw;
+    right: -20vw;
+    animation-duration: 18s;
+    animation-delay: -7s;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.35) 0%, rgba(14, 165, 233, 0) 65%);
+}
+
+.dark body::before {
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.45) 0%, rgba(59, 130, 246, 0) 65%);
+}
+
+.dark body::after {
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.4) 0%, rgba(14, 165, 233, 0) 65%);
+}
+
+@keyframes floatOrbs {
+    0% { transform: translate(0, 0) scale(0.9); }
+    50% { transform: translate(15vw, 15vw) scale(1.1); }
+    100% { transform: translate(25vw, -5vw) scale(1.25); }
+}
+
+/* Entrance Animation for the main container */
+main {
+    animation: slideUpFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+@keyframes slideUpFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Softer shadow and glassy effect for the card */
+main.fi-simple-main {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08), 0 10px 15px -3px rgba(0, 0, 0, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    border-radius: 1rem !important;
+    backdrop-filter: blur(8px) !important;
+    transition: box-shadow 0.4s ease-in-out;
+}
+
+.dark main.fi-simple-main {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 10px 15px -3px rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Polish interactive elements */
+input, button, .fi-btn {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Inputs hover & focus enhancement */
+input:hover {
+    background-color: #f8fafc !important;
+}
+.dark input:hover {
+    background-color: #1e293b !important;
+}
+
+input:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px -3px rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Primary Button hover & active enhancements */
+button[type="submit"]:hover, .fi-btn-color-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.35) !important;
+    filter: brightness(1.05);
+}
+
+button[type="submit"]:active, .fi-btn-color-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 10px -3px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Logo animation */
+img[alt="Electrotech"] {
+    animation: gentlePulse 3s infinite alternate ease-in-out;
+}
+
+@keyframes gentlePulse {
+    0% {
+        filter: drop-shadow(0 0 0 rgba(59, 130, 246, 0));
+    }
+    100% {
+        filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.15));
+    }
+}

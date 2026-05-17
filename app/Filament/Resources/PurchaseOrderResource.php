@@ -98,6 +98,7 @@ class PurchaseOrderResource extends Resource
                                     ->label('Unit Price (EGP)')
                                     ->numeric()
                                     ->required()
+                                    ->visible(fn () => auth()->user()?->can('inventory.view_pricing'))
                                     ->columnSpan(1),
 
                                 Forms\Components\TextInput::make('received_quantity')
@@ -142,7 +143,8 @@ class PurchaseOrderResource extends Resource
 
                 Tables\Columns\TextColumn::make('total_amount')
                     ->money('EGP')
-                    ->sortable(),
+                    ->sortable()
+                    ->visible(fn () => auth()->user()?->can('inventory.view_pricing')),
 
                 Tables\Columns\TextColumn::make('expected_delivery_date')
                     ->label('Expected Delivery')
@@ -171,7 +173,7 @@ class PurchaseOrderResource extends Resource
                     ->visible(fn (PurchaseOrder $record) => in_array($record->status, [
                         PurchaseOrderStatus::Submitted,
                         PurchaseOrderStatus::PartiallyReceived,
-                    ]))
+                    ]) && auth()->user()?->can('purchase_orders.receive'))
                     ->form(fn (PurchaseOrder $record) => $record->items->map(
                         fn (PurchaseOrderItem $poItem) => Forms\Components\TextInput::make("items.{$poItem->id}")
                             ->label("{$poItem->item->name} (Ordered: {$poItem->quantity}, Received: {$poItem->received_quantity})")
