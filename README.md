@@ -1,8 +1,8 @@
 # Electrotech ERP
 
-## 🏷️ V1 — النسخة الأولى
+## 🏷️ V1 — First Release
 
-نظام إدارة صناعية متكامل لإدارة عمليات التصنيع من البداية للنهاية.
+An integrated industrial management system for end-to-end manufacturing operations.
 
 ---
 
@@ -18,77 +18,77 @@
 
 ---
 
-## أقسام النظام
+## System Modules
 
 ### 1. Sales & CRM
-- إنشاء المشاريع وتتبع حالتها
-- بيانات العملاء والاستشاريين
-- الميزانية التقديرية والتكلفة الفعلية
-- مرفقات المشروع (رسومات، مواصفات، BOQ)
+- Create and track project status
+- Client and consultant information
+- Estimated budget and actual cost
+- Project attachments (drawings, specs, BOQ)
 
 ### 2. Technical Office
-- كتالوج المواد والخامات (Items)
-- إنشاء قوائم المواد BOM مع نسب الهالك
-- إصدارات متعددة للـ BOM مع نظام اعتماد
+- Items and raw materials catalog
+- Bill of Materials (BOM) with waste percentages
+- Multi-version BOMs with approval workflow
 
 ### 3. Warehouse (WMS)
-- تتبع المخزون (On Hand / On Hold)
-- نظام الحجز والإفراج (Hold/Release)
-- سجل حركات المخزون (Stock Movements)
-- إخفاء الأسعار عن أمناء المخازن
+- Inventory tracking (On Hand / On Hold)
+- Hold/Release reservation system
+- Stock movement audit trail
+- Pricing hidden from warehouse keepers
 
 ### 4. Procurement
-- إنشاء أوامر الشراء (Purchase Orders)
-- استلام جزئي وكلي للمواد
-- تحديث المخزون تلقائياً عند الاستلام
-- تتبع حالة أمر الشراء
+- Purchase Order creation and management
+- Partial and full item receiving
+- Automatic inventory update on receiving
+- PO status tracking
 
 ### 5. Manufacturing
-- أوامر التشغيل (Work Orders)
-- صرف المواد من المخزن حسب الـ BOM
-- بوابة الجودة (QA Gate) — إلزامية قبل إغلاق أمر التشغيل
-- تتبع الكميات المنتجة والهالك
+- Work Order management
+- Material issuance from warehouse based on BOM
+- QA Gate — mandatory approval before closing a Work Order
+- Produced quantity and waste tracking
 
 ---
 
-## رحلة العمل
+## Workflow
 
 ```
-مشروع جديد (Sales)
+New Project (Sales)
     ↓
-إعداد قائمة المواد BOM (Technical Office)
+Prepare Bill of Materials (Technical Office)
     ↓
-اعتماد الـ BOM
+BOM Approval
     ↓
-إنشاء أوامر شراء للمواد الناقصة (Procurement)
+Create Purchase Orders for missing materials (Procurement)
     ↓
-استلام المواد وتحديث المخزون (Warehouse)
+Receive materials and update inventory (Warehouse)
     ↓
-إنشاء أمر تشغيل (Manufacturing)
+Create Work Order (Manufacturing)
     ↓
-صرف المواد من المخزن
+Issue materials from warehouse
     ↓
-الإنتاج → فحص الجودة (QA Gate)
+Production → Quality Inspection (QA Gate)
     ↓
-إغلاق أمر التشغيل
+Close Work Order
 ```
 
 ---
 
-## الصلاحيات
+## Roles
 
-| الدور | الوصف |
-|-------|-------|
-| Admin | صلاحيات كاملة على النظام |
-| Sales | إدارة المشاريع والعملاء |
-| Technical Office | إدارة المواد وقوائم الـ BOM |
-| Procurement | أوامر الشراء والاستلام |
-| Factory Manager | أوامر التشغيل واعتماد الجودة |
-| Warehouse Manager | إدارة المخزون بدون رؤية الأسعار |
+| Role | Description |
+|------|-------------|
+| Admin | Full system access |
+| Sales | Project and client management |
+| Technical Office | Items and BOM management |
+| Procurement | Purchase orders and receiving |
+| Factory Manager | Work orders and QA approval |
+| Warehouse Manager | Inventory management without pricing visibility |
 
 ---
 
-## التشغيل
+## Getting Started
 
 ```bash
 composer install
