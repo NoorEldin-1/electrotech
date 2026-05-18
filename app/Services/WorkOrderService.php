@@ -49,20 +49,7 @@ class WorkOrderService
             );
         }
 
-        DB::transaction(function () use ($workOrder) {
-            $bomItems = $workOrder->bom->items()->with('item')->get();
-
-            foreach ($bomItems as $bomItem) {
-                $totalRequired = $bomItem->total_required_quantity;
-
-                $this->inventoryService->deductStock(
-                    item: $bomItem->item,
-                    quantity: $totalRequired,
-                    reference: $workOrder,
-                    notes: "Issued for WO #{$workOrder->wo_number} (BOM item incl. {$bomItem->waste_percentage}% waste)",
-                );
-            }
-        });
+        \App\Jobs\ProcessWorkOrderMaterialsJob::dispatch($workOrder);
     }
 
     /**

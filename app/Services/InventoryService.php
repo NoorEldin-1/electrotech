@@ -10,6 +10,7 @@ use App\Models\InventoryTransaction;
 use App\Models\Item;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class InventoryService
@@ -28,7 +29,7 @@ class InventoryService
     ): InventoryTransaction {
         $this->validatePositiveQuantity($quantity);
 
-        return DB::transaction(function () use ($item, $quantity, $reference, $notes) {
+        return $this->executeWithLock($item, function () use ($item, $quantity, $reference, $notes) {
             $inventory = $this->getOrCreateInventoryWithLock($item);
 
             $inventory->on_hand_quantity = (float) $inventory->on_hand_quantity + $quantity;
@@ -58,7 +59,7 @@ class InventoryService
     ): InventoryTransaction {
         $this->validatePositiveQuantity($quantity);
 
-        return DB::transaction(function () use ($item, $quantity, $reference, $notes) {
+        return $this->executeWithLock($item, function () use ($item, $quantity, $reference, $notes) {
             $inventory = $this->getOrCreateInventoryWithLock($item);
 
             $available = (float) $inventory->on_hand_quantity - (float) $inventory->on_hold_quantity;
@@ -97,7 +98,7 @@ class InventoryService
     ): InventoryTransaction {
         $this->validatePositiveQuantity($quantity);
 
-        return DB::transaction(function () use ($item, $quantity, $reference, $notes) {
+        return $this->executeWithLock($item, function () use ($item, $quantity, $reference, $notes) {
             $inventory = $this->getOrCreateInventoryWithLock($item);
 
             $available = (float) $inventory->on_hand_quantity - (float) $inventory->on_hold_quantity;
@@ -134,7 +135,7 @@ class InventoryService
     ): InventoryTransaction {
         $this->validatePositiveQuantity($quantity);
 
-        return DB::transaction(function () use ($item, $quantity, $reference, $notes) {
+        return $this->executeWithLock($item, function () use ($item, $quantity, $reference, $notes) {
             $inventory = $this->getOrCreateInventoryWithLock($item);
 
             if ((float) $inventory->on_hold_quantity < $quantity) {
@@ -153,6 +154,25 @@ class InventoryService
                 reference: $reference,
                 notes: $notes,
             );
+        });
+    }
+
+    /**
+     * Execute a closure within a Redis Atomic Lock and Database Transaction.
+     * Guarantees strict sequential processing to prevent race conditions.
+     *
+     * @param Item $item The item being modified
+     * @param \Closure $callback The transaction logic
+     * @return mixed
+     * @throws \Illuminate\Contracts\Cache\LockTimeoutException
+     */
+    private function executeWithLock(Item $item, \Closure $callback): mixed
+    {
+        $lockKey = "inventory_lock:item_{$item->id}";
+
+        // Block for up to 10 seconds waiting to acquire the lock. Hold the lock for a maximum of 15 seconds.
+        return Cache::lock($lockKey, 15)->block(10, function () use ($callback) {
+            return DB::transaction($callback);
         });
     }
 

@@ -21,17 +21,6 @@ enum UnitOfMeasure: string implements HasLabel
 
     public function getLabel(): string
     {
-        return match ($this) {
-            self::Piece => 'Pieces (pcs)',
-            self::Kilogram => 'Kilograms (kg)',
-            self::Meter => 'Meters (m)',
-            self::SquareMeter => 'Square Meters (m²)',
-            self::Liter => 'Liters (L)',
-            self::Set => 'Sets',
-            self::Roll => 'Rolls',
-            self::Sheet => 'Sheets',
-            self::Box => 'Boxes',
-            self::Ton => 'Tons',
-        };
+        return __('resources.enums.unit_of_measure.' . $this->value);
     }
 }

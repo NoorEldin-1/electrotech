@@ -20,15 +20,7 @@ enum ProjectStatus: string implements HasLabel, HasColor, HasIcon
 
     public function getLabel(): string
     {
-        return match ($this) {
-            self::Draft => 'Draft',
-            self::PendingReview => 'Pending Review',
-            self::Approved => 'Approved',
-            self::InProgress => 'In Progress',
-            self::OnHold => 'On Hold',
-            self::Completed => 'Completed',
-            self::Cancelled => 'Cancelled',
-        };
+        return __('resources.enums.project_status.' . $this->value);
     }
 
     public function getColor(): string|array|null

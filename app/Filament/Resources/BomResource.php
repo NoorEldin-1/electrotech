@@ -23,34 +23,51 @@ class BomResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationGroup = 'Technical Office';
-
     protected static ?int $navigationSort = 2;
 
-    protected static ?string $label = 'Bill of Materials';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('navigation.groups.technical_office');
+    }
 
-    protected static ?string $pluralLabel = 'Bills of Materials';
+    public static function getLabel(): string
+    {
+        return __('resources.boms.label');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return __('resources.boms.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('resources.boms.navigation_label');
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('BOM Details')
+                Forms\Components\Section::make(__('resources.boms.sections.bom_details'))
                     ->icon('heroicon-o-document-text')
                     ->columns(2)
                     ->schema([
                         Forms\Components\Select::make('project_id')
+                            ->label(__('resources.boms.fields.project'))
                             ->relationship('project', 'name')
                             ->searchable()
                             ->preload()
                             ->required(),
 
                         Forms\Components\TextInput::make('version')
+                            ->label(__('resources.boms.fields.version'))
                             ->numeric()
                             ->default(1)
                             ->required(),
 
                         Forms\Components\Select::make('status')
+                            ->label(__('resources.boms.fields.status'))
                             ->options(BomStatus::class)
                             ->default(BomStatus::Draft)
                             ->required(),
@@ -59,19 +76,21 @@ class BomResource extends Resource
                             ->default(fn () => auth()->id()),
 
                         Forms\Components\Textarea::make('notes')
+                            ->label(__('resources.boms.fields.notes'))
                             ->rows(3)
                             ->columnSpanFull(),
                     ]),
 
-                Forms\Components\Section::make('BOM Items')
+                Forms\Components\Section::make(__('resources.boms.sections.bom_items'))
                     ->icon('heroicon-o-list-bullet')
-                    ->description('Add items required for this project. Include waste percentage as per technical specifications.')
+                    ->description(__('resources.boms.sections.bom_items_description'))
                     ->schema([
                         Forms\Components\Repeater::make('items')
                             ->relationship()
                             ->columns(4)
                             ->schema([
                                 Forms\Components\Select::make('item_id')
+                                    ->label(__('resources.boms.fields.item'))
                                     ->relationship('item', 'name')
                                     ->searchable()
                                     ->preload()
@@ -79,25 +98,29 @@ class BomResource extends Resource
                                     ->columnSpan(1),
 
                                 Forms\Components\TextInput::make('quantity')
+                                    ->label(__('resources.boms.fields.quantity'))
                                     ->numeric()
                                     ->required()
                                     ->minValue(0.0001)
                                     ->columnSpan(1),
 
                                 Forms\Components\TextInput::make('waste_percentage')
-                                    ->label('Waste %')
+                                    ->label(__('resources.boms.fields.waste_percentage'))
                                     ->numeric()
                                     ->default(0)
+                                    ->minValue(0)
+                                    ->maxValue(100)
                                     ->suffix('%')
                                     ->columnSpan(1),
 
                                 Forms\Components\TextInput::make('notes')
+                                    ->label(__('resources.boms.fields.notes'))
                                     ->maxLength(255)
                                     ->columnSpan(1),
                             ])
                             ->defaultItems(1)
                             ->reorderable(false)
-                            ->addActionLabel('Add BOM Item'),
+                            ->addActionLabel(__('resources.boms.actions.add_bom_item')),
                     ]),
             ]);
     }
@@ -107,35 +130,37 @@ class BomResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('project.name')
-                    ->label('Project')
+                    ->label(__('resources.boms.columns.project'))
                     ->searchable()
                     ->sortable()
                     ->limit(30),
 
                 Tables\Columns\TextColumn::make('version')
-                    ->label('Version')
+                    ->label(__('resources.boms.columns.version'))
                     ->prefix('v')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
+                    ->label(__('resources.boms.columns.status'))
                     ->badge()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('items_count')
-                    ->label('Items')
+                    ->label(__('resources.boms.columns.items_count'))
                     ->counts('items')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('preparedBy.name')
-                    ->label('Prepared By')
+                    ->label(__('resources.boms.columns.prepared_by'))
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('approvedBy.name')
-                    ->label('Approved By')
+                    ->label(__('resources.boms.columns.approved_by'))
                     ->toggleable()
-                    ->placeholder('—'),
+                    ->placeholder(__('resources.common.no_data')),
 
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('resources.boms.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -143,6 +168,7 @@ class BomResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
+                    ->label(__('resources.boms.columns.status'))
                     ->options(BomStatus::class)
                     ->multiple(),
                 Tables\Filters\TrashedFilter::make(),
@@ -152,7 +178,7 @@ class BomResource extends Resource
                 Tables\Actions\EditAction::make(),
 
                 Tables\Actions\Action::make('approve')
-                    ->label('Approve')
+                    ->label(__('resources.boms.actions.approve'))
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
                     ->requiresConfirmation()
@@ -164,7 +190,7 @@ class BomResource extends Resource
                             'approved_by' => Auth::id(),
                             'approved_at' => now(),
                         ]);
-                        Notification::make()->success()->title('BOM approved successfully')->send();
+                        Notification::make()->success()->title(__('resources.boms.notifications.approved'))->send();
                     }),
             ])
             ->bulkActions([

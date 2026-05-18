@@ -1,4 +1,4 @@
-# Documentation & Mapping Guide: Electrotech MVP v1
+# Documentation & Mapping Guide: Electrotech MVP v2
 
 ## 📌 Introduction
 
@@ -53,11 +53,34 @@ The goal of this document is to explain how theoretical concepts and diagrams we
 
 - **In the PDF (Page 13):** Electronic approvals, digital document lifecycles, and preventing overlap of responsibilities.
 - **In the Actual System (Software):**
-    - **Interface:** **Users (Users and Role Management)** Screen.
-    - **How it works:** A strict Role-Based Access Control (RBAC) system is applied. Each employee only sees screens designated for their department (e.g., storekeeper doesn't see accounting, etc.). No transaction can occur without being logged with the user's name and execution timestamp (Audit Log).
+    - **Interface:** **Roles & Permissions Management** Screen.
+    - **How it works:** A dynamic, highly flexible Role-Based Access Control (RBAC) system has been implemented. Administrators can easily create custom roles and grant granular permissions through an intuitive UI without developer intervention. Each employee only sees screens designated for their department. No transaction can occur without being logged with the user's name and execution timestamp (Audit Log).
 
-## 💰 8. Financial Control & Integration
+## 🌍 8. Multi-Language & RTL/LTR Support
+
+- **In the System Requirements:** Ensuring usability for both local and international staff members.
+- **In the Actual System (Software):**
+    - **How it works:** The system fully supports bilingual interfaces (English and Arabic). It features dynamic localization with a language switcher, automatically adjusting the layout to accommodate Right-To-Left (RTL) for Arabic and Left-To-Right (LTR) for English, ensuring a seamless, native user experience across all modules, forms, and tables.
+
+## 🧪 9. Software Quality & Automated Testing
+
+- **In the System Requirements:** Ensuring system stability, security, and preventing regressions in core business logic.
+- **In the Actual System (Software):**
+    - **How it works:** A robust automated testing suite (using Pest/PHPUnit) is integrated into the system's architecture. It systematically validates critical workflows, model interactions, RBAC security policies, and Filament interface resources. This high-coverage testing ensures the application remains highly reliable and production-ready as it scales and evolves over time.
+
+## 💰 10. Financial Control & Integration
 
 - **In the PDF (Pages 12, 14):** Translating operations into financial entries to control profitability and costs.
 - **In the Actual System (Software):**
     - **How it works:** In this MVP stage, the system acts as an "Automated Pricer" for projects and purchase orders. Raw material prices are linked to consumed quantities in work orders and inventory transactions, providing accurate data for finance to easily determine the actual cost of any project, paving the way for full GL accounting integration in the future.
+
+## 🚀 11. System Performance & High Concurrency (Redis Integration)
+
+- **In the System Requirements:** Ensuring lightning-fast response times even with a large number of concurrent users and heavy operations.
+- **In the Actual System (Software):**
+    - **How it works:** **Redis** has been deeply integrated into the system architecture to act as an ultra-fast, in-memory data store.
+    - **Key Benefits in the Project:**
+        1. **Dashboard Acceleration:** Complex statistics and aggregate data are cached to appear instantly for management without recalculating database queries.
+        2. **Data Integrity (Atomic Locks):** Strictly prevents race conditions and inventory discrepancies if multiple users attempt to deduct the same items simultaneously.
+        3. **Background Processing (Queues):** Offloads heavy tasks (e.g., deducting hundreds of BOM items for a Work Order) to run asynchronously in the background, keeping the user interface highly responsive.
+        4. **RBAC Speed:** Caches user roles and permissions to drastically reduce database load and accelerate system navigation.

@@ -21,31 +21,52 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $navigationGroup = 'System';
-
     protected static ?int $navigationSort = 1;
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('navigation.groups.system');
+    }
+
+    public static function getLabel(): string
+    {
+        return __('resources.users.label');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return __('resources.users.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('resources.users.navigation_label');
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Account Information')
+                Forms\Components\Section::make(__('resources.users.sections.account_information'))
                     ->icon('heroicon-o-user-circle')
                     ->columns(2)
                     ->schema([
                         Forms\Components\TextInput::make('name')
+                            ->label(__('resources.users.fields.name'))
                             ->required()
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('email')
+                            ->label(__('resources.users.fields.email'))
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('password')
+                            ->label(__('resources.users.fields.password'))
                             ->password()
                             ->revealable()
                             ->rule(Password::defaults())
@@ -53,17 +74,17 @@ class UserResource extends Resource
                             ->dehydrated(fn (?string $state): bool => filled($state))
                             ->dehydrateStateUsing(fn (string $state): string => Hash::make($state))
                             ->helperText(fn (string $operation): string => $operation === 'edit'
-                                ? 'Leave blank to keep the current password.'
+                                ? __('resources.users.fields.password_helper_edit')
                                 : ''),
 
                         Forms\Components\Select::make('roles')
-                            ->label('Role')
+                            ->label(__('resources.users.fields.roles'))
                             ->relationship('roles', 'name')
                             ->options(Role::pluck('name', 'id'))
                             ->required()
                             ->preload()
                             ->native(false)
-                            ->helperText('Determines what the user can access in the system.'),
+                            ->helperText(__('resources.users.fields.roles_helper')),
                     ]),
             ]);
     }
@@ -73,29 +94,31 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label(__('resources.users.columns.name'))
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
 
                 Tables\Columns\TextColumn::make('email')
+                    ->label(__('resources.users.columns.email'))
                     ->searchable()
                     ->sortable()
                     ->copyable(),
 
                 Tables\Columns\TextColumn::make('roles.name')
-                    ->label('Role')
+                    ->label(__('resources.users.columns.role'))
                     ->badge()
                     ->color('primary')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('email_verified_at')
-                    ->label('Verified')
+                    ->label(__('resources.users.columns.verified'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Joined')
+                    ->label(__('resources.users.columns.joined'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(),
@@ -103,6 +126,7 @@ class UserResource extends Resource
             ->defaultSort('name')
             ->filters([
                 Tables\Filters\SelectFilter::make('roles')
+                    ->label(__('resources.users.fields.roles'))
                     ->relationship('roles', 'name')
                     ->preload()
                     ->multiple(),

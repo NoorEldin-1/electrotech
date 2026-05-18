@@ -21,22 +21,40 @@ class ProjectResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-briefcase';
 
-    protected static ?string $navigationGroup = 'Sales & CRM';
-
     protected static ?int $navigationSort = 1;
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('navigation.groups.sales_crm');
+    }
+
+    public static function getLabel(): string
+    {
+        return __('resources.projects.label');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return __('resources.projects.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('resources.projects.navigation_label');
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Project Information')
+                Forms\Components\Section::make(__('resources.projects.sections.project_information'))
                     ->icon('heroicon-o-information-circle')
                     ->columns(2)
                     ->schema([
                         Forms\Components\TextInput::make('code')
-                            ->label('Project Code')
+                            ->label(__('resources.projects.fields.code'))
                             ->default(fn () => Project::generateCode())
                             ->disabled()
                             ->dehydrated()
@@ -44,20 +62,21 @@ class ProjectResource extends Resource
                             ->unique(ignoreRecord: true),
 
                         Forms\Components\TextInput::make('name')
-                            ->label('Project / Operation Name')
+                            ->label(__('resources.projects.fields.name'))
                             ->required()
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('client_name')
-                            ->label('Client Name')
+                            ->label(__('resources.projects.fields.client_name'))
                             ->required()
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('consultant_name')
-                            ->label('Consultant Name')
+                            ->label(__('resources.projects.fields.consultant_name'))
                             ->maxLength(255),
 
                         Forms\Components\Select::make('status')
+                            ->label(__('resources.projects.fields.status'))
                             ->options(ProjectStatus::class)
                             ->default(ProjectStatus::Draft)
                             ->required(),
@@ -66,33 +85,35 @@ class ProjectResource extends Resource
                             ->default(fn () => auth()->id()),
                     ]),
 
-                Forms\Components\Section::make('Financial & Timeline')
+                Forms\Components\Section::make(__('resources.projects.sections.financial_timeline'))
                     ->icon('heroicon-o-currency-dollar')
                     ->columns(2)
                     ->schema([
                         Forms\Components\TextInput::make('estimated_budget')
-                            ->label('Estimated Budget')
+                            ->label(__('resources.projects.fields.estimated_budget'))
                             ->numeric()
                             ->prefix('EGP')
                             ->default(0),
 
                         Forms\Components\TextInput::make('actual_cost')
-                            ->label('Actual Cost')
+                            ->label(__('resources.projects.fields.actual_cost'))
                             ->numeric()
                             ->prefix('EGP')
                             ->default(0)
                             ->disabled()
                             ->dehydrated(),
 
-                        Forms\Components\DatePicker::make('start_date'),
+                        Forms\Components\DatePicker::make('start_date')
+                            ->label(__('resources.projects.fields.start_date')),
                         Forms\Components\DatePicker::make('end_date')
+                            ->label(__('resources.projects.fields.end_date'))
                             ->after('start_date'),
                     ]),
 
-                Forms\Components\Section::make('Description')
+                Forms\Components\Section::make(__('resources.projects.sections.description'))
                     ->schema([
                         Forms\Components\Textarea::make('description')
-                            ->label('Project Description / Notes')
+                            ->label(__('resources.projects.fields.description'))
                             ->rows(4)
                             ->columnSpanFull(),
                     ]),
@@ -104,41 +125,45 @@ class ProjectResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('code')
-                    ->label('Code')
+                    ->label(__('resources.projects.columns.code'))
                     ->searchable()
                     ->sortable()
                     ->copyable()
                     ->weight('bold'),
 
                 Tables\Columns\TextColumn::make('name')
+                    ->label(__('resources.projects.columns.name'))
                     ->searchable()
                     ->sortable()
                     ->limit(40),
 
                 Tables\Columns\TextColumn::make('client_name')
-                    ->label('Client')
+                    ->label(__('resources.projects.columns.client_name'))
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
+                    ->label(__('resources.projects.columns.status'))
                     ->badge()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('estimated_budget')
-                    ->label('Budget')
+                    ->label(__('resources.projects.columns.estimated_budget'))
                     ->money('EGP')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('start_date')
+                    ->label(__('resources.projects.columns.start_date'))
                     ->date()
                     ->sortable()
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('createdBy.name')
-                    ->label('Created By')
+                    ->label(__('resources.projects.columns.created_by'))
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('resources.projects.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -146,6 +171,7 @@ class ProjectResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
+                    ->label(__('resources.projects.columns.status'))
                     ->options(ProjectStatus::class)
                     ->multiple(),
                 Tables\Filters\TrashedFilter::make(),

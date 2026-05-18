@@ -17,13 +17,27 @@ class InventoryTransactionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
 
-    protected static ?string $navigationGroup = 'Warehouse';
-
     protected static ?int $navigationSort = 2;
 
-    protected static ?string $label = 'Stock Movement';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('navigation.groups.warehouse');
+    }
 
-    protected static ?string $pluralLabel = 'Stock Movements';
+    public static function getLabel(): string
+    {
+        return __('resources.inventory_transactions.label');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return __('resources.inventory_transactions.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('resources.inventory_transactions.navigation_label');
+    }
 
     public static function canCreate(): bool
     {
@@ -35,44 +49,48 @@ class InventoryTransactionResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Date')
+                    ->label(__('resources.inventory_transactions.columns.date'))
                     ->dateTime()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('item.name')
-                    ->label('Item')
+                    ->label(__('resources.inventory_transactions.columns.item'))
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('item.sku')
-                    ->label('SKU')
+                    ->label(__('resources.inventory_transactions.columns.sku'))
                     ->searchable()
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('type')
+                    ->label(__('resources.inventory_transactions.columns.type'))
                     ->badge()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('quantity')
+                    ->label(__('resources.inventory_transactions.columns.quantity'))
                     ->numeric(4)
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('reference_type')
-                    ->label('Source')
-                    ->formatStateUsing(fn (?string $state) => $state ? class_basename($state) : '—')
+                    ->label(__('resources.inventory_transactions.columns.source'))
+                    ->formatStateUsing(fn (?string $state) => $state ? class_basename($state) : __('resources.common.no_data'))
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('notes')
+                    ->label(__('resources.inventory_transactions.columns.notes'))
                     ->limit(50)
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('performedBy.name')
-                    ->label('By')
+                    ->label(__('resources.inventory_transactions.columns.performed_by'))
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('type')
+                    ->label(__('resources.inventory_transactions.columns.type'))
                     ->options(TransactionType::class)
                     ->multiple(),
             ])

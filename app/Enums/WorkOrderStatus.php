@@ -18,13 +18,7 @@ enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
 
     public function getLabel(): string
     {
-        return match ($this) {
-            self::Pending => 'Pending',
-            self::InProgress => 'In Progress',
-            self::QaReview => 'QA Review',
-            self::Completed => 'Completed',
-            self::Cancelled => 'Cancelled',
-        };
+        return __('resources.enums.work_order_status.' . $this->value);
     }
 
     public function getColor(): string|array|null

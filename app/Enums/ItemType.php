@@ -16,12 +16,7 @@ enum ItemType: string implements HasLabel, HasColor
 
     public function getLabel(): string
     {
-        return match ($this) {
-            self::RawMaterial => 'Raw Material',
-            self::FinishedGood => 'Finished Good',
-            self::SemiFinished => 'Semi-Finished',
-            self::Consumable => 'Consumable',
-        };
+        return __('resources.enums.item_type.' . $this->value);
     }
 
     public function getColor(): string|array|null

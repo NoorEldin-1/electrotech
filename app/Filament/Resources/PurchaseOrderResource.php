@@ -24,22 +24,40 @@ class PurchaseOrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
 
-    protected static ?string $navigationGroup = 'Procurement';
-
     protected static ?int $navigationSort = 1;
 
     protected static ?string $recordTitleAttribute = 'po_number';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('navigation.groups.procurement');
+    }
+
+    public static function getLabel(): string
+    {
+        return __('resources.purchase_orders.label');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return __('resources.purchase_orders.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('resources.purchase_orders.navigation_label');
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Purchase Order Details')
+                Forms\Components\Section::make(__('resources.purchase_orders.sections.po_details'))
                     ->icon('heroicon-o-shopping-cart')
                     ->columns(2)
                     ->schema([
                         Forms\Components\TextInput::make('po_number')
-                            ->label('PO Number')
+                            ->label(__('resources.purchase_orders.fields.po_number'))
                             ->default(fn () => PurchaseOrder::generatePoNumber())
                             ->disabled()
                             ->dehydrated()
@@ -47,34 +65,40 @@ class PurchaseOrderResource extends Resource
                             ->unique(ignoreRecord: true),
 
                         Forms\Components\Select::make('project_id')
+                            ->label(__('resources.purchase_orders.fields.project'))
                             ->relationship('project', 'name')
                             ->searchable()
                             ->preload()
                             ->required(),
 
                         Forms\Components\TextInput::make('supplier_name')
+                            ->label(__('resources.purchase_orders.fields.supplier_name'))
                             ->required()
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('supplier_contact')
+                            ->label(__('resources.purchase_orders.fields.supplier_contact'))
                             ->maxLength(255),
 
                         Forms\Components\Select::make('status')
+                            ->label(__('resources.purchase_orders.fields.status'))
                             ->options(PurchaseOrderStatus::class)
                             ->default(PurchaseOrderStatus::Draft)
                             ->required(),
 
-                        Forms\Components\DatePicker::make('expected_delivery_date'),
+                        Forms\Components\DatePicker::make('expected_delivery_date')
+                            ->label(__('resources.purchase_orders.fields.expected_delivery_date')),
 
                         Forms\Components\Hidden::make('created_by')
                             ->default(fn () => auth()->id()),
 
                         Forms\Components\Textarea::make('notes')
+                            ->label(__('resources.purchase_orders.fields.notes'))
                             ->rows(3)
                             ->columnSpanFull(),
                     ]),
 
-                Forms\Components\Section::make('Line Items')
+                Forms\Components\Section::make(__('resources.purchase_orders.sections.line_items'))
                     ->icon('heroicon-o-list-bullet')
                     ->schema([
                         Forms\Components\Repeater::make('items')
@@ -82,6 +106,7 @@ class PurchaseOrderResource extends Resource
                             ->columns(4)
                             ->schema([
                                 Forms\Components\Select::make('item_id')
+                                    ->label(__('resources.purchase_orders.fields.item'))
                                     ->relationship('item', 'name')
                                     ->searchable()
                                     ->preload()
@@ -89,19 +114,21 @@ class PurchaseOrderResource extends Resource
                                     ->columnSpan(1),
 
                                 Forms\Components\TextInput::make('quantity')
+                                    ->label(__('resources.purchase_orders.fields.quantity'))
                                     ->numeric()
                                     ->required()
                                     ->minValue(0.0001)
                                     ->columnSpan(1),
 
                                 Forms\Components\TextInput::make('unit_price')
-                                    ->label('Unit Price (EGP)')
+                                    ->label(__('resources.purchase_orders.fields.unit_price'))
                                     ->numeric()
                                     ->required()
                                     ->visible(fn () => auth()->user()?->can('inventory.view_pricing'))
                                     ->columnSpan(1),
 
                                 Forms\Components\TextInput::make('received_quantity')
+                                    ->label(__('resources.purchase_orders.fields.received_quantity'))
                                     ->numeric()
                                     ->default(0)
                                     ->disabled()
@@ -110,7 +137,7 @@ class PurchaseOrderResource extends Resource
                             ])
                             ->defaultItems(1)
                             ->reorderable(false)
-                            ->addActionLabel('Add Item'),
+                            ->addActionLabel(__('resources.purchase_orders.actions.add_item')),
                     ]),
             ]);
     }
@@ -120,38 +147,41 @@ class PurchaseOrderResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('po_number')
-                    ->label('PO #')
+                    ->label(__('resources.purchase_orders.columns.po_number'))
                     ->searchable()
                     ->sortable()
                     ->copyable()
                     ->weight('bold'),
 
                 Tables\Columns\TextColumn::make('project.name')
-                    ->label('Project')
+                    ->label(__('resources.purchase_orders.columns.project'))
                     ->searchable()
                     ->sortable()
                     ->limit(30),
 
                 Tables\Columns\TextColumn::make('supplier_name')
-                    ->label('Supplier')
+                    ->label(__('resources.purchase_orders.columns.supplier_name'))
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
+                    ->label(__('resources.purchase_orders.columns.status'))
                     ->badge()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('total_amount')
+                    ->label(__('resources.purchase_orders.columns.total_amount'))
                     ->money('EGP')
                     ->sortable()
                     ->visible(fn () => auth()->user()?->can('inventory.view_pricing')),
 
                 Tables\Columns\TextColumn::make('expected_delivery_date')
-                    ->label('Expected Delivery')
+                    ->label(__('resources.purchase_orders.columns.expected_delivery'))
                     ->date()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('resources.purchase_orders.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -159,6 +189,7 @@ class PurchaseOrderResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
+                    ->label(__('resources.purchase_orders.columns.status'))
                     ->options(PurchaseOrderStatus::class)
                     ->multiple(),
                 Tables\Filters\TrashedFilter::make(),
@@ -167,7 +198,7 @@ class PurchaseOrderResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('receive')
-                    ->label('Receive Items')
+                    ->label(__('resources.purchase_orders.actions.receive'))
                     ->icon('heroicon-o-truck')
                     ->color('success')
                     ->visible(fn (PurchaseOrder $record) => in_array($record->status, [
@@ -193,7 +224,7 @@ class PurchaseOrderResource extends Resource
                         if (empty($receivedQuantities)) {
                             Notification::make()
                                 ->warning()
-                                ->title('No quantities entered')
+                                ->title(__('resources.purchase_orders.notifications.no_quantities'))
                                 ->send();
 
                             return;
@@ -203,12 +234,12 @@ class PurchaseOrderResource extends Resource
                             app(PurchaseOrderService::class)->receiveItems($record, $receivedQuantities);
                             Notification::make()
                                 ->success()
-                                ->title('Items received successfully')
+                                ->title(__('resources.purchase_orders.notifications.received'))
                                 ->send();
                         } catch (\RuntimeException $e) {
                             Notification::make()
                                 ->danger()
-                                ->title('Receiving failed')
+                                ->title(__('resources.purchase_orders.notifications.receive_failed'))
                                 ->body($e->getMessage())
                                 ->send();
                         }

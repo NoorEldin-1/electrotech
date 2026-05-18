@@ -16,12 +16,7 @@ enum TransactionType: string implements HasLabel, HasColor
 
     public function getLabel(): string
     {
-        return match ($this) {
-            self::In => 'Stock In',
-            self::Out => 'Stock Out',
-            self::Hold => 'Hold/Reserve',
-            self::Release => 'Release',
-        };
+        return __('resources.enums.transaction_type.' . $this->value);
     }
 
     public function getColor(): string|array|null

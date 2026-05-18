@@ -16,12 +16,7 @@ enum BomStatus: string implements HasLabel, HasColor
 
     public function getLabel(): string
     {
-        return match ($this) {
-            self::Draft => 'Draft',
-            self::PendingApproval => 'Pending Approval',
-            self::Approved => 'Approved',
-            self::Superseded => 'Superseded',
-        };
+        return __('resources.enums.bom_status.' . $this->value);
     }
 
     public function getColor(): string|array|null
