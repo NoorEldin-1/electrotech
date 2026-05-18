@@ -32,17 +32,19 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('Electrotech')
-            ->favicon(asset('favicon.ico'))
+            ->brandName('ElectroTech Orwa')
+            ->brandLogo(fn () => view('filament.brand'))
+            ->brandLogoHeight('2.5rem')
+            ->favicon(asset('images/electrotech-logo.jpg'))
             ->colors([
-                'primary' => Color::Blue,
+                'primary' => Color::hex('#D9723B'),
                 'danger' => Color::Rose,
                 'gray' => Color::Slate,
                 'info' => Color::Sky,
                 'success' => Color::Emerald,
                 'warning' => Color::Amber,
             ])
-            ->font('Inter')
+            ->font('Cairo')
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
                 __('navigation.groups.sales_crm'),
@@ -77,9 +79,13 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->renderHook(
+                PanelsRenderHook::STYLES_AFTER,
+                fn (): string => Blade::render('@vite(\'resources/css/filament/admin/theme.css\')')
+            )
+            ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn (): string => request()->routeIs('filament.admin.auth.login') 
-                    ? Blade::render('<link rel="stylesheet" href="{{ asset(\'css/custom-login.css\') }}">') 
+                fn (): string => request()->routeIs('filament.admin.auth.login')
+                    ? Blade::render('<link rel="stylesheet" href="{{ asset(\'css/custom-login.css\') }}">')
                     : ''
             );
     }

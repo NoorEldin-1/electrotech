@@ -1,4 +1,4 @@
-# Electrotech ERP
+# ElectroTech Orwa ERP
 
 ## 🏷️ V1 — First Release
 

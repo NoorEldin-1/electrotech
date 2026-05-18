@@ -1,0 +1,407 @@
+@import 'tailwindcss';
+
+/*
+ * Force class-based dark mode so Tailwind v4's `dark:` variants match
+ * Filament's strategy (which toggles a `.dark` class on <html>). Without
+ * this the variants default to `@media (prefers-color-scheme: dark)`,
+ * which would activate dark text utilities while Filament's chrome stays
+ * in light mode — producing white-on-cream invisible headings.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@source '../../../../app/Filament';
+@source '../../../../resources/views/filament';
+
+@theme {
+    --color-primary-50: #fdf4ee;
+    --color-primary-100: #fae5d3;
+    --color-primary-200: #f4c9a4;
+    --color-primary-300: #eda66e;
+    --color-primary-400: #e48745;
+    --color-primary-500: #d9723b;
+    --color-primary-600: #c45c2a;
+    --color-primary-700: #a34823;
+    --color-primary-800: #803820;
+    --color-primary-900: #602b1a;
+    --color-primary-950: #361410;
+
+    --color-navy-700: #1c2a3d;
+    --color-navy-800: #162133;
+    --color-navy-900: #111c2a;
+    --color-navy-950: #0a1320;
+
+    --color-cream-50: #fbfaf5;
+    --color-cream-100: #f8f6f0;
+    --color-cream-200: #f0ebde;
+
+    --font-sans: 'Cairo', 'Tajawal', 'Almarai', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+    html,
+    body {
+        background-color: var(--color-cream-100);
+        font-family: var(--font-sans);
+    }
+
+    .dark html,
+    .dark body {
+        background-color: var(--color-slate-950);
+    }
+}
+
+/* ===================================================================
+   SIDEBAR — navy in light, slate in dark
+   =================================================================== */
+.fi-sidebar {
+    background-color: var(--color-navy-900);
+    color: var(--color-slate-300);
+    border-color: var(--color-navy-800);
+}
+
+.fi-sidebar .fi-sidebar-nav {
+    padding-inline: 0.75rem;
+    padding-block: 1rem;
+}
+
+.fi-sidebar-header {
+    background-color: var(--color-navy-900);
+    border-color: var(--color-navy-800);
+}
+
+.fi-sidebar-header .fi-logo,
+.fi-sidebar-header .fi-sidebar-brand,
+.fi-sidebar-header .fi-sidebar-brand * {
+    color: white;
+}
+
+.fi-sidebar-header .fi-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+.fi-brand-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    line-height: 1;
+}
+
+.fi-brand-wrapper .fi-brand-logo {
+    height: 2.5rem;
+    width: auto;
+    border-radius: 0.5rem;
+    object-fit: contain;
+    background-color: white;
+    padding: 0.15rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+
+.fi-brand-wrapper .fi-brand-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: inherit;
+    white-space: nowrap;
+}
+
+.fi-sidebar-group-label {
+    color: var(--color-slate-500);
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    padding-inline-start: 0.75rem;
+}
+
+.fi-sidebar-item .fi-sidebar-item-button {
+    border-radius: 0.75rem;
+    gap: 0.75rem;
+    padding-inline: 0.75rem;
+    color: var(--color-slate-300);
+}
+
+.fi-sidebar-item .fi-sidebar-item-button .fi-sidebar-item-icon,
+.fi-sidebar-item .fi-sidebar-item-button .fi-sidebar-item-label {
+    color: var(--color-slate-300);
+}
+
+.fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button:hover,
+.fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button:hover .fi-sidebar-item-icon,
+.fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button:hover .fi-sidebar-item-label {
+    background-color: var(--color-navy-800);
+    color: white;
+}
+
+.fi-sidebar-item-active .fi-sidebar-item-button,
+.fi-sidebar-item-active .fi-sidebar-item-button:hover,
+.fi-sidebar-item-active .fi-sidebar-item-button .fi-sidebar-item-icon,
+.fi-sidebar-item-active .fi-sidebar-item-button .fi-sidebar-item-label {
+    background-color: var(--color-primary-500);
+    color: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.fi-sidebar-group-collapse-button {
+    color: var(--color-slate-400);
+}
+
+/* ---------- Scrollbar — thin, navy-tinted, matches the sidebar ---------- */
+.fi-sidebar,
+.fi-sidebar-nav,
+.fi-sidebar *::-webkit-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.12) transparent;
+}
+
+.fi-sidebar ::-webkit-scrollbar,
+.fi-sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.fi-sidebar ::-webkit-scrollbar-track,
+.fi-sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.fi-sidebar ::-webkit-scrollbar-thumb,
+.fi-sidebar-nav::-webkit-scrollbar-thumb {
+    background-color: rgb(255 255 255 / 0.12);
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+}
+
+.fi-sidebar ::-webkit-scrollbar-thumb:hover,
+.fi-sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-primary-500);
+}
+
+.fi-sidebar ::-webkit-scrollbar-corner,
+.fi-sidebar-nav::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Main content scrollbar — softer, cream-tinted in light mode */
+.fi-main::-webkit-scrollbar,
+.fi-main-ctn::-webkit-scrollbar,
+.fi-page::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.fi-main::-webkit-scrollbar-track,
+.fi-main-ctn::-webkit-scrollbar-track,
+.fi-page::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.fi-main::-webkit-scrollbar-thumb,
+.fi-main-ctn::-webkit-scrollbar-thumb,
+.fi-page::-webkit-scrollbar-thumb {
+    background-color: rgb(17 28 42 / 0.18);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.fi-main::-webkit-scrollbar-thumb:hover,
+.fi-main-ctn::-webkit-scrollbar-thumb:hover,
+.fi-page::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-primary-500);
+}
+
+.fi-main,
+.fi-main-ctn,
+.fi-page {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(17 28 42 / 0.18) transparent;
+}
+
+.dark .fi-main,
+.dark .fi-main-ctn,
+.dark .fi-page {
+    scrollbar-color: rgb(255 255 255 / 0.12) transparent;
+}
+
+.dark .fi-main::-webkit-scrollbar-thumb,
+.dark .fi-main-ctn::-webkit-scrollbar-thumb,
+.dark .fi-page::-webkit-scrollbar-thumb {
+    background-color: rgb(255 255 255 / 0.12);
+}
+
+/* Dark mode sidebar */
+.dark .fi-sidebar {
+    background-color: var(--color-slate-900);
+    border-color: var(--color-slate-800);
+}
+
+.dark .fi-sidebar-header {
+    background-color: var(--color-slate-900);
+    border-color: var(--color-slate-800);
+}
+
+.dark .fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button:hover,
+.dark .fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button:hover .fi-sidebar-item-icon,
+.dark .fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button:hover .fi-sidebar-item-label {
+    background-color: var(--color-slate-800);
+    color: white;
+}
+
+/* ===================================================================
+   MAIN CONTENT — warm cream in light, slate-950 in dark
+   =================================================================== */
+.fi-main-ctn,
+.fi-main,
+.fi-layout,
+.fi-body {
+    background-color: var(--color-cream-100);
+}
+
+.dark .fi-main-ctn,
+.dark .fi-main,
+.dark .fi-layout,
+.dark .fi-body {
+    background-color: var(--color-slate-950);
+}
+
+.fi-topbar {
+    background-color: rgb(251 250 245 / 0.85);
+    backdrop-filter: blur(8px);
+    border-color: var(--color-cream-200);
+}
+
+.dark .fi-topbar {
+    background-color: rgb(15 23 42 / 0.85);
+    border-color: var(--color-slate-800);
+}
+
+/* ===================================================================
+   CARDS, SECTIONS, WIDGETS — pure white, pronounced radius, soft shadow
+   =================================================================== */
+.fi-section,
+.fi-fo-section,
+.fi-wi-stats-overview-stat,
+.fi-page .fi-section,
+.fi-ta-ctn {
+    background-color: white;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.03);
+    border: 1px solid rgb(0 0 0 / 0.04);
+}
+
+.fi-section-header,
+.fi-fo-section-header {
+    border-start-start-radius: 1rem;
+    border-start-end-radius: 1rem;
+}
+
+.fi-section-content,
+.fi-fo-section-content {
+    border-end-start-radius: 1rem;
+    border-end-end-radius: 1rem;
+}
+
+.fi-wi-stats-overview-stat {
+    border-width: 1px;
+    border-color: rgb(0 0 0 / 0.04);
+}
+
+.dark .fi-section,
+.dark .fi-fo-section,
+.dark .fi-wi-stats-overview-stat,
+.dark .fi-page .fi-section,
+.dark .fi-ta-ctn {
+    background-color: var(--color-slate-900);
+    border-color: rgb(255 255 255 / 0.05);
+}
+
+/* ===================================================================
+   BADGES — full pill
+   =================================================================== */
+.fi-badge {
+    border-radius: 9999px;
+    padding-inline: 0.75rem;
+}
+
+/* ===================================================================
+   BUTTONS & FORM CONTROLS — softer radius
+   =================================================================== */
+.fi-btn {
+    border-radius: 0.75rem;
+}
+
+.fi-input,
+.fi-select-input,
+.fi-textarea,
+.fi-fo-text-input input,
+.fi-fo-textarea textarea,
+.fi-fo-select select {
+    border-radius: 0.75rem;
+}
+
+/* ===================================================================
+   TABLES — soft border, cream-tinted dividers
+   =================================================================== */
+.fi-ta-ctn .fi-ta-header,
+.fi-ta-ctn .fi-ta-row {
+    border-color: var(--color-cream-200);
+}
+
+.dark .fi-ta-ctn .fi-ta-header,
+.dark .fi-ta-ctn .fi-ta-row {
+    border-color: var(--color-slate-800);
+}
+
+/* ===================================================================
+   SAFETY NET — explicit text colors for chrome that depends on
+   Tailwind utility scanning. These reinforce visibility in case any
+   `dark:` variant slips through with the wrong strategy.
+   =================================================================== */
+.fi-header-heading,
+.fi-section-header-heading,
+.fi-fo-section-header-heading,
+.fi-modal-heading {
+    color: var(--color-gray-950);
+}
+
+.dark .fi-header-heading,
+.dark .fi-section-header-heading,
+.dark .fi-fo-section-header-heading,
+.dark .fi-modal-heading {
+    color: white;
+}
+
+.fi-header-subheading,
+.fi-section-header-description,
+.fi-fo-section-header-description {
+    color: var(--color-gray-500);
+}
+
+.dark .fi-header-subheading,
+.dark .fi-section-header-description,
+.dark .fi-fo-section-header-description {
+    color: var(--color-gray-400);
+}
+
+.fi-breadcrumbs a,
+.fi-breadcrumbs li,
+.fi-breadcrumbs-item {
+    color: var(--color-gray-500);
+}
+
+.fi-breadcrumbs a:hover {
+    color: var(--color-gray-700);
+}
+
+.dark .fi-breadcrumbs a,
+.dark .fi-breadcrumbs li,
+.dark .fi-breadcrumbs-item {
+    color: var(--color-gray-400);
+}
+
+.dark .fi-breadcrumbs a:hover {
+    color: var(--color-gray-200);
+}

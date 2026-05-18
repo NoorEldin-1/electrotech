@@ -1,8 +1,8 @@
-# Documentation & Mapping Guide: Electrotech MVP v2
+# Documentation & Mapping Guide: ElectroTech Orwa MVP v2
 
 ## 📌 Introduction
 
-This guide serves as the bridge between the **Strategic Vision** documented in the project file (Electrotech.pdf) and the **Actual Implementation** of the digital system (MVP - Minimum Viable Product) that has been built.
+This guide serves as the bridge between the **Strategic Vision** documented in the project file (ElectroTech Orwa.pdf) and the **Actual Implementation** of the digital system (MVP - Minimum Viable Product) that has been built.
 The goal of this document is to explain how theoretical concepts and diagrams were transformed into real, interconnected screens and workflows, using simple and direct language suitable for all departments and teams.
 
 ---
