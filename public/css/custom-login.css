@@ -1,121 +1,191 @@
-/* Premium Animated Background using subtle glowing orbs */
+/* ===================================================================
+   GLASSMORPHIC LOGIN — Gradient Mesh BG + Frosted Card
+   =================================================================== */
+
+/* --- Base canvas ---------------------------------------------------- */
 html {
-    background-color: #f8f6f0 !important;
+    background-color: #faf6ef !important;
 }
 
 .dark html {
-    background-color: #0f172a !important;
+    background-color: #0a1320 !important;
 }
 
 body {
     background-color: transparent !important;
     position: relative;
     z-index: 0;
+    overflow-x: hidden;
 }
 
-body::before, body::after {
+/* --- Gradient Mesh Background --------------------------------------
+   Multiple radial gradients layered on one fixed element. Each blob is
+   anchored at a different position with its own size & warm tone, so the
+   composite reads as a rich, organic mesh instead of a flat color. */
+body::before {
     content: '';
     position: fixed;
-    width: 80vw;
-    height: 80vw;
-    border-radius: 50%;
-    z-index: -1;
+    inset: 0;
+    z-index: -2;
     pointer-events: none;
-    animation: floatOrbs 15s infinite ease-in-out alternate;
-}
-
-body::before {
-    top: -25vw;
-    inset-inline-start: -20vw;
-    background: radial-gradient(circle, rgba(217, 114, 59, 0.35) 0%, rgba(217, 114, 59, 0) 65%);
-}
-
-body::after {
-    bottom: -25vw;
-    inset-inline-end: -20vw;
-    animation-duration: 18s;
-    animation-delay: -7s;
-    background: radial-gradient(circle, rgba(244, 201, 164, 0.4) 0%, rgba(244, 201, 164, 0) 65%);
+    background-image:
+        radial-gradient(60vw 60vw at 12% 18%, rgba(237, 166, 110, 0.55) 0%, rgba(237, 166, 110, 0) 60%),
+        radial-gradient(50vw 50vw at 88% 22%, rgba(217, 114, 59, 0.40) 0%, rgba(217, 114, 59, 0) 65%),
+        radial-gradient(70vw 70vw at 80% 85%, rgba(244, 201, 164, 0.50) 0%, rgba(244, 201, 164, 0) 60%),
+        radial-gradient(55vw 55vw at 15% 92%, rgba(253, 244, 238, 0.65) 0%, rgba(253, 244, 238, 0) 65%),
+        radial-gradient(45vw 45vw at 50% 55%, rgba(228, 135, 69, 0.18) 0%, rgba(228, 135, 69, 0) 70%);
 }
 
 .dark body::before {
-    background: radial-gradient(circle, rgba(217, 114, 59, 0.4) 0%, rgba(217, 114, 59, 0) 65%);
+    background-image:
+        radial-gradient(60vw 60vw at 12% 18%, rgba(217, 114, 59, 0.32) 0%, rgba(217, 114, 59, 0) 60%),
+        radial-gradient(50vw 50vw at 88% 22%, rgba(99, 47, 30, 0.55) 0%, rgba(99, 47, 30, 0) 65%),
+        radial-gradient(70vw 70vw at 80% 85%, rgba(228, 135, 69, 0.22) 0%, rgba(228, 135, 69, 0) 60%),
+        radial-gradient(55vw 55vw at 15% 92%, rgba(28, 42, 61, 0.75) 0%, rgba(28, 42, 61, 0) 70%),
+        radial-gradient(45vw 45vw at 50% 55%, rgba(54, 20, 16, 0.40) 0%, rgba(54, 20, 16, 0) 70%);
+}
+
+/* --- Fine grain overlay --------------------------------------------
+   Adds a near-invisible film of noise on top of the mesh. Breaks the
+   gradient banding and gives the surface a tactile, premium texture. */
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.35;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.10 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .dark body::after {
-    background: radial-gradient(circle, rgba(228, 135, 69, 0.35) 0%, rgba(228, 135, 69, 0) 65%);
+    opacity: 0.5;
 }
 
-@keyframes floatOrbs {
-    0% { transform: translate(0, 0) scale(0.9); }
-    50% { transform: translate(15vw, 15vw) scale(1.1); }
-    100% { transform: translate(25vw, -5vw) scale(1.25); }
-}
-
-/* Entrance Animation for the main container */
-main {
-    animation: slideUpFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* --- Card entrance animation --------------------------------------- */
+main.fi-simple-main {
+    animation: cardRise 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(24px) scale(0.985);
 }
 
-@keyframes slideUpFadeIn {
-    0% {
-        opacity: 0;
-        transform: translateY(30px) scale(0.98);
-    }
-    100% {
+@keyframes cardRise {
+    to {
         opacity: 1;
         transform: translateY(0) scale(1);
     }
 }
 
-/* Softer shadow and glassy effect for the card */
+/* --- Glassmorphic Card ---------------------------------------------
+   Semi-transparent fill + heavy backdrop blur lets the mesh bleed through
+   softly. The ::before pseudo paints a 1px gradient border that fakes
+   light catching the top-left edges of a real glass panel. */
 main.fi-simple-main {
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08), 0 10px 15px -3px rgba(0, 0, 0, 0.03) !important;
-    border: 1px solid rgba(255, 255, 255, 0.8) !important;
-    border-radius: 1rem !important;
-    backdrop-filter: blur(8px) !important;
-    transition: box-shadow 0.4s ease-in-out;
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.55) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    border: 1px solid transparent !important;
+    border-radius: 1.25rem !important;
+    box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.7),
+        0 30px 60px -20px rgba(99, 47, 30, 0.18),
+        0 12px 24px -10px rgba(99, 47, 30, 0.08) !important;
+    transition: box-shadow 0.4s ease, transform 0.4s ease !important;
+}
+
+main.fi-simple-main::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.95) 0%,
+        rgba(255, 255, 255, 0.45) 30%,
+        rgba(255, 255, 255, 0.05) 55%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
 }
 
 .dark main.fi-simple-main {
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 10px 15px -3px rgba(0, 0, 0, 0.2) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    background-color: rgba(22, 33, 51, 0.55) !important;
+    box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+        0 30px 60px -20px rgba(0, 0, 0, 0.6),
+        0 12px 24px -10px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* Polish interactive elements */
+.dark main.fi-simple-main::before {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.20) 0%,
+        rgba(255, 255, 255, 0.07) 30%,
+        rgba(255, 255, 255, 0) 60%
+    );
+}
+
+/* --- Form fields — glassy layered inside the card ------------------ */
 input, button, .fi-btn {
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Inputs hover & focus enhancement */
-input:hover {
-    background-color: #fbfaf5 !important;
+.fi-input,
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+    background-color: rgba(255, 255, 255, 0.55) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
 }
+
+.dark .fi-input,
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="text"] {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+input:hover {
+    background-color: rgba(255, 255, 255, 0.72) !important;
+}
+
 .dark input:hover {
-    background-color: #1e293b !important;
+    background-color: rgba(255, 255, 255, 0.07) !important;
 }
 
 input:focus {
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px -3px rgba(217, 114, 59, 0.25) !important;
+    box-shadow:
+        0 0 0 3px rgba(217, 114, 59, 0.15),
+        0 4px 15px -3px rgba(217, 114, 59, 0.20) !important;
+    border-color: rgba(217, 114, 59, 0.5) !important;
 }
 
-/* Primary Button hover & active enhancements */
-button[type="submit"]:hover, .fi-btn-color-primary:hover {
+/* --- Primary CTA — keeps the brand orange front-and-center --------- */
+button[type="submit"]:hover,
+.fi-btn-color-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px -5px rgba(217, 114, 59, 0.35) !important;
+    box-shadow: 0 12px 24px -6px rgba(217, 114, 59, 0.45) !important;
     filter: brightness(1.05);
 }
 
-button[type="submit"]:active, .fi-btn-color-primary:active {
+button[type="submit"]:active,
+.fi-btn-color-primary:active {
     transform: translateY(0);
-    box-shadow: 0 4px 10px -3px rgba(217, 114, 59, 0.2) !important;
+    box-shadow: 0 4px 10px -3px rgba(217, 114, 59, 0.25) !important;
 }
 
-/* Allow the .fi-logo container to expand beyond brandLogoHeight on the login page,
-   because our custom brand contains both an image AND a name stacked vertically. */
+/* --- Brand block (logo + name stacked, login only) ----------------- */
 .fi-simple-layout .fi-logo,
 .fi-simple-header .fi-logo,
 .fi-simple-main .fi-logo {
@@ -128,7 +198,6 @@ button[type="submit"]:active, .fi-btn-color-primary:active {
     margin-bottom: 1rem;
 }
 
-/* Brand wrapper on login page — logo on top, name below */
 .fi-simple-layout .fi-brand-wrapper,
 .fi-simple-header .fi-brand-wrapper,
 .fi-simple-main .fi-brand-wrapper {
@@ -144,12 +213,13 @@ button[type="submit"]:active, .fi-btn-color-primary:active {
 .fi-simple-main .fi-brand-wrapper .fi-brand-logo {
     height: 4.5rem;
     width: auto;
-    border-radius: 0.75rem;
+    border-radius: 0.875rem;
     object-fit: contain;
     background-color: white;
     padding: 0.25rem;
-    box-shadow: 0 4px 12px rgba(217, 114, 59, 0.15);
-    animation: gentlePulse 3s infinite alternate ease-in-out;
+    box-shadow:
+        0 8px 20px -6px rgba(217, 114, 59, 0.30),
+        0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .fi-simple-layout .fi-brand-wrapper .fi-brand-name,
@@ -165,15 +235,6 @@ button[type="submit"]:active, .fi-btn-color-primary:active {
 .dark .fi-simple-header .fi-brand-wrapper .fi-brand-name,
 .dark .fi-simple-main .fi-brand-wrapper .fi-brand-name {
     color: #f8fafc;
-}
-
-@keyframes gentlePulse {
-    0% {
-        filter: drop-shadow(0 0 0 rgba(217, 114, 59, 0));
-    }
-    100% {
-        filter: drop-shadow(0 4px 8px rgba(217, 114, 59, 0.25));
-    }
 }
 
 /* ===================================================================

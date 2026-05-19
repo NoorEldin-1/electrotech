@@ -8,10 +8,13 @@ use App\Enums\TransactionType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class InventoryTransaction extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     protected $fillable = [
         'item_id',
@@ -29,6 +32,15 @@ class InventoryTransaction extends Model
             'type' => TransactionType::class,
             'quantity' => 'decimal:4',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['item_id', 'type', 'quantity', 'reference_type', 'reference_id'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn (string $eventName) => "Stock movement was {$eventName}");
     }
 
     public function item(): BelongsTo

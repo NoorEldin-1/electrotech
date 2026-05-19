@@ -7,10 +7,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class BomItem extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     protected $fillable = [
         'bom_id',
@@ -26,6 +29,14 @@ class BomItem extends Model
             'quantity' => 'decimal:4',
             'waste_percentage' => 'decimal:2',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['bom_id', 'item_id', 'quantity', 'waste_percentage'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 
     public function bom(): BelongsTo

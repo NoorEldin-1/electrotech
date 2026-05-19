@@ -56,7 +56,9 @@ class RoleResource extends Resource
                 ->schema([
                     Forms\Components\CheckboxList::make('permissions_' . $group)
                         ->label('')
-                        ->options($groupPermissions->pluck('name', 'name'))
+                        ->options($groupPermissions->mapWithKeys(fn ($permission) => [
+                            $permission->name => __('resources.roles.permissions.' . $permission->name),
+                        ]))
                         ->columns(['default' => 1, 'sm' => 2, 'lg' => 3])
                         ->bulkToggleable()
                         ->afterStateHydrated(function ($component, ?Role $record) use ($groupPermissions) {

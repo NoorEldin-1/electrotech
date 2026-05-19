@@ -7,10 +7,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class PurchaseOrderItem extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     protected $fillable = [
         'purchase_order_id',
@@ -27,6 +30,14 @@ class PurchaseOrderItem extends Model
             'unit_price' => 'decimal:2',
             'received_quantity' => 'decimal:4',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['purchase_order_id', 'item_id', 'quantity', 'unit_price', 'received_quantity'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 
     public function purchaseOrder(): BelongsTo

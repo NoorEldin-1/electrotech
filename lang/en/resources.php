@@ -354,6 +354,184 @@ return [
             'dashboard' => 'Dashboard',
             'attachments' => 'Attachments',
         ],
+
+        'permissions' => [
+            'projects' => [
+                'view' => 'View Projects',
+                'create' => 'Create Project',
+                'edit' => 'Edit Projects',
+                'delete' => 'Delete Projects',
+                'change_status' => 'Change Project Status',
+            ],
+            'attachments' => [
+                'upload' => 'Upload Attachments',
+                'download' => 'Download Attachments',
+                'delete' => 'Delete Attachments',
+            ],
+            'items' => [
+                'view' => 'View Items',
+                'create' => 'Create Item',
+                'edit' => 'Edit Items',
+                'delete' => 'Delete Items',
+            ],
+            'boms' => [
+                'view' => 'View BOMs',
+                'create' => 'Create BOM',
+                'edit' => 'Edit BOMs',
+                'approve' => 'Approve BOMs',
+                'delete' => 'Delete BOMs',
+            ],
+            'inventory' => [
+                'view' => 'View Inventory',
+                'manage' => 'Manage Inventory',
+                'hold' => 'Hold Inventory',
+                'release' => 'Release Inventory',
+                'view_pricing' => 'View Pricing',
+            ],
+            'transactions' => [
+                'view' => 'View Inventory Transactions',
+            ],
+            'purchase_orders' => [
+                'view' => 'View Purchase Orders',
+                'create' => 'Create Purchase Order',
+                'edit' => 'Edit Purchase Orders',
+                'approve' => 'Approve Purchase Orders',
+                'receive' => 'Receive Purchase Orders',
+                'delete' => 'Delete Purchase Orders',
+            ],
+            'work_orders' => [
+                'view' => 'View Work Orders',
+                'create' => 'Create Work Order',
+                'edit' => 'Edit Work Orders',
+                'start' => 'Start Work Order',
+                'submit_qa' => 'Submit to QA',
+                'approve_qa' => 'Approve QA',
+                'complete' => 'Complete Work Order',
+                'delete' => 'Delete Work Orders',
+            ],
+            'users' => [
+                'view' => 'View Users',
+                'create' => 'Create User',
+                'edit' => 'Edit Users',
+                'delete' => 'Delete Users',
+            ],
+            'roles' => [
+                'manage' => 'Manage Roles & Permissions',
+            ],
+            'activity_log' => [
+                'view' => 'View Activity Logs',
+            ],
+            'dashboard' => [
+                'view' => 'View Dashboard',
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Activity Log Resource
+    |--------------------------------------------------------------------------
+    */
+    'activities' => [
+        'label' => 'Activity',
+        'plural_label' => 'Activity Log',
+        'navigation_label' => 'Activity Log',
+        'system_causer' => 'System',
+        'description_format' => ':subject was :event',
+
+        'sections' => [
+            'summary' => 'Activity Summary',
+            'actor' => 'Actor & Subject',
+            'changes' => 'Changed Fields',
+            'properties' => 'Raw Properties',
+        ],
+
+        'columns' => [
+            'timestamp' => 'When',
+            'log_name' => 'Log',
+            'event' => 'Event',
+            'description' => 'Description',
+            'subject' => 'Record',
+            'subject_id' => 'Record ID',
+            'causer' => 'Performed By',
+            'causer_type' => 'Performer Type',
+            'old_values' => 'Old Values',
+            'new_values' => 'New Values',
+            'batch' => 'Batch',
+        ],
+
+        'events' => [
+            'created' => 'Created',
+            'updated' => 'Updated',
+            'deleted' => 'Deleted',
+            'restored' => 'Restored',
+        ],
+
+        'log_names' => [
+            'default' => 'System',
+        ],
+
+        'values' => [
+            'true' => 'Yes',
+            'false' => 'No',
+        ],
+
+        /*
+        | Generic translation bucket for attribute names that appear in
+        | the "Modified Fields" tables. Consulted as a fallback when the
+        | per-model fields/columns translations don't cover the key.
+        */
+        'field_labels' => [
+            'name' => 'Name',
+            'code' => 'Code',
+            'sku' => 'SKU',
+            'type' => 'Type',
+            'unit' => 'Unit',
+            'unit_cost' => 'Unit Cost',
+            'unit_price' => 'Unit Price',
+            'quantity' => 'Quantity',
+            'received_quantity' => 'Received Quantity',
+            'produced_quantity' => 'Produced Quantity',
+            'waste_quantity' => 'Waste Quantity',
+            'planned_quantity' => 'Planned Quantity',
+            'waste_percentage' => 'Waste %',
+            'minimum_stock' => 'Minimum Stock',
+            'status' => 'Status',
+            'priority' => 'Priority',
+            'version' => 'Version',
+            'description' => 'Description',
+            'notes' => 'Notes',
+            'email' => 'Email',
+            'estimated_budget' => 'Estimated Budget',
+            'actual_cost' => 'Actual Cost',
+            'total_amount' => 'Total Amount',
+            'on_hand_quantity' => 'On-Hand Quantity',
+            'on_hold_quantity' => 'On-Hold Quantity',
+            'warehouse_type' => 'Warehouse',
+            'reference_type' => 'Reference Type',
+            'reference_id' => 'Reference ID',
+            'file_name' => 'File Name',
+            'file_type' => 'File Type',
+            'file_size' => 'File Size',
+            'category' => 'Category',
+            'project_id' => 'Project',
+            'item_id' => 'Item',
+            'bom_id' => 'BOM',
+            'purchase_order_id' => 'Purchase Order',
+            'approved_by' => 'Approved By',
+            'approved_at' => 'Approved At',
+            'qa_approved_by' => 'QA Approved By',
+            'qa_approved_at' => 'QA Approved At',
+            'created_by' => 'Created By',
+            'po_number' => 'PO Number',
+            'wo_number' => 'WO Number',
+        ],
+
+        'filters' => [
+            'date_range' => 'Date range',
+            'from' => 'From',
+            'until' => 'Until',
+        ],
     ],
 
     /*
