@@ -77,8 +77,12 @@ class WorkOrderResource extends Resource
 
                         Forms\Components\Select::make('bom_id')
                             ->label(__('resources.work_orders.fields.linked_bom'))
-                            ->relationship('bom', 'version', fn (Builder $query) => $query->where('status', 'approved'))
-                            ->getOptionLabelFromRecordUsing(fn ($record) => "v{$record->version} — {$record->project->name}")
+                            ->relationship(
+                                'bom',
+                                'version',
+                                fn (Builder $query) => $query->where('status', 'approved')->with('project:id,name'),
+                            )
+                            ->getOptionLabelFromRecordUsing(fn ($record) => "v{$record->version} — {$record->project?->name}")
                             ->searchable()
                             ->preload(),
 
@@ -251,6 +255,15 @@ class WorkOrderResource extends Resource
                 Tables\Actions\EditAction::make(),
 
                 // Start WO action
+                //
+                // The action is idempotent under a flaky connection: if a
+                // second submission arrives because the user's browser
+                // didn't see the first response and retried, we re-read
+                // the record from the DB and silently succeed if the WO
+                // has already advanced past the target state. Combined
+                // with HTTP-level Idempotency-Key middleware, this means
+                // a double-click on a 2 s RTT link can never start the
+                // WO twice or surface a confusing "wrong state" toast.
                 Tables\Actions\Action::make('start')
                     ->label(__('resources.work_orders.actions.start'))
                     ->icon('heroicon-o-play')
@@ -259,6 +272,11 @@ class WorkOrderResource extends Resource
                     ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::Pending
                         && auth()->user()?->can('work_orders.start'))
                     ->action(function (WorkOrder $record) {
+                        $fresh = $record->fresh();
+                        if ($fresh && $fresh->status !== WorkOrderStatus::Pending) {
+                            Notification::make()->success()->title(__('resources.work_orders.notifications.started'))->send();
+                            return;
+                        }
                         try {
                             app(WorkOrderService::class)->start($record);
                             Notification::make()->success()->title(__('resources.work_orders.notifications.started'))->send();
@@ -267,7 +285,7 @@ class WorkOrderResource extends Resource
                         }
                     }),
 
-                // Submit for QA
+                // Submit for QA — same idempotency story as `start`.
                 Tables\Actions\Action::make('submit_qa')
                     ->label(__('resources.work_orders.actions.submit_qa'))
                     ->icon('heroicon-o-shield-check')
@@ -286,6 +304,11 @@ class WorkOrderResource extends Resource
                             ->default(0),
                     ])
                     ->action(function (WorkOrder $record, array $data) {
+                        $fresh = $record->fresh();
+                        if ($fresh && $fresh->status !== WorkOrderStatus::InProgress) {
+                            Notification::make()->success()->title(__('resources.work_orders.notifications.submitted_qa'))->send();
+                            return;
+                        }
                         try {
                             app(WorkOrderService::class)->submitForQa(
                                 $record,
@@ -298,7 +321,9 @@ class WorkOrderResource extends Resource
                         }
                     }),
 
-                // Approve QA
+                // Approve QA — idempotent: a retry that lands after the
+                // first approval finds qa_approved_by already set and
+                // returns success without touching the row again.
                 Tables\Actions\Action::make('approve_qa')
                     ->label(__('resources.work_orders.actions.approve_qa'))
                     ->icon('heroicon-o-check-badge')
@@ -312,6 +337,11 @@ class WorkOrderResource extends Resource
                             ->rows(3),
                     ])
                     ->action(function (WorkOrder $record, array $data) {
+                        $fresh = $record->fresh();
+                        if ($fresh && $fresh->isQaApproved()) {
+                            Notification::make()->success()->title(__('resources.work_orders.notifications.qa_approved'))->send();
+                            return;
+                        }
                         try {
                             app(WorkOrderService::class)->approveQa($record, $data['qa_notes'] ?? null);
                             Notification::make()->success()->title(__('resources.work_orders.notifications.qa_approved'))->send();
@@ -320,7 +350,7 @@ class WorkOrderResource extends Resource
                         }
                     }),
 
-                // Complete WO
+                // Complete WO — idempotent on retry.
                 Tables\Actions\Action::make('complete')
                     ->label(__('resources.work_orders.actions.complete'))
                     ->icon('heroicon-o-check-circle')
@@ -330,6 +360,11 @@ class WorkOrderResource extends Resource
                         && $record->isQaApproved()
                         && auth()->user()?->can('work_orders.complete'))
                     ->action(function (WorkOrder $record) {
+                        $fresh = $record->fresh();
+                        if ($fresh && $fresh->status === WorkOrderStatus::Completed) {
+                            Notification::make()->success()->title(__('resources.work_orders.notifications.completed'))->send();
+                            return;
+                        }
                         try {
                             app(WorkOrderService::class)->complete($record);
                             Notification::make()->success()->title(__('resources.work_orders.notifications.completed'))->send();
@@ -357,7 +392,11 @@ class WorkOrderResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['project', 'assignedTo', 'qaApprovedBy'])
+            ->with([
+                'project:id,name',
+                'assignedTo:id,name',
+                'qaApprovedBy:id,name',
+            ])
             ->withoutGlobalScopes([SoftDeletingScope::class]);
     }
 }

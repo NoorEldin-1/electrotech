@@ -1,0 +1,19 @@
+{
+    "name": "ElectroTech Operator Console",
+    "short_name": "ElectroTech",
+    "description": "Offline-first factory-floor operator console for ElectroTech ERP.",
+    "start_url": "/console/",
+    "scope": "/console/",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#0f172a",
+    "theme_color": "#D9723B",
+    "icons": [
+        {
+            "src": "/images/electrotech-logo.jpg",
+            "sizes": "256x256",
+            "type": "image/jpeg",
+            "purpose": "any"
+        }
+    ]
+}

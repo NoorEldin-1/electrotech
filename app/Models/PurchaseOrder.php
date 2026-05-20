@@ -74,27 +74,38 @@ class PurchaseOrder extends Model
 
     /**
      * Recalculate total_amount from line items.
+     *
+     * Computes the sum at the database with a single aggregate query
+     * instead of hydrating every PurchaseOrderItem into a model. For POs
+     * with many line items this is ~10-100x faster and uses constant memory.
      */
     public function recalculateTotal(): void
     {
-        $this->total_amount = $this->items->sum(fn (PurchaseOrderItem $item) => (float) $item->quantity * (float) $item->unit_price);
+        $total = (float) $this->items()
+            ->selectRaw('COALESCE(SUM(quantity * unit_price), 0) AS aggregate')
+            ->value('aggregate');
+
+        $this->total_amount = $total;
         $this->saveQuietly();
     }
 
     /**
      * Generate a unique PO number with format: PO-YYYYMM-XXXX
+     *
+     * See App\Models\Project::generateCode() for the rationale on the
+     * MAX(CAST(...)) aggregate + Redis lock pattern.
      */
     public static function generatePoNumber(): string
     {
         $prefix = 'PO-' . now()->format('Ym') . '-';
-        $lastPo = static::where('po_number', 'like', $prefix . '%')
-            ->orderByDesc('po_number')
-            ->first();
 
-        $sequence = $lastPo
-            ? ((int) substr($lastPo->po_number, -4)) + 1
-            : 1;
+        return \Illuminate\Support\Facades\Cache::lock('po_number_seq:' . $prefix, 5)->block(3, function () use ($prefix) {
+            $maxSequence = (int) static::query()
+                ->where('po_number', 'like', $prefix . '%')
+                ->selectRaw('COALESCE(MAX(CAST(SUBSTRING_INDEX(po_number, "-", -1) AS UNSIGNED)), 0) AS seq')
+                ->value('seq');
 
-        return $prefix . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
+            return $prefix . str_pad((string) ($maxSequence + 1), 4, '0', STR_PAD_LEFT);
+        });
     }
 }

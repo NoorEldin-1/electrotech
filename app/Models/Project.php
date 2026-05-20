@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\ProjectStatus;
+use App\Sync\Concerns\Syncable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,17 @@ class Project extends Model
     use HasFactory;
     use LogsActivity;
     use SoftDeletes;
+    use Syncable;
+
+    /**
+     * Projects are read-only on the factory floor; operators must not
+     * mutate budgets, dates, or status from offline. Empty array =
+     * sync push for this model is rejected entirely.
+     */
+    public function syncWritableFields(): array
+    {
+        return [];
+    }
 
     protected $fillable = [
         'name',
@@ -81,18 +93,23 @@ class Project extends Model
 
     /**
      * Generate a unique project code with format: PRJ-YYYYMM-XXXX
+     *
+     * Pulls just the max sequence for the current month with a single
+     * aggregate query (no model hydration, no full row fetch). Wrapped in
+     * a Redis lock to make the generate→insert sequence race-safe under
+     * concurrent creates.
      */
     public static function generateCode(): string
     {
         $prefix = 'PRJ-' . now()->format('Ym') . '-';
-        $lastProject = static::where('code', 'like', $prefix . '%')
-            ->orderByDesc('code')
-            ->first();
 
-        $sequence = $lastProject
-            ? ((int) substr($lastProject->code, -4)) + 1
-            : 1;
+        return \Illuminate\Support\Facades\Cache::lock('project_code_seq:' . $prefix, 5)->block(3, function () use ($prefix) {
+            $maxSequence = (int) static::query()
+                ->where('code', 'like', $prefix . '%')
+                ->selectRaw('COALESCE(MAX(CAST(SUBSTRING_INDEX(code, "-", -1) AS UNSIGNED)), 0) AS seq')
+                ->value('seq');
 
-        return $prefix . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
+            return $prefix . str_pad((string) ($maxSequence + 1), 4, '0', STR_PAD_LEFT);
+        });
     }
 }

@@ -11,4 +11,8 @@ return [
         'manufacturing' => 'التصنيع',
         'system' => 'النظام',
     ],
+
+    'user_menu' => [
+        'operator_console' => 'وحدة تحكم المُشغّل',
+    ],
 ];

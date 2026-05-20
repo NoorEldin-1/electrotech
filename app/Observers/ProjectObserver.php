@@ -14,7 +14,7 @@ class ProjectObserver
      */
     public function saved(Project $project): void
     {
-        Cache::forget('dashboard_active_projects');
+        Cache::forget('dashboard:active_projects');
     }
 
     /**
@@ -22,6 +22,6 @@ class ProjectObserver
      */
     public function deleted(Project $project): void
     {
-        Cache::forget('dashboard_active_projects');
+        Cache::forget('dashboard:active_projects');
     }
 }

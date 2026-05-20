@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#D9723B">
+    <title data-i18n="title">Operator Console</title>
+    <link rel="manifest" href="/console/manifest.webmanifest">
+    <link rel="icon" type="image/jpeg" href="/images/electrotech-logo.jpg">
+    <link rel="stylesheet" href="/console/styles.css">
+</head>
+<body>
+    <!--
+        Operator Console — the offline-first factory-floor UI.
+
+        Static strings carry a `data-i18n="dotted.key"` attribute and are
+        retranslated on every locale switch by i18n.js::applyDomTranslations.
+        Attribute values (placeholder, title, aria-label) use the longer
+        form `data-i18n-attr-{attrName}="key"` — i18n.js scans for any
+        attribute matching that prefix and translates the indicated
+        attribute. This means we never have to manually call setAttribute
+        in the locale-change handler.
+    -->
+
+    <div id="app">
+        <header class="topbar">
+            <div class="brand">
+                <img src="/images/electrotech-logo.jpg" alt="ElectroTech" width="32" height="32">
+                <h1 data-i18n="title">Operator Console</h1>
+            </div>
+            <div class="status">
+                <span id="connectivity" class="pill pill-unknown" data-i18n-attr-title="topbar.connectivity_title">…</span>
+                <span id="sync-state" class="pill pill-idle" data-i18n-attr-title="topbar.sync_state_title">idle</span>
+                <span id="outbox-count" class="pill pill-info" data-i18n-attr-title="topbar.outbox_title">0 queued</span>
+                <button type="button" id="sync-now" class="btn btn-ghost" data-i18n-attr-title="topbar.sync_now">↻</button>
+                <button type="button" id="lang-switch" class="btn btn-ghost" data-i18n-attr-title="topbar.language_switch">EN</button>
+                <span id="user-name" class="user"></span>
+                <button type="button" id="sign-out" class="btn btn-ghost" data-i18n-attr-title="topbar.sign_out">⏻</button>
+            </div>
+        </header>
+
+        <nav class="tabs" role="tablist" aria-label="Sections">
+            <button type="button" data-route="work-orders" class="tab-btn is-active" role="tab" data-i18n="tabs.work_orders">Work Orders</button>
+            <button type="button" data-route="inventory" class="tab-btn" role="tab" data-i18n="tabs.inventory">Inventory</button>
+            <button type="button" data-route="conflicts" class="tab-btn" role="tab">
+                <span data-i18n="tabs.conflicts">Conflicts</span>
+                <span id="conflict-badge" class="badge" hidden>0</span>
+            </button>
+            <button type="button" data-route="diagnostics" class="tab-btn" role="tab" data-i18n="tabs.diagnostics">Diagnostics</button>
+        </nav>
+
+        <main id="view" class="view"></main>
+
+        <footer class="footer">
+            <span class="footer-note">
+                <span data-i18n="footer.prefix">Offline-first build · all writes captured locally · last sync: </span>
+                <time id="last-sync" data-i18n="footer.never">never</time>
+            </span>
+        </footer>
+
+        <!--
+            Enrolment overlay. Shown when no device token is present.
+            The form submits to /sync/enroll under the regular web
+            session, so the user must have signed in to /admin once on
+            this browser. After enrolment the bearer token is stored
+            in IndexedDB and the overlay is dismissed.
+        -->
+        <dialog id="enroll-dialog" class="dialog">
+            <form id="enroll-form" method="dialog">
+                <h2 data-i18n="enroll.heading">Enrol This Device</h2>
+                <p data-i18n="enroll.help">This tablet needs a one-time setup to work offline. Make sure you are signed in to the admin panel in another tab, then click Enrol.</p>
+                <label>
+                    <span data-i18n="enroll.device_name_label">Device name (optional)</span>
+                    <input type="text" name="device_name" maxlength="120" data-i18n-attr-placeholder="enroll.device_name_placeholder">
+                </label>
+                <div class="dialog-buttons">
+                    <button type="submit" class="btn btn-primary" data-i18n="enroll.submit">Enrol</button>
+                </div>
+                <p class="enroll-error" id="enroll-error" hidden></p>
+            </form>
+        </dialog>
+    </div>
+
+    <script type="module" src="/console/app.js"></script>
+</body>
+</html>

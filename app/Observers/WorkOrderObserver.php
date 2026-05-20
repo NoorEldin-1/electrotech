@@ -14,7 +14,7 @@ class WorkOrderObserver
      */
     public function saved(WorkOrder $workOrder): void
     {
-        Cache::forget('dashboard_active_wos');
+        Cache::forget('dashboard:active_wos');
     }
 
     /**
@@ -22,6 +22,6 @@ class WorkOrderObserver
      */
     public function deleted(WorkOrder $workOrder): void
     {
-        Cache::forget('dashboard_active_wos');
+        Cache::forget('dashboard:active_wos');
     }
 }

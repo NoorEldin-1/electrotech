@@ -43,10 +43,21 @@ class User extends Authenticatable implements FilamentUser
      * Determines if the user can access the Filament admin panel.
      * All authenticated users with any role can access; panel-level
      * restrictions are handled via Spatie permissions and Filament policies.
+     *
+     * Reads from the already-loaded `roles` relation when available, falls
+     * back to Spatie's Redis-cached role registrar. Avoids the per-request
+     * `SELECT EXISTS (...)` query that `roles()->exists()` would issue.
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->roles()->exists();
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->isNotEmpty();
+        }
+
+        // getRoleNames() reads from Spatie's permission cache (Redis-backed
+        // per config/permission.php), which is populated on first hit and
+        // invalidated by RoleObserver/PermissionObserver.
+        return $this->getRoleNames()->isNotEmpty();
     }
 
     public function getActivitylogOptions(): LogOptions

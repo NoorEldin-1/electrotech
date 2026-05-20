@@ -14,6 +14,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
 
@@ -136,7 +137,11 @@ class ActivityResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['causer', 'subject']);
+        // `subject` is a polymorphic morphTo — eager-loading it runs one
+        // IN-query per subject_type, hydrating models we never display in
+        // the list. We only show `causer.name`, so only eager-load that
+        // here. The `view` page can lazy-load `subject` if it needs to.
+        return parent::getEloquentQuery()->with('causer:id,name');
     }
 
     /**
@@ -217,22 +222,28 @@ class ActivityResource extends Resource
 
                 Tables\Filters\SelectFilter::make('log_name')
                     ->label(__('resources.activities.columns.log_name'))
-                    ->options(fn (): array => Activity::query()
-                        ->whereNotNull('log_name')
-                        ->distinct()
-                        ->pluck('log_name')
-                        ->mapWithKeys(fn (string $log) => [$log => static::formatLogName($log)])
-                        ->toArray())
+                    ->options(fn (): array => collect(Cache::remember(
+                        'activity_filter:log_names',
+                        now()->addMinutes(15),
+                        fn (): array => Activity::query()
+                            ->whereNotNull('log_name')
+                            ->distinct()
+                            ->pluck('log_name')
+                            ->all(),
+                    ))->mapWithKeys(fn (string $log) => [$log => static::formatLogName($log)])->toArray())
                     ->multiple(),
 
                 Tables\Filters\SelectFilter::make('subject_type')
                     ->label(__('resources.activities.columns.subject'))
-                    ->options(fn (): array => Activity::query()
-                        ->whereNotNull('subject_type')
-                        ->distinct()
-                        ->pluck('subject_type')
-                        ->mapWithKeys(fn (string $type) => [$type => static::translateSubjectType($type)])
-                        ->toArray())
+                    ->options(fn (): array => collect(Cache::remember(
+                        'activity_filter:subject_types',
+                        now()->addMinutes(15),
+                        fn (): array => Activity::query()
+                            ->whereNotNull('subject_type')
+                            ->distinct()
+                            ->pluck('subject_type')
+                            ->all(),
+                    ))->mapWithKeys(fn (string $type) => [$type => static::translateSubjectType($type)])->toArray())
                     ->multiple(),
 
                 Tables\Filters\Filter::make('created_at')
@@ -255,7 +266,12 @@ class ActivityResource extends Resource
             ->bulkActions([])
             ->persistFiltersInSession()
             ->striped()
-            ->poll('30s');
+            // Polling on an audit table multiplies query cost by every open
+            // tab. 30s was too aggressive — every user with this page open
+            // re-ran the full (filtered) query twice a minute, including
+            // the polymorphic causer/subject lookups. 2 minutes is plenty
+            // for an audit-log view; users can also pull-to-refresh.
+            ->poll('120s');
     }
 
     public static function infolist(Infolist $infolist): Infolist

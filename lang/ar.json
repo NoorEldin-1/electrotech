@@ -4,5 +4,7 @@
     "Pending Purchase Orders": "أوامر الشراء المعلقة",
     "Awaiting delivery/receipt": "بانتظار التسليم/الاستلام",
     "Active Work Orders": "أوامر التشغيل النشطة",
-    "Currently in production": "قيد الإنتاج حالياً"
+    "Currently in production": "قيد الإنتاج حالياً",
+    "Low Stock Items": "أصناف منخفضة المخزون",
+    "Below minimum threshold": "أقل من الحد الأدنى"
 }

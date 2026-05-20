@@ -212,7 +212,11 @@ class BomResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['project', 'preparedBy', 'approvedBy'])
+            ->with([
+                'project:id,name',
+                'preparedBy:id,name',
+                'approvedBy:id,name',
+            ])
             ->withoutGlobalScopes([SoftDeletingScope::class]);
     }
 }

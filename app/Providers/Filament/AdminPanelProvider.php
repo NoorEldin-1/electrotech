@@ -16,6 +16,7 @@ use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Support\Facades\Blade;
+use Filament\Navigation\MenuItem;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -45,6 +46,14 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::Amber,
             ])
             ->font('Cairo')
+            // SPA mode turns every navigation click into a wire:navigate
+            // (Livewire) call instead of a full HTTP round-trip. Result:
+            //   • No re-bootstrapping the framework on every nav
+            //   • No re-fetching CSS/JS/Alpine state
+            //   • No re-running every Filament resource's static registration
+            // For panels with many resources (you have 9) this is typically
+            // a 200–500ms saving per click on cold caches.
+            ->spa()
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
                 __('navigation.groups.sales_crm'),
@@ -62,6 +71,19 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
+            ])
+            // Operator Console entry point in the user menu. Lives in
+            // the topbar dropdown rather than the sidebar because it
+            // takes the user *out* of the admin panel into a different
+            // application surface — the standalone offline-first PWA
+            // at /console/. The link is always visible; the console
+            // itself handles the enrolment flow.
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label(fn (): string => __('navigation.user_menu.operator_console'))
+                    ->url('/console/')
+                    ->icon('heroicon-o-device-tablet')
+                    ->openUrlInNewTab(false),
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -87,6 +109,46 @@ class AdminPanelProvider extends PanelProvider
                 fn (): string => request()->routeIs('filament.admin.auth.login')
                     ? Blade::render('<link rel="stylesheet" href="{{ asset(\'css/custom-login.css\') }}">')
                     : ''
+            )
+            // Network-resilience client. Loads on every admin page when
+            // enabled in config — see config/resilience.php. When
+            // disabled (default for `APP_ENV=local`) we emit a tiny
+            // inline kill-switch that unregisters any previously
+            // registered Service Worker and clears its caches, so
+            // turning the feature off recovers a clean Filament UI on
+            // the user's next reload without DevTools surgery.
+            //
+            // Defer attribute on the main script: it must not block the
+            // initial paint on a slow link — it is a progressive
+            // enhancement layer; the app must still work without it.
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): string => config('resilience.enabled')
+                    ? Blade::render(
+                        '<script>window.__electrotechResilienceConfig = @json([
+                            "serviceWorker" => (bool) config("resilience.service_worker", true),
+                        ]);</script>
+                        <script defer src="{{ asset(\'js/network-resilience.js\') }}"></script>'
+                    )
+                    : Blade::render(
+                        '<script>
+                        // Resilience layer disabled — clean up any stale
+                        // Service Worker from a previous activation.
+                        (function () {
+                            if ("serviceWorker" in navigator) {
+                                navigator.serviceWorker.getRegistrations().then(function (regs) {
+                                    regs.forEach(function (r) { r.unregister(); });
+                                }).catch(function () {});
+                            }
+                            if (window.caches && caches.keys) {
+                                caches.keys().then(function (keys) {
+                                    keys.filter(function (k) { return k.indexOf("electrotech-") === 0; })
+                                        .forEach(function (k) { caches.delete(k); });
+                                }).catch(function () {});
+                            }
+                        })();
+                        </script>'
+                    )
             );
     }
 }

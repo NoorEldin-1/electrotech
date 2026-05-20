@@ -179,6 +179,13 @@ class InventoryService
     /**
      * Acquire a row-level lock on the inventory record
      * to prevent concurrent modification.
+     *
+     * The outer Redis lock (executeWithLock) already serializes all writes
+     * for this item across the cluster, so the create-then-relock dance
+     * the previous implementation did is unnecessary — we are already the
+     * only writer. We use firstOrCreate to short-circuit when the row
+     * exists and only re-issue the lockForUpdate when we actually had to
+     * create it.
      */
     private function getOrCreateInventoryWithLock(Item $item): Inventory
     {
@@ -186,25 +193,27 @@ class InventoryService
             ->lockForUpdate()
             ->first();
 
-        if (! $inventory) {
-            $inventory = Inventory::create([
-                'item_id' => $item->id,
-                'warehouse_type' => match ($item->type->value) {
-                    'finished_good' => 'finished_goods',
-                    'semi_finished' => 'work_in_progress',
-                    default => 'raw_materials',
-                },
-                'on_hand_quantity' => 0,
-                'on_hold_quantity' => 0,
-            ]);
-
-            // Re-acquire with lock after creation
-            $inventory = Inventory::where('item_id', $item->id)
-                ->lockForUpdate()
-                ->firstOrFail();
+        if ($inventory !== null) {
+            return $inventory;
         }
 
-        return $inventory;
+        Inventory::create([
+            'item_id' => $item->id,
+            'warehouse_type' => match ($item->type->value) {
+                'finished_good' => 'finished_goods',
+                'semi_finished' => 'work_in_progress',
+                default => 'raw_materials',
+            },
+            'on_hand_quantity' => 0,
+            'on_hold_quantity' => 0,
+        ]);
+
+        // We just inserted under the outer Redis lock, so we know the row
+        // now exists and only this process is touching it. lockForUpdate
+        // here is for transactional consistency, not contention.
+        return Inventory::where('item_id', $item->id)
+            ->lockForUpdate()
+            ->firstOrFail();
     }
 
     private function createTransaction(
@@ -227,7 +236,13 @@ class InventoryService
             $data['reference_id'] = $reference->getKey();
         }
 
-        return InventoryTransaction::create($data);
+        $transaction = InventoryTransaction::create($data);
+
+        // Stock just moved — invalidate the cached low-stock count so the
+        // dashboard reflects reality on the next render. Cheap O(1) op.
+        Cache::forget('dashboard:low_stock_count');
+
+        return $transaction;
     }
 
     private function validatePositiveQuantity(float $quantity): void

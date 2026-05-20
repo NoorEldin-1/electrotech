@@ -10,6 +10,7 @@ use App\Models\InventoryTransaction;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class InventoryTransactionResource extends Resource
 {
@@ -104,5 +105,14 @@ class InventoryTransactionResource extends Resource
         return [
             'index' => Pages\ListInventoryTransactions::route('/'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'item:id,name,sku',
+                'performedBy:id,name',
+            ]);
     }
 }

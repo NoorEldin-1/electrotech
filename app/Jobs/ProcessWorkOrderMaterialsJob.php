@@ -31,10 +31,17 @@ class ProcessWorkOrderMaterialsJob implements ShouldQueue
 
     /**
      * Create a new job instance.
+     *
+     * Routed onto a dedicated 'materials' queue so a long BOM loop cannot
+     * starve activity-log writes, dashboard refreshes, or other default-
+     * queue work. Run a worker with:
+     *   php artisan queue:work redis --queue=materials,default --tries=3
      */
     public function __construct(
         public readonly WorkOrder $workOrder,
-    ) {}
+    ) {
+        $this->onQueue('materials');
+    }
 
     /**
      * Execute the job.
@@ -51,25 +58,29 @@ class ProcessWorkOrderMaterialsJob implements ShouldQueue
                 return;
             }
 
-            // Eager load items to prevent N+1 queries during the loop
-            $bomItems = $bom->items()->with('item')->get();
+            // Stream BOM items via lazy cursor so memory stays constant
+            // even for very large BOMs. The chunked cursor still eager-
+            // loads `item` per chunk (default 1000), preventing N+1
+            // without hydrating all rows up front.
+            $bom->items()
+                ->with('item')
+                ->lazyById(200)
+                ->each(function ($bomItem) use ($inventoryService) {
+                    $totalRequired = (float) $bomItem->total_required_quantity;
 
-            foreach ($bomItems as $bomItem) {
-                $totalRequired = (float) $bomItem->total_required_quantity;
+                    if ($totalRequired <= 0) {
+                        return;
+                    }
 
-                if ($totalRequired <= 0) {
-                    continue;
-                }
-
-                // InventoryService utilizes Redis Atomic Locks, ensuring this background
-                // processing doesn't collide with live user interactions on the same items.
-                $inventoryService->deductStock(
-                    item: $bomItem->item,
-                    quantity: $totalRequired,
-                    reference: $this->workOrder,
-                    notes: "Issued for WO #{$this->workOrder->wo_number} (BOM item incl. {$bomItem->waste_percentage}% waste)",
-                );
-            }
+                    // InventoryService utilizes Redis Atomic Locks, ensuring this background
+                    // processing doesn't collide with live user interactions on the same items.
+                    $inventoryService->deductStock(
+                        item: $bomItem->item,
+                        quantity: $totalRequired,
+                        reference: $this->workOrder,
+                        notes: "Issued for WO #{$this->workOrder->wo_number} (BOM item incl. {$bomItem->waste_percentage}% waste)",
+                    );
+                });
 
             Log::info("Successfully issued materials for WO #{$this->workOrder->wo_number}.");
         } catch (\Throwable $e) {

@@ -1,0 +1,297 @@
+/*
+ * Operator Console styles.
+ *
+ * Tablet-first (most factory-floor devices are 9–10" touch). Big tap
+ * targets (44 px minimum), generous contrast for shop-floor lighting,
+ * no reliance on hover (no cursor on touch).
+ *
+ * Deliberately no Tailwind / no framework — the console must boot from
+ * a service-worker cache with nothing else, so the CSS surface is one
+ * self-contained file shipped as a static asset.
+ */
+
+:root {
+    --bg: #f8fafc;
+    --bg-elev: #ffffff;
+    --bg-dark: #0f172a;
+    --fg: #0f172a;
+    --fg-muted: #64748b;
+    --border: #e2e8f0;
+    --primary: #D9723B;
+    --primary-fg: #ffffff;
+    --success: #059669;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: #2563eb;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+    --radius: 8px;
+    --radius-lg: 14px;
+    --tap: 44px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Cairo", sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+}
+
+#app {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    min-height: 100vh;
+}
+
+.topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 16px; margin: 0; font-weight: 600; letter-spacing: -0.02em; }
+.brand img { border-radius: 6px; }
+
+.status { display: flex; align-items: center; gap: 8px; }
+.user { font-size: 13px; color: var(--fg-muted); margin-inline-start: 4px; }
+
+.pill {
+    display: inline-flex; align-items: center;
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 500; line-height: 1;
+}
+.pill-unknown { background: #e2e8f0; color: #475569; }
+.pill-online  { background: #dcfce7; color: #166534; }
+.pill-weak    { background: #fef3c7; color: #92400e; }
+.pill-offline { background: #fee2e2; color: #991b1b; }
+.pill-syncing { background: #dbeafe; color: #1e40af; }
+.pill-idle    { background: #f1f5f9; color: #475569; }
+.pill-error   { background: #fee2e2; color: #991b1b; }
+.pill-info    { background: #e0e7ff; color: #3730a3; }
+
+.tabs {
+    display: flex; gap: 4px;
+    padding: 8px 16px 0;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+}
+.tab-btn {
+    appearance: none; border: 0; background: transparent;
+    padding: 10px 14px; cursor: pointer;
+    font-size: 14px; font-weight: 500;
+    color: var(--fg-muted);
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    min-height: var(--tap);
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.tab-btn.is-active { color: var(--primary); border-bottom-color: var(--primary); }
+.tab-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 5px;
+    border-radius: 999px;
+    background: var(--danger); color: white;
+    font-size: 11px; font-weight: 700;
+}
+
+.view { padding: 16px; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+.btn {
+    appearance: none; border: 0;
+    padding: 10px 14px; min-height: var(--tap);
+    border-radius: var(--radius);
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s, transform 0.05s;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); }
+.btn-primary:hover { background: #b8602f; }
+.btn-success { background: var(--success); color: white; }
+.btn-warning { background: var(--warning); color: white; }
+.btn-danger  { background: var(--danger); color: white; }
+.btn-ghost   { background: transparent; color: var(--fg-muted); padding: 6px 10px; min-height: 36px; }
+.btn-ghost:hover { background: var(--border); }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+.card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+}
+.card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+}
+.card-title { font-size: 16px; font-weight: 600; margin: 0; }
+.card-subtitle { font-size: 13px; color: var(--fg-muted); }
+
+.list { display: grid; gap: 10px; }
+
+.wo-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px 12px;
+    align-items: center;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    /* Logical inline-start so the colored status indicator stays on
+     * the leading edge of the card regardless of writing direction. */
+    border-inline-start: 4px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+}
+.wo-card[data-status="pending"]     { border-inline-start-color: #94a3b8; }
+.wo-card[data-status="in_progress"] { border-inline-start-color: var(--info); }
+.wo-card[data-status="qa_review"]   { border-inline-start-color: var(--warning); }
+.wo-card[data-status="completed"]   { border-inline-start-color: var(--success); }
+.wo-card[data-status="cancelled"]   { border-inline-start-color: var(--danger); opacity: 0.6; }
+
+.wo-title { font-weight: 600; font-size: 15px; }
+.wo-meta  { font-size: 12px; color: var(--fg-muted); display: flex; gap: 12px; flex-wrap: wrap; }
+.wo-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.field { display: grid; gap: 4px; margin-bottom: 12px; }
+.field label { font-size: 13px; font-weight: 500; }
+.field input, .field textarea, .field select {
+    width: 100%;
+    padding: 10px 12px; min-height: var(--tap);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-elev);
+    font-size: 15px;
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+    outline: 2px solid var(--primary); outline-offset: 1px; border-color: var(--primary);
+}
+
+.dialog {
+    border: 0; border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 24px; max-width: 480px; width: calc(100% - 32px);
+    background: var(--bg-elev);
+}
+.dialog::backdrop { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); }
+.dialog h2 { margin: 0 0 8px; font-size: 18px; }
+.dialog p { color: var(--fg-muted); font-size: 14px; line-height: 1.5; margin: 0 0 16px; }
+.dialog label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+.dialog input, .dialog textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: var(--radius); font-size: 15px; margin-bottom: 16px;
+}
+.dialog-buttons { display: flex; gap: 8px; justify-content: flex-end; }
+.enroll-error { color: var(--danger); font-size: 13px; margin-top: 8px; }
+
+.footer {
+    padding: 10px 16px;
+    background: var(--bg-dark); color: #e2e8f0;
+    font-size: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.footer time { font-variant-numeric: tabular-nums; }
+
+.empty {
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--fg-muted);
+}
+.empty h3 { margin-bottom: 8px; color: var(--fg); }
+
+.diag {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.6;
+    background: var(--bg-dark); color: #cbd5e1;
+    padding: 12px; border-radius: var(--radius);
+    overflow-x: auto;
+}
+
+.toast-container {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 100; pointer-events: none;
+}
+.toast {
+    background: var(--bg-dark); color: white;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    font-size: 14px;
+    max-width: 320px;
+    animation: toast-in 0.2s ease-out;
+    pointer-events: auto;
+}
+.toast-success { background: var(--success); }
+.toast-warning { background: var(--warning); }
+.toast-danger  { background: var(--danger); }
+@keyframes toast-in {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.conflict-card {
+    background: #fef3c7; border: 1px solid #fbbf24;
+    padding: 14px; border-radius: var(--radius);
+    margin-bottom: 10px;
+}
+.conflict-card h4 { margin: 0 0 6px; font-size: 14px; color: #78350f; }
+.conflict-diff {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px; background: white; padding: 8px; border-radius: 4px;
+    margin-top: 8px; overflow-x: auto;
+}
+
+@media (max-width: 600px) {
+    .topbar { flex-direction: column; align-items: stretch; gap: 8px; }
+    .brand h1 { font-size: 14px; }
+    .wo-card { grid-template-columns: 1fr; }
+}
+
+/* ---------- RTL ----------------------------------------------------
+ *
+ * Almost every layout primitive in this file is flex or grid, which
+ * the browser mirrors automatically when `<html dir="rtl">` is set.
+ * The handful of rules below cover the edge cases where the default
+ * mirror is not enough:
+ *
+ *   - Font fallback: Cairo first for Arabic so glyphs hint properly
+ *     at small sizes and bidi text doesn't fall back to the browser's
+ *     default Arabic font (often Tahoma or Geeza Pro on legacy
+ *     systems, both of which look out of place next to the Latin
+ *     typeface chosen for the rest of the UI).
+ *
+ *   - Diagnostic <pre> blocks: keep them LTR because they contain
+ *     JSON, device ids, and timestamps — the structure is read
+ *     left-to-right even on an Arabic page.
+ *
+ *   - Toast container `transform: translateX(-50%)` is symmetric, so
+ *     no override needed.
+ */
+
+[dir="rtl"] body {
+    font-family: "Cairo", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+[dir="rtl"] .diag,
+[dir="rtl"] .conflict-diff {
+    direction: ltr;
+    text-align: start;
+}
+
+/* Toasts: keep numeric/JSON fragments inside them LTR even when the
+ * surrounding paragraph is Arabic — otherwise something like
+ * "WO-202605-0001" can render as "0001-202605-WO". */
+[dir="rtl"] .toast {
+    unicode-bidi: plaintext;
+}

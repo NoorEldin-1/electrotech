@@ -11,6 +11,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Spatie\Permission\Models\Role;
@@ -80,7 +82,11 @@ class UserResource extends Resource
                         Forms\Components\Select::make('roles')
                             ->label(__('resources.users.fields.roles'))
                             ->relationship('roles', 'name')
-                            ->options(Role::pluck('name', 'id'))
+                            ->options(fn () => Cache::remember(
+                                'roles_select_options',
+                                now()->addHour(),
+                                fn () => Role::query()->pluck('name', 'id')->all(),
+                            ))
                             ->required()
                             ->preload()
                             ->native(false)
@@ -150,5 +156,11 @@ class UserResource extends Resource
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['roles:id,name']);
     }
 }

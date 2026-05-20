@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
+use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -35,5 +36,6 @@ class PermissionObserver
     protected function flushCache(): void
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+        Cache::forget('role_resource_permission_groups');
     }
 }

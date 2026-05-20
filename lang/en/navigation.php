@@ -11,4 +11,8 @@ return [
         'manufacturing' => 'Manufacturing',
         'system' => 'System',
     ],
+
+    'user_menu' => [
+        'operator_console' => 'Operator Console',
+    ],
 ];

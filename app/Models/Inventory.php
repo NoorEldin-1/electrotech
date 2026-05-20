@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Sync\Concerns\Syncable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,6 +16,18 @@ class Inventory extends Model
 {
     use HasFactory;
     use LogsActivity;
+    use Syncable;
+
+    /**
+     * Inventory levels are NEVER edited directly by sync clients; they
+     * change as a side effect of accepted InventoryTransaction pushes.
+     * Empty array enforces this on the API surface; the
+     * InventoryService remains the only legitimate mutator.
+     */
+    public function syncWritableFields(): array
+    {
+        return [];
+    }
 
     protected $table = 'inventories';
 

@@ -205,14 +205,18 @@ class PurchaseOrderResource extends Resource
                         PurchaseOrderStatus::Submitted,
                         PurchaseOrderStatus::PartiallyReceived,
                     ]) && auth()->user()?->can('purchase_orders.receive'))
-                    ->form(fn (PurchaseOrder $record) => $record->items->map(
-                        fn (PurchaseOrderItem $poItem) => Forms\Components\TextInput::make("items.{$poItem->id}")
-                            ->label("{$poItem->item->name} (Ordered: {$poItem->quantity}, Received: {$poItem->received_quantity})")
-                            ->numeric()
-                            ->default(0)
-                            ->minValue(0)
-                            ->maxValue($poItem->remaining_quantity)
-                    )->toArray())
+                    ->form(fn (PurchaseOrder $record) => $record
+                        ->items()
+                        ->with('item:id,name')
+                        ->get()
+                        ->map(
+                            fn (PurchaseOrderItem $poItem) => Forms\Components\TextInput::make("items.{$poItem->id}")
+                                ->label("{$poItem->item->name} (Ordered: {$poItem->quantity}, Received: {$poItem->received_quantity})")
+                                ->numeric()
+                                ->default(0)
+                                ->minValue(0)
+                                ->maxValue($poItem->remaining_quantity)
+                        )->toArray())
                     ->action(function (PurchaseOrder $record, array $data) {
                         $receivedQuantities = [];
                         foreach ($data['items'] ?? [] as $poItemId => $qty) {
@@ -264,7 +268,7 @@ class PurchaseOrderResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['project', 'items.item'])
+            ->with(['project:id,name'])
             ->withoutGlobalScopes([SoftDeletingScope::class]);
     }
 }

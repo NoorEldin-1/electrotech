@@ -11,6 +11,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -44,27 +45,48 @@ class RoleResource extends Resource
 
     public static function form(Form $form): Form
     {
-        // Fetch and group permissions
-        $permissions = Permission::all()->groupBy(function ($permission) {
-            return explode('.', $permission->name)[0];
-        });
+        // Fetch grouped permission names from Redis. The shape we cache is
+        // [group => [permission_name, ...]] — purely string scalars, so
+        // there's no model hydration cost on subsequent renders. The cache
+        // is invalidated by PermissionObserver when permissions change.
+        $groupedPermissionNames = Cache::remember(
+            'role_resource_permission_groups',
+            now()->addDay(),
+            fn (): array => Permission::query()
+                ->orderBy('name')
+                ->pluck('name')
+                ->groupBy(fn (string $name) => explode('.', $name)[0])
+                ->map(fn ($group) => $group->all())
+                ->all(),
+        );
 
         $sections = [];
 
-        foreach ($permissions as $group => $groupPermissions) {
+        foreach ($groupedPermissionNames as $group => $permissionNames) {
             $sections[] = Forms\Components\Section::make(__('resources.roles.groups.' . $group))
                 ->schema([
                     Forms\Components\CheckboxList::make('permissions_' . $group)
                         ->label('')
-                        ->options($groupPermissions->mapWithKeys(fn ($permission) => [
-                            $permission->name => __('resources.roles.permissions.' . $permission->name),
-                        ]))
+                        ->options(collect($permissionNames)->mapWithKeys(fn (string $name) => [
+                            $name => __('resources.roles.permissions.' . $name),
+                        ])->all())
                         ->columns(['default' => 1, 'sm' => 2, 'lg' => 3])
                         ->bulkToggleable()
-                        ->afterStateHydrated(function ($component, ?Role $record) use ($groupPermissions) {
-                            if ($record) {
-                                $component->state($record->permissions->whereIn('name', $groupPermissions->pluck('name'))->pluck('name')->toArray());
+                        ->afterStateHydrated(function ($component, ?Role $record) use ($permissionNames) {
+                            if (! $record) {
+                                return;
                             }
+
+                            // intersect() compares scalar names against the
+                            // already-loaded `permissions` collection — no
+                            // extra query is issued here.
+                            $component->state(
+                                $record->permissions
+                                    ->pluck('name')
+                                    ->intersect($permissionNames)
+                                    ->values()
+                                    ->all()
+                            );
                         })
                         ->disabled(fn (?Role $record): bool => $record && $record->name === 'Admin'),
                 ])
@@ -158,5 +180,10 @@ class RoleResource extends Resource
             'create' => Pages\CreateRole::route('/create'),
             'edit' => Pages\EditRole::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()->with('permissions:id,name');
     }
 }

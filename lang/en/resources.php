@@ -603,6 +603,61 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Sync Conflicts (Offline-First)
+    |--------------------------------------------------------------------------
+    */
+    'sync_conflicts' => [
+        'label' => 'Sync Conflict',
+        'plural_label' => 'Sync Conflicts',
+        'navigation_label' => 'Sync Conflicts',
+
+        'columns' => [
+            'detected_at' => 'Detected',
+            'operator' => 'Operator',
+            'device' => 'Device',
+            'type' => 'Type',
+            'record' => 'Record',
+            'reason' => 'Reason',
+            'resolved' => 'Resolved',
+        ],
+
+        'fields' => [
+            'uuid' => 'Conflict ID',
+            'model_type' => 'Record Type',
+            'record_uuid' => 'Record UUID',
+            'reason' => 'Reason',
+            'server_version' => 'Server Version',
+            'client_base_version' => 'Client Base Version',
+            'error_message' => 'Error Message',
+            'client_payload' => 'Client payload (rejected)',
+            'server_state' => 'Server state (authoritative)',
+        ],
+
+        'reasons' => [
+            'version_stale' => 'Version stale',
+            'illegal_transition' => 'Illegal transition',
+            'insufficient_stock' => 'Insufficient stock',
+            'validation_failed' => 'Validation failed',
+            'fk_missing' => 'FK missing',
+            'push_rejected' => 'Push rejected',
+            'tombstoned' => 'Tombstoned on server',
+        ],
+
+        'actions' => [
+            'resolve' => 'Mark resolved',
+            'resolve_confirmation' => 'Mark this conflict as resolved? The server\'s state will be accepted as authoritative.',
+        ],
+
+        'filters' => [
+            'reason' => 'Reason',
+            'resolved' => 'Resolved',
+            'resolved_true' => 'Resolved',
+            'resolved_false' => 'Unresolved',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Common / Shared Strings
     |--------------------------------------------------------------------------
     */

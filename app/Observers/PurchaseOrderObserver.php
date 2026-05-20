@@ -14,7 +14,7 @@ class PurchaseOrderObserver
      */
     public function saved(PurchaseOrder $purchaseOrder): void
     {
-        Cache::forget('dashboard_pending_pos');
+        Cache::forget('dashboard:pending_pos');
     }
 
     /**
@@ -22,6 +22,6 @@ class PurchaseOrderObserver
      */
     public function deleted(PurchaseOrder $purchaseOrder): void
     {
-        Cache::forget('dashboard_pending_pos');
+        Cache::forget('dashboard:pending_pos');
     }
 }

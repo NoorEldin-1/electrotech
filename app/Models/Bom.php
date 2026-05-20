@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\BomStatus;
+use App\Sync\Concerns\Syncable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +19,15 @@ class Bom extends Model
     use HasFactory;
     use LogsActivity;
     use SoftDeletes;
+    use Syncable;
+
+    /**
+     * BOM authoring is an office workflow. Read-only on the floor.
+     */
+    public function syncWritableFields(): array
+    {
+        return [];
+    }
 
     protected $fillable = [
         'project_id',
@@ -68,9 +78,17 @@ class Bom extends Model
 
     /**
      * Calculate the total estimated cost of this BOM.
+     *
+     * Loads `items.item` once if it isn't already loaded so iterating the
+     * collection cannot trigger an N+1 cascade — the per-item `$item->item`
+     * access would otherwise issue one query per BOM line.
      */
     public function getTotalCostAttribute(): float
     {
-        return $this->items->sum(fn (BomItem $item) => (float) $item->quantity * (float) $item->item->unit_cost);
+        $this->loadMissing('items.item:id,unit_cost');
+
+        return (float) $this->items->sum(
+            fn (BomItem $item) => (float) $item->quantity * (float) ($item->item->unit_cost ?? 0)
+        );
     }
 }

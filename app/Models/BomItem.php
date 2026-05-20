@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Sync\Concerns\Syncable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,12 @@ class BomItem extends Model
 {
     use HasFactory;
     use LogsActivity;
+    use Syncable;
+
+    public function syncWritableFields(): array
+    {
+        return [];
+    }
 
     protected $fillable = [
         'bom_id',

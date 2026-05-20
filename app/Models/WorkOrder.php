@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\WorkOrderStatus;
+use App\Sync\Concerns\Syncable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,7 @@ class WorkOrder extends Model
     use HasFactory;
     use LogsActivity;
     use SoftDeletes;
+    use Syncable;
 
     protected $fillable = [
         'project_id',
@@ -39,6 +41,30 @@ class WorkOrder extends Model
         'qa_approved_at',
         'qa_notes',
     ];
+
+    /**
+     * Sync clients (operators on the factory floor) have a narrower
+     * write surface than admin form submissions. They can advance state
+     * and record the actuals; they cannot rewrite plans or reassign.
+     *
+     * Anything outside this list submitted via the sync push is silently
+     * dropped (with a debug-level log line). Server-side authoring
+     * through Filament / services is unaffected.
+     */
+    public function syncWritableFields(): array
+    {
+        return [
+            'status',
+            'produced_quantity',
+            'waste_quantity',
+            'actual_start_date',
+            'actual_end_date',
+            'qa_approved_by',
+            'qa_approved_at',
+            'qa_notes',
+            'client_updated_at',
+        ];
+    }
 
     protected function casts(): array
     {
@@ -123,18 +149,21 @@ class WorkOrder extends Model
 
     /**
      * Generate a unique WO number with format: WO-YYYYMM-XXXX
+     *
+     * See App\Models\Project::generateCode() for the rationale on the
+     * MAX(CAST(...)) aggregate + Redis lock pattern.
      */
     public static function generateWoNumber(): string
     {
         $prefix = 'WO-' . now()->format('Ym') . '-';
-        $lastWo = static::where('wo_number', 'like', $prefix . '%')
-            ->orderByDesc('wo_number')
-            ->first();
 
-        $sequence = $lastWo
-            ? ((int) substr($lastWo->wo_number, -4)) + 1
-            : 1;
+        return \Illuminate\Support\Facades\Cache::lock('wo_number_seq:' . $prefix, 5)->block(3, function () use ($prefix) {
+            $maxSequence = (int) static::query()
+                ->where('wo_number', 'like', $prefix . '%')
+                ->selectRaw('COALESCE(MAX(CAST(SUBSTRING_INDEX(wo_number, "-", -1) AS UNSIGNED)), 0) AS seq')
+                ->value('seq');
 
-        return $prefix . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
+            return $prefix . str_pad((string) ($maxSequence + 1), 4, '0', STR_PAD_LEFT);
+        });
     }
 }
