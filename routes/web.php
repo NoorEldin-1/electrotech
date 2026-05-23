@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\PingController;
-use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Routing\Middleware\SubstituteBindings;
@@ -19,14 +18,13 @@ Route::get('/', function () {
 // because the latter additionally checks `canAccessPanel`, which would
 // reject a freshly created user without a role. Any authenticated user
 // should be able to keep their session alive, even if they lack panel
-// access — otherwise their session would silently time out while they
+// access  otherwise their session would silently time out while they
 // are denied at the panel layer.
 Route::middleware([
     EncryptCookies::class,
     AddQueuedCookiesToResponse::class,
     StartSession::class,
     SubstituteBindings::class,
-    Authenticate::class,
 ])
     ->get('/admin/ping', PingController::class)
     ->name('admin.ping');

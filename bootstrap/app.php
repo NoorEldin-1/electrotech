@@ -62,9 +62,6 @@ return Application::configure(basePath: dirname(__DIR__))
             $middleware->append(Idempotency::class);
         }
 
-        if ($readFlag('NETWORK_RESILIENCE_COMPRESS', false, true)) {
-            $middleware->append(CompressResponse::class);
-        }
 
         // Bypass CSRF on the ping endpoint. The route is read-only (only
         // writes a timestamp to the user's own session) and is hit from a

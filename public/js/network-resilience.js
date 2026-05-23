@@ -385,7 +385,7 @@
                 if (!btn || btn.disabled || btn.dataset.electrotechGuarded) return;
                 btn.dataset.electrotechGuarded = '1';
                 const originalDisabled = btn.disabled;
-                btn.disabled = true;
+                setTimeout(function () { btn.disabled = true; }, 0);
                 setTimeout(function () {
                     btn.disabled = originalDisabled;
                     delete btn.dataset.electrotechGuarded;
