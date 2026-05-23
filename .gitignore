@@ -23,3 +23,9 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /PDFs
+extract.py
+extracted_text.txt
+output.txt
+output2.txt
+system_gap_analysis.md
+upgrade_plan.md
