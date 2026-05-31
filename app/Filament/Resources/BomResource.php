@@ -135,6 +135,11 @@ class BomResource extends Resource
                     ->sortable()
                     ->limit(30),
 
+                Tables\Columns\TextColumn::make('project.status')
+                    ->label(__('resources.boms.columns.sales_stage'))
+                    ->badge()
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('version')
                     ->label(__('resources.boms.columns.version'))
                     ->prefix('v')

@@ -57,7 +57,10 @@ php artisan icons:cache || true
 php artisan optimize
 
 log "Ensuring storage symlink exists"
-php artisan storage:link || true
+# --force overwrites a stale or wrongly-typed `public/storage` (e.g. a
+# leftover directory from a previous misconfigured deploy). Without it,
+# storage:link would silently fail and uploaded attachments would 404.
+php artisan storage:link --force || true
 
 log "Fixing writable permissions on storage and bootstrap/cache"
 chmod -R ug+rwX storage bootstrap/cache || true

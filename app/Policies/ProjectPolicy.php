@@ -46,4 +46,34 @@ class ProjectPolicy
     {
         return $user->can('projects.delete');
     }
+
+    public function moveToTender(User $user, Project $project): bool
+    {
+        return $user->can('projects.move_to_tender');
+    }
+
+    public function moveToInHand(User $user, Project $project): bool
+    {
+        return $user->can('projects.move_to_inhand');
+    }
+
+    public function moveToActive(User $user, Project $project): bool
+    {
+        return $user->can('projects.move_to_active');
+    }
+
+    public function managerApprove(User $user, Project $project): bool
+    {
+        return $user->can('projects.manager_approve');
+    }
+
+    public function cancelToLost(User $user, Project $project): bool
+    {
+        return $user->can('projects.cancel_to_lost');
+    }
+
+    public function setAlarm(User $user, Project $project): bool
+    {
+        return $user->can('projects.set_alarm');
+    }
 }

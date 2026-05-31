@@ -159,6 +159,11 @@ class PurchaseOrderResource extends Resource
                     ->sortable()
                     ->limit(30),
 
+                Tables\Columns\TextColumn::make('project.status')
+                    ->label(__('resources.purchase_orders.columns.sales_stage'))
+                    ->badge()
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('supplier_name')
                     ->label(__('resources.purchase_orders.columns.supplier_name'))
                     ->searchable()

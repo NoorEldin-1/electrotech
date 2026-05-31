@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\AttachmentCategory;
 use App\Models\Attachment;
 use App\Models\Project;
 use App\Models\User;
@@ -19,7 +20,7 @@ class AttachmentFactory extends Factory
             'file_path' => 'attachments/' . fake()->uuid() . '.pdf',
             'file_type' => 'application/pdf',
             'file_size' => fake()->numberBetween(1024, 10485760),
-            'category' => fake()->randomElement(['Contract', 'Invoice', 'Blueprint', 'Other']),
+            'category' => fake()->randomElement(AttachmentCategory::cases())->value,
             'uploaded_by' => User::factory(),
         ];
     }

@@ -16,7 +16,12 @@ return [
 
         'sections' => [
             'project_information' => 'معلومات المشروع',
+            'technical_specifications' => 'المواصفات الفنية',
             'financial_timeline' => 'البيانات المالية والجدول الزمني',
+            'offers' => 'العروض',
+            'offers_description' => 'أضف عرضاً مالياً / فنياً جديداً. آخر عرض هو الذي يظهر في قائمة المناقصات.',
+            'attachments' => 'مرفقات المشروع',
+            'attachments_description' => 'ارفع الملفات تحت الفئة المناسبة — UPLOAD / VENDOR LIST / DROWING / SPECES / BOQ.',
             'description' => 'الوصف',
         ],
 
@@ -25,11 +30,36 @@ return [
             'name' => 'اسم المشروع / العملية',
             'client_name' => 'اسم العميل',
             'consultant_name' => 'اسم الاستشاري',
+            'engineer_name' => 'اسم المهندس',
+            'electric_current' => 'التيار الكهربي',
+            'model' => 'الطراز',
+            'section_type' => 'نوع الفصل',
+            'poles_count' => 'عدد الأقطاب',
+            'quantity' => 'الكمية',
+            'project_location' => 'مكان المشروع',
+            'arrival_method' => 'طريقة ورود العملية',
             'status' => 'الحالة',
+            'status_helper' => 'يتم تحديث الحالة عبر أزرار مسار المبيعات (Action / Cancel) — لا تُعدّل يدوياً.',
             'estimated_budget' => 'الميزانية التقديرية',
             'actual_cost' => 'التكلفة الفعلية',
             'start_date' => 'تاريخ البداية',
             'end_date' => 'تاريخ النهاية',
+            'alarm_at' => 'وقت التنبيه',
+            'alarm_note' => 'ملاحظة التنبيه',
+            'smb_status' => 'حالة SMB',
+            'smb_received_at' => 'تاريخ استلام SMB',
+            'acceptance_email_at' => 'تاريخ إيميل القبول',
+            'manager_approved_at' => 'تاريخ موافقة المدير',
+            'manager_approved_by' => 'موافقة المدير من',
+            'lost_reason' => 'سبب الخسارة',
+            'lost_reason_note' => 'ملاحظات الخسارة',
+            'winning_competitor' => 'الشركة المنافسة الفائزة',
+            'financial_amount' => 'المبلغ المالي',
+            'technical_amount' => 'المبلغ الفني',
+            'submitted_at' => 'تاريخ التقديم',
+            'offer_notes' => 'ملاحظات العرض',
+            'latest_offer' => 'آخر عرض',
+            'no_offers_yet' => 'لا توجد عروض مسجلة حتى الآن.',
             'description' => 'وصف المشروع / ملاحظات',
             'created_by' => 'أنشئ بواسطة',
         ],
@@ -43,6 +73,154 @@ return [
             'start_date' => 'تاريخ البداية',
             'created_by' => 'أنشئ بواسطة',
             'created_at' => 'تاريخ الإنشاء',
+        ],
+
+        'actions' => [
+            'move_to_tender' => 'إرسال إلى المناقصات',
+            'move_to_tender_modal_heading' => 'إرسال هذه العملية إلى المناقصات؟',
+            'move_to_tender_modal_description' => 'بعد الإرسال ستظهر العملية في "عمليات المناقصات" بأزرار الإجراء / الإلغاء / التنبيه.',
+            'change_status' => 'تغيير الحالة',
+            'change_status_modal_heading' => 'تغيير حالة المشروع',
+            'change_status_modal_description' => 'تجاوز إداري لمسار المبيعات الاعتيادي. يُسجَّل التغيير في سجل النشاط.',
+        ],
+
+        'notifications' => [
+            'moved_to_tender' => 'تم إرسال العملية إلى المناقصات.',
+            'move_to_tender_needs_offer_title' => 'لا يوجد عرض مسجل',
+            'move_to_tender_needs_offer_body' => 'ادخل تعديل المشروع وأضف عرضاً واحداً على الأقل في قسم العروض قبل الإرسال للمناقصات.',
+            'status_changed' => 'تم تحديث حالة المشروع.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | عمليات المناقصات (الشريحة 5)
+    |--------------------------------------------------------------------------
+    */
+    'tender_projects' => [
+        'label' => 'عملية مناقصة',
+        'plural_label' => 'عمليات المناقصات',
+        'navigation_label' => 'عمليات المناقصات',
+
+        'columns' => [
+            'name' => 'اسم العملية',
+            'financial_offer' => 'العرض المالي',
+            'technical_offer' => 'العرض الفني',
+            'alarm' => 'تنبيه',
+            'date' => 'التاريخ',
+        ],
+
+        'fields' => [
+            'smb_note' => 'ملاحظة SMB',
+            'lost_reason' => 'سبب الخسارة',
+            'lost_reason_note' => 'ملاحظات الخسارة',
+            'winning_competitor' => 'الشركة المنافسة الفائزة',
+            'alarm_at' => 'وقت التنبيه',
+            'alarm_note' => 'ملاحظة التنبيه',
+        ],
+
+        'actions' => [
+            'action' => 'إجراء — نقل إلى تحت اليد',
+            'action_modal_heading' => 'نقل هذه العملية إلى تحت اليد؟',
+            'action_modal_description' => 'العميل قبل وطلب تجهيز SMB. يمكنك إضافة ملاحظة اختيارية.',
+            'cancel' => 'إلغاء — نقل إلى المفقودة',
+            'cancel_modal_heading' => 'إلغاء العملية ونقلها إلى المفقودة؟',
+            'set_alarm' => 'ضبط تنبيه',
+            'clear_alarm' => 'مسح التنبيه',
+        ],
+
+        'notifications' => [
+            'moved_to_inhand' => 'تم نقل العملية إلى تحت اليد.',
+            'moved_to_lost' => 'تم نقل العملية إلى المفقودة.',
+            'alarm_set' => 'تم ضبط التنبيه.',
+            'alarm_cleared' => 'تم مسح التنبيه.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | العمليات تحت اليد (الشريحة 7)
+    |--------------------------------------------------------------------------
+    */
+    'in_hand_projects' => [
+        'label' => 'عملية تحت اليد',
+        'plural_label' => 'العمليات تحت اليد',
+        'navigation_label' => 'العمليات تحت اليد',
+
+        'columns' => [
+            'name' => 'اسم العملية',
+            'smb' => 'SMB',
+            'acceptance_email_at' => 'إيميل القبول',
+            'manager_approved' => 'موافقة المدير',
+            'alarm' => 'تنبيه',
+            'date' => 'التاريخ',
+        ],
+
+        'fields' => [
+            'acceptance_email_at' => 'تاريخ إيميل القبول',
+            'manager_approve_now' => 'موافقة المدير الآن',
+            'manager_approve_helper' => 'يظهر فقط للمستخدمين الذين لديهم صلاحية موافقة المدير.',
+            'lost_reason' => 'سبب الخسارة',
+            'lost_reason_note' => 'ملاحظات الخسارة',
+            'winning_competitor' => 'الشركة المنافسة الفائزة',
+            'alarm_at' => 'وقت التنبيه',
+            'alarm_note' => 'ملاحظة التنبيه',
+        ],
+
+        'actions' => [
+            'action' => 'إجراء — نقل إلى العمليات النشطة',
+            'action_modal_heading' => 'نقل هذه العملية إلى العمليات النشطة؟',
+            'action_modal_description' => 'يتطلب تاريخ إيميل القبول وموافقة المدير.',
+            'cancel' => 'إلغاء — نقل إلى المفقودة',
+            'cancel_modal_heading' => 'إلغاء العملية ونقلها إلى المفقودة؟',
+            'set_alarm' => 'ضبط تنبيه',
+            'clear_alarm' => 'مسح التنبيه',
+        ],
+
+        'notifications' => [
+            'moved_to_active' => 'تم نقل العملية إلى العمليات النشطة.',
+            'moved_to_lost' => 'تم نقل العملية إلى المفقودة.',
+            'alarm_set' => 'تم ضبط التنبيه.',
+            'alarm_cleared' => 'تم مسح التنبيه.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | العمليات النشطة
+    |--------------------------------------------------------------------------
+    */
+    'active_projects' => [
+        'label' => 'عملية نشطة',
+        'plural_label' => 'العمليات النشطة',
+        'navigation_label' => 'العمليات النشطة',
+
+        'columns' => [
+            'code' => 'الكود',
+            'name' => 'اسم العملية',
+            'client_name' => 'العميل',
+            'actual_cost' => 'التكلفة الفعلية',
+            'start_date' => 'تاريخ البداية',
+            'winning_offer' => 'العرض الفائز',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | العمليات المفقودة (الشريحة 4)
+    |--------------------------------------------------------------------------
+    */
+    'lost_projects' => [
+        'label' => 'عملية مفقودة',
+        'plural_label' => 'العمليات المفقودة',
+        'navigation_label' => 'قائمة المفقودة',
+
+        'columns' => [
+            'name' => 'اسم العملية',
+            'client_name' => 'العميل',
+            'lost_reason' => 'سبب الخسارة',
+            'winning_competitor' => 'الشركة المنافسة الفائزة',
+            'date' => 'التاريخ',
         ],
     ],
 
@@ -110,6 +288,7 @@ return [
 
         'columns' => [
             'project' => 'المشروع',
+            'sales_stage' => 'مرحلة المبيعات',
             'version' => 'الإصدار',
             'status' => 'الحالة',
             'items_count' => 'الأصناف',
@@ -160,6 +339,7 @@ return [
         'columns' => [
             'po_number' => 'رقم الأمر',
             'project' => 'المشروع',
+            'sales_stage' => 'مرحلة المبيعات',
             'supplier_name' => 'المورد',
             'status' => 'الحالة',
             'total_amount' => 'المبلغ الإجمالي',
@@ -342,6 +522,7 @@ return [
 
         'groups' => [
             'projects' => 'إدارة المشاريع',
+            'project_offers' => 'عروض المشاريع',
             'items' => 'الأصناف',
             'boms' => 'قوائم المواد',
             'inventory' => 'مراقبة المخزون',
@@ -362,6 +543,18 @@ return [
                 'edit' => 'تعديل المشاريع',
                 'delete' => 'حذف المشاريع',
                 'change_status' => 'تغيير حالة المشروع',
+                'move_to_tender' => 'نقل المشروع إلى المناقصات',
+                'move_to_inhand' => 'نقل المشروع إلى تحت اليد',
+                'move_to_active' => 'نقل المشروع إلى نشط',
+                'cancel_to_lost' => 'نقل المشروع إلى المفقودة',
+                'set_alarm' => 'ضبط تنبيه المشروع',
+                'manager_approve' => 'موافقة المدير على المشروع',
+            ],
+            'project_offers' => [
+                'view' => 'عرض عروض المشاريع',
+                'create' => 'إنشاء عرض مشروع',
+                'edit' => 'تعديل عروض المشاريع',
+                'delete' => 'حذف عروض المشاريع',
             ],
             'attachments' => [
                 'upload' => 'رفع المرفقات',
@@ -551,10 +744,37 @@ return [
             'draft' => 'مسودة',
             'pending_review' => 'بانتظار المراجعة',
             'approved' => 'معتمد',
-            'in_progress' => 'قيد التنفيذ',
+            'tender' => 'مناقصة',
+            'in_hand' => 'تحت اليد',
+            'in_progress' => 'عملية نشطة',
             'on_hold' => 'معلّق',
             'completed' => 'مكتمل',
             'cancelled' => 'ملغي',
+            'lost' => 'مفقودة',
+        ],
+
+        'arrival_method' => [
+            'direct_client' => 'عميل مباشر',
+            'consultant_referral' => 'إحالة من استشاري',
+            'tender_invitation' => 'دعوة مناقصة',
+            'website' => 'الموقع الإلكتروني',
+            'other' => 'أخرى',
+        ],
+
+        'attachment_category' => [
+            'upload' => 'UPLOAD',
+            'vendor_list' => 'VENDOR LIST',
+            'drowing' => 'DROWING',
+            'speces' => 'SPECES',
+            'boq' => 'BOQ',
+        ],
+
+        'lost_reason' => [
+            'high_price' => 'الأسعار غالية',
+            'not_approved_by_consultant' => 'غير معتمدين عند الاستشاري',
+            'electricity_company_approval' => 'اعتماد شركة الكهرباء',
+            'payment_facilities' => 'تسهيلات في الدفع',
+            'other' => 'أخرى',
         ],
 
         'work_order_status' => [

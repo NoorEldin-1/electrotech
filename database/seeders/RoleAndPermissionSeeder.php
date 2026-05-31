@@ -98,9 +98,21 @@ class RoleAndPermissionSeeder extends Seeder
             'projects.edit',
             'projects.delete',
             'projects.change_status',
+            'projects.move_to_tender',
+            'projects.move_to_inhand',
+            'projects.move_to_active',
+            'projects.cancel_to_lost',
+            'projects.set_alarm',
+            'projects.manager_approve',
             'attachments.upload',
             'attachments.download',
             'attachments.delete',
+
+            // Project Offers (Sales pipeline)
+            'project_offers.view',
+            'project_offers.create',
+            'project_offers.edit',
+            'project_offers.delete',
 
             // Technical Office / BOM
             'items.view',
@@ -164,13 +176,45 @@ class RoleAndPermissionSeeder extends Seeder
                 'projects.create',
                 'projects.edit',
                 'projects.change_status',
+                'projects.move_to_tender',
+                'projects.move_to_inhand',
+                'projects.move_to_active',
+                'projects.cancel_to_lost',
+                'projects.set_alarm',
+                'project_offers.view',
+                'project_offers.create',
+                'project_offers.edit',
                 'attachments.upload',
                 'attachments.download',
                 'dashboard.view',
             ],
 
+            // Sales_Manager: same as Sales plus the manager-approve gate that
+            // unlocks the In-Hand → Active transition.
+            'Sales_Manager' => [
+                'projects.view',
+                'projects.create',
+                'projects.edit',
+                'projects.change_status',
+                'projects.move_to_tender',
+                'projects.move_to_inhand',
+                'projects.move_to_active',
+                'projects.cancel_to_lost',
+                'projects.set_alarm',
+                'projects.manager_approve',
+                'project_offers.view',
+                'project_offers.create',
+                'project_offers.edit',
+                'project_offers.delete',
+                'attachments.upload',
+                'attachments.download',
+                'attachments.delete',
+                'dashboard.view',
+            ],
+
             'Technical_Office' => [
                 'projects.view',
+                'project_offers.view',
                 'items.view',
                 'items.create',
                 'items.edit',
@@ -187,6 +231,7 @@ class RoleAndPermissionSeeder extends Seeder
 
             'Procurement' => [
                 'projects.view',
+                'project_offers.view',
                 'items.view',
                 'boms.view',
                 'inventory.view',
@@ -202,6 +247,7 @@ class RoleAndPermissionSeeder extends Seeder
 
             'Factory_Manager' => [
                 'projects.view',
+                'project_offers.view',
                 'items.view',
                 'boms.view',
                 'inventory.view',

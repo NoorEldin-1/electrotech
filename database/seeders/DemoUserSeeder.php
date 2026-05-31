@@ -24,6 +24,11 @@ class DemoUserSeeder extends Seeder
                 'role' => 'Sales',
             ],
             [
+                'name' => 'Mona Saeed (Sales Manager)',
+                'email' => 'sales.manager@electrotech.com',
+                'role' => 'Sales_Manager',
+            ],
+            [
                 'name' => 'Eng. Mohamed Ali (Technical)',
                 'email' => 'technical@electrotech.com',
                 'role' => 'Technical_Office',

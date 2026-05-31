@@ -16,7 +16,12 @@ return [
 
         'sections' => [
             'project_information' => 'Project Information',
+            'technical_specifications' => 'Technical Specifications',
             'financial_timeline' => 'Financial & Timeline',
+            'offers' => 'Offers',
+            'offers_description' => 'Add a new financial / technical offer. The latest offer is what appears on the Tender list.',
+            'attachments' => 'Project Attachments',
+            'attachments_description' => 'Upload files under the appropriate category — UPLOAD, VENDOR LIST, DROWING, SPECES, BOQ.',
             'description' => 'Description',
         ],
 
@@ -25,11 +30,36 @@ return [
             'name' => 'Project / Operation Name',
             'client_name' => 'Client Name',
             'consultant_name' => 'Consultant Name',
+            'engineer_name' => 'Engineer Name',
+            'electric_current' => 'Electric Current',
+            'model' => 'Model',
+            'section_type' => 'Section Type',
+            'poles_count' => 'Number of Poles',
+            'quantity' => 'Quantity',
+            'project_location' => 'Project Location',
+            'arrival_method' => 'How the Operation Arrived',
             'status' => 'Status',
+            'status_helper' => 'Status is driven by the Sales pipeline actions (Action / Cancel) — it is not edited directly.',
             'estimated_budget' => 'Estimated Budget',
             'actual_cost' => 'Actual Cost',
             'start_date' => 'Start Date',
             'end_date' => 'End Date',
+            'alarm_at' => 'Alarm Time',
+            'alarm_note' => 'Alarm Note',
+            'smb_status' => 'SMB Status',
+            'smb_received_at' => 'SMB Received At',
+            'acceptance_email_at' => 'Acceptance Email Date',
+            'manager_approved_at' => 'Manager Approved At',
+            'manager_approved_by' => 'Manager Approved By',
+            'lost_reason' => 'Loss Reason',
+            'lost_reason_note' => 'Loss Note',
+            'winning_competitor' => 'Winning Competitor',
+            'financial_amount' => 'Financial Amount',
+            'technical_amount' => 'Technical Amount',
+            'submitted_at' => 'Submitted At',
+            'offer_notes' => 'Offer Notes',
+            'latest_offer' => 'Latest Offer',
+            'no_offers_yet' => 'No offers recorded yet.',
             'description' => 'Project Description / Notes',
             'created_by' => 'Created By',
         ],
@@ -43,6 +73,154 @@ return [
             'start_date' => 'Start Date',
             'created_by' => 'Created By',
             'created_at' => 'Created At',
+        ],
+
+        'actions' => [
+            'move_to_tender' => 'Send to Tender',
+            'move_to_tender_modal_heading' => 'Send this operation to Tender Projects?',
+            'move_to_tender_modal_description' => 'Once sent, the operation appears under Tender Projects with Action / Cancel / Alarm buttons.',
+            'change_status' => 'Change Status',
+            'change_status_modal_heading' => 'Change project status',
+            'change_status_modal_description' => 'Admin override — bypasses the standard sales pipeline transitions. The change is recorded in the activity log.',
+        ],
+
+        'notifications' => [
+            'moved_to_tender' => 'Operation sent to Tender Projects.',
+            'move_to_tender_needs_offer_title' => 'No offer recorded',
+            'move_to_tender_needs_offer_body' => 'Edit the project and add at least one offer in the Offers section before sending to Tender.',
+            'status_changed' => 'Project status updated.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tender Projects (Sales pipeline — Slide 5)
+    |--------------------------------------------------------------------------
+    */
+    'tender_projects' => [
+        'label' => 'Tender Project',
+        'plural_label' => 'Tender Projects',
+        'navigation_label' => 'Tender Projects',
+
+        'columns' => [
+            'name' => 'Operation Name',
+            'financial_offer' => 'Financial Offer',
+            'technical_offer' => 'Technical Offer',
+            'alarm' => 'Alarm',
+            'date' => 'Date',
+        ],
+
+        'fields' => [
+            'smb_note' => 'SMB Note',
+            'lost_reason' => 'Loss Reason',
+            'lost_reason_note' => 'Loss Note',
+            'winning_competitor' => 'Winning Competitor',
+            'alarm_at' => 'Alarm Time',
+            'alarm_note' => 'Alarm Note',
+        ],
+
+        'actions' => [
+            'action' => 'Action — Move to In-Hand',
+            'action_modal_heading' => 'Move this operation to In-Hand?',
+            'action_modal_description' => 'The client has accepted; SMB preparation begins. You can leave an optional SMB note.',
+            'cancel' => 'Cancel — Move to Lost',
+            'cancel_modal_heading' => 'Cancel and move to Lost?',
+            'set_alarm' => 'Set Alarm',
+            'clear_alarm' => 'Clear Alarm',
+        ],
+
+        'notifications' => [
+            'moved_to_inhand' => 'Operation moved to In-Hand.',
+            'moved_to_lost' => 'Operation moved to Lost.',
+            'alarm_set' => 'Alarm set.',
+            'alarm_cleared' => 'Alarm cleared.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | In-Hand Projects (Sales pipeline — Slide 7)
+    |--------------------------------------------------------------------------
+    */
+    'in_hand_projects' => [
+        'label' => 'In-Hand Project',
+        'plural_label' => 'In-Hand Projects',
+        'navigation_label' => 'In-Hand Projects',
+
+        'columns' => [
+            'name' => 'Operation Name',
+            'smb' => 'SMB',
+            'acceptance_email_at' => 'Acceptance Email',
+            'manager_approved' => 'Manager Approved',
+            'alarm' => 'Alarm',
+            'date' => 'Date',
+        ],
+
+        'fields' => [
+            'acceptance_email_at' => 'Acceptance Email Date',
+            'manager_approve_now' => 'Approve as Manager Now',
+            'manager_approve_helper' => 'Visible only to users with manager-approve permission.',
+            'lost_reason' => 'Loss Reason',
+            'lost_reason_note' => 'Loss Note',
+            'winning_competitor' => 'Winning Competitor',
+            'alarm_at' => 'Alarm Time',
+            'alarm_note' => 'Alarm Note',
+        ],
+
+        'actions' => [
+            'action' => 'Action — Move to Active',
+            'action_modal_heading' => 'Move this operation to Active Operations?',
+            'action_modal_description' => 'Requires an acceptance email date and manager approval.',
+            'cancel' => 'Cancel — Move to Lost',
+            'cancel_modal_heading' => 'Cancel and move to Lost?',
+            'set_alarm' => 'Set Alarm',
+            'clear_alarm' => 'Clear Alarm',
+        ],
+
+        'notifications' => [
+            'moved_to_active' => 'Operation moved to Active Operations.',
+            'moved_to_lost' => 'Operation moved to Lost.',
+            'alarm_set' => 'Alarm set.',
+            'alarm_cleared' => 'Alarm cleared.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Active Projects (Sales pipeline — post-approval)
+    |--------------------------------------------------------------------------
+    */
+    'active_projects' => [
+        'label' => 'Active Operation',
+        'plural_label' => 'Active Operations',
+        'navigation_label' => 'Active Operations',
+
+        'columns' => [
+            'code' => 'Code',
+            'name' => 'Operation Name',
+            'client_name' => 'Client',
+            'actual_cost' => 'Actual Cost',
+            'start_date' => 'Start Date',
+            'winning_offer' => 'Winning Offer',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lost Projects (Sales pipeline — Slide 4)
+    |--------------------------------------------------------------------------
+    */
+    'lost_projects' => [
+        'label' => 'Lost Project',
+        'plural_label' => 'Lost Projects',
+        'navigation_label' => 'Lost List',
+
+        'columns' => [
+            'name' => 'Operation Name',
+            'client_name' => 'Client',
+            'lost_reason' => 'Loss Reason',
+            'winning_competitor' => 'Winning Competitor',
+            'date' => 'Date',
         ],
     ],
 
@@ -110,6 +288,7 @@ return [
 
         'columns' => [
             'project' => 'Project',
+            'sales_stage' => 'Sales Stage',
             'version' => 'Version',
             'status' => 'Status',
             'items_count' => 'Items',
@@ -160,6 +339,7 @@ return [
         'columns' => [
             'po_number' => 'PO #',
             'project' => 'Project',
+            'sales_stage' => 'Sales Stage',
             'supplier_name' => 'Supplier',
             'status' => 'Status',
             'total_amount' => 'Total Amount',
@@ -342,6 +522,7 @@ return [
 
         'groups' => [
             'projects' => 'Projects Management',
+            'project_offers' => 'Project Offers',
             'items' => 'Items',
             'boms' => 'Bills of Materials',
             'inventory' => 'Inventory Control',
@@ -362,6 +543,18 @@ return [
                 'edit' => 'Edit Projects',
                 'delete' => 'Delete Projects',
                 'change_status' => 'Change Project Status',
+                'move_to_tender' => 'Move Project to Tender',
+                'move_to_inhand' => 'Move Project to In-Hand',
+                'move_to_active' => 'Move Project to Active',
+                'cancel_to_lost' => 'Cancel Project to Lost',
+                'set_alarm' => 'Set Project Alarm',
+                'manager_approve' => 'Manager Approve Project',
+            ],
+            'project_offers' => [
+                'view' => 'View Project Offers',
+                'create' => 'Create Project Offer',
+                'edit' => 'Edit Project Offers',
+                'delete' => 'Delete Project Offers',
             ],
             'attachments' => [
                 'upload' => 'Upload Attachments',
@@ -551,10 +744,37 @@ return [
             'draft' => 'Draft',
             'pending_review' => 'Pending Review',
             'approved' => 'Approved',
-            'in_progress' => 'In Progress',
+            'tender' => 'Tender',
+            'in_hand' => 'In-Hand',
+            'in_progress' => 'Active Operation',
             'on_hold' => 'On Hold',
             'completed' => 'Completed',
             'cancelled' => 'Cancelled',
+            'lost' => 'Lost',
+        ],
+
+        'arrival_method' => [
+            'direct_client' => 'Direct Client',
+            'consultant_referral' => 'Consultant Referral',
+            'tender_invitation' => 'Tender Invitation',
+            'website' => 'Website',
+            'other' => 'Other',
+        ],
+
+        'attachment_category' => [
+            'upload' => 'UPLOAD',
+            'vendor_list' => 'VENDOR LIST',
+            'drowing' => 'DROWING',
+            'speces' => 'SPECES',
+            'boq' => 'BOQ',
+        ],
+
+        'lost_reason' => [
+            'high_price' => 'Prices too high',
+            'not_approved_by_consultant' => 'Not approved by consultant',
+            'electricity_company_approval' => 'Electricity company approval required',
+            'payment_facilities' => 'Payment facilities',
+            'other' => 'Other',
         ],
 
         'work_order_status' => [

@@ -14,7 +14,7 @@ class ProjectObserver
      */
     public function saved(Project $project): void
     {
-        Cache::forget('dashboard:active_projects');
+        $this->invalidateDashboardCounts();
     }
 
     /**
@@ -22,6 +22,14 @@ class ProjectObserver
      */
     public function deleted(Project $project): void
     {
+        $this->invalidateDashboardCounts();
+    }
+
+    private function invalidateDashboardCounts(): void
+    {
         Cache::forget('dashboard:active_projects');
+        Cache::forget('dashboard:tender_count');
+        Cache::forget('dashboard:inhand_count');
+        Cache::forget('dashboard:lost_count');
     }
 }

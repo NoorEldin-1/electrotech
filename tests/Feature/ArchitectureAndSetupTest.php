@@ -9,6 +9,7 @@ use App\Models\Inventory;
 use App\Models\InventoryTransaction;
 use App\Models\Item;
 use App\Models\Project;
+use App\Models\ProjectOffer;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\User;
@@ -54,5 +55,8 @@ class ArchitectureAndSetupTest extends TestCase
 
         $attachment = Attachment::factory()->create();
         $this->assertDatabaseHas('attachments', ['id' => $attachment->id]);
+
+        $offer = ProjectOffer::factory()->create();
+        $this->assertDatabaseHas('project_offers', ['id' => $offer->id]);
     }
 }
