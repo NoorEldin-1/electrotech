@@ -9,24 +9,85 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
+/**
+ * Safe to run on every deploy.
+ *
+ * Behavior:
+ *  - Adds new permissions defined in code to the DB.
+ *  - Removes orphaned permissions (in DB but not in code).
+ *  - Creates initial roles with default permissions ONLY if they don't exist.
+ *  - Does NOT touch role-permission assignments that the Admin manages via UI,
+ *    except the Admin role which is always force-synced to all permissions.
+ */
 class RoleAndPermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $permissions = $this->getPermissions();
+        $this->syncPermissionCatalog();
+        $this->ensureInitialRolesExist();
+        $this->grantAdminAllPermissions();
 
-        foreach ($permissions as $permission) {
-            Permission::findOrCreate($permission, 'web');
-        }
-
-        $this->createRolesWithPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 
     /**
-     * Returns a flat list of all permissions grouped by module.
+     * Sync the master permission list with the DB.
+     * Adds new permissions and removes orphaned ones.
+     * Role-permission assignments for removed permissions are cascade-deleted by Spatie.
+     */
+    private function syncPermissionCatalog(): void
+    {
+        $defined = $this->getPermissions();
+
+        foreach ($defined as $name) {
+            Permission::findOrCreate($name, 'web');
+        }
+
+        Permission::where('guard_name', 'web')
+            ->whereNotIn('name', $defined)
+            ->delete();
+    }
+
+    /**
+     * Create the initial set of roles if missing.
+     * If a role already exists, its permissions are left untouched (Admin manages via UI).
+     */
+    private function ensureInitialRolesExist(): void
+    {
+        foreach ($this->getDefaultRoleDefinitions() as $roleName => $defaultPermissions) {
+            $existing = Role::where('name', $roleName)
+                ->where('guard_name', 'web')
+                ->first();
+
+            if ($existing) {
+                continue;
+            }
+
+            $role = Role::create(['name' => $roleName, 'guard_name' => 'web']);
+            $role->syncPermissions($defaultPermissions);
+        }
+    }
+
+    /**
+     * Admin is the super-admin role: always has every permission in the system.
+     */
+    private function grantAdminAllPermissions(): void
+    {
+        $admin = Role::where('name', 'Admin')
+            ->where('guard_name', 'web')
+            ->first();
+
+        if ($admin) {
+            $admin->syncPermissions(Permission::where('guard_name', 'web')->get());
+        }
+    }
+
+    /**
+     * The single source of truth for permissions.
+     * Adding a new entry here will surface it in the UI on next deploy.
+     * Removing an entry here will delete it from the DB and revoke it from all roles/users.
      */
     private function getPermissions(): array
     {
@@ -89,91 +150,85 @@ class RoleAndPermissionSeeder extends Seeder
         ];
     }
 
-    private function createRolesWithPermissions(): void
+    /**
+     * Default permissions applied only when a role is first created.
+     * Subsequent edits should be done via the admin UI.
+     */
+    private function getDefaultRoleDefinitions(): array
     {
-        // Admin: Full system access (super-admin pattern)
-        $admin = Role::findOrCreate('Admin', 'web');
-        $admin->givePermissionTo(Permission::all());
+        return [
+            'Admin' => [], // handled by grantAdminAllPermissions()
 
-        // Sales: Project initiation and CRM
-        $sales = Role::findOrCreate('Sales', 'web');
-        $sales->givePermissionTo([
-            'projects.view',
-            'projects.create',
-            'projects.edit',
-            'projects.change_status',
-            'attachments.upload',
-            'attachments.download',
-            'dashboard.view',
-        ]);
+            'Sales' => [
+                'projects.view',
+                'projects.create',
+                'projects.edit',
+                'projects.change_status',
+                'attachments.upload',
+                'attachments.download',
+                'dashboard.view',
+            ],
 
-        // Technical Office: BOM & Engineering
-        $technicalOffice = Role::findOrCreate('Technical_Office', 'web');
-        $technicalOffice->givePermissionTo([
-            'projects.view',
-            'items.view',
-            'items.create',
-            'items.edit',
-            'boms.view',
-            'boms.create',
-            'boms.edit',
-            'boms.approve',
-            'work_orders.view',
-            'work_orders.create',
-            'inventory.view',
-            'attachments.download',
-            'dashboard.view',
-        ]);
+            'Technical_Office' => [
+                'projects.view',
+                'items.view',
+                'items.create',
+                'items.edit',
+                'boms.view',
+                'boms.create',
+                'boms.edit',
+                'boms.approve',
+                'work_orders.view',
+                'work_orders.create',
+                'inventory.view',
+                'attachments.download',
+                'dashboard.view',
+            ],
 
-        // Procurement: Purchase Order management
-        $procurement = Role::findOrCreate('Procurement', 'web');
-        $procurement->givePermissionTo([
-            'projects.view',
-            'items.view',
-            'boms.view',
-            'inventory.view',
-            'inventory.view_pricing',
-            'purchase_orders.view',
-            'purchase_orders.create',
-            'purchase_orders.edit',
-            'purchase_orders.approve',
-            'purchase_orders.receive',
-            'transactions.view',
-            'dashboard.view',
-        ]);
+            'Procurement' => [
+                'projects.view',
+                'items.view',
+                'boms.view',
+                'inventory.view',
+                'inventory.view_pricing',
+                'purchase_orders.view',
+                'purchase_orders.create',
+                'purchase_orders.edit',
+                'purchase_orders.approve',
+                'purchase_orders.receive',
+                'transactions.view',
+                'dashboard.view',
+            ],
 
-        // Factory Manager: Manufacturing & QA oversight
-        $factoryManager = Role::findOrCreate('Factory_Manager', 'web');
-        $factoryManager->givePermissionTo([
-            'projects.view',
-            'items.view',
-            'boms.view',
-            'inventory.view',
-            'work_orders.view',
-            'work_orders.edit',
-            'work_orders.start',
-            'work_orders.submit_qa',
-            'work_orders.approve_qa',
-            'work_orders.complete',
-            'transactions.view',
-            'dashboard.view',
-        ]);
+            'Factory_Manager' => [
+                'projects.view',
+                'items.view',
+                'boms.view',
+                'inventory.view',
+                'work_orders.view',
+                'work_orders.edit',
+                'work_orders.start',
+                'work_orders.submit_qa',
+                'work_orders.approve_qa',
+                'work_orders.complete',
+                'transactions.view',
+                'dashboard.view',
+            ],
 
-        // Warehouse Manager: Inventory & stock control
-        // NOTE: inventory.view_pricing is intentionally excluded
-        // per PDF spec: "pricing hidden from warehouse keepers"
-        $warehouseManager = Role::findOrCreate('Warehouse_Manager', 'web');
-        $warehouseManager->givePermissionTo([
-            'projects.view',
-            'items.view',
-            'inventory.view',
-            'inventory.manage',
-            'inventory.hold',
-            'inventory.release',
-            'transactions.view',
-            'purchase_orders.view',
-            'purchase_orders.receive',
-            'dashboard.view',
-        ]);
+            // NOTE: inventory.view_pricing is intentionally excluded
+            // per PDF spec: "pricing hidden from warehouse keepers"
+            'Warehouse_Manager' => [
+                'projects.view',
+                'items.view',
+                'inventory.view',
+                'inventory.manage',
+                'inventory.hold',
+                'inventory.release',
+                'transactions.view',
+                'purchase_orders.view',
+                'purchase_orders.receive',
+                'dashboard.view',
+            ],
+        ];
     }
 }

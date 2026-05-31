@@ -39,6 +39,9 @@ fi
 log "Running database migrations"
 php artisan migrate --force
 
+log "Syncing roles and permissions catalog"
+php artisan db:seed --class=Database\\Seeders\\RoleAndPermissionSeeder --force
+
 log "Clearing old caches"
 php artisan optimize:clear
 php artisan filament:clear-cached-components || true
