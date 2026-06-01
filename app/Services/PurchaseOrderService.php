@@ -28,7 +28,7 @@ class PurchaseOrderService
     public function receiveItems(PurchaseOrder $purchaseOrder, array $receivedQuantities): void
     {
         if ($purchaseOrder->status === PurchaseOrderStatus::Cancelled) {
-            throw new \RuntimeException('Cannot receive items for a cancelled PO.');
+            throw new \RuntimeException(__('errors.purchase_order.cancelled'));
         }
 
         DB::transaction(function () use ($purchaseOrder, $receivedQuantities) {
@@ -45,11 +45,12 @@ class PurchaseOrderService
                 $newReceivedTotal = (float) $poItem->received_quantity + $quantity;
 
                 if ($newReceivedTotal > (float) $poItem->quantity) {
-                    throw new \RuntimeException(
-                        "Cannot receive {$quantity} for item '{$poItem->item->name}'. "
-                        . "Would exceed ordered quantity of {$poItem->quantity}. "
-                        . "Already received: {$poItem->received_quantity}."
-                    );
+                    throw new \RuntimeException(__('errors.purchase_order.exceeds_ordered', [
+                        'quantity' => $quantity,
+                        'item' => $poItem->item->name,
+                        'ordered' => $poItem->quantity,
+                        'received' => $poItem->received_quantity,
+                    ]));
                 }
 
                 $poItem->received_quantity = $newReceivedTotal;

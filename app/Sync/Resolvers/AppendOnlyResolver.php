@@ -135,6 +135,12 @@ final class AppendOnlyResolver implements Resolver
             }
         }
 
+        // Optional warehouse the offline client targeted; defaults inside the
+        // service to the item's home warehouse when null.
+        $warehouse = isset($fields['warehouse_type'])
+            ? \App\Enums\WarehouseType::tryFrom((string) $fields['warehouse_type'])
+            : null;
+
         // Authenticate the user for the duration of this call so
         // InventoryService::createTransaction picks up performed_by from
         // Auth::id().
@@ -143,13 +149,13 @@ final class AppendOnlyResolver implements Resolver
         try {
             $transaction = match ($type) {
                 \App\Enums\TransactionType::Out->value, 'out' =>
-                    $inventory->deductStock($item, $qty, $reference, $fields['notes'] ?? null),
+                    $inventory->deductStock($item, $qty, $reference, $fields['notes'] ?? null, $warehouse),
                 \App\Enums\TransactionType::In->value, 'in' =>
-                    $inventory->addStock($item, $qty, $reference, $fields['notes'] ?? null),
+                    $inventory->addStock($item, $qty, $reference, $fields['notes'] ?? null, $warehouse),
                 \App\Enums\TransactionType::Hold->value, 'hold' =>
-                    $inventory->holdStock($item, $qty, $reference, $fields['notes'] ?? null),
+                    $inventory->holdStock($item, $qty, $reference, $fields['notes'] ?? null, $warehouse),
                 \App\Enums\TransactionType::Release->value, 'release' =>
-                    $inventory->releaseStock($item, $qty, $reference, $fields['notes'] ?? null),
+                    $inventory->releaseStock($item, $qty, $reference, $fields['notes'] ?? null, $warehouse),
                 default =>
                     throw new \RuntimeException("Unknown transaction type: {$type}"),
             };

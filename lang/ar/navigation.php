@@ -9,6 +9,7 @@ return [
         'warehouse' => 'المستودع',
         'procurement' => 'المشتريات',
         'manufacturing' => 'التصنيع',
+        'finance' => 'الإدارة المالية',
         'system' => 'النظام',
     ],
 

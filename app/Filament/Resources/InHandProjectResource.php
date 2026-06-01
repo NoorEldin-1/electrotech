@@ -23,7 +23,7 @@ class InHandProjectResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-hand-raised';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 12;
 
     protected static ?string $recordTitleAttribute = 'name';
 

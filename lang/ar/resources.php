@@ -374,10 +374,278 @@ return [
             'item' => 'الصنف',
             'sku' => 'الرقم المرجعي',
             'type' => 'النوع',
+            'warehouse' => 'المخزن',
             'quantity' => 'الكمية',
+            'unit_cost' => 'تكلفة الوحدة',
             'source' => 'المصدر',
             'notes' => 'ملاحظات',
             'performed_by' => 'بواسطة',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | الموردون - Supplier Resource
+    |--------------------------------------------------------------------------
+    */
+    'suppliers' => [
+        'label' => 'مورد',
+        'plural_label' => 'الموردون',
+        'navigation_label' => 'الموردون',
+
+        'sections' => [
+            'details' => 'بيانات المورد',
+        ],
+
+        'fields' => [
+            'name' => 'اسم المورد',
+            'contact_person' => 'مسؤول التواصل',
+            'phone' => 'الهاتف',
+            'email' => 'البريد الإلكتروني',
+            'tax_number' => 'الرقم الضريبي',
+            'address' => 'العنوان',
+            'notes' => 'ملاحظات',
+        ],
+
+        'columns' => [
+            'name' => 'الاسم',
+            'contact_person' => 'جهة التواصل',
+            'phone' => 'الهاتف',
+            'email' => 'البريد الإلكتروني',
+            'balance' => 'الرصيد',
+            'created_at' => 'تاريخ الإنشاء',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | العملاء - Customer Resource
+    |--------------------------------------------------------------------------
+    */
+    'customers' => [
+        'label' => 'عميل',
+        'plural_label' => 'العملاء',
+        'navigation_label' => 'العملاء',
+
+        'sections' => [
+            'details' => 'بيانات العميل',
+        ],
+
+        'fields' => [
+            'name' => 'اسم العميل',
+            'contact_person' => 'مسؤول التواصل',
+            'phone' => 'الهاتف',
+            'email' => 'البريد الإلكتروني',
+            'tax_number' => 'الرقم الضريبي',
+            'address' => 'العنوان',
+            'notes' => 'ملاحظات',
+        ],
+
+        'columns' => [
+            'name' => 'الاسم',
+            'contact_person' => 'جهة التواصل',
+            'phone' => 'الهاتف',
+            'email' => 'البريد الإلكتروني',
+            'balance' => 'الرصيد',
+            'created_at' => 'تاريخ الإنشاء',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | إذن الإضافة - Addition Voucher Resource
+    |--------------------------------------------------------------------------
+    */
+    'addition_vouchers' => [
+        'label' => 'إذن إضافة',
+        'plural_label' => 'أذون الإضافة',
+        'navigation_label' => 'أذون الإضافة',
+
+        'sections' => [
+            'details' => 'بيانات الإذن',
+            'lines' => 'الأصناف الواردة',
+        ],
+
+        'fields' => [
+            'voucher_number' => 'رقم الإذن',
+            'supplier' => 'المورد',
+            'purchase_order' => 'طلب الشراء',
+            'voucher_date' => 'التاريخ',
+            'invoice_number' => 'رقم الفاتورة',
+            'invoice_value' => 'قيمة الفاتورة',
+            'notes' => 'ملاحظات',
+            'lines' => 'الأصناف',
+            'item' => 'الصنف',
+            'quantity' => 'الكمية',
+            'unit_cost' => 'تكلفة الوحدة',
+        ],
+
+        'columns' => [
+            'voucher_number' => 'الرقم',
+            'supplier' => 'المورد',
+            'voucher_date' => 'التاريخ',
+            'invoice_number' => 'الفاتورة',
+            'invoice_value' => 'قيمة الفاتورة',
+            'status' => 'الحالة',
+        ],
+
+        'actions' => [
+            'post' => 'ترحيل',
+            'post_confirm' => 'الترحيل يضيف الأصناف للمخزون ويُرحّل القيمة لحساب المورد. لا يمكن التراجع.',
+        ],
+
+        'notifications' => [
+            'posted' => 'تم ترحيل إذن الإضافة — تم تحديث المخزون وحساب المورد.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | إذن الصرف - Issue Voucher Resource
+    |--------------------------------------------------------------------------
+    */
+    'issue_vouchers' => [
+        'label' => 'إذن صرف',
+        'plural_label' => 'أذون الصرف',
+        'navigation_label' => 'أذون الصرف',
+
+        'sections' => [
+            'details' => 'بيانات الإذن',
+            'lines' => 'الأصناف المنصرفة',
+        ],
+
+        'fields' => [
+            'voucher_number' => 'رقم الإذن',
+            'work_order' => 'أمر التشغيل',
+            'voucher_date' => 'التاريخ',
+            'notes' => 'ملاحظات',
+            'lines' => 'الأصناف',
+            'item' => 'الصنف',
+            'quantity' => 'الكمية',
+            'unit_cost' => 'تكلفة الوحدة',
+        ],
+
+        'columns' => [
+            'voucher_number' => 'الرقم',
+            'work_order' => 'أمر التشغيل',
+            'voucher_date' => 'التاريخ',
+            'total_value' => 'إجمالي القيمة',
+            'status' => 'الحالة',
+        ],
+
+        'actions' => [
+            'post' => 'ترحيل',
+            'post_confirm' => 'الترحيل ينقل الخامات من المخزن إلى تحت التشغيل ويُحمّل قيمتها على العملية. لا يمكن التراجع.',
+        ],
+
+        'notifications' => [
+            'posted' => 'تم ترحيل إذن الصرف — تم نقل الخامات إلى تحت التشغيل.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | كشف الحساب - Account Entry Resource
+    |--------------------------------------------------------------------------
+    */
+    'account_entries' => [
+        'label' => 'قيد حساب',
+        'plural_label' => 'دفتر الحسابات',
+        'navigation_label' => 'دفتر الحسابات',
+        'statement' => 'كشف الحساب',
+
+        'columns' => [
+            'date' => 'التاريخ',
+            'party' => 'الحساب',
+            'reference' => 'المرجع',
+            'operation' => 'العملية',
+            'direction' => 'النوع',
+            'amount' => 'القيمة',
+            'running_balance' => 'الرصيد',
+        ],
+
+        'filters' => [
+            'from' => 'من',
+            'until' => 'إلى',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | إذن التسليم - Delivery Voucher Resource
+    |--------------------------------------------------------------------------
+    */
+    'delivery_vouchers' => [
+        'label' => 'إذن تسليم',
+        'plural_label' => 'أذون التسليم',
+        'navigation_label' => 'أذون التسليم',
+
+        'sections' => [
+            'details' => 'بيانات الإذن',
+            'specs' => 'المواصفات الفنية',
+            'lines' => 'الأصناف المُسلَّمة',
+        ],
+
+        'fields' => [
+            'voucher_number' => 'رقم الإذن',
+            'customer' => 'العميل',
+            'project' => 'العملية / المشروع',
+            'supply_order_number' => 'رقم طلب التوريد',
+            'voucher_date' => 'التاريخ',
+            'plates_count' => 'عدد الأطباق',
+            'protection_degree' => 'درجة الحماية',
+            'insulation_voltage' => 'جهد العزل',
+            'notes' => 'ملاحظات',
+            'lines' => 'الأصناف',
+            'item' => 'الصنف',
+            'quantity' => 'الكمية',
+            'unit_cost' => 'تكلفة الوحدة',
+        ],
+
+        'columns' => [
+            'voucher_number' => 'الرقم',
+            'customer' => 'العميل',
+            'voucher_date' => 'التاريخ',
+            'technical' => 'فني',
+            'financial' => 'مالي',
+            'total_value' => 'إجمالي القيمة',
+            'status' => 'الحالة',
+        ],
+
+        'actions' => [
+            'approve_technical' => 'اعتماد فني',
+            'approve_financial' => 'اعتماد مالي',
+            'cancel' => 'إلغاء',
+        ],
+
+        'notifications' => [
+            'approved' => 'تم تسجيل التوقيع. يُفعَّل الإذن عند اكتمال الاعتمادين.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | الإنتاج والفاقد - Production Entry Resource
+    |--------------------------------------------------------------------------
+    */
+    'production_entries' => [
+        'label' => 'إجراء إنتاج',
+        'plural_label' => 'الإنتاج والفاقد',
+        'navigation_label' => 'الإنتاج والفاقد',
+
+        'columns' => [
+            'work_order' => 'أمر التشغيل',
+            'output_item' => 'المنتج',
+            'entry_date' => 'التاريخ',
+            'planned_quantity' => 'المخطط',
+            'produced_quantity' => 'المنتَج',
+            'scrap_quantity' => 'الفاقد',
+            'scrap_percentage' => 'نسبة الفاقد',
+        ],
+
+        'filters' => [
+            'from' => 'من',
+            'until' => 'إلى',
         ],
     ],
 
@@ -404,6 +672,8 @@ return [
             'title' => 'العنوان',
             'project' => 'المشروع',
             'linked_bom' => 'قائمة المواد المرتبطة',
+            'output_item' => 'المنتج التام',
+            'output_item_helper' => 'الصنف الذي يُنتَج في مخزن التام عند إتمام أمر التشغيل.',
             'status' => 'الحالة',
             'priority' => 'الأولوية',
             'assigned_to' => 'مسند إلى',
@@ -431,6 +701,7 @@ return [
 
         'actions' => [
             'start' => 'بدء',
+            'issue_materials' => 'صرف الخامات',
             'submit_qa' => 'إرسال لضمان الجودة',
             'approve_qa' => 'اعتماد الجودة',
             'complete' => 'إتمام',
@@ -438,6 +709,7 @@ return [
 
         'notifications' => [
             'started' => 'تم بدء أمر التشغيل',
+            'issue_voucher_created' => 'تم إنشاء إذن صرف (مسودة)',
             'submitted_qa' => 'تم الإرسال لضمان الجودة',
             'qa_approved' => 'تم اعتماد الجودة',
             'completed' => 'تم إتمام أمر التشغيل',
@@ -527,7 +799,16 @@ return [
             'boms' => 'قوائم المواد',
             'inventory' => 'مراقبة المخزون',
             'transactions' => 'حركات المخزون',
+            'addition_vouchers' => 'أذون الإضافة',
+            'issue_vouchers' => 'أذون الصرف',
+            'delivery_vouchers' => 'أذون التسليم',
+            'production_entries' => 'الإنتاج والفاقد',
+            'scrap' => 'الفاقد',
             'purchase_orders' => 'أوامر الشراء',
+            'suppliers' => 'الموردون',
+            'customers' => 'العملاء',
+            'supplier_statements' => 'كشوف حساب الموردين',
+            'customer_statements' => 'كشوف حساب العملاء',
             'work_orders' => 'أوامر التشغيل',
             'users' => 'إدارة المستخدمين',
             'roles' => 'إدارة الأدوار',
@@ -579,10 +860,34 @@ return [
                 'manage' => 'إدارة المخزون',
                 'hold' => 'حجز المخزون',
                 'release' => 'الإفراج عن المخزون',
+                'transfer' => 'التحويل بين المخازن',
                 'view_pricing' => 'عرض الأسعار',
             ],
             'transactions' => [
                 'view' => 'عرض حركات المخزون',
+            ],
+            'addition_vouchers' => [
+                'view' => 'عرض أذون الإضافة',
+                'create' => 'إنشاء إذن إضافة',
+                'post' => 'ترحيل إذن الإضافة',
+            ],
+            'issue_vouchers' => [
+                'view' => 'عرض أذون الصرف',
+                'create' => 'إنشاء إذن صرف',
+                'post' => 'ترحيل إذن الصرف',
+            ],
+            'delivery_vouchers' => [
+                'view' => 'عرض أذون التسليم',
+                'create' => 'إنشاء إذن تسليم',
+                'approve_technical' => 'الاعتماد الفني',
+                'approve_financial' => 'الاعتماد المالي',
+                'cancel' => 'إلغاء إذن التسليم',
+            ],
+            'production_entries' => [
+                'view' => 'عرض الإنتاج والفاقد',
+            ],
+            'scrap' => [
+                'view' => 'عرض الفاقد',
             ],
             'purchase_orders' => [
                 'view' => 'عرض أوامر الشراء',
@@ -591,6 +896,24 @@ return [
                 'approve' => 'اعتماد أوامر الشراء',
                 'receive' => 'استلام أوامر الشراء',
                 'delete' => 'حذف أوامر الشراء',
+            ],
+            'suppliers' => [
+                'view' => 'عرض الموردين',
+                'create' => 'إنشاء مورد',
+                'edit' => 'تعديل الموردين',
+                'delete' => 'حذف الموردين',
+            ],
+            'customers' => [
+                'view' => 'عرض العملاء',
+                'create' => 'إنشاء عميل',
+                'edit' => 'تعديل العملاء',
+                'delete' => 'حذف العملاء',
+            ],
+            'supplier_statements' => [
+                'view' => 'عرض كشوف حساب الموردين',
+            ],
+            'customer_statements' => [
+                'view' => 'عرض كشوف حساب العملاء',
             ],
             'work_orders' => [
                 'view' => 'عرض أوامر التشغيل',
@@ -807,6 +1130,29 @@ return [
             'release' => 'مُفرَج',
         ],
 
+        'warehouse_type' => [
+            'raw_materials' => 'مخزن الخامات',
+            'work_in_progress' => 'مخزن تحت التشغيل',
+            'finished_goods' => 'مخزن المنتجات التامة',
+        ],
+
+        'voucher_status' => [
+            'draft' => 'مسودة',
+            'posted' => 'مُرحَّل',
+        ],
+
+        'account_direction' => [
+            'debit' => 'مدين',
+            'credit' => 'دائن',
+        ],
+
+        'delivery_voucher_status' => [
+            'draft' => 'مسودة',
+            'pending_approval' => 'بانتظار الاعتماد',
+            'active' => 'نشط',
+            'cancelled' => 'ملغي',
+        ],
+
         'unit_of_measure' => [
             'pcs' => 'قطعة',
             'kg' => 'كيلوغرام',
@@ -884,5 +1230,7 @@ return [
     'common' => [
         'no_data' => '—',
         'created_at' => 'تاريخ الإنشاء',
+        'auto_generated' => 'تلقائي',
+        'action_failed' => 'فشل تنفيذ الإجراء',
     ],
 ];

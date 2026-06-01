@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\WarehouseType;
 use App\Sync\Concerns\Syncable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,9 +43,15 @@ class Inventory extends Model
     protected function casts(): array
     {
         return [
+            'warehouse_type' => WarehouseType::class,
             'on_hand_quantity' => 'decimal:4',
             'on_hold_quantity' => 'decimal:4',
         ];
+    }
+
+    public function scopeInWarehouse(Builder $query, WarehouseType $warehouse): Builder
+    {
+        return $query->where('warehouse_type', $warehouse->value);
     }
 
     public function getActivitylogOptions(): LogOptions

@@ -23,7 +23,7 @@ class WorkOrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 50;
 
     protected static ?string $recordTitleAttribute = 'wo_number';
 
@@ -85,6 +85,18 @@ class WorkOrderResource extends Resource
                             ->getOptionLabelFromRecordUsing(fn ($record) => "v{$record->version} — {$record->project?->name}")
                             ->searchable()
                             ->preload(),
+
+                        Forms\Components\Select::make('output_item_id')
+                            ->label(__('resources.work_orders.fields.output_item'))
+                            ->relationship(
+                                'outputItem',
+                                'name',
+                                fn (Builder $query) => $query->whereIn('type', ['finished_good', 'semi_finished']),
+                            )
+                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->sku} — {$record->name}")
+                            ->searchable()
+                            ->preload()
+                            ->helperText(__('resources.work_orders.fields.output_item_helper')),
 
                         Forms\Components\Select::make('status')
                             ->label(__('resources.work_orders.fields.status'))
@@ -280,6 +292,30 @@ class WorkOrderResource extends Resource
                         try {
                             app(WorkOrderService::class)->start($record);
                             Notification::make()->success()->title(__('resources.work_orders.notifications.started'))->send();
+                        } catch (\RuntimeException $e) {
+                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                        }
+                    }),
+
+                // Issue materials — creates a DRAFT issue voucher (إذن صرف)
+                // from the BOM. The warehouse then posts it, moving the raw
+                // materials into work-in-progress.
+                Tables\Actions\Action::make('issue_materials')
+                    ->label(__('resources.work_orders.actions.issue_materials'))
+                    ->icon('heroicon-o-arrow-up-on-square-stack')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->visible(fn (WorkOrder $record) => $record->bom_id !== null
+                        && in_array($record->status, [WorkOrderStatus::Pending, WorkOrderStatus::InProgress], true)
+                        && auth()->user()?->can('issue_vouchers.create'))
+                    ->action(function (WorkOrder $record) {
+                        try {
+                            $voucher = app(WorkOrderService::class)->issueMaterials($record);
+                            Notification::make()
+                                ->success()
+                                ->title(__('resources.work_orders.notifications.issue_voucher_created'))
+                                ->body($voucher->voucher_number)
+                                ->send();
                         } catch (\RuntimeException $e) {
                             Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
                         }

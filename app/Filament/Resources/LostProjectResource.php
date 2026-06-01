@@ -19,7 +19,7 @@ class LostProjectResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-no-symbol';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 14;
 
     protected static ?string $recordTitleAttribute = 'name';
 

@@ -55,12 +55,18 @@ class AdminPanelProvider extends PanelProvider
             // a 200–500ms saving per click on cold caches.
             ->spa()
             ->sidebarCollapsibleOnDesktop()
+            // Logical business-flow order: Sales → Technical Office →
+            // Procurement → Warehouse → Manufacturing → Finance → System.
+            // (In English this array drives the order; in Arabic the
+            // matching resolves via each resource's navigationSort block —
+            // both are kept consistent so the order is identical in any locale.)
             ->navigationGroups([
                 __('navigation.groups.sales_crm'),
                 __('navigation.groups.technical_office'),
-                __('navigation.groups.warehouse'),
                 __('navigation.groups.procurement'),
+                __('navigation.groups.warehouse'),
                 __('navigation.groups.manufacturing'),
+                __('navigation.groups.finance'),
                 __('navigation.groups.system'),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

@@ -18,7 +18,7 @@ class ActiveProjectResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-play';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 13;
 
     protected static ?string $recordTitleAttribute = 'name';
 

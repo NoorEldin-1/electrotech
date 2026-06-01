@@ -304,7 +304,7 @@ final class OfflineFirstSyncTest extends TestCase
     public function test_inventory_transaction_appends(): void
     {
         [$user, , $raw] = $this->actingDevice();
-        $item = Item::factory()->create(['unit_cost' => 1]);
+        $item = Item::factory()->create(['type' => \App\Enums\ItemType::RawMaterial, 'unit_cost' => 1]);
         // Seed enough stock so the deduction doesn't fail.
         \App\Models\Inventory::create([
             'item_id' => $item->id, 'warehouse_type' => 'raw_materials',
@@ -341,7 +341,7 @@ final class OfflineFirstSyncTest extends TestCase
     public function test_inventory_consumption_beyond_stock_is_rejected(): void
     {
         [$user, , $raw] = $this->actingDevice();
-        $item = Item::factory()->create();
+        $item = Item::factory()->create(['type' => \App\Enums\ItemType::RawMaterial]);
         \App\Models\Inventory::create([
             'item_id' => $item->id, 'warehouse_type' => 'raw_materials',
             'on_hand_quantity' => 5, 'on_hold_quantity' => 0,
@@ -372,7 +372,7 @@ final class OfflineFirstSyncTest extends TestCase
         [$a, , $rawA] = $this->actingDevice();
         [$b, , $rawB] = $this->actingDevice();
 
-        $item = Item::factory()->create();
+        $item = Item::factory()->create(['type' => \App\Enums\ItemType::RawMaterial]);
         \App\Models\Inventory::create([
             'item_id' => $item->id, 'warehouse_type' => 'raw_materials',
             'on_hand_quantity' => 10, 'on_hold_quantity' => 0,

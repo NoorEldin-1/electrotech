@@ -24,7 +24,7 @@ class ActivityResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?int $navigationSort = 99;
+    protected static ?int $navigationSort = 72;
 
     protected static ?string $recordTitleAttribute = 'description';
 

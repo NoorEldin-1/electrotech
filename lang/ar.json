@@ -6,5 +6,7 @@
     "Active Work Orders": "أوامر التشغيل النشطة",
     "Currently in production": "قيد الإنتاج حالياً",
     "Low Stock Items": "أصناف منخفضة المخزون",
-    "Below minimum threshold": "أقل من الحد الأدنى"
+    "Below minimum threshold": "أقل من الحد الأدنى",
+    "Pending Deliveries": "أذون تسليم معلّقة",
+    "Awaiting dual approval": "بانتظار الاعتماد المزدوج"
 }

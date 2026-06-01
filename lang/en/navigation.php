@@ -9,6 +9,7 @@ return [
         'warehouse' => 'Warehouse',
         'procurement' => 'Procurement',
         'manufacturing' => 'Manufacturing',
+        'finance' => 'Finance',
         'system' => 'System',
     ],
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\TransactionType;
+use App\Enums\WarehouseType;
 use App\Sync\Concerns\Syncable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,7 +36,9 @@ class InventoryTransaction extends Model
         return [
             'item_id',
             'type',
+            'warehouse_type',
             'quantity',
+            'unit_cost',
             'reference_type',
             'reference_id',
             'notes',
@@ -47,7 +50,9 @@ class InventoryTransaction extends Model
     protected $fillable = [
         'item_id',
         'type',
+        'warehouse_type',
         'quantity',
+        'unit_cost',
         'reference_type',
         'reference_id',
         'notes',
@@ -58,7 +63,9 @@ class InventoryTransaction extends Model
     {
         return [
             'type' => TransactionType::class,
+            'warehouse_type' => WarehouseType::class,
             'quantity' => 'decimal:4',
+            'unit_cost' => 'decimal:2',
         ];
     }
 

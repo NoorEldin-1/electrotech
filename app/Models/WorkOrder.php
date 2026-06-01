@@ -23,6 +23,7 @@ class WorkOrder extends Model
     protected $fillable = [
         'project_id',
         'bom_id',
+        'output_item_id',
         'wo_number',
         'title',
         'description',
@@ -98,6 +99,21 @@ class WorkOrder extends Model
     public function bom(): BelongsTo
     {
         return $this->belongsTo(Bom::class);
+    }
+
+    public function outputItem(): BelongsTo
+    {
+        return $this->belongsTo(Item::class, 'output_item_id');
+    }
+
+    public function issueVouchers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(IssueVoucher::class);
+    }
+
+    public function productionEntries(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductionEntry::class);
     }
 
     public function assignedTo(): BelongsTo

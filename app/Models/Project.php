@@ -41,6 +41,7 @@ class Project extends Model
         'name',
         'code',
         'client_name',
+        'customer_id',
         'consultant_name',
         'engineer_name',
         'electric_current',
@@ -112,6 +113,11 @@ class Project extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function boms(): HasMany

@@ -6,8 +6,9 @@ namespace App\Filament\Widgets;
 
 use App\Enums\ProjectStatus;
 use App\Enums\PurchaseOrderStatus;
+use App\Enums\DeliveryVoucherStatus;
 use App\Enums\WorkOrderStatus;
-use App\Models\Inventory;
+use App\Models\DeliveryVoucher;
 use App\Models\Project;
 use App\Models\PurchaseOrder;
 use App\Models\WorkOrder;
@@ -15,6 +16,7 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class StatsOverview extends BaseWidget
 {
@@ -60,17 +62,31 @@ class StatsOverview extends BaseWidget
             fn (): int => WorkOrder::query()->where('status', WorkOrderStatus::InProgress)->count(),
         );
 
-        // Low-stock count: items whose available (on_hand - on_hold) has
-        // fallen below their minimum_stock. This is a JOIN that would be
-        // very expensive on every dashboard render; we cache aggressively
-        // and let the InventoryService invalidate after stock movements.
+        // Low-stock count: items whose total available (on_hand - on_hold)
+        // summed across ALL warehouses has fallen below their minimum_stock.
+        // Aggregated per item because an item can now hold rows in several
+        // warehouses. Cached aggressively; the InventoryService invalidates
+        // it after every stock movement.
         $lowStockCount = Cache::remember(
             'dashboard:low_stock_count',
             now()->addMinutes(5),
-            fn (): int => Inventory::query()
-                ->join('items', 'items.id', '=', 'inventories.item_id')
-                ->whereRaw('(inventories.on_hand_quantity - inventories.on_hold_quantity) < items.minimum_stock')
+            fn (): int => DB::table('items')
+                ->leftJoin('inventories', 'inventories.item_id', '=', 'items.id')
                 ->whereNull('items.deleted_at')
+                ->groupBy('items.id', 'items.minimum_stock')
+                ->havingRaw('COALESCE(SUM(inventories.on_hand_quantity - inventories.on_hold_quantity), 0) < items.minimum_stock')
+                ->select('items.id')
+                ->get()
+                ->count(),
+        );
+
+        // Delivery vouchers awaiting one or both signatures before they can
+        // release finished goods to the customer.
+        $pendingDeliveries = Cache::remember(
+            'dashboard:pending_deliveries',
+            now()->addMinutes(5),
+            fn (): int => DeliveryVoucher::query()
+                ->whereIn('status', [DeliveryVoucherStatus::Draft, DeliveryVoucherStatus::PendingApproval])
                 ->count(),
         );
 
@@ -79,6 +95,11 @@ class StatsOverview extends BaseWidget
                 ->description(__('Currently in progress'))
                 ->descriptionIcon('heroicon-m-play')
                 ->color('primary'),
+
+            Stat::make(__('Pending Deliveries'), (string) $pendingDeliveries)
+                ->description(__('Awaiting dual approval'))
+                ->descriptionIcon('heroicon-m-truck')
+                ->color($pendingDeliveries > 0 ? 'warning' : 'success'),
 
             Stat::make(__('Pending Purchase Orders'), (string) $pendingPos)
                 ->description(__('Awaiting delivery/receipt'))

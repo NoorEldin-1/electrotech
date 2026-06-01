@@ -18,7 +18,7 @@ class InventoryTransactionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 40;
 
     public static function getNavigationGroup(): ?string
     {
@@ -69,10 +69,22 @@ class InventoryTransactionResource extends Resource
                     ->badge()
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('warehouse_type')
+                    ->label(__('resources.inventory_transactions.columns.warehouse'))
+                    ->badge()
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('quantity')
                     ->label(__('resources.inventory_transactions.columns.quantity'))
                     ->numeric(4)
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('unit_cost')
+                    ->label(__('resources.inventory_transactions.columns.unit_cost'))
+                    ->money('EGP')
+                    ->sortable()
+                    ->toggleable()
+                    ->visible(fn () => auth()->user()?->can('inventory.view_pricing')),
 
                 Tables\Columns\TextColumn::make('reference_type')
                     ->label(__('resources.inventory_transactions.columns.source'))

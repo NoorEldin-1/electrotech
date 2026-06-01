@@ -39,7 +39,7 @@ class SyncConflictResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-exclamation-triangle';
 
-    protected static ?int $navigationSort = 99;
+    protected static ?int $navigationSort = 73;
 
     public static function getNavigationGroup(): ?string
     {

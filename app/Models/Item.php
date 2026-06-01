@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\ItemType;
 use App\Enums\UnitOfMeasure;
+use App\Enums\WarehouseType;
 use App\Sync\Concerns\Syncable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -58,9 +59,23 @@ class Item extends Model
             ->dontSubmitEmptyLogs();
     }
 
+    /**
+     * The item's stock row in its HOME warehouse. The home row is always the
+     * first created for an item (stock lands there before it can be moved
+     * elsewhere), so `oldestOfMany` resolves it deterministically and stays
+     * eager-loadable for the catalog screens.
+     */
     public function inventory(): HasOne
     {
-        return $this->hasOne(Inventory::class);
+        return $this->hasOne(Inventory::class)->oldestOfMany();
+    }
+
+    /**
+     * All per-warehouse balances for this item.
+     */
+    public function inventories(): HasMany
+    {
+        return $this->hasMany(Inventory::class);
     }
 
     public function bomItems(): HasMany
@@ -74,21 +89,48 @@ class Item extends Model
     }
 
     /**
-     * Get the current available quantity (on_hand - on_hold).
+     * The default warehouse where this item's stock lives, derived from its type.
      */
-    public function getAvailableQuantityAttribute(): float
+    public function homeWarehouse(): WarehouseType
     {
-        $inventory = $this->inventory;
-
-        if (! $inventory) {
-            return 0;
-        }
-
-        return (float) $inventory->on_hand_quantity - (float) $inventory->on_hold_quantity;
+        return WarehouseType::homeFor($this->type);
     }
 
     /**
-     * Check if current stock is below minimum threshold.
+     * On-hand quantity in a specific warehouse (0 if no row yet).
+     */
+    public function quantityIn(WarehouseType $warehouse): float
+    {
+        return (float) ($this->inventories
+            ->firstWhere('warehouse_type', $warehouse->value)?->on_hand_quantity ?? 0);
+    }
+
+    /**
+     * Available (on_hand - on_hold) quantity in a specific warehouse.
+     */
+    public function availableIn(WarehouseType $warehouse): float
+    {
+        $row = $this->inventories->firstWhere('warehouse_type', $warehouse->value);
+
+        if (! $row) {
+            return 0;
+        }
+
+        return (float) $row->on_hand_quantity - (float) $row->on_hold_quantity;
+    }
+
+    /**
+     * Total available quantity across every warehouse (on_hand - on_hold).
+     */
+    public function getAvailableQuantityAttribute(): float
+    {
+        return (float) $this->inventories->sum(
+            fn (Inventory $row) => (float) $row->on_hand_quantity - (float) $row->on_hold_quantity
+        );
+    }
+
+    /**
+     * Check if total available stock is below minimum threshold.
      */
     public function isBelowMinimumStock(): bool
     {

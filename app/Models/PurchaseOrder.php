@@ -21,6 +21,7 @@ class PurchaseOrder extends Model
 
     protected $fillable = [
         'project_id',
+        'supplier_id',
         'po_number',
         'supplier_name',
         'supplier_contact',
@@ -55,6 +56,11 @@ class PurchaseOrder extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     public function createdBy(): BelongsTo

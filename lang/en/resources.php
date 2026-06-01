@@ -374,10 +374,278 @@ return [
             'item' => 'Item',
             'sku' => 'SKU',
             'type' => 'Type',
+            'warehouse' => 'Warehouse',
             'quantity' => 'Quantity',
+            'unit_cost' => 'Unit Cost',
             'source' => 'Source',
             'notes' => 'Notes',
             'performed_by' => 'By',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Supplier Resource
+    |--------------------------------------------------------------------------
+    */
+    'suppliers' => [
+        'label' => 'Supplier',
+        'plural_label' => 'Suppliers',
+        'navigation_label' => 'Suppliers',
+
+        'sections' => [
+            'details' => 'Supplier Details',
+        ],
+
+        'fields' => [
+            'name' => 'Supplier Name',
+            'contact_person' => 'Contact Person',
+            'phone' => 'Phone',
+            'email' => 'Email',
+            'tax_number' => 'Tax Number',
+            'address' => 'Address',
+            'notes' => 'Notes',
+        ],
+
+        'columns' => [
+            'name' => 'Name',
+            'contact_person' => 'Contact',
+            'phone' => 'Phone',
+            'email' => 'Email',
+            'balance' => 'Balance',
+            'created_at' => 'Created At',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customer Resource
+    |--------------------------------------------------------------------------
+    */
+    'customers' => [
+        'label' => 'Customer',
+        'plural_label' => 'Customers',
+        'navigation_label' => 'Customers',
+
+        'sections' => [
+            'details' => 'Customer Details',
+        ],
+
+        'fields' => [
+            'name' => 'Customer Name',
+            'contact_person' => 'Contact Person',
+            'phone' => 'Phone',
+            'email' => 'Email',
+            'tax_number' => 'Tax Number',
+            'address' => 'Address',
+            'notes' => 'Notes',
+        ],
+
+        'columns' => [
+            'name' => 'Name',
+            'contact_person' => 'Contact',
+            'phone' => 'Phone',
+            'email' => 'Email',
+            'balance' => 'Balance',
+            'created_at' => 'Created At',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Addition Voucher Resource (إذن إضافة)
+    |--------------------------------------------------------------------------
+    */
+    'addition_vouchers' => [
+        'label' => 'Addition Voucher',
+        'plural_label' => 'Addition Vouchers',
+        'navigation_label' => 'Addition Vouchers',
+
+        'sections' => [
+            'details' => 'Voucher Details',
+            'lines' => 'Received Items',
+        ],
+
+        'fields' => [
+            'voucher_number' => 'Voucher Number',
+            'supplier' => 'Supplier',
+            'purchase_order' => 'Purchase Order',
+            'voucher_date' => 'Date',
+            'invoice_number' => 'Invoice Number',
+            'invoice_value' => 'Invoice Value',
+            'notes' => 'Notes',
+            'lines' => 'Items',
+            'item' => 'Item',
+            'quantity' => 'Quantity',
+            'unit_cost' => 'Unit Cost',
+        ],
+
+        'columns' => [
+            'voucher_number' => 'Number',
+            'supplier' => 'Supplier',
+            'voucher_date' => 'Date',
+            'invoice_number' => 'Invoice',
+            'invoice_value' => 'Invoice Value',
+            'status' => 'Status',
+        ],
+
+        'actions' => [
+            'post' => 'Post',
+            'post_confirm' => 'Posting adds the items to stock and credits the supplier account. This cannot be undone.',
+        ],
+
+        'notifications' => [
+            'posted' => 'Addition voucher posted — stock and supplier account updated.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Issue Voucher Resource (إذن صرف)
+    |--------------------------------------------------------------------------
+    */
+    'issue_vouchers' => [
+        'label' => 'Issue Voucher',
+        'plural_label' => 'Issue Vouchers',
+        'navigation_label' => 'Issue Vouchers',
+
+        'sections' => [
+            'details' => 'Voucher Details',
+            'lines' => 'Issued Items',
+        ],
+
+        'fields' => [
+            'voucher_number' => 'Voucher Number',
+            'work_order' => 'Work Order',
+            'voucher_date' => 'Date',
+            'notes' => 'Notes',
+            'lines' => 'Items',
+            'item' => 'Item',
+            'quantity' => 'Quantity',
+            'unit_cost' => 'Unit Cost',
+        ],
+
+        'columns' => [
+            'voucher_number' => 'Number',
+            'work_order' => 'Work Order',
+            'voucher_date' => 'Date',
+            'total_value' => 'Total Value',
+            'status' => 'Status',
+        ],
+
+        'actions' => [
+            'post' => 'Post',
+            'post_confirm' => 'Posting moves the materials from raw stock into work-in-progress and loads their cost onto the operation. This cannot be undone.',
+        ],
+
+        'notifications' => [
+            'posted' => 'Issue voucher posted — materials moved to work-in-progress.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Account Entry Resource (كشف الحساب)
+    |--------------------------------------------------------------------------
+    */
+    'account_entries' => [
+        'label' => 'Account Entry',
+        'plural_label' => 'Account Ledger',
+        'navigation_label' => 'Account Ledger',
+        'statement' => 'Account Statement',
+
+        'columns' => [
+            'date' => 'Date',
+            'party' => 'Account',
+            'reference' => 'Reference',
+            'operation' => 'Operation',
+            'direction' => 'Type',
+            'amount' => 'Amount',
+            'running_balance' => 'Balance',
+        ],
+
+        'filters' => [
+            'from' => 'From',
+            'until' => 'Until',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Voucher Resource (إذن تسليم)
+    |--------------------------------------------------------------------------
+    */
+    'delivery_vouchers' => [
+        'label' => 'Delivery Voucher',
+        'plural_label' => 'Delivery Vouchers',
+        'navigation_label' => 'Delivery Vouchers',
+
+        'sections' => [
+            'details' => 'Voucher Details',
+            'specs' => 'Technical Specifications',
+            'lines' => 'Delivered Items',
+        ],
+
+        'fields' => [
+            'voucher_number' => 'Voucher Number',
+            'customer' => 'Customer',
+            'project' => 'Operation / Project',
+            'supply_order_number' => 'Supply Order No.',
+            'voucher_date' => 'Date',
+            'plates_count' => 'Number of Plates',
+            'protection_degree' => 'Protection Degree',
+            'insulation_voltage' => 'Insulation Voltage',
+            'notes' => 'Notes',
+            'lines' => 'Items',
+            'item' => 'Item',
+            'quantity' => 'Quantity',
+            'unit_cost' => 'Unit Cost',
+        ],
+
+        'columns' => [
+            'voucher_number' => 'Number',
+            'customer' => 'Customer',
+            'voucher_date' => 'Date',
+            'technical' => 'Technical',
+            'financial' => 'Financial',
+            'total_value' => 'Total Value',
+            'status' => 'Status',
+        ],
+
+        'actions' => [
+            'approve_technical' => 'Technical Approval',
+            'approve_financial' => 'Financial Approval',
+            'cancel' => 'Cancel',
+        ],
+
+        'notifications' => [
+            'approved' => 'Signature recorded. The voucher activates once both approvals are in.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Production Entry Resource (استخراج الفاقد)
+    |--------------------------------------------------------------------------
+    */
+    'production_entries' => [
+        'label' => 'Production Entry',
+        'plural_label' => 'Production & Loss',
+        'navigation_label' => 'Production & Loss',
+
+        'columns' => [
+            'work_order' => 'Work Order',
+            'output_item' => 'Product',
+            'entry_date' => 'Date',
+            'planned_quantity' => 'Planned',
+            'produced_quantity' => 'Produced',
+            'scrap_quantity' => 'Loss',
+            'scrap_percentage' => 'Loss %',
+        ],
+
+        'filters' => [
+            'from' => 'From',
+            'until' => 'Until',
         ],
     ],
 
@@ -404,6 +672,8 @@ return [
             'title' => 'Title',
             'project' => 'Project',
             'linked_bom' => 'Linked BOM',
+            'output_item' => 'Finished Product',
+            'output_item_helper' => 'The item produced into finished goods when this work order completes.',
             'status' => 'Status',
             'priority' => 'Priority',
             'assigned_to' => 'Assigned To',
@@ -431,6 +701,7 @@ return [
 
         'actions' => [
             'start' => 'Start',
+            'issue_materials' => 'Issue Materials',
             'submit_qa' => 'Submit QA',
             'approve_qa' => 'Approve QA',
             'complete' => 'Complete',
@@ -438,6 +709,7 @@ return [
 
         'notifications' => [
             'started' => 'Work Order started',
+            'issue_voucher_created' => 'Draft issue voucher created',
             'submitted_qa' => 'Submitted for QA',
             'qa_approved' => 'QA Approved',
             'completed' => 'Work Order completed',
@@ -527,7 +799,16 @@ return [
             'boms' => 'Bills of Materials',
             'inventory' => 'Inventory Control',
             'transactions' => 'Inventory Transactions',
+            'addition_vouchers' => 'Addition Vouchers',
+            'issue_vouchers' => 'Issue Vouchers',
+            'delivery_vouchers' => 'Delivery Vouchers',
+            'production_entries' => 'Production & Loss',
+            'scrap' => 'Scrap / Loss',
             'purchase_orders' => 'Purchase Orders',
+            'suppliers' => 'Suppliers',
+            'customers' => 'Customers',
+            'supplier_statements' => 'Supplier Statements',
+            'customer_statements' => 'Customer Statements',
             'work_orders' => 'Work Orders',
             'users' => 'Users Management',
             'roles' => 'Roles Management',
@@ -579,10 +860,34 @@ return [
                 'manage' => 'Manage Inventory',
                 'hold' => 'Hold Inventory',
                 'release' => 'Release Inventory',
+                'transfer' => 'Transfer Between Warehouses',
                 'view_pricing' => 'View Pricing',
             ],
             'transactions' => [
                 'view' => 'View Inventory Transactions',
+            ],
+            'addition_vouchers' => [
+                'view' => 'View Addition Vouchers',
+                'create' => 'Create Addition Voucher',
+                'post' => 'Post Addition Voucher',
+            ],
+            'issue_vouchers' => [
+                'view' => 'View Issue Vouchers',
+                'create' => 'Create Issue Voucher',
+                'post' => 'Post Issue Voucher',
+            ],
+            'delivery_vouchers' => [
+                'view' => 'View Delivery Vouchers',
+                'create' => 'Create Delivery Voucher',
+                'approve_technical' => 'Technical Approval',
+                'approve_financial' => 'Financial Approval',
+                'cancel' => 'Cancel Delivery Voucher',
+            ],
+            'production_entries' => [
+                'view' => 'View Production & Loss',
+            ],
+            'scrap' => [
+                'view' => 'View Scrap / Loss',
             ],
             'purchase_orders' => [
                 'view' => 'View Purchase Orders',
@@ -591,6 +896,24 @@ return [
                 'approve' => 'Approve Purchase Orders',
                 'receive' => 'Receive Purchase Orders',
                 'delete' => 'Delete Purchase Orders',
+            ],
+            'suppliers' => [
+                'view' => 'View Suppliers',
+                'create' => 'Create Supplier',
+                'edit' => 'Edit Suppliers',
+                'delete' => 'Delete Suppliers',
+            ],
+            'customers' => [
+                'view' => 'View Customers',
+                'create' => 'Create Customer',
+                'edit' => 'Edit Customers',
+                'delete' => 'Delete Customers',
+            ],
+            'supplier_statements' => [
+                'view' => 'View Supplier Statements',
+            ],
+            'customer_statements' => [
+                'view' => 'View Customer Statements',
             ],
             'work_orders' => [
                 'view' => 'View Work Orders',
@@ -807,6 +1130,29 @@ return [
             'release' => 'Release',
         ],
 
+        'warehouse_type' => [
+            'raw_materials' => 'Raw Materials',
+            'work_in_progress' => 'Work In Progress',
+            'finished_goods' => 'Finished Goods',
+        ],
+
+        'voucher_status' => [
+            'draft' => 'Draft',
+            'posted' => 'Posted',
+        ],
+
+        'account_direction' => [
+            'debit' => 'Debit',
+            'credit' => 'Credit',
+        ],
+
+        'delivery_voucher_status' => [
+            'draft' => 'Draft',
+            'pending_approval' => 'Pending Approval',
+            'active' => 'Active',
+            'cancelled' => 'Cancelled',
+        ],
+
         'unit_of_measure' => [
             'pcs' => 'Pieces (pcs)',
             'kg' => 'Kilograms (kg)',
@@ -884,5 +1230,7 @@ return [
     'common' => [
         'no_data' => '—',
         'created_at' => 'Created At',
+        'auto_generated' => 'Auto-generated',
+        'action_failed' => 'Action failed',
     ],
 ];
