@@ -8,11 +8,11 @@
             <select
                 id="cost-file-operation"
                 wire:model.live="projectId"
-                class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-950 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-950 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-900 dark:text-white dark:[color-scheme:dark]"
             >
-                <option value="">—</option>
+                <option value="" class="bg-white text-gray-950 dark:bg-gray-900 dark:text-white">—</option>
                 @foreach ($this->getProjectOptions() as $id => $label)
-                    <option value="{{ $id }}">{{ $label }}</option>
+                    <option value="{{ $id }}" class="bg-white text-gray-950 dark:bg-gray-900 dark:text-white">{{ $label }}</option>
                 @endforeach
             </select>
         </div>
