@@ -26,7 +26,11 @@ jobs:
           chmod 700 ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          # Best-effort known_hosts pre-fill. Non-fatal: the deploy step uses
+          # StrictHostKeyChecking=no, so it does not depend on this. ssh-keyscan
+          # can exit non-zero (host unreachable, missing SSH_PORT/SSH_HOST) and
+          # must not abort the whole deploy.
+          ssh-keyscan -p "${SSH_PORT:-22}" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Run remote deploy
         env:
