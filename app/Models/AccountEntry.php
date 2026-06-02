@@ -27,6 +27,7 @@ class AccountEntry extends Model
         'reference_type',
         'reference_id',
         'operation_name',
+        'project_id',
         'notes',
         'created_by',
     ];
@@ -53,5 +54,14 @@ class AccountEntry extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Optional cost-center tag: the operation this party posting belongs to.
+     * Supersedes the legacy free-text `operation_name`.
+     */
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 }

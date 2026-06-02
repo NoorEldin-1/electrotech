@@ -96,6 +96,10 @@ class IssueVoucherService
                 $project->increment('actual_cost', $total);
             }
 
+            // Accrue onto the work order too, for the estimate-vs-actual
+            // comparison on the operating order (سلايد 2 المقارنة).
+            $voucher->workOrder->increment('actual_material_cost', $total);
+
             $voucher->update([
                 'status' => VoucherStatus::Posted,
                 'total_value' => $total,

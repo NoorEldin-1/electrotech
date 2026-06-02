@@ -55,12 +55,17 @@ class AdminPanelProvider extends PanelProvider
             // a 200–500ms saving per click on cold caches.
             ->spa()
             ->sidebarCollapsibleOnDesktop()
+            // Database notifications power the topbar bell — used by the
+            // General Management layer to notify departments when an operation
+            // is activated or a delivery minute is distributed.
+            ->databaseNotifications()
             // Logical business-flow order: Sales → Technical Office →
             // Procurement → Warehouse → Manufacturing → Finance → System.
             // (In English this array drives the order; in Arabic the
             // matching resolves via each resource's navigationSort block —
             // both are kept consistent so the order is identical in any locale.)
             ->navigationGroups([
+                __('navigation.groups.general_management'),
                 __('navigation.groups.sales_crm'),
                 __('navigation.groups.technical_office'),
                 __('navigation.groups.procurement'),

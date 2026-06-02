@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 return [
     'groups' => [
+        'general_management' => 'General Management',
         'sales_crm' => 'Sales & CRM',
         'technical_office' => 'Technical Office',
         'warehouse' => 'Warehouse',

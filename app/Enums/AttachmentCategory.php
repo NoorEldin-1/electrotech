@@ -20,6 +20,9 @@ enum AttachmentCategory: string implements HasLabel, HasIcon
     case Drowing = 'drowing';
     case Speces = 'speces';
     case Boq = 'boq';
+    // Site measurements raised during the engineering survey (سلايد 1: "رفع
+    // مقاسات الموقع"); drawings already covered by Drowing.
+    case SiteMeasurement = 'site_measurement';
 
     public function getLabel(): string
     {
@@ -34,6 +37,7 @@ enum AttachmentCategory: string implements HasLabel, HasIcon
             self::Drowing => 'heroicon-o-paint-brush',
             self::Speces => 'heroicon-o-clipboard-document-list',
             self::Boq => 'heroicon-o-calculator',
+            self::SiteMeasurement => 'heroicon-o-map',
         };
     }
 }

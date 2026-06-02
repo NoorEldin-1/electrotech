@@ -135,6 +135,36 @@ class Project extends Model
         return $this->hasMany(WorkOrder::class);
     }
 
+    public function deliveryVouchers(): HasMany
+    {
+        return $this->hasMany(DeliveryVoucher::class);
+    }
+
+    /**
+     * GL lines tagged to this operation (cost-center dimension). Read-only —
+     * the General Ledger owns writes; the Operation Cost Center reads.
+     */
+    public function journalLines(): HasMany
+    {
+        return $this->hasMany(JournalEntryLine::class);
+    }
+
+    /**
+     * Party-ledger postings (supplier/customer) tagged to this operation.
+     */
+    public function accountEntries(): HasMany
+    {
+        return $this->hasMany(AccountEntry::class);
+    }
+
+    /**
+     * Cash payments / receipts recorded against this operation (الدفعات).
+     */
+    public function operationPayments(): HasMany
+    {
+        return $this->hasMany(OperationPayment::class);
+    }
+
     public function attachments(): HasMany
     {
         return $this->hasMany(Attachment::class);

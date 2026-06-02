@@ -180,6 +180,33 @@ class RoleAndPermissionSeeder extends Seeder
             'general_ledger.view',
             'trial_balance.view',
 
+            // General Management (الإدارة العامة) — operations oversight, cost
+            // center, delivery minutes and financial claims.
+            'operations.overview',
+            'operations.view_cost',
+            'operations.activate',
+            'operations.complete',
+            'operations.hold',
+            'operations.reserve',
+            'delivery_minutes.view',
+            'delivery_minutes.create',
+            'delivery_minutes.distribute',
+            'financial_claims.view',
+            'financial_claims.create',
+            'financial_claims.submit',
+            'financial_claims.collect',
+            // General Management (Phase 7) — payments, facilities, installation,
+            // site surveys.
+            'operation_payments.view',
+            'operation_payments.record',
+            'supply_orders_file.view',
+            'credit_facilities.view',
+            'credit_facilities.manage',
+            'installations.view',
+            'installations.manage',
+            'site_surveys.view',
+            'site_surveys.manage',
+
             // Manufacturing / Work Orders
             'work_orders.view',
             'work_orders.create',
@@ -259,6 +286,11 @@ class RoleAndPermissionSeeder extends Seeder
                 'attachments.upload',
                 'attachments.download',
                 'attachments.delete',
+                // General management: can see the operations overview, push an
+                // operation to active, and view delivery minutes.
+                'operations.overview',
+                'operations.activate',
+                'delivery_minutes.view',
                 'dashboard.view',
             ],
 
@@ -281,6 +313,11 @@ class RoleAndPermissionSeeder extends Seeder
                 'production_entries.view',
                 'scrap.view',
                 'attachments.download',
+                // Phase 7 — engineering: site measurements/drawings + sees
+                // installation progress.
+                'site_surveys.view',
+                'site_surveys.manage',
+                'installations.view',
                 'dashboard.view',
             ],
 
@@ -325,6 +362,14 @@ class RoleAndPermissionSeeder extends Seeder
                 'production_entries.view',
                 'scrap.view',
                 'transactions.view',
+                // General management: oversees the operations floor — overview,
+                // marking an operation complete, and reserving stock for it.
+                'operations.overview',
+                'operations.complete',
+                'operations.reserve',
+                // Phase 7 — executes installation on the floor.
+                'installations.view',
+                'installations.manage',
                 'dashboard.view',
             ],
 
@@ -381,6 +426,74 @@ class RoleAndPermissionSeeder extends Seeder
                 'journal_entries.post',
                 'general_ledger.view',
                 'trial_balance.view',
+                // General management: the operation cost center and the
+                // financial-claim workflow live with finance.
+                'operations.view_cost',
+                'financial_claims.view',
+                'financial_claims.create',
+                'financial_claims.submit',
+                'financial_claims.collect',
+                // Phase 7 — collection/financing side: payments, supply file,
+                // credit facilities.
+                'operation_payments.view',
+                'operation_payments.record',
+                'supply_orders_file.view',
+                'credit_facilities.view',
+                'credit_facilities.manage',
+                'dashboard.view',
+            ],
+
+            // General_Manager (الإدارة العامة): the oversight role that owns the
+            // operations overview, the cost center, lifecycle transitions,
+            // delivery minutes and financial claims, with broad cross-department
+            // read access. New role — created automatically on fresh installs.
+            'General_Manager' => [
+                'projects.view',
+                'project_offers.view',
+                'items.view',
+                'boms.view',
+                'inventory.view',
+                'inventory.view_pricing',
+                'work_orders.view',
+                'purchase_orders.view',
+                'addition_vouchers.view',
+                'issue_vouchers.view',
+                'delivery_vouchers.view',
+                'production_entries.view',
+                'suppliers.view',
+                'customers.view',
+                'supplier_statements.view',
+                'customer_statements.view',
+                'accounts.view',
+                'journal_entries.view',
+                'general_ledger.view',
+                'trial_balance.view',
+                'transactions.view',
+                // General management permissions (the owning role).
+                'operations.overview',
+                'operations.view_cost',
+                'operations.activate',
+                'operations.complete',
+                'operations.hold',
+                'operations.reserve',
+                'delivery_minutes.view',
+                'delivery_minutes.create',
+                'delivery_minutes.distribute',
+                'financial_claims.view',
+                'financial_claims.create',
+                'financial_claims.submit',
+                'financial_claims.collect',
+                // Phase 7 — owns payments, supply file, facilities, installation,
+                // and site surveys.
+                'operation_payments.view',
+                'operation_payments.record',
+                'supply_orders_file.view',
+                'credit_facilities.view',
+                'credit_facilities.manage',
+                'installations.view',
+                'installations.manage',
+                'site_surveys.view',
+                'site_surveys.manage',
                 'dashboard.view',
             ],
         ];

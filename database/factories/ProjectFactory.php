@@ -54,4 +54,15 @@ class ProjectFactory extends Factory
             'smb_status' => 'pending',
         ]);
     }
+
+    /** Active operation (status = InProgress) — the live cost-center stage. */
+    public function active(): self
+    {
+        return $this->state(fn () => ['status' => ProjectStatus::InProgress]);
+    }
+
+    public function completed(): self
+    {
+        return $this->state(fn () => ['status' => ProjectStatus::Completed]);
+    }
 }

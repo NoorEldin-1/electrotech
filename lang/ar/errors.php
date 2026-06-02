@@ -47,4 +47,11 @@ return [
         'cancelled' => 'لا يمكن استلام أصناف لأمر شراء ملغي.',
         'exceeds_ordered' => "لا يمكن استلام :quantity من الصنف ':item'. سيتجاوز الكمية المطلوبة :ordered (المستلَم بالفعل: :received).",
     ],
+
+    'operations' => [
+        'illegal_transition' => "انتقال غير مسموح: حالة العملية الحالية ':current'، المتوقع إحدى [:allowed].",
+        'claim_before_completion' => 'لا يمكن رفع مطالبة مالية إلا بعد إتمام التوريد والتركيب.',
+        'reserve_exceeds_available' => "لا يمكن حجز :quantity من الصنف ':item'. المتاح فقط :available في :warehouse.",
+        'facility_exceeds_available' => "لا يمكن تخصيص :amount من التسهيل ':facility'. المتاح فقط :available.",
+    ],
 ];

@@ -32,6 +32,8 @@ class WorkOrder extends Model
         'planned_quantity',
         'produced_quantity',
         'waste_quantity',
+        'estimated_cost',
+        'actual_material_cost',
         'planned_start_date',
         'planned_end_date',
         'actual_start_date',
@@ -74,12 +76,25 @@ class WorkOrder extends Model
             'planned_quantity' => 'decimal:4',
             'produced_quantity' => 'decimal:4',
             'waste_quantity' => 'decimal:4',
+            'estimated_cost' => 'decimal:2',
+            'actual_material_cost' => 'decimal:2',
             'planned_start_date' => 'date',
             'planned_end_date' => 'date',
             'actual_start_date' => 'datetime',
             'actual_end_date' => 'datetime',
             'qa_approved_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Snapshot the estimated cost from the linked BOM at creation time
+        // (سلايد 2 المقارنة). Frozen so it stays stable if item prices change.
+        static::creating(function (WorkOrder $workOrder): void {
+            if ($workOrder->bom_id && (float) ($workOrder->estimated_cost ?? 0) === 0.0) {
+                $workOrder->estimated_cost = $workOrder->bom?->total_cost ?? 0;
+            }
+        });
     }
 
     public function getActivitylogOptions(): LogOptions
@@ -153,6 +168,29 @@ class WorkOrder extends Model
         }
 
         return ((float) $this->produced_quantity / (float) $this->planned_quantity) * 100;
+    }
+
+    /**
+     * Cost variance vs the operating-order estimate (actual − estimated).
+     * Positive = over budget.
+     */
+    public function getCostVarianceAttribute(): float
+    {
+        return (float) $this->actual_material_cost - (float) $this->estimated_cost;
+    }
+
+    /**
+     * Cost variance as a percentage of the estimate, or null if no estimate.
+     */
+    public function getCostVariancePercentAttribute(): ?float
+    {
+        $estimated = (float) $this->estimated_cost;
+
+        if ($estimated === 0.0) {
+            return null;
+        }
+
+        return ($this->cost_variance / $estimated) * 100;
     }
 
     /**

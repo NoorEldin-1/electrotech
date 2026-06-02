@@ -7,6 +7,8 @@ namespace App\Filament\Resources;
 use App\Enums\ProjectStatus;
 use App\Filament\Resources\ActiveProjectResource\Pages;
 use App\Models\Project;
+use App\Services\OperationLifecycleService;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -86,7 +88,47 @@ class ActiveProjectResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->url(fn (Project $r) => ProjectResource::getUrl('edit', ['record' => $r])),
+
+                Tables\Actions\Action::make('hold')
+                    ->label(__('resources.operations.actions.hold'))
+                    ->icon('heroicon-o-pause')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->visible(fn () => auth()->user()?->can('operations.hold') ?? false)
+                    ->action(fn (Project $record) => static::runLifecycle(
+                        fn () => app(OperationLifecycleService::class)->putOnHold($record),
+                        __('resources.operations.notifications.held'),
+                    )),
+
+                Tables\Actions\Action::make('complete')
+                    ->label(__('resources.operations.actions.complete'))
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn () => auth()->user()?->can('operations.complete') ?? false)
+                    ->action(fn (Project $record) => static::runLifecycle(
+                        fn () => app(OperationLifecycleService::class)->markCompleted($record),
+                        __('resources.operations.notifications.completed'),
+                    )),
             ]);
+    }
+
+    /**
+     * Run a lifecycle transition, surfacing success or the DomainException
+     * message as a Filament notification.
+     */
+    protected static function runLifecycle(callable $transition, string $successMessage): void
+    {
+        try {
+            $transition();
+            Notification::make()->title($successMessage)->success()->send();
+        } catch (\Throwable $e) {
+            Notification::make()
+                ->title(__('resources.common.action_failed'))
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 
     public static function getPages(): array

@@ -236,6 +236,26 @@ class WorkOrderResource extends Resource
                     ->numeric(2)
                     ->color('success'),
 
+                Tables\Columns\TextColumn::make('estimated_cost')
+                    ->label(__('resources.work_orders.columns.estimated_cost'))
+                    ->numeric(2)
+                    ->visible(fn () => auth()->user()?->can('operations.view_cost') ?? false)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('actual_material_cost')
+                    ->label(__('resources.work_orders.columns.actual_cost'))
+                    ->numeric(2)
+                    ->visible(fn () => auth()->user()?->can('operations.view_cost') ?? false)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('cost_variance')
+                    ->label(__('resources.work_orders.columns.cost_variance'))
+                    ->state(fn (WorkOrder $record): float => $record->cost_variance)
+                    ->numeric(2)
+                    ->color(fn (WorkOrder $record): string => $record->cost_variance > 0 ? 'danger' : 'success')
+                    ->visible(fn () => auth()->user()?->can('operations.view_cost') ?? false)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('assignedTo.name')
                     ->label(__('resources.work_orders.columns.assigned_to'))
                     ->toggleable(),

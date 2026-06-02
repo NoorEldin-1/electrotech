@@ -57,5 +57,9 @@ class AppServiceProvider extends ServiceProvider
         Project::observe(ProjectObserver::class);
         PurchaseOrder::observe(PurchaseOrderObserver::class);
         WorkOrder::observe(WorkOrderObserver::class);
+
+        // NOTE: the OperationActivated → NotifyDepartmentsOfActivation binding
+        // is registered automatically via Laravel's listener auto-discovery
+        // (app/Listeners). No manual Event::listen needed here.
     }
 }

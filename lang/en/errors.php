@@ -52,4 +52,11 @@ return [
         'cancelled' => 'Cannot receive items for a cancelled purchase order.',
         'exceeds_ordered' => "Cannot receive :quantity of ':item'. It would exceed the ordered quantity of :ordered (already received: :received).",
     ],
+
+    'operations' => [
+        'illegal_transition' => "Illegal operation transition: the operation is ':current', expected one of [:allowed].",
+        'claim_before_completion' => 'A financial claim can only be raised after supply and installation are complete.',
+        'reserve_exceeds_available' => "Cannot reserve :quantity of ':item'. Only :available available in :warehouse.",
+        'facility_exceeds_available' => "Cannot allocate :amount from ':facility'. Only :available available on the facility.",
+    ],
 ];

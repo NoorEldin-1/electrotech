@@ -636,6 +636,7 @@ return [
             'notes' => 'Notes',
             'lines' => 'Lines',
             'account' => 'Account',
+            'project' => 'Operation (cost center)',
             'direction' => 'Type',
             'amount' => 'Amount',
             'line_notes' => 'Notes',
@@ -720,6 +721,378 @@ return [
             'debit' => 'Debit',
             'credit' => 'Credit',
             'balance' => 'Balance',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Operations Overview (الإدارة العامة — نظرة عامة على العمليات)
+    |--------------------------------------------------------------------------
+    */
+    'operations_overview' => [
+        'label' => 'Operations Overview',
+        'plural_label' => 'Operations Overview',
+        'navigation_label' => 'Operations Overview',
+        'title' => 'Active Operations',
+        'empty' => 'No active operations.',
+        'filters' => [
+            'search' => 'Search by name, code or client',
+        ],
+        'columns' => [
+            'row' => '#',
+            'operation' => 'Operation',
+            'client' => 'Client',
+            'estimated_budget' => 'Budget',
+            'actual_cost' => 'Actual Cost',
+            'usage' => 'Budget Used',
+            'boms' => 'BOMs',
+            'work_orders' => 'Work Orders',
+            'purchase_orders' => 'Purchase Orders',
+            'deliveries' => 'Deliveries',
+            'status' => 'Status',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Operation Cost Center (الإدارة العامة — مركز تكلفة العملية)
+    |--------------------------------------------------------------------------
+    */
+    'operations_cost' => [
+        'label' => 'Operation Cost File',
+        'plural_label' => 'Operation Cost Files',
+        'navigation_label' => 'Operation Cost Center',
+        'title' => 'Operation Cost Center',
+        'select_operation' => 'Select operation',
+        'empty' => 'Select an operation to view its cost center.',
+        'cards' => [
+            'estimated_budget' => 'Estimated Budget',
+            'materials_cost' => 'Materials Cost',
+            'ledger_expenses' => 'Ledger Expenses',
+            'installation_expenses' => 'Installation Expenses',
+            'purchases_reference' => 'Purchases (reference)',
+            'total_cost' => 'Total Cost',
+            'revenue' => 'Revenue (deliveries)',
+            'received' => 'Received (cash)',
+            'profit' => 'Profit',
+            'margin' => 'Margin',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Operation Lifecycle actions & notifications (الإدارة العامة)
+    |--------------------------------------------------------------------------
+    */
+    'operations' => [
+        'actions' => [
+            'complete' => 'Complete Operation',
+            'hold' => 'Put On Hold',
+            'resume' => 'Resume Operation',
+        ],
+        'notifications' => [
+            'completed' => 'Operation marked as completed.',
+            'held' => 'Operation put on hold.',
+            'resumed' => 'Operation resumed.',
+            'activated_title' => 'New active operation',
+            'activated_body' => 'Operation :operation is now active and assigned to all departments.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Stock Reservations (الإدارة العامة — حجز الكمية للعملية)
+    |--------------------------------------------------------------------------
+    */
+    'stock_reservations' => [
+        'label' => 'Stock Reservation',
+        'plural_label' => 'Stock Reservations',
+        'navigation_label' => 'Stock Reservations',
+        'columns' => [
+            'operation' => 'Operation',
+            'item' => 'Item',
+            'warehouse' => 'Warehouse',
+            'quantity' => 'Quantity',
+            'status' => 'Status',
+            'released_at' => 'Released At',
+        ],
+        'fields' => [
+            'operation' => 'Operation',
+            'item' => 'Item',
+            'warehouse' => 'Warehouse',
+            'quantity' => 'Quantity',
+            'notes' => 'Notes',
+        ],
+        'actions' => [
+            'reserve' => 'Reserve Stock',
+            'release' => 'Release',
+        ],
+        'notifications' => [
+            'reserved' => 'Stock reserved for the operation.',
+            'released' => 'Reservation released.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Minutes (الإدارة العامة — محاضر التسليم)
+    |--------------------------------------------------------------------------
+    */
+    'delivery_minutes' => [
+        'label' => 'Delivery Minute',
+        'plural_label' => 'Delivery Minutes',
+        'navigation_label' => 'Delivery Minutes',
+        'sections' => [
+            'details' => 'Minute Details',
+        ],
+        'fields' => [
+            'minute_number' => 'Minute No.',
+            'minute_date' => 'Date',
+            'operation' => 'Operation',
+            'delivery_voucher' => 'Delivery Voucher',
+            'customer' => 'Customer',
+            'content' => 'Content',
+        ],
+        'columns' => [
+            'minute_number' => 'Minute No.',
+            'operation' => 'Operation',
+            'customer' => 'Customer',
+            'minute_date' => 'Date',
+            'distributed' => 'Distributed',
+        ],
+        'actions' => [
+            'distribute' => 'Distribute',
+        ],
+        'notifications' => [
+            'distributed' => 'Delivery minute distributed to all departments.',
+            'distributed_title' => 'Delivery minute',
+            'distributed_body' => 'Delivery minute :number for operation :operation has been distributed.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Financial Claims (الإدارة العامة — المطالبة المالية)
+    |--------------------------------------------------------------------------
+    */
+    'financial_claims' => [
+        'label' => 'Financial Claim',
+        'plural_label' => 'Financial Claims',
+        'navigation_label' => 'Financial Claims',
+        'sections' => [
+            'details' => 'Claim Details',
+        ],
+        'fields' => [
+            'claim_number' => 'Claim No.',
+            'claim_date' => 'Date',
+            'operation' => 'Operation',
+            'customer' => 'Customer',
+            'amount' => 'Amount',
+            'description' => 'Description',
+        ],
+        'columns' => [
+            'claim_number' => 'Claim No.',
+            'operation' => 'Operation',
+            'customer' => 'Customer',
+            'amount' => 'Amount',
+            'status' => 'Status',
+            'claim_date' => 'Date',
+        ],
+        'actions' => [
+            'submit' => 'Submit',
+            'collect' => 'Collect',
+        ],
+        'notifications' => [
+            'submitted' => 'Financial claim submitted.',
+            'collected' => 'Financial claim collected.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Operation Payments (الإدارة العامة — الدفعات والمقبوضات)
+    |--------------------------------------------------------------------------
+    */
+    'operation_payments' => [
+        'label' => 'Operation Payment',
+        'plural_label' => 'Operation Payments',
+        'navigation_label' => 'Payments',
+        'journal_description' => 'Operation payment :number',
+        'sections' => [
+            'details' => 'Payment Details',
+        ],
+        'fields' => [
+            'payment_number' => 'Payment No.',
+            'payment_date' => 'Date',
+            'operation' => 'Operation',
+            'customer' => 'Customer',
+            'direction' => 'Direction',
+            'method' => 'Method',
+            'amount' => 'Amount',
+            'currency' => 'Currency',
+            'account' => 'Treasury / Bank account',
+            'account_hint' => 'Required to auto-post a journal entry.',
+            'counter_account' => 'Counter account',
+            'financial_claim' => 'Financial Claim',
+            'reference' => 'Reference',
+            'notes' => 'Notes',
+        ],
+        'columns' => [
+            'payment_number' => 'Payment No.',
+            'operation' => 'Operation',
+            'customer' => 'Customer',
+            'direction' => 'Direction',
+            'method' => 'Method',
+            'amount' => 'Amount',
+            'payment_date' => 'Date',
+            'posted' => 'Posted to GL',
+        ],
+        'filters' => [
+            'from' => 'From',
+            'until' => 'Until',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Supply Orders File (ملف أوامر التوريد)
+    |--------------------------------------------------------------------------
+    */
+    'supply_orders_file' => [
+        'label' => 'Supply Orders File',
+        'navigation_label' => 'Supply Orders File',
+        'title' => 'Supply Orders File',
+        'select_operation' => 'Select operation',
+        'empty' => 'Select an operation to view its supply orders file.',
+        'orders_heading' => 'Purchase / Supply Orders',
+        'no_orders' => 'No purchase orders for this operation.',
+        'summary' => [
+            'revenue' => 'Revenue (deliveries)',
+            'received' => 'Received',
+            'paid' => 'Paid',
+            'outstanding' => 'Outstanding',
+        ],
+        'columns' => [
+            'po_number' => 'PO No.',
+            'supplier' => 'Supplier',
+            'status' => 'Status',
+            'total' => 'Total',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Credit Facilities (الإدارة العامة — التسهيلات الائتمانية)
+    |--------------------------------------------------------------------------
+    */
+    'credit_facilities' => [
+        'label' => 'Credit Facility',
+        'plural_label' => 'Credit Facilities',
+        'navigation_label' => 'Credit Facilities',
+        'sections' => [
+            'details' => 'Facility Details',
+        ],
+        'fields' => [
+            'name' => 'Name',
+            'status' => 'Status',
+            'account' => 'GL Account',
+            'customer' => 'Customer',
+            'limit_amount' => 'Limit',
+            'currency' => 'Currency',
+            'start_date' => 'Start Date',
+            'end_date' => 'End Date',
+            'notes' => 'Notes',
+        ],
+        'columns' => [
+            'name' => 'Name',
+            'account' => 'Account',
+            'limit_amount' => 'Limit',
+            'used_amount' => 'Used',
+            'available_amount' => 'Available',
+            'status' => 'Status',
+        ],
+    ],
+
+    'facility_allocations' => [
+        'label' => 'Allocation',
+        'plural_label' => 'Operation Allocations',
+        'fields' => [
+            'operation' => 'Operation',
+            'amount' => 'Allocated Amount',
+            'notes' => 'Notes',
+        ],
+        'columns' => [
+            'operation' => 'Operation',
+            'amount' => 'Amount',
+            'allocated_at' => 'Allocated At',
+            'status' => 'Status',
+        ],
+        'actions' => [
+            'allocate' => 'Allocate to Operation',
+            'release' => 'Release',
+        ],
+        'notifications' => [
+            'allocated' => 'Facility allocated to the operation.',
+            'released' => 'Allocation released.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Installations (الإدارة العامة — مرحلة التركيب)
+    |--------------------------------------------------------------------------
+    */
+    'installations' => [
+        'label' => 'Installation',
+        'plural_label' => 'Installations',
+        'navigation_label' => 'Installations',
+        'sections' => [
+            'details' => 'Installation Details',
+        ],
+        'fields' => [
+            'operation' => 'Operation',
+            'delivery_voucher' => 'Delivery Voucher',
+            'notes' => 'Notes',
+        ],
+        'columns' => [
+            'operation' => 'Operation',
+            'status' => 'Status',
+            'started_at' => 'Started',
+            'completed_at' => 'Completed',
+        ],
+        'actions' => [
+            'start' => 'Start Installation',
+            'complete' => 'Complete Installation',
+        ],
+        'notifications' => [
+            'started' => 'Installation started.',
+            'completed' => 'Installation completed.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Site Surveys (الإدارة العامة — معاينات الموقع)
+    |--------------------------------------------------------------------------
+    */
+    'site_surveys' => [
+        'label' => 'Site Survey',
+        'plural_label' => 'Site Surveys',
+        'navigation_label' => 'Site Surveys',
+        'sections' => [
+            'details' => 'Survey Details',
+        ],
+        'fields' => [
+            'operation' => 'Operation',
+            'survey_date' => 'Survey Date',
+            'surveyed_by' => 'Surveyed By',
+            'measurements' => 'Measurements',
+            'notes' => 'Notes',
+        ],
+        'columns' => [
+            'operation' => 'Operation',
+            'survey_date' => 'Survey Date',
+            'surveyed_by' => 'Surveyed By',
         ],
     ],
 
@@ -848,6 +1221,9 @@ return [
             'priority' => 'Priority',
             'planned' => 'Planned',
             'produced' => 'Produced',
+            'estimated_cost' => 'Estimated Cost',
+            'actual_cost' => 'Actual Cost',
+            'cost_variance' => 'Cost Variance',
             'assigned_to' => 'Assigned To',
             'start_date' => 'Start',
         ],
@@ -966,6 +1342,14 @@ return [
             'journal_entries' => 'Journal Entries',
             'general_ledger' => 'General Ledger',
             'trial_balance' => 'Trial Balance',
+            'operations' => 'Operations (General Management)',
+            'delivery_minutes' => 'Delivery Minutes',
+            'financial_claims' => 'Financial Claims',
+            'operation_payments' => 'Operation Payments',
+            'supply_orders_file' => 'Supply Orders File',
+            'credit_facilities' => 'Credit Facilities',
+            'installations' => 'Installations',
+            'site_surveys' => 'Site Surveys',
             'work_orders' => 'Work Orders',
             'users' => 'Users Management',
             'roles' => 'Roles Management',
@@ -1090,6 +1474,44 @@ return [
             ],
             'trial_balance' => [
                 'view' => 'View Trial Balance',
+            ],
+            'operations' => [
+                'overview' => 'View Operations Overview',
+                'view_cost' => 'View Operation Cost Center',
+                'activate' => 'Activate Operation',
+                'complete' => 'Complete Operation',
+                'hold' => 'Put Operation On Hold',
+                'reserve' => 'Reserve Stock for Operation',
+            ],
+            'delivery_minutes' => [
+                'view' => 'View Delivery Minutes',
+                'create' => 'Create Delivery Minute',
+                'distribute' => 'Distribute Delivery Minute',
+            ],
+            'financial_claims' => [
+                'view' => 'View Financial Claims',
+                'create' => 'Create Financial Claim',
+                'submit' => 'Submit Financial Claim',
+                'collect' => 'Collect Financial Claim',
+            ],
+            'operation_payments' => [
+                'view' => 'View Operation Payments',
+                'record' => 'Record Operation Payment',
+            ],
+            'supply_orders_file' => [
+                'view' => 'View Supply Orders File',
+            ],
+            'credit_facilities' => [
+                'view' => 'View Credit Facilities',
+                'manage' => 'Manage Credit Facilities',
+            ],
+            'installations' => [
+                'view' => 'View Installations',
+                'manage' => 'Manage Installations',
+            ],
+            'site_surveys' => [
+                'view' => 'View Site Surveys',
+                'manage' => 'Manage Site Surveys',
             ],
             'work_orders' => [
                 'view' => 'View Work Orders',
@@ -1232,6 +1654,41 @@ return [
     |--------------------------------------------------------------------------
     */
     'enums' => [
+        'reservation_status' => [
+            'active' => 'Active',
+            'released' => 'Released',
+        ],
+
+        'claim_status' => [
+            'draft' => 'Draft',
+            'submitted' => 'Submitted',
+            'collected' => 'Collected',
+            'cancelled' => 'Cancelled',
+        ],
+
+        'payment_direction' => [
+            'incoming' => 'Incoming (received)',
+            'outgoing' => 'Outgoing (paid)',
+        ],
+
+        'payment_method' => [
+            'cash' => 'Cash',
+            'cheque' => 'Cheque',
+            'bank_transfer' => 'Bank Transfer',
+        ],
+
+        'facility_status' => [
+            'active' => 'Active',
+            'expired' => 'Expired',
+            'closed' => 'Closed',
+        ],
+
+        'installation_status' => [
+            'pending' => 'Pending',
+            'in_progress' => 'In Progress',
+            'completed' => 'Completed',
+        ],
+
         'bom_status' => [
             'draft' => 'Draft',
             'pending_approval' => 'Pending Approval',
@@ -1266,6 +1723,7 @@ return [
             'drowing' => 'DROWING',
             'speces' => 'SPECES',
             'boq' => 'BOQ',
+            'site_measurement' => 'SITE MEASUREMENT',
         ],
 
         'lost_reason' => [

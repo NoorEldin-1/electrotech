@@ -126,6 +126,16 @@ class JournalEntryResource extends Resource
                                     ->preload()
                                     ->required(),
 
+                                // Optional cost-center tag (الإدارة العامة):
+                                // attach this line's expense to an operation so
+                                // the Operation Cost Center can aggregate it.
+                                Forms\Components\Select::make('project_id')
+                                    ->label(__('resources.journal_entries.fields.project'))
+                                    ->relationship(name: 'project', titleAttribute: 'name')
+                                    ->searchable(['name', 'code'])
+                                    ->preload()
+                                    ->nullable(),
+
                                 Forms\Components\Select::make('direction')
                                     ->label(__('resources.journal_entries.fields.direction'))
                                     ->options(AccountDirection::class)

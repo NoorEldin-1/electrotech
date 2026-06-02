@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\LostReason;
 use App\Enums\ProjectStatus;
+use App\Events\OperationActivated;
 use App\Models\Project;
 use App\Models\ProjectOffer;
 use Carbon\CarbonInterface;
@@ -92,6 +93,11 @@ class SalesPipelineService
                 $latest->save();
             }
         });
+
+        // Cascade the operation to all departments (الإدارة العامة): notify
+        // each department that a new operation is active. Dispatched after the
+        // transaction commits so listeners see the persisted InProgress state.
+        OperationActivated::dispatch($project);
     }
 
     /**
