@@ -42,6 +42,9 @@ php artisan migrate --force
 log "Syncing roles and permissions catalog"
 php artisan db:seed --class=Database\\Seeders\\RoleAndPermissionSeeder --force
 
+log "Seeding chart of accounts (only adds missing accounts; never overwrites admin edits)"
+php artisan db:seed --class=Database\\Seeders\\ChartOfAccountsSeeder --force
+
 log "Clearing old caches"
 php artisan optimize:clear
 php artisan filament:clear-cached-components || true

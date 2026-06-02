@@ -167,6 +167,19 @@ class RoleAndPermissionSeeder extends Seeder
             'supplier_statements.view',
             'customer_statements.view',
 
+            // Finance — General Ledger (الإدارة المالية)
+            'accounts.view',
+            'accounts.create',
+            'accounts.edit',
+            'accounts.delete',
+            'journal_entries.view',
+            'journal_entries.create',
+            'journal_entries.edit',
+            'journal_entries.post',
+            'journal_entries.delete',
+            'general_ledger.view',
+            'trial_balance.view',
+
             // Manufacturing / Work Orders
             'work_orders.view',
             'work_orders.create',
@@ -357,6 +370,17 @@ class RoleAndPermissionSeeder extends Seeder
                 'delivery_vouchers.approve_financial',
                 'supplier_statements.view',
                 'customer_statements.view',
+                // General ledger (الإدارة المالية): chart of accounts, journal
+                // entries, ledger and trial balance.
+                'accounts.view',
+                'accounts.create',
+                'accounts.edit',
+                'journal_entries.view',
+                'journal_entries.create',
+                'journal_entries.edit',
+                'journal_entries.post',
+                'general_ledger.view',
+                'trial_balance.view',
                 'dashboard.view',
             ],
         ];

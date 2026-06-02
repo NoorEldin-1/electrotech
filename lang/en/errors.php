@@ -22,6 +22,12 @@ return [
         'no_lines' => 'Voucher :number has no items to post.',
     ],
 
+    'journal' => [
+        'already_posted' => 'Journal entry :number is already posted.',
+        'no_lines' => 'Journal entry :number must have at least two lines.',
+        'unbalanced' => 'Journal entry :number is not balanced. Debit: :debit, Credit: :credit.',
+    ],
+
     'issue' => [
         'no_bom' => 'Work Order :number has no linked BOM, so an issue voucher cannot be created.',
     ],

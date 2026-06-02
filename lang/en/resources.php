@@ -572,6 +572,159 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Chart of Accounts Resource (شجرة الحسابات)
+    |--------------------------------------------------------------------------
+    */
+    'accounts' => [
+        'label' => 'Account',
+        'plural_label' => 'Chart of Accounts',
+        'navigation_label' => 'Chart of Accounts',
+
+        'sections' => [
+            'details' => 'Account Details',
+            'opening' => 'Opening Balance',
+        ],
+
+        'fields' => [
+            'code' => 'Code',
+            'name' => 'Name',
+            'name_en' => 'Name (English)',
+            'type' => 'Type',
+            'nature' => 'Nature',
+            'currency' => 'Currency',
+            'parent' => 'Parent Account',
+            'is_active' => 'Active',
+            'opening_balance' => 'Opening Balance',
+            'opening_balance_hint' => 'Signed by the account nature (رصيد أول المدة).',
+            'opening_balance_date' => 'Opening Balance Date',
+            'notes' => 'Notes',
+        ],
+
+        'columns' => [
+            'code' => 'Code',
+            'name' => 'Account',
+            'type' => 'Type',
+            'nature' => 'Nature',
+            'currency' => 'Currency',
+            'opening_balance' => 'Opening Balance',
+            'is_active' => 'Active',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Journal Entry Resource (قيود اليومية)
+    |--------------------------------------------------------------------------
+    */
+    'journal_entries' => [
+        'label' => 'Journal Entry',
+        'plural_label' => 'Journal Entries',
+        'navigation_label' => 'Journal Entries',
+
+        'sections' => [
+            'details' => 'Entry Details',
+            'lines' => 'Entry Lines',
+        ],
+
+        'fields' => [
+            'entry_number' => 'Entry No.',
+            'document_type' => 'Document Type',
+            'document_number' => 'Document No.',
+            'entry_date' => 'Date',
+            'description' => 'Description',
+            'currency' => 'Currency',
+            'notes' => 'Notes',
+            'lines' => 'Lines',
+            'account' => 'Account',
+            'direction' => 'Type',
+            'amount' => 'Amount',
+            'line_notes' => 'Notes',
+            'totals' => 'Totals',
+        ],
+
+        'columns' => [
+            'entry_number' => 'Entry No.',
+            'document_type' => 'Document',
+            'document_number' => 'Document No.',
+            'entry_date' => 'Date',
+            'description' => 'Description',
+            'total_debit' => 'Debit',
+            'total_credit' => 'Credit',
+            'status' => 'Status',
+        ],
+
+        'filters' => [
+            'from' => 'From',
+            'until' => 'Until',
+        ],
+
+        'actions' => [
+            'post' => 'Post',
+            'post_confirm' => 'Posting reflects this entry in the ledgers and trial balance. It can no longer be edited.',
+        ],
+
+        'placeholders' => [
+            'total_debit' => 'Total Debit',
+            'total_credit' => 'Total Credit',
+            'difference' => 'Difference (must be zero)',
+        ],
+
+        'notifications' => [
+            'posted' => 'Journal entry posted.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | General Ledger (دفتر الأستاذ)
+    |--------------------------------------------------------------------------
+    */
+    'general_ledger' => [
+        'title' => 'Ledger',
+        'line_label' => 'ledger entry',
+        'lines_label' => 'ledger entries',
+        'empty' => 'No posted ledger entries yet.',
+        'opening_balance' => 'Opening Balance',
+        'total' => 'Total',
+
+        'columns' => [
+            'date' => 'Date',
+            'document_number' => 'Document No.',
+            'document_type' => 'Document',
+            'description' => 'Description',
+            'debit' => 'Debit',
+            'credit' => 'Credit',
+            'balance' => 'Balance',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Trial Balance (ميزان المراجعة)
+    |--------------------------------------------------------------------------
+    */
+    'trial_balance' => [
+        'label' => 'Trial Balance',
+        'navigation_label' => 'Trial Balance',
+        'title' => 'Trial Balance',
+        'as_of' => 'As of date',
+        'currency' => 'Currency',
+        'totals' => 'Totals',
+        'balanced' => 'The trial balance is balanced.',
+        'unbalanced' => 'Warning: the trial balance does not balance.',
+        'empty' => 'No accounts to display.',
+
+        'columns' => [
+            'row' => '#',
+            'account' => 'Account',
+            'debit' => 'Debit',
+            'credit' => 'Credit',
+            'balance' => 'Balance',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Delivery Voucher Resource (إذن تسليم)
     |--------------------------------------------------------------------------
     */
@@ -809,6 +962,10 @@ return [
             'customers' => 'Customers',
             'supplier_statements' => 'Supplier Statements',
             'customer_statements' => 'Customer Statements',
+            'accounts' => 'Chart of Accounts',
+            'journal_entries' => 'Journal Entries',
+            'general_ledger' => 'General Ledger',
+            'trial_balance' => 'Trial Balance',
             'work_orders' => 'Work Orders',
             'users' => 'Users Management',
             'roles' => 'Roles Management',
@@ -914,6 +1071,25 @@ return [
             ],
             'customer_statements' => [
                 'view' => 'View Customer Statements',
+            ],
+            'accounts' => [
+                'view' => 'View Chart of Accounts',
+                'create' => 'Create Account',
+                'edit' => 'Edit Accounts',
+                'delete' => 'Delete Accounts',
+            ],
+            'journal_entries' => [
+                'view' => 'View Journal Entries',
+                'create' => 'Create Journal Entry',
+                'edit' => 'Edit Journal Entries',
+                'post' => 'Post Journal Entries',
+                'delete' => 'Delete Journal Entries',
+            ],
+            'general_ledger' => [
+                'view' => 'View General Ledger',
+            ],
+            'trial_balance' => [
+                'view' => 'View Trial Balance',
             ],
             'work_orders' => [
                 'view' => 'View Work Orders',
@@ -1144,6 +1320,25 @@ return [
         'account_direction' => [
             'debit' => 'Debit',
             'credit' => 'Credit',
+        ],
+
+        'account_type' => [
+            'asset' => 'Asset',
+            'liability' => 'Liability',
+            'equity' => 'Equity',
+            'revenue' => 'Revenue',
+            'expense' => 'Expense',
+        ],
+
+        'document_type' => [
+            'payment_order' => 'Payment Order',
+            'supply_receipt' => 'Supply Receipt',
+            'settlement' => 'Settlement Entry',
+        ],
+
+        'journal_status' => [
+            'draft' => 'Draft',
+            'posted' => 'Posted',
         ],
 
         'delivery_voucher_status' => [
