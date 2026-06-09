@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\ArrivalMethod;
+use App\Enums\ConductorType;
 use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\User;
@@ -15,14 +16,14 @@ class ProjectFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->company() . ' Project',
-            'code' => 'PRJ-' . fake()->numerify('######-####'),
+            'name' => fake()->company().' Project',
+            'code' => 'PRJ-'.fake()->numerify('######-####'),
             'client_name' => fake()->company(),
             'consultant_name' => fake()->name(),
             'engineer_name' => fake()->name(),
             'electric_current' => fake()->randomElement(['16A', '32A', '63A', '100A', '160A']),
             'model' => fake()->bothify('M-####'),
-            'section_type' => fake()->randomElement(['Main', 'Sub', 'Distribution']),
+            'section_type' => fake()->randomElement(ConductorType::cases())->value,
             'poles_count' => fake()->randomElement([1, 2, 3, 4]),
             'quantity' => fake()->numberBetween(1, 50),
             'project_location' => fake()->city(),

@@ -9,6 +9,7 @@ use App\Enums\ProjectStatus;
 use App\Filament\Resources\TenderProjectResource\Pages;
 use App\Models\Project;
 use App\Services\SalesPipelineService;
+use Carbon\Carbon;
 use DomainException;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -70,6 +71,15 @@ class TenderProjectResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->limit(40),
+
+                Tables\Columns\IconColumn::make('missing_offer')
+                    ->label(__('resources.sales_alerts.column'))
+                    ->getStateUsing(fn (Project $r): bool => ! $r->hasPricedOffer())
+                    ->trueIcon('heroicon-o-exclamation-triangle')
+                    ->falseIcon('heroicon-o-check-circle')
+                    ->trueColor('danger')
+                    ->falseColor('success')
+                    ->tooltip(fn (Project $r): ?string => $r->hasPricedOffer() ? null : __('resources.sales_alerts.missing_offer_tooltip')),
 
                 Tables\Columns\TextColumn::make('latestOffer.financial_amount')
                     ->label(__('resources.tender_projects.columns.financial_offer'))
@@ -176,7 +186,7 @@ class TenderProjectResource extends Resource
                     ->action(function (Project $r, array $data) {
                         app(SalesPipelineService::class)->setAlarm(
                             $r,
-                            \Carbon\Carbon::parse($data['alarm_at']),
+                            Carbon::parse($data['alarm_at']),
                             $data['alarm_note'] ?? null,
                         );
                         Notification::make()

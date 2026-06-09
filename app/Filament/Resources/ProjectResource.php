@@ -6,8 +6,10 @@ namespace App\Filament\Resources;
 
 use App\Enums\ArrivalMethod;
 use App\Enums\AttachmentCategory;
+use App\Enums\ConductorType;
 use App\Enums\ProjectStatus;
 use App\Filament\Resources\ProjectResource\Pages;
+use App\Filament\Support\MoneyInput;
 use App\Models\Project;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -81,7 +83,7 @@ class ProjectResource extends Resource
                         Forms\Components\Select::make('status')
                             ->label(__('resources.projects.fields.status'))
                             ->options(ProjectStatus::class)
-                            ->default(ProjectStatus::Draft)
+                            ->default(ProjectStatus::Tender)
                             ->disabled()
                             ->dehydrated()
                             ->helperText(__('resources.projects.fields.status_helper'))
@@ -108,9 +110,10 @@ class ProjectResource extends Resource
                             ->label(__('resources.projects.fields.model'))
                             ->maxLength(255),
 
-                        Forms\Components\TextInput::make('section_type')
+                        Forms\Components\Select::make('section_type')
                             ->label(__('resources.projects.fields.section_type'))
-                            ->maxLength(255),
+                            ->options(ConductorType::class)
+                            ->native(false),
 
                         Forms\Components\TextInput::make('poles_count')
                             ->label(__('resources.projects.fields.poles_count'))
@@ -136,16 +139,12 @@ class ProjectResource extends Resource
                     ->icon('heroicon-o-currency-dollar')
                     ->columns(2)
                     ->schema([
-                        Forms\Components\TextInput::make('estimated_budget')
+                        MoneyInput::make('estimated_budget')
                             ->label(__('resources.projects.fields.estimated_budget'))
-                            ->numeric()
-                            ->prefix('EGP')
                             ->default(0),
 
-                        Forms\Components\TextInput::make('actual_cost')
+                        MoneyInput::make('actual_cost')
                             ->label(__('resources.projects.fields.actual_cost'))
-                            ->numeric()
-                            ->prefix('EGP')
                             ->default(0)
                             ->disabled()
                             ->dehydrated(),
@@ -154,59 +153,20 @@ class ProjectResource extends Resource
                             ->label(__('resources.projects.fields.start_date')),
                         Forms\Components\DatePicker::make('end_date')
                             ->label(__('resources.projects.fields.end_date'))
-                            ->after('start_date'),
+                            ->after('start_date')
+                            ->helperText(__('resources.projects.fields.end_date_helper')),
                     ]),
 
+                // Offers are now full BOQ documents (tables of priced line items
+                // + VAT + terms), managed in the dedicated "Offers" tab once the
+                // project exists. See OffersRelationManager.
                 Forms\Components\Section::make(__('resources.projects.sections.offers'))
                     ->icon('heroicon-o-banknotes')
-                    ->description(__('resources.projects.sections.offers_description'))
+                    ->visibleOn('create')
                     ->schema([
-                        Forms\Components\Placeholder::make('latest_offer_summary')
-                            ->label(__('resources.projects.fields.latest_offer'))
-                            ->content(function (?Project $record): string {
-                                $offer = $record?->latestOffer;
-                                if ($offer === null) {
-                                    return __('resources.projects.fields.no_offers_yet');
-                                }
-                                $financial = number_format((float) $offer->financial_amount, 2);
-                                $technical = $offer->technical_amount !== null
-                                    ? ' / ' . number_format((float) $offer->technical_amount, 2)
-                                    : '';
-
-                                return "v{$offer->version} — EGP {$financial}{$technical}";
-                            }),
-
-                        Forms\Components\Repeater::make('offers')
-                            ->relationship()
-                            ->label(__('resources.projects.sections.offers'))
-                            ->columns(4)
-                            ->schema([
-                                Forms\Components\TextInput::make('financial_amount')
-                                    ->label(__('resources.projects.fields.financial_amount'))
-                                    ->numeric()
-                                    ->prefix('EGP')
-                                    ->required(),
-
-                                Forms\Components\TextInput::make('technical_amount')
-                                    ->label(__('resources.projects.fields.technical_amount'))
-                                    ->numeric()
-                                    ->prefix('EGP'),
-
-                                Forms\Components\DateTimePicker::make('submitted_at')
-                                    ->label(__('resources.projects.fields.submitted_at'))
-                                    ->default(now())
-                                    ->required(),
-
-                                Forms\Components\TextInput::make('notes')
-                                    ->label(__('resources.projects.fields.offer_notes'))
-                                    ->maxLength(255),
-
-                                Forms\Components\Hidden::make('submitted_by')
-                                    ->default(fn () => auth()->id()),
-                            ])
-                            ->defaultItems(0)
-                            ->reorderable(false)
-                            ->visible(fn () => auth()->user()?->can('project_offers.view') ?? false),
+                        Forms\Components\Placeholder::make('offers_hint')
+                            ->hiddenLabel()
+                            ->content(__('resources.projects.sections.offers_after_save_hint')),
                     ]),
 
                 Forms\Components\Section::make(__('resources.projects.sections.attachments'))
@@ -214,7 +174,11 @@ class ProjectResource extends Resource
                     ->description(__('resources.projects.sections.attachments_description'))
                     ->columns(1)
                     ->schema(self::attachmentCategorySchema())
-                    ->visible(fn () => auth()->user()?->can('attachments.upload') ?? false),
+                    // Slide 3: other departments need to see/download the files
+                    // Sales uploads — show the section to anyone who can download
+                    // OR upload (the upload controls themselves are gated below).
+                    ->visible(fn () => (auth()->user()?->can('attachments.download') ?? false)
+                        || (auth()->user()?->can('attachments.upload') ?? false)),
 
                 Forms\Components\Section::make(__('resources.projects.sections.description'))
                     ->schema([
@@ -236,10 +200,23 @@ class ProjectResource extends Resource
         $components = [];
         foreach (AttachmentCategory::cases() as $category) {
             $components[] = Forms\Components\FileUpload::make("attachments_{$category->value}")
-                ->label(__('resources.enums.attachment_category.' . $category->value))
+                ->label(__('resources.enums.attachment_category.'.$category->value))
                 ->multiple()
                 ->preserveFilenames()
-                ->directory(fn (?Project $record) => 'attachments/' . ($record?->id ?? 'new') . '/' . $category->value)
+                // Files are engineering deliverables (AutoCAD, BOQ sheets, and
+                // crucially .rar/.zip bundles). Browsers can't preview an archive,
+                // which is why "the file wouldn't open" (Slide 3). Keep the upload
+                // unrestricted but expose explicit download/open controls and
+                // disable the inline preview so every category is retrievable by
+                // any department that can see the project.
+                ->downloadable()
+                ->openable()
+                ->previewable(false)
+                // Download-only departments see the files but can't add/remove
+                // them (a disabled FileUpload still exposes download/open).
+                ->disabled(fn (): bool => ! (auth()->user()?->can('attachments.upload') ?? false))
+                ->maxSize(40960) // 40 MB — kept in sync with config/livewire.php temporary_file_upload rules
+                ->directory(fn (?Project $record) => 'attachments/'.($record?->id ?? 'new').'/'.$category->value)
                 ->disk('public')
                 ->afterStateHydrated(function (Forms\Components\FileUpload $component, ?Project $record) use ($category) {
                     if ($record === null) {
@@ -356,7 +333,10 @@ class ProjectResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            ProjectResource\RelationManagers\OffersRelationManager::class,
+            ProjectResource\RelationManagers\ActivitiesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

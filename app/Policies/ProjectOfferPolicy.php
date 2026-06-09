@@ -37,6 +37,11 @@ class ProjectOfferPolicy
         return $user->can('project_offers.delete');
     }
 
+    public function print(User $user, ProjectOffer $offer): bool
+    {
+        return $user->can('project_offers.print');
+    }
+
     public function restore(User $user, ProjectOffer $offer): bool
     {
         return $user->can('project_offers.delete');

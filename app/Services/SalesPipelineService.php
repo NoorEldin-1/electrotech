@@ -84,6 +84,15 @@ class SalesPipelineService
 
         DB::transaction(function () use ($project) {
             $project->status = ProjectStatus::InProgress;
+
+            // Slide 1: the End Date is set automatically the moment the
+            // operation graduates from the Sales pipeline into Active
+            // Operations. Only fill it when Sales left it blank — never
+            // overwrite a date entered by hand.
+            if ($project->end_date === null) {
+                $project->end_date = now()->toDateString();
+            }
+
             $project->save();
 
             $latest = $project->latestOffer;

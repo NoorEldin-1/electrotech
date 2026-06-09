@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\OfferPdfController;
 use App\Http\Controllers\PingController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -28,3 +29,9 @@ Route::middleware([
 ])
     ->get('/admin/ping', PingController::class)
     ->name('admin.ping');
+
+// Printable PDF quotation for a project offer (Slides 7 & 8). Streamed
+// through PHP and gated by ProjectOfferPolicy::print (project_offers.print).
+Route::middleware('auth')
+    ->get('offers/{offer}/pdf', [OfferPdfController::class, 'show'])
+    ->name('offers.pdf');

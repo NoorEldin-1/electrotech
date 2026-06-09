@@ -9,6 +9,7 @@ use App\Enums\ProjectStatus;
 use App\Filament\Resources\InHandProjectResource\Pages;
 use App\Models\Project;
 use App\Services\SalesPipelineService;
+use Carbon\Carbon;
 use DomainException;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -69,6 +70,15 @@ class InHandProjectResource extends Resource
                     ->sortable()
                     ->limit(40),
 
+                Tables\Columns\IconColumn::make('missing_offer')
+                    ->label(__('resources.sales_alerts.column'))
+                    ->getStateUsing(fn (Project $r): bool => ! $r->hasPricedOffer())
+                    ->trueIcon('heroicon-o-exclamation-triangle')
+                    ->falseIcon('heroicon-o-check-circle')
+                    ->trueColor('danger')
+                    ->falseColor('success')
+                    ->tooltip(fn (Project $r): ?string => $r->hasPricedOffer() ? null : __('resources.sales_alerts.missing_offer_tooltip')),
+
                 Tables\Columns\TextColumn::make('smb_status')
                     ->label(__('resources.in_hand_projects.columns.smb'))
                     ->badge()
@@ -107,6 +117,29 @@ class InHandProjectResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->url(fn (Project $r) => ProjectResource::getUrl('edit', ['record' => $r])),
+
+                // Standalone manager-approval gate (Slide 5): previously the
+                // only way to approve was buried inside the "move to active"
+                // modal and hidden from non-managers, so reviewers couldn't
+                // find it. Surface it as its own action for whoever holds
+                // projects.manager_approve, while the operation is still
+                // awaiting approval.
+                Tables\Actions\Action::make('manager_approve')
+                    ->label(__('resources.in_hand_projects.actions.manager_approve'))
+                    ->icon('heroicon-o-shield-check')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('resources.in_hand_projects.actions.manager_approve_modal_heading'))
+                    ->visible(fn (Project $r): bool => $r->manager_approved_at === null
+                        && (auth()->user()?->can('managerApprove', $r) ?? false))
+                    ->action(function (Project $r) {
+                        app(SalesPipelineService::class)->managerApprove($r);
+
+                        Notification::make()
+                            ->success()
+                            ->title(__('resources.in_hand_projects.notifications.manager_approved'))
+                            ->send();
+                    }),
 
                 Tables\Actions\Action::make('action')
                     ->label(__('resources.in_hand_projects.actions.action'))
@@ -200,7 +233,7 @@ class InHandProjectResource extends Resource
                     ->action(function (Project $r, array $data) {
                         app(SalesPipelineService::class)->setAlarm(
                             $r,
-                            \Carbon\Carbon::parse($data['alarm_at']),
+                            Carbon::parse($data['alarm_at']),
                             $data['alarm_note'] ?? null,
                         );
                         Notification::make()

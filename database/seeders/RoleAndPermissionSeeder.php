@@ -104,6 +104,7 @@ class RoleAndPermissionSeeder extends Seeder
             'projects.cancel_to_lost',
             'projects.set_alarm',
             'projects.manager_approve',
+            'projects.view_history',
             'attachments.upload',
             'attachments.download',
             'attachments.delete',
@@ -113,6 +114,7 @@ class RoleAndPermissionSeeder extends Seeder
             'project_offers.create',
             'project_offers.edit',
             'project_offers.delete',
+            'project_offers.print',
 
             // Technical Office / BOM
             'items.view',
@@ -249,9 +251,11 @@ class RoleAndPermissionSeeder extends Seeder
                 'projects.move_to_active',
                 'projects.cancel_to_lost',
                 'projects.set_alarm',
+                'projects.view_history',
                 'project_offers.view',
                 'project_offers.create',
                 'project_offers.edit',
+                'project_offers.print',
                 'customers.view',
                 'customers.create',
                 'customers.edit',
@@ -274,10 +278,12 @@ class RoleAndPermissionSeeder extends Seeder
                 'projects.cancel_to_lost',
                 'projects.set_alarm',
                 'projects.manager_approve',
+                'projects.view_history',
                 'project_offers.view',
                 'project_offers.create',
                 'project_offers.edit',
                 'project_offers.delete',
+                'project_offers.print',
                 'customers.view',
                 'customers.create',
                 'customers.edit',
@@ -324,6 +330,7 @@ class RoleAndPermissionSeeder extends Seeder
             'Procurement' => [
                 'projects.view',
                 'project_offers.view',
+                'attachments.download',
                 'items.view',
                 'boms.view',
                 'inventory.view',
@@ -346,6 +353,7 @@ class RoleAndPermissionSeeder extends Seeder
             'Factory_Manager' => [
                 'projects.view',
                 'project_offers.view',
+                'attachments.download',
                 'items.view',
                 'boms.view',
                 'inventory.view',
@@ -377,6 +385,7 @@ class RoleAndPermissionSeeder extends Seeder
             // per PDF spec: "pricing hidden from warehouse keepers"
             'Warehouse_Manager' => [
                 'projects.view',
+                'attachments.download',
                 'items.view',
                 'inventory.view',
                 'inventory.manage',
@@ -402,6 +411,7 @@ class RoleAndPermissionSeeder extends Seeder
             'Finance' => [
                 'projects.view',
                 'project_offers.view',
+                'attachments.download',
                 'suppliers.view',
                 'customers.view',
                 'inventory.view',

@@ -20,6 +20,7 @@ return [
             'financial_timeline' => 'Financial & Timeline',
             'offers' => 'Offers',
             'offers_description' => 'Add a new financial / technical offer. The latest offer is what appears on the Tender list.',
+            'offers_after_save_hint' => 'Save the project first, then add detailed offers (BOQ tables, VAT and terms) from the Offers tab.',
             'attachments' => 'Project Attachments',
             'attachments_description' => 'Upload files under the appropriate category — UPLOAD, VENDOR LIST, DROWING, SPECES, BOQ.',
             'description' => 'Description',
@@ -33,17 +34,18 @@ return [
             'engineer_name' => 'Engineer Name',
             'electric_current' => 'Electric Current',
             'model' => 'Model',
-            'section_type' => 'Section Type',
+            'section_type' => 'Conductor Name',
             'poles_count' => 'Number of Poles',
             'quantity' => 'Quantity',
             'project_location' => 'Project Location',
             'arrival_method' => 'How the Operation Arrived',
             'status' => 'Status',
-            'status_helper' => 'Status is driven by the Sales pipeline actions (Action / Cancel) — it is not edited directly.',
+            'status_helper' => 'A new operation starts in Tender, so it appears under Tender Projects. "Draft" is a saved-but-not-yet-submitted operation. The status then moves Tender → In-Hand → Active Operation through the Action / Cancel buttons — it is not edited here.',
             'estimated_budget' => 'Estimated Budget',
             'actual_cost' => 'Actual Cost',
             'start_date' => 'Start Date',
             'end_date' => 'End Date',
+            'end_date_helper' => 'Set automatically when the operation moves to Active Operations, if left empty.',
             'alarm_at' => 'Alarm Time',
             'alarm_note' => 'Alarm Note',
             'smb_status' => 'SMB Status',
@@ -56,6 +58,7 @@ return [
             'winning_competitor' => 'Winning Competitor',
             'financial_amount' => 'Financial Amount',
             'technical_amount' => 'Technical Amount',
+            'technical_amount_helper' => 'Price of the separate technical / engineering proposal, when submitted alongside the financial offer. Leave empty if the offer is purely financial.',
             'submitted_at' => 'Submitted At',
             'offer_notes' => 'Offer Notes',
             'latest_offer' => 'Latest Offer',
@@ -90,6 +93,109 @@ return [
             'move_to_tender_needs_offer_body' => 'Edit the project and add at least one offer in the Offers section before sending to Tender.',
             'status_changed' => 'Project status updated.',
         ],
+
+        'relations' => [
+            'activities' => [
+                'title' => 'History',
+                'columns' => [
+                    'date' => 'When',
+                    'event' => 'Event',
+                    'changes' => 'Changed Fields',
+                    'causer' => 'By',
+                ],
+                'events' => [
+                    'created' => 'Created',
+                    'updated' => 'Updated',
+                    'deleted' => 'Deleted',
+                ],
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Project Offers — BOQ documents (Slides 2, 7 & 8)
+    |--------------------------------------------------------------------------
+    */
+    'project_offers' => [
+        'title' => 'Offers',
+        'label' => 'Offer',
+        'plural_label' => 'Offers',
+
+        'sections' => [
+            'header' => 'Offer Details',
+            'groups' => 'Offer Tables',
+            'items' => 'Line Items',
+        ],
+
+        'fields' => [
+            'quotation_number' => 'Quotation No.',
+            'currency' => 'Currency',
+            'technical_amount' => 'Technical Amount',
+            'technical_amount_helper' => 'Price of the separate technical / engineering proposal, when submitted alongside the financial offer. Leave empty if the offer is purely financial.',
+            'vat_percentage' => 'VAT %',
+            'show_vat' => 'Show VAT in the offer',
+            'show_vat_helper' => 'When off, the offer total excludes value-added tax.',
+            'submitted_at' => 'Submission Date',
+            'group_label' => 'Table Title',
+            'conductor_type' => 'Conductor',
+            'description' => 'Description',
+            'unit' => 'Unit',
+            'quantity' => 'Qty',
+            'unit_price' => 'Unit Price',
+            'line_total' => 'Total',
+            'subtotal' => 'Subtotal',
+            'tax_amount' => 'VAT',
+            'grand_total' => 'Grand Total',
+            'totals' => 'Totals',
+            'terms' => 'Notes / Terms',
+            'terms_helper' => 'Free-text notes shown under the table — payment terms, delivery dates, installation %, and other details.',
+        ],
+
+        'columns' => [
+            'version' => 'Ver.',
+            'quotation_number' => 'Quotation No.',
+            'grand_total' => 'Grand Total',
+            'technical_amount' => 'Technical',
+            'is_winning' => 'Winning',
+            'submitted_at' => 'Submitted',
+        ],
+
+        'actions' => [
+            'add_group' => 'Add table',
+            'add_item' => 'Add line',
+            'print' => 'Print',
+        ],
+
+        'pdf' => [
+            'company_name' => 'Electrotech for Electrical Industries',
+            'quotation' => 'Quotation',
+            'quotation_no' => 'Quotation No.',
+            'date' => 'Date',
+            'project' => 'Project',
+            'to' => 'To',
+            'conductor_type' => 'Conductor type',
+            'item_no' => 'ITEM NO.',
+            'description' => 'DESCRIPTION',
+            'unit' => 'UNIT',
+            'qty' => 'QTY',
+            'unit_price' => 'UNIT PRICE',
+            'total_price' => 'T. PRICE',
+            'subtotal' => 'Subtotal',
+            'taxes' => 'Taxes',
+            'grand_total' => 'Grand total',
+            'technical_offer' => 'Technical offer',
+            'terms_title' => 'Terms',
+            'best_regards' => 'Best Regards',
+            'sales_manager' => 'Sales Manager',
+        ],
+    ],
+
+    'sales_alerts' => [
+        'column' => 'Offer',
+        'missing_offer_tooltip' => 'No priced offer recorded for this operation yet.',
+        'notification_title' => 'Operations missing an offer',
+        'notification_body' => ':count pipeline operation(s) have no priced offer yet.',
     ],
 
     /*
@@ -171,6 +277,8 @@ return [
             'action' => 'Action — Move to Active',
             'action_modal_heading' => 'Move this operation to Active Operations?',
             'action_modal_description' => 'Requires an acceptance email date and manager approval.',
+            'manager_approve' => 'Manager Approve',
+            'manager_approve_modal_heading' => 'Approve this operation as manager?',
             'cancel' => 'Cancel — Move to Lost',
             'cancel_modal_heading' => 'Cancel and move to Lost?',
             'set_alarm' => 'Set Alarm',
@@ -180,6 +288,7 @@ return [
         'notifications' => [
             'moved_to_active' => 'Operation moved to Active Operations.',
             'moved_to_lost' => 'Operation moved to Lost.',
+            'manager_approved' => 'Manager approval recorded.',
             'alarm_set' => 'Alarm set.',
             'alarm_cleared' => 'Alarm cleared.',
         ],
@@ -1371,12 +1480,14 @@ return [
                 'cancel_to_lost' => 'Cancel Project to Lost',
                 'set_alarm' => 'Set Project Alarm',
                 'manager_approve' => 'Manager Approve Project',
+                'view_history' => 'View Operation History',
             ],
             'project_offers' => [
                 'view' => 'View Project Offers',
                 'create' => 'Create Project Offer',
                 'edit' => 'Edit Project Offers',
                 'delete' => 'Delete Project Offers',
+                'print' => 'Print Offer',
             ],
             'attachments' => [
                 'upload' => 'Upload Attachments',
@@ -1715,6 +1826,12 @@ return [
             'tender_invitation' => 'Tender Invitation',
             'website' => 'Website',
             'other' => 'Other',
+        ],
+
+        'conductor_type' => [
+            'copper' => 'Copper',
+            'aluminum' => 'Aluminium',
+            'bi_metal' => 'Bi-Metal',
         ],
 
         'attachment_category' => [

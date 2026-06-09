@@ -14,9 +14,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -190,6 +190,22 @@ class Project extends Model
         return $this->hasOne(ProjectOffer::class)->latestOfMany('version');
     }
 
+    /**
+     * Whether this operation carries at least one offer with a real price
+     * (financial_amount > 0). Drives the "missing offer" Sales alert — Slide 5
+     * asks the system to flag an operation added without a financial/technical
+     * offer.
+     */
+    public function hasPricedOffer(): bool
+    {
+        return $this->offers()->where('financial_amount', '>', 0)->exists();
+    }
+
+    public function scopeMissingPricedOffer(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('offers', fn (Builder $q) => $q->where('financial_amount', '>', 0));
+    }
+
     public function managerApprovedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'manager_approved_by');
@@ -216,30 +232,53 @@ class Project extends Model
     }
 
     /**
-     * Generate a unique project code with format: PRJ-YYYYMM-XXXX
+     * Generate a unique project code with format: YYYY-N (e.g. "2026-1").
      *
-     * Pulls just the max sequence for the current month with a single
-     * aggregate query (no model hydration, no full row fetch). Wrapped in
-     * a Redis lock to make the generate→insert sequence race-safe under
-     * concurrent creates.
+     * Slide 4 of the Sales modifications: the code is keyed by YEAR only
+     * (not month) and the sequence is not zero-padded. Wrapped in a cache
+     * lock to make the generate→insert sequence race-safe under concurrent
+     * creates.
      *
      * Soft-deleted rows are intentionally included via withTrashed() — the
      * unique constraint on `code` is enforced at the DB level regardless of
      * deleted_at, so reusing a soft-deleted record's number would hit a
-     * "code has already been taken" error on save.
+     * "code has already been taken" error on save. Legacy "PRJ-YYYYMM-XXXX"
+     * codes never match the "YYYY-%" filter, so they don't skew the sequence.
      */
     public static function generateCode(): string
     {
-        $prefix = 'PRJ-' . now()->format('Ym') . '-';
+        // Slide 4: the operation code is by YEAR only (e.g. "2026-1"), not by
+        // month. Sequence resets each calendar year and is not zero-padded.
+        $prefix = now()->format('Y').'-';
 
-        return \Illuminate\Support\Facades\Cache::lock('project_code_seq:' . $prefix, 5)->block(3, function () use ($prefix) {
-            $maxSequence = (int) static::query()
+        return Cache::lock('project_code_seq:'.$prefix, 5)->block(3, function () use ($prefix) {
+            // Computed in PHP (not SUBSTRING_INDEX) so it is portable across
+            // MySQL (production) and SQLite (tests). Volume per year is small.
+            $maxSequence = static::query()
                 ->withTrashed()
-                ->where('code', 'like', $prefix . '%')
-                ->selectRaw('COALESCE(MAX(CAST(SUBSTRING_INDEX(code, "-", -1) AS UNSIGNED)), 0) AS seq')
-                ->value('seq');
+                ->where('code', 'like', $prefix.'%')
+                ->pluck('code')
+                ->map(fn (string $code): int => (int) substr((string) strrchr($code, '-'), 1))
+                ->max() ?? 0;
 
-            return $prefix . str_pad((string) ($maxSequence + 1), 4, '0', STR_PAD_LEFT);
+            return $prefix.($maxSequence + 1);
+        });
+    }
+
+    /**
+     * Slide 6: a brand-new operation must land in the Tender list
+     * (عمليات المناقصات), not silently in "Draft". The intake form already
+     * defaults the (disabled) status field to Tender; this guard covers any
+     * other creation path (factory states that null the status, future API)
+     * by defaulting an unset status to Tender. Explicit statuses — including
+     * a deliberate Draft — are never overridden.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (Project $project): void {
+            if ($project->status === null) {
+                $project->status = ProjectStatus::Tender;
+            }
         });
     }
 }
