@@ -53,7 +53,7 @@ class DeliveryMinute extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['minute_number', 'project_id', 'distributed_at'])
+            ->logOnly(['minute_number', 'project_id', 'minute_date', 'distributed_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

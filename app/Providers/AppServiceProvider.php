@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Models\Project;
+use App\Models\ProjectOffer;
 use App\Models\PurchaseOrder;
 use App\Models\WorkOrder;
 use App\Observers\PermissionObserver;
 use App\Observers\ProjectObserver;
+use App\Observers\ProjectOfferObserver;
 use App\Observers\PurchaseOrderObserver;
 use App\Observers\RoleObserver;
 use App\Observers\WorkOrderObserver;
@@ -55,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
         Role::observe(RoleObserver::class);
         Permission::observe(PermissionObserver::class);
         Project::observe(ProjectObserver::class);
+        ProjectOffer::observe(ProjectOfferObserver::class);
         PurchaseOrder::observe(PurchaseOrderObserver::class);
         WorkOrder::observe(WorkOrderObserver::class);
 

@@ -100,8 +100,10 @@ class Project extends Model
                 'actual_cost',
                 'alarm_at',
                 'smb_status',
+                'smb_received_at',
                 'acceptance_email_at',
                 'manager_approved_at',
+                'end_date',
                 'lost_reason',
                 'winning_competitor',
             ])

@@ -26,6 +26,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Offer / Submittal notification recipients (شريحة 11)
+    |--------------------------------------------------------------------------
+    |
+    | An automatic alert when a financial offer is attached to a pipeline
+    | (Tender / In-Hand) operation, and likewise when a submittal is uploaded.
+    | These roles receive the database (topbar bell) notification. Unknown role
+    | names are ignored; an empty array disables that alert.
+    |
+    */
+    'offer_notify_roles' => [
+        'Sales',
+        'Sales_Manager',
+    ],
+
+    'submittal_notify_roles' => [
+        'Sales',
+        'Sales_Manager',
+        'Technical_Office',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Payments → GL bridge (سلايد 1: الدفعات النقدية)
     |--------------------------------------------------------------------------
     |

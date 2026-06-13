@@ -31,10 +31,16 @@ class OfferTotalsService
 
         $subtotal = round($subtotal, 2);
         $tax = $offer->show_vat ? round($subtotal * (float) $offer->vat_percentage / 100, 2) : 0.0;
-        $grandTotal = round($subtotal + $tax, 2);
+        // Slides 1 & 8: installation is a percentage of the subtotal, added on
+        // top exactly like VAT, but only when the offer opts in.
+        $installation = $offer->show_installation
+            ? round($subtotal * (float) $offer->installation_percentage / 100, 2)
+            : 0.0;
+        $grandTotal = round($subtotal + $tax + $installation, 2);
 
         $offer->subtotal = $subtotal;
         $offer->tax_amount = $tax;
+        $offer->installation_amount = $installation;
         $offer->grand_total = $grandTotal;
         // BOQ is the source of truth for the headline figure.
         $offer->financial_amount = $grandTotal;

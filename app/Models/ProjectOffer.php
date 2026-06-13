@@ -34,13 +34,18 @@ class ProjectOffer extends Model
         'technical_amount',
         'vat_percentage',
         'show_vat',
+        'installation_percentage',
+        'show_installation',
         'subtotal',
         'tax_amount',
+        'installation_amount',
         'grand_total',
         'submitted_at',
         'submitted_by',
         'notes',
         'terms',
+        'general_terms',
+        'header_note',
         'is_winning',
     ];
 
@@ -90,8 +95,11 @@ class ProjectOffer extends Model
             'technical_amount' => 'decimal:2',
             'vat_percentage' => 'decimal:2',
             'show_vat' => 'boolean',
+            'installation_percentage' => 'decimal:2',
+            'show_installation' => 'boolean',
             'subtotal' => 'decimal:2',
             'tax_amount' => 'decimal:2',
+            'installation_amount' => 'decimal:2',
             'grand_total' => 'decimal:2',
             'submitted_at' => 'datetime',
             'is_winning' => 'boolean',
@@ -101,7 +109,7 @@ class ProjectOffer extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['version', 'financial_amount', 'technical_amount', 'grand_total', 'vat_percentage', 'is_winning'])
+            ->logOnly(['version', 'quotation_number', 'financial_amount', 'technical_amount', 'grand_total', 'vat_percentage', 'installation_percentage', 'show_installation', 'submitted_at', 'is_winning'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(

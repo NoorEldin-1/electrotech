@@ -23,6 +23,10 @@ enum AttachmentCategory: string implements HasLabel, HasIcon
     // Site measurements raised during the engineering survey (سلايد 1: "رفع
     // مقاسات الموقع"); drawings already covered by Drowing.
     case SiteMeasurement = 'site_measurement';
+    // Tender submittal file (شريحة 11): a document compiled and uploaded for
+    // tender operations. Sales asked where this is attached — it lives here as
+    // its own category so it surfaces in the project Attachments section.
+    case Submittal = 'submittal';
 
     public function getLabel(): string
     {
@@ -38,6 +42,7 @@ enum AttachmentCategory: string implements HasLabel, HasIcon
             self::Speces => 'heroicon-o-clipboard-document-list',
             self::Boq => 'heroicon-o-calculator',
             self::SiteMeasurement => 'heroicon-o-map',
+            self::Submittal => 'heroicon-o-document-check',
         };
     }
 }

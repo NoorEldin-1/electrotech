@@ -2,13 +2,16 @@
 
 namespace Tests\Feature\Sales;
 
+use App\Enums\AttachmentCategory;
 use App\Enums\ProjectStatus;
+use App\Filament\Resources\ProjectResource\Pages\AttachmentPersistence;
 use App\Models\Project;
 use App\Models\ProjectOffer;
 use App\Models\User;
 use App\Services\SalesAlertService;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -86,8 +89,54 @@ class SalesAlertTest extends TestCase
         $project = Project::factory()->tender()->create();
         ProjectOffer::factory()->for($project)->create(['financial_amount' => 1000]);
 
+        // The offer-attached alert (Slide 11) may already have fired; the
+        // missing-offer command itself must add nothing on top of it.
+        $before = $sales->fresh()->notifications()->count();
+
         $this->artisan('sales:notify-incomplete-operations')->assertSuccessful();
 
+        $this->assertSame($before, $sales->fresh()->notifications()->count());
+    }
+
+    public function test_attaching_an_offer_to_a_pipeline_operation_notifies_sales(): void
+    {
+        $this->seed(RoleAndPermissionSeeder::class);
+        $sales = User::factory()->create();
+        $sales->assignRole('Sales');
+
+        $project = Project::factory()->tender()->create();
+        ProjectOffer::factory()->for($project)->create(['financial_amount' => 1000]);
+
+        $this->assertSame(1, $sales->fresh()->notifications()->count());
+    }
+
+    public function test_attaching_an_offer_outside_the_pipeline_does_not_notify(): void
+    {
+        $this->seed(RoleAndPermissionSeeder::class);
+        $sales = User::factory()->create();
+        $sales->assignRole('Sales');
+
+        $project = Project::factory()->active()->create();
+        ProjectOffer::factory()->for($project)->create(['financial_amount' => 1000]);
+
         $this->assertSame(0, $sales->fresh()->notifications()->count());
+    }
+
+    public function test_uploading_a_submittal_notifies_sales(): void
+    {
+        $this->seed(RoleAndPermissionSeeder::class);
+        Storage::fake('public');
+        $sales = User::factory()->create();
+        $sales->assignRole('Sales');
+        $this->actingAs($sales);
+
+        $project = Project::factory()->create();
+        $path = "attachments/{$project->id}/submittal/doc.pdf";
+        Storage::disk('public')->put($path, 'PDF');
+
+        AttachmentPersistence::sync($project, [AttachmentCategory::Submittal->value => [$path]]);
+
+        $this->assertDatabaseHas('attachments', ['project_id' => $project->id, 'category' => 'submittal']);
+        $this->assertSame(1, $sales->fresh()->notifications()->count());
     }
 }

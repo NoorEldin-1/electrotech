@@ -23,7 +23,13 @@ class OfferPdfController extends Controller
     {
         Gate::authorize('print', $offer);
 
-        $offer->load(['project', 'groups.items', 'submittedBy']);
+        // Slide 9: the offer can be printed in Arabic or English regardless of
+        // the UI language. From 2026 offers default to English, so an unknown /
+        // missing ?lang falls back to 'en'.
+        $lang = in_array(request('lang'), ['ar', 'en'], true) ? request('lang') : 'en';
+        app()->setLocale($lang);
+
+        $offer->load(['project.customer', 'groups.items', 'submittedBy']);
 
         $logoPath = base_path('electrotech-logo.jpg');
         $logo = is_file($logoPath)
@@ -44,6 +50,20 @@ class OfferPdfController extends Controller
             'autoScriptToLang' => true,
             'autoLangToFont' => true,
         ]);
+
+        // Slide 2: stamp the company logo as a faint watermark behind every
+        // page, like the reference quotation. A dedicated low-contrast asset is
+        // preferred (it is already softened, so it can carry a touch more
+        // opacity); fall back to the main full-colour logo at a lower opacity
+        // so its dark edges never fight the text.
+        $dedicatedWatermark = public_path('images/offer-watermark.png');
+        $hasDedicated = is_file($dedicatedWatermark);
+        $watermark = $hasDedicated ? $dedicatedWatermark : $logoPath;
+        if (is_file($watermark)) {
+            $mpdf->SetWatermarkImage($watermark, $hasDedicated ? 0.12 : 0.08, 'D', 'P');
+            $mpdf->showWatermarkImage = true;
+        }
+
         $mpdf->WriteHTML($html);
 
         $name = 'offer-'.($offer->quotation_number ?: $offer->id).'.pdf';

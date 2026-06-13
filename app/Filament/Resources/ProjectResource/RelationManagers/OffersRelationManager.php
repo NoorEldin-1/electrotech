@@ -68,6 +68,32 @@ class OffersRelationManager extends RelationManager
                         ->helperText(__('resources.project_offers.fields.show_vat_helper'))
                         ->default(true)
                         ->live(),
+
+                    // Slides 1 & 8: installation behaves like VAT — a % of the
+                    // subtotal, added only when the client books installation.
+                    Forms\Components\TextInput::make('installation_percentage')
+                        ->label(__('resources.project_offers.fields.installation_percentage'))
+                        ->numeric()
+                        ->default(10)
+                        ->suffix('%')
+                        ->live(onBlur: true),
+
+                    Forms\Components\Toggle::make('show_installation')
+                        ->label(__('resources.project_offers.fields.show_installation'))
+                        ->helperText(__('resources.project_offers.fields.show_installation_helper'))
+                        ->default(false)
+                        ->live(),
+
+                    // Slides 5 & 11: an intro line + the mandatory DKC licence
+                    // statement, printed before the tables. Pre-filled from a
+                    // default so it is never forgotten, but editable per offer.
+                    Forms\Components\Textarea::make('header_note')
+                        ->label(__('resources.project_offers.fields.header_note'))
+                        ->helperText(__('resources.project_offers.fields.header_note_helper'))
+                        ->default(__('resources.project_offers.defaults.header_note'))
+                        ->autosize()
+                        ->rows(2)
+                        ->columnSpanFull(),
                 ]),
 
             Forms\Components\Repeater::make('groups')
@@ -78,6 +104,10 @@ class OffersRelationManager extends RelationManager
                 ->collapsible()
                 ->cloneable()
                 ->defaultItems(1)
+                // Slide 5: a follow-up offer may legitimately carry a different
+                // number of tables than a previous one — even just a single
+                // table. The only structural rule is "at least one table".
+                ->minItems(1)
                 ->columnSpanFull()
                 ->schema([
                     Forms\Components\Grid::make(2)->schema([
@@ -101,9 +131,17 @@ class OffersRelationManager extends RelationManager
                         ->columns(12)
                         ->columnSpanFull()
                         ->schema([
-                            Forms\Components\TextInput::make('description')
+                            // Slide 4: the description is long (e.g. "Busway 4000A
+                            // type DKC … 4P") and a single-line input hid the tail,
+                            // so Sales couldn't proof-read it (a 3P/4P typo swings
+                            // the price). An autosizing Textarea shows the whole
+                            // line for review before printing.
+                            Forms\Components\Textarea::make('description')
                                 ->label(__('resources.project_offers.fields.description'))
+                                ->helperText(__('resources.project_offers.fields.description_helper'))
                                 ->required()
+                                ->autosize()
+                                ->rows(2)
                                 ->columnSpan(5),
 
                             Forms\Components\TextInput::make('unit')
@@ -125,8 +163,10 @@ class OffersRelationManager extends RelationManager
 
                             Forms\Components\Placeholder::make('line_total')
                                 ->label(__('resources.project_offers.fields.line_total'))
+                                // Parse through MoneyInput::toFloat so the live preview
+                                // doesn't read the masked "5,000" as 5.0 (Slide 4).
                                 ->content(fn (Forms\Get $get): string => number_format(
-                                    (float) $get('quantity') * (float) $get('unit_price'),
+                                    MoneyInput::toFloat($get('quantity')) * MoneyInput::toFloat($get('unit_price')),
                                     2
                                 ))
                                 ->columnSpan(1),
@@ -140,23 +180,44 @@ class OffersRelationManager extends RelationManager
                     $subtotal = 0.0;
                     foreach ((array) $get('groups') as $group) {
                         foreach ((array) ($group['items'] ?? []) as $item) {
-                            $subtotal += (float) ($item['quantity'] ?? 0) * (float) ($item['unit_price'] ?? 0);
+                            // Strip the live mask's grouping commas before casting,
+                            // otherwise "5,000" collapses to 5.0 in the preview (Slide 4).
+                            $subtotal += MoneyInput::toFloat($item['quantity'] ?? 0) * MoneyInput::toFloat($item['unit_price'] ?? 0);
                         }
                     }
-                    $tax = $get('show_vat') ? $subtotal * ((float) $get('vat_percentage') / 100) : 0.0;
-                    $grand = $subtotal + $tax;
+                    $tax = $get('show_vat') ? $subtotal * (MoneyInput::toFloat($get('vat_percentage')) / 100) : 0.0;
+                    $installation = $get('show_installation') ? $subtotal * (MoneyInput::toFloat($get('installation_percentage')) / 100) : 0.0;
+                    $grand = $subtotal + $tax + $installation;
+
+                    $rows = __('resources.project_offers.fields.subtotal').': '.number_format($subtotal, 2).' EGP<br>'.
+                        __('resources.project_offers.fields.tax_amount').': '.number_format($tax, 2).' EGP<br>';
+
+                    if ($installation > 0) {
+                        $rows .= __('resources.project_offers.fields.installation_amount').': '.number_format($installation, 2).' EGP<br>';
+                    }
 
                     return new HtmlString(
-                        __('resources.project_offers.fields.subtotal').': '.number_format($subtotal, 2).' EGP<br>'.
-                        __('resources.project_offers.fields.tax_amount').': '.number_format($tax, 2).' EGP<br>'.
+                        $rows.
                         '<span style="font-weight:700">'.__('resources.project_offers.fields.grand_total').': '.number_format($grand, 2).' EGP</span>'
                     );
                 }),
 
+            // Slides 3 & 8: per-offer SPECIAL terms, printed directly behind the
+            // tables (e.g. "if installation is requested, prices rise by 15%").
             Forms\Components\Textarea::make('terms')
-                ->label(__('resources.project_offers.fields.terms'))
-                ->helperText(__('resources.project_offers.fields.terms_helper'))
-                ->rows(5)
+                ->label(__('resources.project_offers.fields.special_terms'))
+                ->helperText(__('resources.project_offers.fields.special_terms_helper'))
+                ->rows(4)
+                ->columnSpanFull(),
+
+            // Slide 9: the standard terms — mostly fixed across all offers. Pre-
+            // filled from a template (one point per line) so they are never
+            // forgotten, and editable (add / remove a point) per offer.
+            Forms\Components\Textarea::make('general_terms')
+                ->label(__('resources.project_offers.fields.general_terms'))
+                ->helperText(__('resources.project_offers.fields.general_terms_helper'))
+                ->default(__('resources.project_offers.defaults.general_terms'))
+                ->rows(8)
                 ->columnSpanFull(),
         ]);
     }
@@ -203,12 +264,24 @@ class OffersRelationManager extends RelationManager
                     ->after(fn (ProjectOffer $record) => app(OfferTotalsService::class)->recalculate($record)),
             ])
             ->actions([
-                Tables\Actions\Action::make('print')
+                // Slide 9: print in English (2026 default) or Arabic.
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('print_en')
+                        ->label(__('resources.project_offers.actions.print_en'))
+                        ->icon('heroicon-o-printer')
+                        ->url(fn (ProjectOffer $record): string => route('offers.pdf', ['offer' => $record, 'lang' => 'en']))
+                        ->openUrlInNewTab(),
+
+                    Tables\Actions\Action::make('print_ar')
+                        ->label(__('resources.project_offers.actions.print_ar'))
+                        ->icon('heroicon-o-printer')
+                        ->url(fn (ProjectOffer $record): string => route('offers.pdf', ['offer' => $record, 'lang' => 'ar']))
+                        ->openUrlInNewTab(),
+                ])
                     ->label(__('resources.project_offers.actions.print'))
                     ->icon('heroicon-o-printer')
                     ->color('gray')
-                    ->url(fn (ProjectOffer $record): string => route('offers.pdf', $record))
-                    ->openUrlInNewTab()
+                    ->button()
                     ->visible(fn (ProjectOffer $record): bool => auth()->user()?->can('print', $record) ?? false),
 
                 Tables\Actions\EditAction::make()

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ProjectResource\Pages;
 
+use App\Enums\AttachmentCategory;
 use App\Models\Attachment;
 use App\Models\Project;
+use App\Services\SalesAlertService;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -34,6 +36,7 @@ final class AttachmentPersistence
     public static function sync(Project $project, array $byCategory): void
     {
         $disk = Storage::disk('public');
+        $submittalAdded = false;
 
         foreach ($byCategory as $categoryValue => $filePaths) {
             // Move any not-yet-scoped uploads into attachments/{id}/{category}
@@ -58,6 +61,11 @@ final class AttachmentPersistence
                 ]);
             }
 
+            // Slide 11: announce a freshly-uploaded submittal once the loop ends.
+            if ($categoryValue === AttachmentCategory::Submittal->value && $newOnes->isNotEmpty()) {
+                $submittalAdded = true;
+            }
+
             if ($removed->isNotEmpty()) {
                 $project->attachments()
                     ->where('category', $categoryValue)
@@ -67,6 +75,10 @@ final class AttachmentPersistence
                         $a->delete();
                     });
             }
+        }
+
+        if ($submittalAdded) {
+            app(SalesAlertService::class)->notifySubmittalUploaded($project);
         }
     }
 

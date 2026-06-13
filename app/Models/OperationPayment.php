@@ -63,7 +63,7 @@ class OperationPayment extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['payment_number', 'project_id', 'direction', 'amount', 'journal_entry_id'])
+            ->logOnly(['payment_number', 'project_id', 'direction', 'amount', 'method', 'payment_date', 'journal_entry_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
