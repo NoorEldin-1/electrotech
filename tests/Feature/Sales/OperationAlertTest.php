@@ -46,6 +46,27 @@ class OperationAlertTest extends TestCase
             ->count();
     }
 
+    public function test_creating_a_tender_directly_raises_the_missing_offer_alert(): void
+    {
+        // A new operation is created straight as a Tender (it never goes
+        // through moveToTender), so the alert must fire on creation — no manual
+        // reconcile call here on purpose.
+        $sales = $this->sales();
+
+        Project::factory()->tender()->create();
+
+        $this->assertSame(1, $this->alertsOf($sales, SalesAlertService::ALERT_MISSING_OFFER));
+    }
+
+    public function test_creating_an_in_hand_operation_directly_raises_the_missing_smb_alert(): void
+    {
+        $sales = $this->sales();
+
+        Project::factory()->inHand()->create();
+
+        $this->assertSame(1, $this->alertsOf($sales, SalesAlertService::ALERT_MISSING_SMB));
+    }
+
     public function test_reconcile_raises_a_missing_offer_alert_for_a_tender(): void
     {
         $sales = $this->sales();

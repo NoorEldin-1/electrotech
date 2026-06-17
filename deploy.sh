@@ -71,4 +71,10 @@ chmod -R ug+rwX storage bootstrap/cache || true
 log "Restarting queue workers"
 php artisan queue:restart || true
 
+# Refresh the topbar bell so it matches live pipeline state right after a
+# deploy: raise a red alert for every Tender with no offer and every In-Hand
+# with no SMB, and drop any that no longer apply. Idempotent and non-fatal.
+log "Reconciling pipeline alerts (missing offer / SMB)"
+php artisan sales:notify-incomplete-operations || true
+
 log "Deploy finished at commit: $(git rev-parse --short HEAD)"
