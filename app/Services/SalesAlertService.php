@@ -145,15 +145,17 @@ class SalesAlertService
             return;
         }
 
-        Notification::make()
-            ->title(__('resources.sales_alerts.offer_attached_title'))
-            ->body(__('resources.sales_alerts.offer_attached_body', [
-                'operation' => $project->name,
-                'count' => $project->offers()->count(),
-            ]))
-            ->icon('heroicon-o-banknotes')
-            ->info()
-            ->sendToDatabase($recipients);
+        $this->sendNow(
+            Notification::make()
+                ->title(__('resources.sales_alerts.offer_attached_title'))
+                ->body(__('resources.sales_alerts.offer_attached_body', [
+                    'operation' => $project->name,
+                    'count' => $project->offers()->count(),
+                ]))
+                ->icon('heroicon-o-banknotes')
+                ->info(),
+            $recipients,
+        );
     }
 
     /**
@@ -172,15 +174,17 @@ class SalesAlertService
             return;
         }
 
-        Notification::make()
-            ->title(__('resources.sales_alerts.submittal_title'))
-            ->body(__('resources.sales_alerts.submittal_body', [
-                'operation' => $project->name,
-                'count' => $project->attachmentsByCategory(AttachmentCategory::Submittal)->count(),
-            ]))
-            ->icon('heroicon-o-document-check')
-            ->info()
-            ->sendToDatabase($recipients);
+        $this->sendNow(
+            Notification::make()
+                ->title(__('resources.sales_alerts.submittal_title'))
+                ->body(__('resources.sales_alerts.submittal_body', [
+                    'operation' => $project->name,
+                    'count' => $project->attachmentsByCategory(AttachmentCategory::Submittal)->count(),
+                ]))
+                ->icon('heroicon-o-document-check')
+                ->info(),
+            $recipients,
+        );
     }
 
     /**
@@ -231,7 +235,7 @@ class SalesAlertService
     {
         $content = $this->alertContent($type, $project);
 
-        Notification::make()
+        $notification = Notification::make()
             ->title($content['title'])
             ->body($content['body'])
             ->icon('heroicon-o-exclamation-triangle')
@@ -242,8 +246,28 @@ class SalesAlertService
                     ->label(__('resources.sales_alerts.view_operation'))
                     ->url(ProjectResource::getUrl('edit', ['record' => $project->getKey()], panel: 'admin'))
                     ->markAsRead(),
-            ])
-            ->sendToDatabase($recipient);
+            ]);
+
+        $this->sendNow($notification, [$recipient]);
+    }
+
+    /**
+     * Write a Filament notification to each recipient's bell *synchronously*.
+     *
+     * Filament's DatabaseNotification implements ShouldQueue, so the usual
+     * ->sendToDatabase() only persists the row once a queue worker runs the
+     * job — on a host with no worker (a common production setup) the bell would
+     * stay empty. These are cheap inserts that must appear the instant they are
+     * raised, so we bypass the queue with notifyNow(): the bell then works on
+     * any host, worker or not.
+     *
+     * @param  iterable<int, User>  $recipients
+     */
+    private function sendNow(Notification $notification, iterable $recipients): void
+    {
+        foreach ($recipients as $recipient) {
+            $recipient->notifyNow($notification->toDatabase());
+        }
     }
 
     /**
