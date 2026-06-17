@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\RelationManagers;
 
+use App\Models\Supplier;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * كشف حساب — the party's ledger entries ordered by date with a running
@@ -20,9 +22,30 @@ class AccountEntriesRelationManager extends RelationManager
 
     protected static ?string $icon = 'heroicon-o-document-text';
 
-    public static function getTitle(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): string
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
         return __('resources.account_entries.statement');
+    }
+
+    /**
+     * Visibility gate for the statement tab. This MUST be evaluated here (per
+     * request, with the auth guard resolved) rather than in the resource's
+     * getRelations(): Filament registers relation managers as Livewire
+     * components at panel-register time — during framework bootstrap, before
+     * the session/auth middleware runs — so an auth() check inside
+     * getRelations() returns null and the component never gets registered,
+     * causing a "Unable to find component" error when the tab later renders.
+     *
+     * The same statement tab is shared by the Supplier and Customer resources,
+     * so the matching permission is chosen from the owner record type.
+     */
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        $permission = $ownerRecord instanceof Supplier
+            ? 'supplier_statements.view'
+            : 'customer_statements.view';
+
+        return auth()->user()?->can($permission) ?? false;
     }
 
     public function isReadOnly(): bool

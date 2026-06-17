@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Spatie\Activitylog\LogOptions;
@@ -23,6 +24,7 @@ class AdditionVoucher extends Model
     protected $fillable = [
         'voucher_number',
         'supplier_id',
+        'supplier_name',
         'purchase_order_id',
         'invoice_number',
         'invoice_value',
@@ -71,6 +73,25 @@ class AdditionVoucher extends Model
     public function receivedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'received_by');
+    }
+
+    /**
+     * Scanned إذن إضافة document (slide 7). Polymorphic — see
+     * Attachment::attachable().
+     */
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    /**
+     * Slide 9: a registered supplier is optional; fall back to the free-text
+     * name when the voucher has no linked supplier (e.g. receipts without an
+     * invoice or purchase order).
+     */
+    public function getSupplierLabelAttribute(): ?string
+    {
+        return $this->supplier?->name ?: $this->supplier_name;
     }
 
     public function postedBy(): BelongsTo

@@ -155,6 +155,7 @@ class RoleAndPermissionSeeder extends Seeder
             'purchase_orders.edit',
             'purchase_orders.approve',
             'purchase_orders.receive',
+            'purchase_orders.print',
             'purchase_orders.delete',
 
             // Suppliers & Customers
@@ -303,6 +304,11 @@ class RoleAndPermissionSeeder extends Seeder
             'Technical_Office' => [
                 'projects.view',
                 'project_offers.view',
+                // Procurement oversight: the technical-office manager approves
+                // purchase orders (slide 5) and prints them (slide 8).
+                'purchase_orders.view',
+                'purchase_orders.approve',
+                'purchase_orders.print',
                 'items.view',
                 'items.create',
                 'items.edit',
@@ -340,6 +346,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'purchase_orders.edit',
                 'purchase_orders.approve',
                 'purchase_orders.receive',
+                'purchase_orders.print',
                 'suppliers.view',
                 'suppliers.create',
                 'suppliers.edit',

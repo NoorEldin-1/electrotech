@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\AttachmentCategory;
 use App\Enums\LostReason;
 use App\Enums\ProjectStatus;
 use App\Filament\Resources\InHandProjectResource\Pages;
 use App\Models\Project;
 use App\Services\SalesPipelineService;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use DomainException;
 use Filament\Forms;
@@ -79,16 +81,20 @@ class InHandProjectResource extends Resource
                     ->falseColor('success')
                     ->tooltip(fn (Project $r): ?string => $r->hasPricedOffer() ? null : __('resources.sales_alerts.missing_offer_tooltip')),
 
-                Tables\Columns\TextColumn::make('smb_status')
+                // SMB presence indicator (شريحة 11): error when the operation has
+                // no SMB / Submittal file on record, verified check once it does —
+                // mirroring the "missing offer" alert above. SMB and Submittal are
+                // the same artifact, so this reads the Submittal attachments.
+                Tables\Columns\IconColumn::make('has_smb')
                     ->label(__('resources.in_hand_projects.columns.smb'))
-                    ->badge()
-                    ->color(fn (?string $state) => match ($state) {
-                        'received' => 'success',
-                        'submitted' => 'info',
-                        'pending' => 'warning',
-                        default => 'gray',
-                    })
-                    ->placeholder(__('resources.common.no_data')),
+                    ->getStateUsing(fn (Project $r): bool => $r->hasSmb())
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-exclamation-triangle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->tooltip(fn (Project $r): string => $r->hasSmb()
+                        ? __('resources.in_hand_projects.smb_present_tooltip')
+                        : __('resources.in_hand_projects.smb_missing_tooltip')),
 
                 Tables\Columns\TextColumn::make('acceptance_email_at')
                     ->label(__('resources.in_hand_projects.columns.acceptance_email_at'))
@@ -158,12 +164,26 @@ class InHandProjectResource extends Resource
                             ->label(__('resources.in_hand_projects.fields.manager_approve_now'))
                             ->helperText(__('resources.in_hand_projects.fields.manager_approve_helper'))
                             ->visible(fn () => auth()->user()?->can('projects.manager_approve') ?? false),
+
+                        // Slide 11: attach the customer acceptance / SMB file
+                        // (the document itself, not just a typed note).
+                        Forms\Components\FileUpload::make('acceptance_file')
+                            ->label(__('resources.in_hand_projects.fields.acceptance_file'))
+                            ->helperText(__('resources.in_hand_projects.fields.acceptance_file_helper'))
+                            ->disk('public')
+                            ->directory(fn (Project $r) => 'attachments/' . $r->id . '/' . AttachmentCategory::CustomerAcceptance->value)
+                            ->downloadable()
+                            ->openable()
+                            ->previewable(false)
+                            ->maxSize(40960),
                     ])
                     ->visible(fn (Project $r) => auth()->user()?->can('moveToActive', $r) ?? false)
                     ->action(function (Project $r, array $data) {
                         try {
                             $r->acceptance_email_at = $data['acceptance_email_at'];
                             $r->save();
+
+                            self::storeAcceptanceFile($r, $data['acceptance_file'] ?? null);
 
                             if (! empty($data['manager_approve_now'])
                                 && (auth()->user()?->can('managerApprove', $r) ?? false)) {
@@ -257,6 +277,36 @@ class InHandProjectResource extends Resource
                             ->send();
                     }),
             ]);
+    }
+
+    /**
+     * Slide 11: persist the uploaded customer-acceptance / SMB file as a
+     * project attachment. The upload already lands in the project's folder, so
+     * we only record the row (idempotent on path).
+     *
+     * @param  string|array<int, string>|null  $file
+     */
+    protected static function storeAcceptanceFile(Project $project, string|array|null $file): void
+    {
+        $paths = array_filter((array) $file);
+        if ($paths === []) {
+            return;
+        }
+
+        $disk = Storage::disk('public');
+
+        foreach ($paths as $path) {
+            $project->attachments()->firstOrCreate(
+                ['file_path' => $path],
+                [
+                    'file_name' => basename((string) $path),
+                    'file_type' => $disk->mimeType($path) ?: null,
+                    'file_size' => $disk->exists($path) ? $disk->size($path) : 0,
+                    'category' => AttachmentCategory::CustomerAcceptance->value,
+                    'uploaded_by' => auth()->id(),
+                ],
+            );
+        }
     }
 
     public static function getPages(): array

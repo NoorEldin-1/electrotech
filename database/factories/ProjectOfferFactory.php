@@ -17,7 +17,6 @@ class ProjectOfferFactory extends Factory
             'project_id' => Project::factory(),
             'version' => 1,
             'financial_amount' => fake()->randomFloat(2, 5000, 500000),
-            'technical_amount' => fake()->randomFloat(2, 1000, 100000),
             'submitted_at' => now(),
             'submitted_by' => User::factory(),
             'notes' => fake()->optional()->sentence(),

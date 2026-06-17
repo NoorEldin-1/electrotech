@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\OfferPdfController;
 use App\Http\Controllers\PingController;
+use App\Http\Controllers\PurchaseOrderPdfController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Routing\Middleware\SubstituteBindings;
@@ -35,3 +36,9 @@ Route::middleware([
 Route::middleware('auth')
     ->get('offers/{offer}/pdf', [OfferPdfController::class, 'show'])
     ->name('offers.pdf');
+
+// Printable purchase order document (Purchasing slide 8). Gated by
+// PurchaseOrderPolicy::print (purchase_orders.print).
+Route::middleware('auth')
+    ->get('purchase-orders/{purchaseOrder}/pdf', [PurchaseOrderPdfController::class, 'show'])
+    ->name('purchase_orders.pdf');

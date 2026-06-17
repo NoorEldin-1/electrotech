@@ -208,6 +208,18 @@ class Project extends Model
         return $query->whereDoesntHave('offers', fn (Builder $q) => $q->where('financial_amount', '>', 0));
     }
 
+    /**
+     * Whether this operation has its SMB document on file. SMB and Submittal
+     * are the same artifact (شريحة 11): the spec/sample submittal compiled for
+     * the operation. The presence of a Submittal attachment is the single
+     * source of truth, surfaced as the In-Hand "SMB" indicator — mirroring the
+     * "missing offer" alert.
+     */
+    public function hasSmb(): bool
+    {
+        return $this->attachmentsByCategory(AttachmentCategory::Submittal)->exists();
+    }
+
     public function managerApprovedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'manager_approved_by');

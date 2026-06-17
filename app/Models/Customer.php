@@ -47,6 +47,15 @@ class Customer extends Model
     }
 
     /**
+     * General customer-file documents (contracts, IDs, correspondence).
+     * Polymorphic — see Attachment::attachable().
+     */
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    /**
      * Ledger entries posted against this customer (debits from delivery
      * vouchers). Drives the customer account statement (كشف حساب العميل).
      */

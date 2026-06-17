@@ -6,6 +6,7 @@ namespace App\Filament\Resources\ProjectResource\Pages;
 
 use App\Enums\AttachmentCategory;
 use App\Filament\Resources\ProjectResource;
+use App\Models\Customer;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateProject extends CreateRecord
@@ -27,6 +28,13 @@ class CreateProject extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        // Keep the denormalized client_name column in sync with the selected
+        // customer so the project lists, offer PDF and reports (which still read
+        // client_name) reflect the chosen customer.
+        if (! empty($data['customer_id'])) {
+            $data['client_name'] = Customer::find($data['customer_id'])?->name ?? ($data['client_name'] ?? '');
+        }
+
         foreach (AttachmentCategory::cases() as $category) {
             $key = "attachments_{$category->value}";
             if (array_key_exists($key, $data)) {

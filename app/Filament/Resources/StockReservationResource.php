@@ -29,13 +29,13 @@ class StockReservationResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-lock-closed';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 33;
 
     protected static ?string $recordTitleAttribute = 'id';
 
     public static function getNavigationGroup(): ?string
     {
-        return __('navigation.groups.general_management');
+        return __('navigation.groups.procurement');
     }
 
     public static function getLabel(): string

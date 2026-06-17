@@ -45,23 +45,31 @@ class SalesPipelineService
 
         $project->status = ProjectStatus::Tender;
         $project->save();
+
+        // Keep the bell in sync: a fresh Tender with no priced offer earns the
+        // "missing offer" error alert immediately, not on the next schedule.
+        app(SalesAlertService::class)->reconcileOperationAlerts();
     }
 
     /**
-     * Client has accepted in principle and asked Sales to prepare the
-     * SMB (sample/spec submittal). The In-Hand list tracks SMB status
-     * until acceptance email arrives from the consultant.
+     * Client has accepted in principle and asked Sales to prepare the SMB —
+     * the same artifact as the project's Submittal (شريحة 11). The SMB is a
+     * file, not a note: callers upload it as a Submittal attachment before this
+     * runs, so we derive the In-Hand SMB status from whether that file is on
+     * file yet ('submitted' if uploaded, 'pending' until it is).
      */
-    public function moveToInHand(Project $project, ?string $smbNote = null): void
+    public function moveToInHand(Project $project): void
     {
         $this->assertStatus($project, [ProjectStatus::Tender]);
 
         $project->status = ProjectStatus::InHand;
-        $project->smb_status = 'pending';
-        if ($smbNote !== null && $smbNote !== '') {
-            $project->alarm_note = $smbNote;
-        }
+        $project->smb_status = $project->hasSmb() ? 'submitted' : 'pending';
         $project->save();
+
+        // Sync the bell: clear the Tender "missing offer" alert this operation
+        // may have carried, and raise the "missing SMB" alert if it arrived
+        // without an SMB on file.
+        app(SalesAlertService::class)->reconcileOperationAlerts();
     }
 
     /**
@@ -107,6 +115,10 @@ class SalesPipelineService
         // each department that a new operation is active. Dispatched after the
         // transaction commits so listeners see the persisted InProgress state.
         OperationActivated::dispatch($project);
+
+        // The operation has left the In-Hand stage, so its "missing SMB" alert
+        // (if any) no longer applies — drop it from the bell.
+        app(SalesAlertService::class)->reconcileOperationAlerts();
     }
 
     /**
@@ -140,6 +152,9 @@ class SalesPipelineService
         $project->lost_reason_note = $note;
         $project->winning_competitor = $winningCompetitor;
         $project->save();
+
+        // A lost operation leaves the pipeline — clear any bell alert it held.
+        app(SalesAlertService::class)->reconcileOperationAlerts();
     }
 
     public function setAlarm(Project $project, CarbonInterface $when, ?string $note = null): void
@@ -166,7 +181,6 @@ class SalesPipelineService
             return $project->offers()->create([
                 'version' => ProjectOffer::nextVersionFor($project->id),
                 'financial_amount' => $data['financial_amount'],
-                'technical_amount' => $data['technical_amount'] ?? null,
                 'submitted_at' => $data['submitted_at'] ?? now(),
                 'submitted_by' => $data['submitted_by'] ?? Auth::id(),
                 'notes' => $data['notes'] ?? null,

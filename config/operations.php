@@ -36,11 +36,13 @@ return [
     |
     */
     'offer_notify_roles' => [
+        'Admin',
         'Sales',
         'Sales_Manager',
     ],
 
     'submittal_notify_roles' => [
+        'Admin',
         'Sales',
         'Sales_Manager',
         'Technical_Office',

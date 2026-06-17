@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AdditionVoucherResource\Pages;
 
+use App\Enums\AttachmentCategory;
+use App\Filament\Concerns\SyncsEntityAttachments;
 use App\Filament\Resources\AdditionVoucherResource;
 use App\Models\AdditionVoucher;
 use App\Services\AdditionVoucherService;
@@ -13,7 +15,29 @@ use Filament\Resources\Pages\EditRecord;
 
 class EditAdditionVoucher extends EditRecord
 {
+    use SyncsEntityAttachments;
+
     protected static string $resource = AdditionVoucherResource::class;
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        return $this->pullAttachments($data);
+    }
+
+    protected function afterSave(): void
+    {
+        $this->pushAttachments($this->record);
+    }
+
+    protected function attachmentCategories(): array
+    {
+        return AttachmentCategory::additionVoucherCategories();
+    }
+
+    protected function attachmentDirPrefix(): string
+    {
+        return 'addition-voucher-attachments';
+    }
 
     protected function getHeaderActions(): array
     {

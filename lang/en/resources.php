@@ -30,6 +30,7 @@ return [
             'code' => 'Project Code',
             'name' => 'Project / Operation Name',
             'client_name' => 'Client Name',
+            'customer' => 'Customer',
             'consultant_name' => 'Consultant Name',
             'engineer_name' => 'Engineer Name',
             'electric_current' => 'Electric Current',
@@ -57,8 +58,6 @@ return [
             'lost_reason_note' => 'Loss Note',
             'winning_competitor' => 'Winning Competitor',
             'financial_amount' => 'Financial Amount',
-            'technical_amount' => 'Technical Amount (separate engineering offer)',
-            'technical_amount_helper' => 'A standalone price for the technical / engineering proposal submitted alongside the financial offer; it is NOT part of the BOQ grand total. Leave empty if the offer is purely financial.',
             'submitted_at' => 'Submitted At',
             'offer_notes' => 'Offer Notes',
             'latest_offer' => 'Latest Offer',
@@ -140,8 +139,6 @@ return [
         'fields' => [
             'quotation_number' => 'Quotation No.',
             'currency' => 'Currency',
-            'technical_amount' => 'Technical Amount (separate engineering offer)',
-            'technical_amount_helper' => 'A standalone price for the technical / engineering proposal submitted alongside the financial offer; it is NOT part of the BOQ grand total. Leave empty if the offer is purely financial.',
             'vat_percentage' => 'VAT %',
             'show_vat' => 'Show VAT in the offer',
             'show_vat_helper' => 'When off, the offer total excludes value-added tax.',
@@ -181,7 +178,6 @@ return [
             'version' => 'Ver.',
             'quotation_number' => 'Quotation No.',
             'grand_total' => 'Grand Total',
-            'technical_amount' => 'Technical',
             'is_winning' => 'Winning',
             'submitted_at' => 'Submitted',
         ],
@@ -216,7 +212,6 @@ return [
             'installation' => 'Installation',
             'grand_total' => 'Grand total',
             'offer_total_title' => 'Offer Total',
-            'technical_offer' => 'Technical offer',
             'special_terms_title' => 'Special Terms',
             'terms_title' => 'Terms',
             'best_regards' => 'Best Regards',
@@ -233,6 +228,11 @@ return [
         'offer_attached_body' => 'Operation ":operation" now has :count offer(s) attached.',
         'submittal_title' => 'Submittal uploaded',
         'submittal_body' => 'A submittal was uploaded for operation ":operation" (:count file(s)).',
+        'view_operation' => 'Open operation',
+        'missing_offer_alert_title' => 'Tender operation with no offer',
+        'missing_offer_alert_body' => 'Operation ":operation" has no priced offer yet. Add an offer.',
+        'missing_smb_alert_title' => 'In-hand operation with no SMB',
+        'missing_smb_alert_body' => 'Operation ":operation" has no SMB on file yet. Upload the SMB.',
     ],
 
     /*
@@ -248,13 +248,13 @@ return [
         'columns' => [
             'name' => 'Operation Name',
             'financial_offer' => 'Financial Offer',
-            'technical_offer' => 'Technical Offer',
             'alarm' => 'Alarm',
             'date' => 'Date',
         ],
 
         'fields' => [
-            'smb_note' => 'SMB Note',
+            'smb_file' => 'SMB / Submittal File',
+            'smb_file_helper' => 'Upload the SMB / Submittal document (the file itself, not a note). Optional — it can be added later from the project\'s Submittal section.',
             'lost_reason' => 'Loss Reason',
             'lost_reason_note' => 'Loss Note',
             'winning_competitor' => 'Winning Competitor',
@@ -265,7 +265,7 @@ return [
         'actions' => [
             'action' => 'Action — Move to In-Hand',
             'action_modal_heading' => 'Move this operation to In-Hand?',
-            'action_modal_description' => 'The client has accepted; SMB preparation begins. You can leave an optional SMB note.',
+            'action_modal_description' => 'The client has accepted; SMB preparation begins. Upload the SMB / Submittal file (optional — you can add it later).',
             'cancel' => 'Cancel — Move to Lost',
             'cancel_modal_heading' => 'Cancel and move to Lost?',
             'set_alarm' => 'Set Alarm',
@@ -299,8 +299,13 @@ return [
             'date' => 'Date',
         ],
 
+        'smb_present_tooltip' => 'SMB / Submittal file is on record.',
+        'smb_missing_tooltip' => 'No SMB / Submittal file yet — upload it from the project\'s Submittal section.',
+
         'fields' => [
             'acceptance_email_at' => 'Acceptance Email Date',
+            'acceptance_file' => 'Customer Acceptance File',
+            'acceptance_file_helper' => 'Attach the customer acceptance document (the file itself, not just a note).',
             'manager_approve_now' => 'Approve as Manager Now',
             'manager_approve_helper' => 'Visible only to users with manager-approve permission.',
             'lost_reason' => 'Loss Reason',
@@ -466,14 +471,21 @@ return [
         'sections' => [
             'po_details' => 'Purchase Order Details',
             'line_items' => 'Line Items',
+            'totals' => 'Totals',
+            'attachment' => 'Purchase Order Scan',
         ],
 
         'fields' => [
             'po_number' => 'PO Number',
             'project' => 'Project',
+            'supplier' => 'Supplier',
             'supplier_name' => 'Supplier Name',
             'supplier_contact' => 'Supplier Contact',
             'status' => 'Status',
+            'subtotal' => 'Subtotal',
+            'vat_amount' => 'VAT (:rate%)',
+            'profit_tax_amount' => 'Profit Withholding (:rate%)',
+            'total_amount' => 'Total',
             'expected_delivery_date' => 'Expected Delivery Date',
             'notes' => 'Notes',
             'item' => 'Item',
@@ -495,13 +507,44 @@ return [
 
         'actions' => [
             'receive' => 'Receive Items',
+            'receive_hint' => 'Enter the received quantities. An addition voucher (إذن إضافة) is created and posted automatically — stock and supplier account are updated and the order is closed by comparison.',
             'add_item' => 'Add Item',
+            'approve' => 'Approve',
+            'approve_confirm' => 'Approve this purchase order? It will be marked as sent and can no longer be edited as a draft.',
+            'open_item' => 'Open item card',
+            'print' => 'Print',
+            'print_en' => 'Print (English)',
+            'print_ar' => 'Print (Arabic)',
         ],
 
         'notifications' => [
             'received' => 'Items received successfully',
             'receive_failed' => 'Receiving failed',
             'no_quantities' => 'No quantities entered',
+            'approved' => 'Purchase order approved and sent',
+            'voucher_created' => 'Addition voucher :number created and posted.',
+        ],
+
+        'pdf' => [
+            'company_name' => 'Electrotech for Electrical Industries',
+            'title' => 'PURCHASE ORDER',
+            'po_number' => 'PO No.',
+            'date' => 'Date',
+            'supplier' => 'Supplier',
+            'tax_number' => 'Tax No.',
+            'project' => 'Project',
+            'status' => 'Status',
+            'item_no' => '#',
+            'item' => 'Item',
+            'qty' => 'Qty',
+            'unit_price' => 'Unit Price',
+            'total_price' => 'Total',
+            'subtotal' => 'Subtotal',
+            'vat' => 'VAT (:rate%)',
+            'profit_tax' => 'Profit Withholding (:rate%)',
+            'total' => 'Total',
+            'no_profit_tax_note' => 'This supplier is not subject to the 1% profit-withholding deduction.',
+            'approved_by' => 'Approved by (Technical Office Manager)',
         ],
     ],
 
@@ -541,6 +584,7 @@ return [
 
         'sections' => [
             'details' => 'Supplier Details',
+            'documents' => 'Documents',
         ],
 
         'fields' => [
@@ -549,6 +593,8 @@ return [
             'phone' => 'Phone',
             'email' => 'Email',
             'tax_number' => 'Tax Number',
+            'profit_tax_exempt' => 'Exempt from 1% profit withholding',
+            'profit_tax_exempt_helper' => 'When on, the 1% commercial/industrial profits tax is NOT deducted on this supplier\'s purchase orders. Attach the exemption document below.',
             'address' => 'Address',
             'notes' => 'Notes',
         ],
@@ -558,6 +604,7 @@ return [
             'contact_person' => 'Contact',
             'phone' => 'Phone',
             'email' => 'Email',
+            'profit_tax_exempt' => '1% Exempt',
             'balance' => 'Balance',
             'created_at' => 'Created At',
         ],
@@ -575,6 +622,7 @@ return [
 
         'sections' => [
             'details' => 'Customer Details',
+            'attachments' => 'Attachments',
         ],
 
         'fields' => [
@@ -610,11 +658,13 @@ return [
         'sections' => [
             'details' => 'Voucher Details',
             'lines' => 'Received Items',
+            'documents' => 'Voucher Scan',
         ],
 
         'fields' => [
             'voucher_number' => 'Voucher Number',
             'supplier' => 'Supplier',
+            'supplier_name' => 'Supplier Name (unregistered)',
             'purchase_order' => 'Purchase Order',
             'voucher_date' => 'Date',
             'invoice_number' => 'Invoice Number',
@@ -1584,6 +1634,7 @@ return [
                 'edit' => 'Edit Purchase Orders',
                 'approve' => 'Approve Purchase Orders',
                 'receive' => 'Receive Purchase Orders',
+                'print' => 'Print Purchase Orders',
                 'delete' => 'Delete Purchase Orders',
             ],
             'suppliers' => [
@@ -1878,7 +1929,14 @@ return [
             'speces' => 'SPECES',
             'boq' => 'BOQ',
             'site_measurement' => 'SITE MEASUREMENT',
-            'submittal' => 'SUBMITTAL',
+            'submittal' => 'SUBMITTAL (SMB)',
+            'commercial_registry' => 'Commercial Registry',
+            'tax_card' => 'Tax Card',
+            'profit_tax_exemption' => '1% Withholding Exemption',
+            'po_scan' => 'Purchase Order Scan',
+            'addition_voucher_scan' => 'Addition Voucher Scan',
+            'customer_acceptance' => 'Customer Acceptance',
+            'customer_document' => 'Customer Files',
         ],
 
         'lost_reason' => [
@@ -2040,5 +2098,6 @@ return [
         'created_at' => 'Created At',
         'auto_generated' => 'Auto-generated',
         'action_failed' => 'Action failed',
+        'currency' => 'EGP',
     ],
 ];

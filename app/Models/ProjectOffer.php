@@ -31,7 +31,6 @@ class ProjectOffer extends Model
         'quotation_number',
         'currency',
         'financial_amount',
-        'technical_amount',
         'vat_percentage',
         'show_vat',
         'installation_percentage',
@@ -92,7 +91,6 @@ class ProjectOffer extends Model
         return [
             'version' => 'integer',
             'financial_amount' => 'decimal:2',
-            'technical_amount' => 'decimal:2',
             'vat_percentage' => 'decimal:2',
             'show_vat' => 'boolean',
             'installation_percentage' => 'decimal:2',
@@ -109,7 +107,7 @@ class ProjectOffer extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['version', 'quotation_number', 'financial_amount', 'technical_amount', 'grand_total', 'vat_percentage', 'installation_percentage', 'show_installation', 'submitted_at', 'is_winning'])
+            ->logOnly(['version', 'quotation_number', 'financial_amount', 'grand_total', 'vat_percentage', 'installation_percentage', 'show_installation', 'submitted_at', 'is_winning'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(

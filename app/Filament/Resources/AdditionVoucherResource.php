@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\AttachmentCategory;
 use App\Enums\VoucherStatus;
 use App\Filament\Resources\AdditionVoucherResource\Pages;
+use App\Filament\Support\EntityAttachments;
 use App\Models\AdditionVoucher;
 use App\Services\AdditionVoucherService;
 use Filament\Forms;
@@ -66,12 +68,20 @@ class AdditionVoucherResource extends Resource
                             ->dehydrated(false)
                             ->placeholder(__('resources.common.auto_generated')),
 
+                        // Slide 9: a registered supplier is optional — some
+                        // receipts have no invoice or purchase order. Fall back
+                        // to a free-text name when no supplier is linked.
                         Forms\Components\Select::make('supplier_id')
                             ->label(__('resources.addition_vouchers.fields.supplier'))
                             ->relationship('supplier', 'name')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->live(),
+
+                        Forms\Components\TextInput::make('supplier_name')
+                            ->label(__('resources.addition_vouchers.fields.supplier_name'))
+                            ->maxLength(255)
+                            ->visible(fn (Forms\Get $get): bool => blank($get('supplier_id'))),
 
                         Forms\Components\Select::make('purchase_order_id')
                             ->label(__('resources.addition_vouchers.fields.purchase_order'))
@@ -133,6 +143,15 @@ class AdditionVoucherResource extends Resource
                             ->disabled(fn (?AdditionVoucher $record) => $record?->isPosted() ?? false)
                             ->columnSpanFull(),
                     ]),
+
+                // Slide 7: attach the scanned إذن إضافة (the file, not a note).
+                Forms\Components\Section::make(__('resources.addition_vouchers.sections.documents'))
+                    ->icon('heroicon-o-paper-clip')
+                    ->columns(1)
+                    ->schema(EntityAttachments::fileUploads(
+                        AttachmentCategory::additionVoucherCategories(),
+                        'addition-voucher-attachments',
+                    )),
             ]);
     }
 

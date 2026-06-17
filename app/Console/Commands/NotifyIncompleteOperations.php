@@ -4,49 +4,28 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Models\User;
 use App\Services\SalesAlertService;
-use Filament\Notifications\Notification;
 use Illuminate\Console\Command;
 
 /**
- * Slide 5: an automatic alert when an operation is sitting in the pipeline
- * without a priced offer. Runs on a schedule and drops a database
- * notification (the topbar bell) on the Sales team — mirrors the
- * NotifyDepartmentsOfActivation pattern.
+ * Slide 5 / 11: keep the topbar bell in step with the live pipeline state —
+ * a red error alert per Tender operation with no priced offer and per In-Hand
+ * operation with no SMB, each cleared automatically once the gap is filled.
+ *
+ * The alerts are also reconciled on every pipeline transition; this scheduled
+ * pass is the safety net that catches anything edited outside those paths.
  */
 class NotifyIncompleteOperations extends Command
 {
     protected $signature = 'sales:notify-incomplete-operations';
 
-    protected $description = 'Notify Sales of pipeline operations that have no priced offer yet.';
+    protected $description = 'Reconcile the bell alerts for pipeline operations missing an offer or an SMB.';
 
     public function handle(SalesAlertService $alerts): int
     {
-        $missing = $alerts->operationsMissingOffers();
+        $alerts->reconcileOperationAlerts();
 
-        if ($missing->isEmpty()) {
-            $this->info('No incomplete operations.');
-
-            return self::SUCCESS;
-        }
-
-        $recipients = User::query()
-            ->whereHas('roles', fn ($query) => $query->whereIn('name', ['Sales', 'Sales_Manager']))
-            ->get();
-
-        if ($recipients->isEmpty()) {
-            return self::SUCCESS;
-        }
-
-        Notification::make()
-            ->title(__('resources.sales_alerts.notification_title'))
-            ->body(__('resources.sales_alerts.notification_body', ['count' => $missing->count()]))
-            ->icon('heroicon-o-exclamation-triangle')
-            ->warning()
-            ->sendToDatabase($recipients);
-
-        $this->info("Notified {$recipients->count()} user(s) about {$missing->count()} incomplete operation(s).");
+        $this->info('Operation alerts reconciled.');
 
         return self::SUCCESS;
     }

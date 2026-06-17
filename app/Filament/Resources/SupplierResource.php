@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\AttachmentCategory;
 use App\Filament\Resources\SupplierResource\Pages;
+use App\Filament\Support\EntityAttachments;
 use App\Models\Supplier;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -75,6 +77,11 @@ class SupplierResource extends Resource
                             ->label(__('resources.suppliers.fields.tax_number'))
                             ->maxLength(100),
 
+                        Forms\Components\Toggle::make('profit_tax_exempt')
+                            ->label(__('resources.suppliers.fields.profit_tax_exempt'))
+                            ->helperText(__('resources.suppliers.fields.profit_tax_exempt_helper'))
+                            ->columnSpanFull(),
+
                         Forms\Components\Textarea::make('address')
                             ->label(__('resources.suppliers.fields.address'))
                             ->rows(2)
@@ -85,6 +92,17 @@ class SupplierResource extends Resource
                             ->rows(2)
                             ->columnSpanFull(),
                     ]),
+
+                // Slide 3: supplier-file documents (commercial registry, tax
+                // card, 1%-exemption proof). View-only when the user can't edit.
+                Forms\Components\Section::make(__('resources.suppliers.sections.documents'))
+                    ->icon('heroicon-o-paper-clip')
+                    ->columns(1)
+                    ->disabled(fn () => ! (auth()->user()?->can('suppliers.edit') ?? false))
+                    ->schema(EntityAttachments::fileUploads(
+                        AttachmentCategory::supplierCategories(),
+                        'supplier-attachments',
+                    )),
             ]);
     }
 
@@ -109,6 +127,11 @@ class SupplierResource extends Resource
 
                 Tables\Columns\TextColumn::make('email')
                     ->label(__('resources.suppliers.columns.email'))
+                    ->toggleable(),
+
+                Tables\Columns\IconColumn::make('profit_tax_exempt')
+                    ->label(__('resources.suppliers.columns.profit_tax_exempt'))
+                    ->boolean()
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('balance')
@@ -140,10 +163,10 @@ class SupplierResource extends Resource
 
     public static function getRelations(): array
     {
-        if (! auth()->user()?->can('supplier_statements.view')) {
-            return [];
-        }
-
+        // Always return the manager so it registers as a Livewire component at
+        // boot; the statement permission is enforced per-request via the
+        // manager's canViewForRecord(). Gating here on auth() would run before
+        // the auth guard is resolved and leave the component unregistered.
         return [
             \App\Filament\RelationManagers\AccountEntriesRelationManager::class,
         ];

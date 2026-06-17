@@ -202,11 +202,6 @@
         <div style="clear: both"></div>
     @endif
 
-    @if ($offer->technical_amount !== null)
-        <p style="margin-top: 10px"><strong>{{ __('resources.project_offers.pdf.technical_offer') }}:</strong>
-            {{ $money($offer->technical_amount) }} {{ $currency }}</p>
-    @endif
-
     {{-- Slides 3 & 8: special terms sit directly behind the tables… --}}
     @if (! empty($offer->terms))
         <div class="terms">

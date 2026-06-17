@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\AttachmentCategory;
 use App\Filament\Resources\CustomerResource\Pages;
+use App\Filament\Support\EntityAttachments;
 use App\Models\Customer;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -85,6 +87,17 @@ class CustomerResource extends Resource
                             ->rows(2)
                             ->columnSpanFull(),
                     ]),
+
+                // Customer file documents — upload multiple files attached to
+                // the customer record. View-only when the user can't edit.
+                Forms\Components\Section::make(__('resources.customers.sections.attachments'))
+                    ->icon('heroicon-o-paper-clip')
+                    ->columns(1)
+                    ->disabled(fn () => ! (auth()->user()?->can('customers.edit') ?? false))
+                    ->schema(EntityAttachments::fileUploads(
+                        AttachmentCategory::customerCategories(),
+                        'customer-attachments',
+                    )),
             ]);
     }
 
@@ -140,10 +153,10 @@ class CustomerResource extends Resource
 
     public static function getRelations(): array
     {
-        if (! auth()->user()?->can('customer_statements.view')) {
-            return [];
-        }
-
+        // Always return the manager so it registers as a Livewire component at
+        // boot; the statement permission is enforced per-request via the
+        // manager's canViewForRecord(). Gating here on auth() would run before
+        // the auth guard is resolved and leave the component unregistered.
         return [
             \App\Filament\RelationManagers\AccountEntriesRelationManager::class,
         ];

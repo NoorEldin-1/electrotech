@@ -31,7 +31,7 @@ class AdditionVoucherService
             throw new \RuntimeException(__('errors.voucher.already_posted', ['number' => $voucher->voucher_number]));
         }
 
-        $voucher->loadMissing(['lines.item', 'supplier', 'purchaseOrder.project']);
+        $voucher->loadMissing(['lines.item', 'supplier', 'purchaseOrder.items', 'purchaseOrder.project']);
 
         if ($voucher->lines->isEmpty()) {
             throw new \RuntimeException(__('errors.voucher.no_lines', ['number' => $voucher->voucher_number]));
@@ -50,23 +50,31 @@ class AdditionVoucherService
                 );
             }
 
-            $amount = (float) $voucher->invoice_value;
-            if ($amount <= 0) {
-                $amount = $voucher->lines_value;
+            // Slide 9: only a registered supplier is posted to the ledger. A
+            // voucher with just a free-text name (no invoice / PO) skips it.
+            if ($voucher->supplier_id !== null) {
+                $amount = (float) $voucher->invoice_value;
+                if ($amount <= 0) {
+                    $amount = $voucher->lines_value;
+                }
+
+                AccountEntry::create([
+                    'party_type' => $voucher->supplier->getMorphClass(),
+                    'party_id' => $voucher->supplier_id,
+                    'entry_date' => $voucher->voucher_date,
+                    'direction' => AccountDirection::Credit,
+                    'amount' => $amount,
+                    'reference_type' => $voucher->getMorphClass(),
+                    'reference_id' => $voucher->id,
+                    'operation_name' => $voucher->purchaseOrder?->project?->name,
+                    'notes' => $voucher->invoice_number ? "Invoice #{$voucher->invoice_number}" : null,
+                    'created_by' => Auth::id(),
+                ]);
             }
 
-            AccountEntry::create([
-                'party_type' => $voucher->supplier->getMorphClass(),
-                'party_id' => $voucher->supplier_id,
-                'entry_date' => $voucher->voucher_date,
-                'direction' => AccountDirection::Credit,
-                'amount' => $amount,
-                'reference_type' => $voucher->getMorphClass(),
-                'reference_id' => $voucher->id,
-                'operation_name' => $voucher->purchaseOrder?->project?->name,
-                'notes' => $voucher->invoice_number ? "Invoice #{$voucher->invoice_number}" : null,
-                'created_by' => Auth::id(),
-            ]);
+            // Slides 1 & 7: a voucher tied to a PO closes it automatically by
+            // updating received quantities and re-deriving the order status.
+            $voucher->purchaseOrder?->applyReceivedFromVoucher($voucher);
 
             $voucher->update([
                 'status' => VoucherStatus::Posted,

@@ -24,14 +24,22 @@ class Supplier extends Model
         'phone',
         'email',
         'tax_number',
+        'profit_tax_exempt',
         'address',
         'notes',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'profit_tax_exempt' => 'boolean',
+        ];
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'contact_person', 'phone', 'email', 'tax_number'])
+            ->logOnly(['name', 'contact_person', 'phone', 'email', 'tax_number', 'profit_tax_exempt'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -44,6 +52,15 @@ class Supplier extends Model
     public function additionVouchers(): HasMany
     {
         return $this->hasMany(AdditionVoucher::class);
+    }
+
+    /**
+     * Supplier-file documents (slide 3): commercial registry, tax card,
+     * 1%-exemption proof. Polymorphic — see Attachment::attachable().
+     */
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
     }
 
     /**

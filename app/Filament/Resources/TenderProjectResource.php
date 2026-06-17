@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\AttachmentCategory;
 use App\Enums\LostReason;
 use App\Enums\ProjectStatus;
 use App\Filament\Resources\TenderProjectResource\Pages;
 use App\Models\Project;
+use App\Services\SalesAlertService;
 use App\Services\SalesPipelineService;
 use Carbon\Carbon;
 use DomainException;
@@ -17,6 +19,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
 
 class TenderProjectResource extends Resource
 {
@@ -86,11 +89,6 @@ class TenderProjectResource extends Resource
                     ->money('EGP')
                     ->placeholder(__('resources.common.no_data')),
 
-                Tables\Columns\TextColumn::make('latestOffer.technical_amount')
-                    ->label(__('resources.tender_projects.columns.technical_offer'))
-                    ->money('EGP')
-                    ->placeholder(__('resources.common.no_data')),
-
                 Tables\Columns\IconColumn::make('alarm_at')
                     ->label(__('resources.tender_projects.columns.alarm'))
                     ->boolean()
@@ -117,14 +115,27 @@ class TenderProjectResource extends Resource
                     ->modalHeading(__('resources.tender_projects.actions.action_modal_heading'))
                     ->modalDescription(__('resources.tender_projects.actions.action_modal_description'))
                     ->form([
-                        Forms\Components\Textarea::make('smb_note')
-                            ->label(__('resources.tender_projects.fields.smb_note'))
-                            ->rows(3),
+                        // SMB is a file, not a note (شريحة 11): it is the same
+                        // artifact as the project's Submittal, so the upload lands
+                        // in the Submittal category and shows up in both places.
+                        Forms\Components\FileUpload::make('smb_file')
+                            ->label(__('resources.tender_projects.fields.smb_file'))
+                            ->helperText(__('resources.tender_projects.fields.smb_file_helper'))
+                            ->disk('public')
+                            ->directory(fn (Project $r) => 'attachments/' . $r->id . '/' . AttachmentCategory::Submittal->value)
+                            ->downloadable()
+                            ->openable()
+                            ->previewable(false)
+                            ->maxSize(40960),
                     ])
                     ->visible(fn (Project $r) => auth()->user()?->can('moveToInHand', $r) ?? false)
                     ->action(function (Project $r, array $data) {
                         try {
-                            app(SalesPipelineService::class)->moveToInHand($r, $data['smb_note'] ?? null);
+                            // Store the SMB / Submittal file first so moveToInHand
+                            // can mark smb_status as 'submitted' when it is present.
+                            self::storeSubmittalFile($r, $data['smb_file'] ?? null);
+
+                            app(SalesPipelineService::class)->moveToInHand($r->fresh());
                             Notification::make()
                                 ->success()
                                 ->title(__('resources.tender_projects.notifications.moved_to_inhand'))
@@ -210,6 +221,44 @@ class TenderProjectResource extends Resource
                             ->send();
                     }),
             ]);
+    }
+
+    /**
+     * Persist the SMB uploaded on the "move to In-Hand" modal as a Submittal
+     * attachment (شريحة 11) — the same category the project's Submittal section
+     * reads, so SMB and Submittal stay one artifact. Idempotent on path, and it
+     * fires the existing submittal-uploaded alert when a new file lands.
+     *
+     * @param  string|array<int, string>|null  $file
+     */
+    protected static function storeSubmittalFile(Project $project, string|array|null $file): void
+    {
+        $paths = array_filter((array) $file);
+        if ($paths === []) {
+            return;
+        }
+
+        $disk = Storage::disk('public');
+        $created = false;
+
+        foreach ($paths as $path) {
+            $attachment = $project->attachments()->firstOrCreate(
+                ['file_path' => $path],
+                [
+                    'file_name' => basename((string) $path),
+                    'file_type' => $disk->mimeType($path) ?: null,
+                    'file_size' => $disk->exists($path) ? $disk->size($path) : 0,
+                    'category' => AttachmentCategory::Submittal->value,
+                    'uploaded_by' => auth()->id(),
+                ],
+            );
+
+            $created = $created || $attachment->wasRecentlyCreated;
+        }
+
+        if ($created) {
+            app(SalesAlertService::class)->notifySubmittalUploaded($project);
+        }
     }
 
     public static function getPages(): array

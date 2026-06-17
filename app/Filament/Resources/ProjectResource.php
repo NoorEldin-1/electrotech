@@ -71,10 +71,34 @@ class ProjectResource extends Resource
                             ->required()
                             ->maxLength(255),
 
-                        Forms\Components\TextInput::make('client_name')
-                            ->label(__('resources.projects.fields.client_name'))
+                        // Customer is now a first-class record: pick it from the
+                        // customers list (with inline create) instead of typing a
+                        // free-text name. The legacy `client_name` column is kept
+                        // in sync server-side (see CreateProject/EditProject) so
+                        // existing lists, PDFs and reports keep working.
+                        Forms\Components\Select::make('customer_id')
+                            ->label(__('resources.projects.fields.customer'))
+                            ->relationship('customer', 'name')
+                            ->searchable()
+                            ->preload()
                             ->required()
-                            ->maxLength(255),
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label(__('resources.customers.fields.name'))
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('contact_person')
+                                    ->label(__('resources.customers.fields.contact_person'))
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('phone')
+                                    ->label(__('resources.customers.fields.phone'))
+                                    ->tel()
+                                    ->maxLength(50),
+                                Forms\Components\TextInput::make('email')
+                                    ->label(__('resources.customers.fields.email'))
+                                    ->email()
+                                    ->maxLength(255),
+                            ]),
 
                         Forms\Components\TextInput::make('consultant_name')
                             ->label(__('resources.projects.fields.consultant_name'))
@@ -199,6 +223,17 @@ class ProjectResource extends Resource
     {
         $components = [];
         foreach (AttachmentCategory::cases() as $category) {
+            // Customer Documents are a customer-only bucket surfaced on the
+            // Customer resource — they don't belong on the project form. Every
+            // other category is shown here, including Customer Acceptance: the
+            // consultant acceptance file (also uploaded by the In-Hand "move to
+            // active" action) is stored as a project attachment under the same
+            // category/directory, so it surfaces in — and can be managed from —
+            // this section.
+            if ($category === AttachmentCategory::CustomerDocument) {
+                continue;
+            }
+
             $components[] = Forms\Components\FileUpload::make("attachments_{$category->value}")
                 ->label(__('resources.enums.attachment_category.'.$category->value))
                 ->multiple()

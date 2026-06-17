@@ -30,6 +30,7 @@ return [
             'code' => 'كود المشروع',
             'name' => 'اسم المشروع / العملية',
             'client_name' => 'اسم العميل',
+            'customer' => 'العميل',
             'consultant_name' => 'اسم الاستشاري',
             'engineer_name' => 'اسم المهندس',
             'electric_current' => 'التيار الكهربي',
@@ -57,8 +58,6 @@ return [
             'lost_reason_note' => 'ملاحظات الخسارة',
             'winning_competitor' => 'الشركة المنافسة الفائزة',
             'financial_amount' => 'المبلغ المالي',
-            'technical_amount' => 'المبلغ الفني (العرض الهندسي المنفصل)',
-            'technical_amount_helper' => 'سعر مستقل للعرض الفني / الهندسي يُقدَّم بجانب العرض المالي، ولا يدخل ضمن الإجمالي النهائي لجداول البنود (BOQ). اتركه فارغاً إذا كان العرض مالياً فقط.',
             'submitted_at' => 'تاريخ التقديم',
             'offer_notes' => 'ملاحظات العرض',
             'latest_offer' => 'آخر عرض',
@@ -140,8 +139,6 @@ return [
         'fields' => [
             'quotation_number' => 'رقم العرض',
             'currency' => 'العملة',
-            'technical_amount' => 'المبلغ الفني (العرض الهندسي المنفصل)',
-            'technical_amount_helper' => 'سعر مستقل للعرض الفني / الهندسي يُقدَّم بجانب العرض المالي، ولا يدخل ضمن الإجمالي النهائي لجداول البنود (BOQ). اتركه فارغاً إذا كان العرض مالياً فقط.',
             'vat_percentage' => 'نسبة ض.ق.م %',
             'show_vat' => 'إظهار الضريبة في العرض',
             'show_vat_helper' => 'عند إيقافه يكون إجمالي العرض بدون ضريبة القيمة المضافة.',
@@ -181,7 +178,6 @@ return [
             'version' => 'الإصدار',
             'quotation_number' => 'رقم العرض',
             'grand_total' => 'الإجمالي النهائي',
-            'technical_amount' => 'الفني',
             'is_winning' => 'الفائز',
             'submitted_at' => 'تاريخ التقديم',
         ],
@@ -216,7 +212,6 @@ return [
             'installation' => 'التركيب',
             'grand_total' => 'الإجمالي النهائي',
             'offer_total_title' => 'إجمالي العرض',
-            'technical_offer' => 'العرض الفني',
             'special_terms_title' => 'الشروط الخاصة',
             'terms_title' => 'الشروط',
             'best_regards' => 'مع خالص التحية',
@@ -233,6 +228,11 @@ return [
         'offer_attached_body' => 'العملية «:operation» أصبح لديها :count عرض/عروض مرفقة.',
         'submittal_title' => 'تم رفع Submittal',
         'submittal_body' => 'تم رفع Submittal للعملية «:operation» (:count ملف).',
+        'view_operation' => 'فتح العملية',
+        'missing_offer_alert_title' => 'عملية مناقصة بلا عرض',
+        'missing_offer_alert_body' => 'العملية «:operation» ليس لها عرض مُسعّر بعد. أضِف عرضًا.',
+        'missing_smb_alert_title' => 'عملية تحت اليد بلا SMB',
+        'missing_smb_alert_body' => 'العملية «:operation» ليس لها SMB مُسجّل بعد. ارفع ملف الـ SMB.',
     ],
 
     /*
@@ -248,13 +248,13 @@ return [
         'columns' => [
             'name' => 'اسم العملية',
             'financial_offer' => 'العرض المالي',
-            'technical_offer' => 'العرض الفني',
             'alarm' => 'تنبيه',
             'date' => 'التاريخ',
         ],
 
         'fields' => [
-            'smb_note' => 'ملاحظة SMB',
+            'smb_file' => 'ملف SMB / Submittal',
+            'smb_file_helper' => 'ارفع مستند SMB / Submittal (الملف نفسه وليس ملاحظة). اختياري — يمكن إضافته لاحقًا من قسم Submittal الخاص بالمشروع.',
             'lost_reason' => 'سبب الخسارة',
             'lost_reason_note' => 'ملاحظات الخسارة',
             'winning_competitor' => 'الشركة المنافسة الفائزة',
@@ -265,7 +265,7 @@ return [
         'actions' => [
             'action' => 'إجراء — نقل إلى تحت اليد',
             'action_modal_heading' => 'نقل هذه العملية إلى تحت اليد؟',
-            'action_modal_description' => 'العميل قبل وطلب تجهيز SMB. يمكنك إضافة ملاحظة اختيارية.',
+            'action_modal_description' => 'العميل قبل وطلب تجهيز SMB. ارفع ملف SMB / Submittal (اختياري — يمكنك إضافته لاحقًا).',
             'cancel' => 'إلغاء — نقل إلى المفقودة',
             'cancel_modal_heading' => 'إلغاء العملية ونقلها إلى المفقودة؟',
             'set_alarm' => 'ضبط تنبيه',
@@ -299,8 +299,13 @@ return [
             'date' => 'التاريخ',
         ],
 
+        'smb_present_tooltip' => 'ملف SMB / Submittal مرفوع.',
+        'smb_missing_tooltip' => 'لا يوجد ملف SMB / Submittal بعد — ارفعه من قسم Submittal الخاص بالمشروع.',
+
         'fields' => [
             'acceptance_email_at' => 'تاريخ إيميل القبول',
+            'acceptance_file' => 'ملف قبول العميل',
+            'acceptance_file_helper' => 'أرفِق مستند قبول العميل (الملف نفسه، وليس مجرد ملاحظة).',
             'manager_approve_now' => 'موافقة المدير الآن',
             'manager_approve_helper' => 'يظهر فقط للمستخدمين الذين لديهم صلاحية موافقة المدير.',
             'lost_reason' => 'سبب الخسارة',
@@ -466,14 +471,21 @@ return [
         'sections' => [
             'po_details' => 'تفاصيل أمر الشراء',
             'line_items' => 'بنود الأمر',
+            'totals' => 'الإجماليات',
+            'attachment' => 'صورة أمر الشراء',
         ],
 
         'fields' => [
             'po_number' => 'رقم أمر الشراء',
             'project' => 'المشروع',
+            'supplier' => 'المورد',
             'supplier_name' => 'اسم المورد',
             'supplier_contact' => 'بيانات تواصل المورد',
             'status' => 'الحالة',
+            'subtotal' => 'الإجمالي الفرعي',
+            'vat_amount' => 'ض. القيمة المضافة (:rate%)',
+            'profit_tax_amount' => 'خصم ض. الأرباح (:rate%)',
+            'total_amount' => 'الإجمالي',
             'expected_delivery_date' => 'تاريخ التسليم المتوقع',
             'notes' => 'ملاحظات',
             'item' => 'الصنف',
@@ -495,13 +507,44 @@ return [
 
         'actions' => [
             'receive' => 'استلام الأصناف',
+            'receive_hint' => 'أدخل الكميات المستلمة. يُنشأ إذن إضافة ويُرحَّل تلقائيًا — يُحدَّث المخزون وحساب المورد ويُقفَل أمر الشراء بالمقارنة.',
             'add_item' => 'إضافة صنف',
+            'approve' => 'اعتماد',
+            'approve_confirm' => 'اعتماد أمر الشراء؟ سيتحوّل إلى «مُرسَل» ولا يمكن تعديله كمسودة بعد ذلك.',
+            'open_item' => 'فتح كرت الصنف',
+            'print' => 'طباعة',
+            'print_en' => 'طباعة (إنجليزي)',
+            'print_ar' => 'طباعة (عربي)',
         ],
 
         'notifications' => [
             'received' => 'تم استلام الأصناف بنجاح',
             'receive_failed' => 'فشل في الاستلام',
             'no_quantities' => 'لم يتم إدخال كميات',
+            'approved' => 'تم اعتماد أمر الشراء وإرساله',
+            'voucher_created' => 'تم إنشاء وترحيل إذن الإضافة :number.',
+        ],
+
+        'pdf' => [
+            'company_name' => 'إلكتروتك للصناعات الكهربائية',
+            'title' => 'أمر شراء',
+            'po_number' => 'رقم الأمر',
+            'date' => 'التاريخ',
+            'supplier' => 'المورد',
+            'tax_number' => 'الرقم الضريبي',
+            'project' => 'المشروع',
+            'status' => 'الحالة',
+            'item_no' => 'م',
+            'item' => 'الصنف',
+            'qty' => 'الكمية',
+            'unit_price' => 'سعر الوحدة',
+            'total_price' => 'الإجمالي',
+            'subtotal' => 'الإجمالي الفرعي',
+            'vat' => 'ض. القيمة المضافة (:rate%)',
+            'profit_tax' => 'خصم ض. الأرباح (:rate%)',
+            'total' => 'الإجمالي',
+            'no_profit_tax_note' => 'هذا المورد غير خاضع لخصم 1% ضريبة الأرباح التجارية والصناعية.',
+            'approved_by' => 'اعتماد مدير المكتب الفني',
         ],
     ],
 
@@ -541,6 +584,7 @@ return [
 
         'sections' => [
             'details' => 'بيانات المورد',
+            'documents' => 'المستندات',
         ],
 
         'fields' => [
@@ -549,6 +593,8 @@ return [
             'phone' => 'الهاتف',
             'email' => 'البريد الإلكتروني',
             'tax_number' => 'الرقم الضريبي',
+            'profit_tax_exempt' => 'معفى من خصم 1% ضريبة الأرباح',
+            'profit_tax_exempt_helper' => 'عند التفعيل لا يُخصم 1% ضريبة الأرباح التجارية والصناعية على أوامر شراء هذا المورد. أرفِق مستند الإعفاء بالأسفل.',
             'address' => 'العنوان',
             'notes' => 'ملاحظات',
         ],
@@ -558,6 +604,7 @@ return [
             'contact_person' => 'جهة التواصل',
             'phone' => 'الهاتف',
             'email' => 'البريد الإلكتروني',
+            'profit_tax_exempt' => 'إعفاء 1%',
             'balance' => 'الرصيد',
             'created_at' => 'تاريخ الإنشاء',
         ],
@@ -575,6 +622,7 @@ return [
 
         'sections' => [
             'details' => 'بيانات العميل',
+            'attachments' => 'المرفقات',
         ],
 
         'fields' => [
@@ -610,11 +658,13 @@ return [
         'sections' => [
             'details' => 'بيانات الإذن',
             'lines' => 'الأصناف الواردة',
+            'documents' => 'صورة الإذن',
         ],
 
         'fields' => [
             'voucher_number' => 'رقم الإذن',
             'supplier' => 'المورد',
+            'supplier_name' => 'اسم المورد (غير مسجّل)',
             'purchase_order' => 'طلب الشراء',
             'voucher_date' => 'التاريخ',
             'invoice_number' => 'رقم الفاتورة',
@@ -1584,6 +1634,7 @@ return [
                 'edit' => 'تعديل أوامر الشراء',
                 'approve' => 'اعتماد أوامر الشراء',
                 'receive' => 'استلام أوامر الشراء',
+                'print' => 'طباعة أوامر الشراء',
                 'delete' => 'حذف أوامر الشراء',
             ],
             'suppliers' => [
@@ -1878,7 +1929,14 @@ return [
             'speces' => 'SPECES',
             'boq' => 'BOQ',
             'site_measurement' => 'مقاسات الموقع',
-            'submittal' => 'Submittal',
+            'submittal' => 'Submittal (SMB)',
+            'commercial_registry' => 'السجل التجاري',
+            'tax_card' => 'البطاقة الضريبية',
+            'profit_tax_exemption' => 'مستند إعفاء خصم 1%',
+            'po_scan' => 'صورة أمر الشراء',
+            'addition_voucher_scan' => 'صورة إذن الإضافة',
+            'customer_acceptance' => 'قبول العميل',
+            'customer_document' => 'ملفات العميل',
         ],
 
         'lost_reason' => [
@@ -2040,5 +2098,6 @@ return [
         'created_at' => 'تاريخ الإنشاء',
         'auto_generated' => 'تلقائي',
         'action_failed' => 'فشل تنفيذ الإجراء',
+        'currency' => 'ج.م',
     ],
 ];

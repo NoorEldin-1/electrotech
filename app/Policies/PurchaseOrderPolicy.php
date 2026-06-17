@@ -32,6 +32,16 @@ class PurchaseOrderPolicy
         return $user->can('purchase_orders.edit');
     }
 
+    public function approve(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $user->can('purchase_orders.approve');
+    }
+
+    public function print(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $user->can('purchase_orders.print');
+    }
+
     public function delete(User $user, PurchaseOrder $purchaseOrder): bool
     {
         return $user->can('purchase_orders.delete');

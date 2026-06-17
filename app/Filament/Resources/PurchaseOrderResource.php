@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\AttachmentCategory;
+use App\Enums\ProjectStatus;
 use App\Enums\PurchaseOrderStatus;
+use App\Filament\Resources\ItemResource;
 use App\Filament\Resources\PurchaseOrderResource\Pages;
+use App\Filament\Support\EntityAttachments;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\Supplier;
 use App\Services\PurchaseOrderService;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -17,6 +22,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\HtmlString;
 
 class PurchaseOrderResource extends Resource
 {
@@ -64,27 +70,57 @@ class PurchaseOrderResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true),
 
+                        // Slide 4: only active projects (in-hand / in-progress)
+                        // can carry a purchase order.
                         Forms\Components\Select::make('project_id')
                             ->label(__('resources.purchase_orders.fields.project'))
-                            ->relationship('project', 'name')
+                            ->relationship(
+                                'project',
+                                'name',
+                                fn (Builder $query) => $query->whereIn('status', [
+                                    ProjectStatus::InProgress,
+                                    ProjectStatus::InHand,
+                                ]),
+                            )
                             ->searchable()
                             ->preload()
                             ->required(),
 
-                        Forms\Components\TextInput::make('supplier_name')
-                            ->label(__('resources.purchase_orders.fields.supplier_name'))
+                        // Slide 3: a PO may only target a registered supplier.
+                        // The free-text supplier name/contact were dropped — the
+                        // contact lives in the supplier file. supplier_name is
+                        // kept as a snapshot, written from the relation on save.
+                        Forms\Components\Select::make('supplier_id')
+                            ->label(__('resources.purchase_orders.fields.supplier'))
+                            ->relationship('supplier', 'name')
+                            ->searchable()
+                            ->preload()
                             ->required()
-                            ->maxLength(255),
+                            ->live()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label(__('resources.suppliers.fields.name'))
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('phone')
+                                    ->label(__('resources.suppliers.fields.phone'))
+                                    ->tel()
+                                    ->maxLength(50),
+                                Forms\Components\TextInput::make('tax_number')
+                                    ->label(__('resources.suppliers.fields.tax_number'))
+                                    ->maxLength(100),
+                                Forms\Components\Toggle::make('profit_tax_exempt')
+                                    ->label(__('resources.suppliers.fields.profit_tax_exempt')),
+                            ]),
 
-                        Forms\Components\TextInput::make('supplier_contact')
-                            ->label(__('resources.purchase_orders.fields.supplier_contact'))
-                            ->maxLength(255),
-
+                        // Status is driven by the workflow actions (approve /
+                        // receive), never edited by hand — shown read-only.
                         Forms\Components\Select::make('status')
                             ->label(__('resources.purchase_orders.fields.status'))
                             ->options(PurchaseOrderStatus::class)
                             ->default(PurchaseOrderStatus::Draft)
-                            ->required(),
+                            ->disabled()
+                            ->dehydrated(),
 
                         Forms\Components\DatePicker::make('expected_delivery_date')
                             ->label(__('resources.purchase_orders.fields.expected_delivery_date')),
@@ -111,6 +147,19 @@ class PurchaseOrderResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
+                                    ->live()
+                                    // Slide 10: open the item "card" in a new tab.
+                                    ->suffixAction(
+                                        Forms\Components\Actions\Action::make('open_item')
+                                            ->label(__('resources.purchase_orders.actions.open_item'))
+                                            ->icon('heroicon-m-arrow-top-right-on-square')
+                                            ->url(fn (Forms\Get $get): ?string => filled($get('item_id'))
+                                                ? ItemResource::getUrl('view', ['record' => $get('item_id')])
+                                                : null)
+                                            ->openUrlInNewTab()
+                                            ->visible(fn (Forms\Get $get): bool => filled($get('item_id'))
+                                                && (auth()->user()?->can('items.view') ?? false)),
+                                    )
                                     ->columnSpan(1),
 
                                 Forms\Components\TextInput::make('quantity')
@@ -118,12 +167,14 @@ class PurchaseOrderResource extends Resource
                                     ->numeric()
                                     ->required()
                                     ->minValue(0.0001)
+                                    ->live(onBlur: true)
                                     ->columnSpan(1),
 
                                 Forms\Components\TextInput::make('unit_price')
                                     ->label(__('resources.purchase_orders.fields.unit_price'))
                                     ->numeric()
                                     ->required()
+                                    ->live(onBlur: true)
                                     ->visible(fn () => auth()->user()?->can('inventory.view_pricing'))
                                     ->columnSpan(1),
 
@@ -138,7 +189,24 @@ class PurchaseOrderResource extends Resource
                             ->defaultItems(1)
                             ->reorderable(false)
                             ->addActionLabel(__('resources.purchase_orders.actions.add_item')),
+
+                        // Slide 3 / 6: live money breakdown so the buyer sees the
+                        // 14% VAT added and the 1% withholding deducted before save.
+                        Forms\Components\Placeholder::make('totals_preview')
+                            ->label(__('resources.purchase_orders.sections.totals'))
+                            ->visible(fn () => auth()->user()?->can('inventory.view_pricing'))
+                            ->content(fn (Forms\Get $get): HtmlString => static::totalsPreview($get)),
                     ]),
+
+                // Slide 6: scanned/printed PO image (holds the richer tax detail).
+                Forms\Components\Section::make(__('resources.purchase_orders.sections.attachment'))
+                    ->icon('heroicon-o-paper-clip')
+                    ->columns(1)
+                    ->disabled(fn () => ! (auth()->user()?->can('purchase_orders.edit') ?? false))
+                    ->schema(EntityAttachments::fileUploads(
+                        AttachmentCategory::purchaseOrderCategories(),
+                        'po-attachments',
+                    )),
             ]);
     }
 
@@ -202,6 +270,29 @@ class PurchaseOrderResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                // Slide 1 & 5: the technical-office manager approves the draft;
+                // it then becomes "sent" (مرسل).
+                Tables\Actions\Action::make('approve')
+                    ->label(__('resources.purchase_orders.actions.approve'))
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('resources.purchase_orders.actions.approve'))
+                    ->modalDescription(__('resources.purchase_orders.actions.approve_confirm'))
+                    ->visible(fn (PurchaseOrder $record) => $record->status === PurchaseOrderStatus::Draft
+                        && (auth()->user()?->can('approve', $record) ?? false))
+                    ->action(function (PurchaseOrder $record) {
+                        $record->update([
+                            'status' => PurchaseOrderStatus::Submitted,
+                            'approved_by' => auth()->id(),
+                            'approved_at' => now(),
+                        ]);
+
+                        Notification::make()
+                            ->success()
+                            ->title(__('resources.purchase_orders.notifications.approved'))
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('receive')
                     ->label(__('resources.purchase_orders.actions.receive'))
                     ->icon('heroicon-o-truck')
@@ -210,18 +301,25 @@ class PurchaseOrderResource extends Resource
                         PurchaseOrderStatus::Submitted,
                         PurchaseOrderStatus::PartiallyReceived,
                     ]) && auth()->user()?->can('purchase_orders.receive'))
-                    ->form(fn (PurchaseOrder $record) => $record
-                        ->items()
-                        ->with('item:id,name')
-                        ->get()
-                        ->map(
-                            fn (PurchaseOrderItem $poItem) => Forms\Components\TextInput::make("items.{$poItem->id}")
-                                ->label("{$poItem->item->name} (Ordered: {$poItem->quantity}, Received: {$poItem->received_quantity})")
-                                ->numeric()
-                                ->default(0)
-                                ->minValue(0)
-                                ->maxValue($poItem->remaining_quantity)
-                        )->toArray())
+                    ->modalDescription(__('resources.purchase_orders.actions.receive_hint'))
+                    ->form(fn (PurchaseOrder $record) => array_merge(
+                        $record->items()
+                            ->with('item:id,name')
+                            ->get()
+                            ->map(
+                                fn (PurchaseOrderItem $poItem) => Forms\Components\TextInput::make("items.{$poItem->id}")
+                                    ->label("{$poItem->item->name} (Ordered: {$poItem->quantity}, Received: {$poItem->received_quantity})")
+                                    ->numeric()
+                                    ->default(0)
+                                    ->minValue(0)
+                                    ->maxValue($poItem->remaining_quantity)
+                            )->toArray(),
+                        [
+                            Forms\Components\TextInput::make('invoice_number')
+                                ->label(__('resources.addition_vouchers.fields.invoice_number'))
+                                ->maxLength(100),
+                        ],
+                    ))
                     ->action(function (PurchaseOrder $record, array $data) {
                         $receivedQuantities = [];
                         foreach ($data['items'] ?? [] as $poItemId => $qty) {
@@ -240,10 +338,12 @@ class PurchaseOrderResource extends Resource
                         }
 
                         try {
-                            app(PurchaseOrderService::class)->receiveItems($record, $receivedQuantities);
+                            $voucher = app(PurchaseOrderService::class)
+                                ->receiveItems($record, $receivedQuantities, $data['invoice_number'] ?? null);
                             Notification::make()
                                 ->success()
                                 ->title(__('resources.purchase_orders.notifications.received'))
+                                ->body(__('resources.purchase_orders.notifications.voucher_created', ['number' => $voucher->voucher_number]))
                                 ->send();
                         } catch (\RuntimeException $e) {
                             Notification::make()
@@ -253,12 +353,72 @@ class PurchaseOrderResource extends Resource
                                 ->send();
                         }
                     }),
+                // Slide 8: print the PO as an internal document (Arabic / English).
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('print_ar')
+                        ->label(__('resources.purchase_orders.actions.print_ar'))
+                        ->icon('heroicon-o-printer')
+                        ->url(fn (PurchaseOrder $record): string => route('purchase_orders.pdf', ['purchaseOrder' => $record, 'lang' => 'ar']))
+                        ->openUrlInNewTab(),
+                    Tables\Actions\Action::make('print_en')
+                        ->label(__('resources.purchase_orders.actions.print_en'))
+                        ->icon('heroicon-o-printer')
+                        ->url(fn (PurchaseOrder $record): string => route('purchase_orders.pdf', ['purchaseOrder' => $record, 'lang' => 'en']))
+                        ->openUrlInNewTab(),
+                ])
+                    ->label(__('resources.purchase_orders.actions.print'))
+                    ->icon('heroicon-o-printer')
+                    ->color('gray')
+                    ->button()
+                    ->visible(fn (PurchaseOrder $record): bool => auth()->user()?->can('print', $record) ?? false),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Build the live money-breakdown shown under the line items: subtotal,
+     * +VAT, −profit-withholding (skipped when the chosen supplier is exempt),
+     * and the resulting total. Mirrors PurchaseOrder::recalculateTotal().
+     */
+    protected static function totalsPreview(Forms\Get $get): HtmlString
+    {
+        $subtotal = 0.0;
+        foreach ((array) $get('items') as $row) {
+            $subtotal += (float) ($row['quantity'] ?? 0) * (float) ($row['unit_price'] ?? 0);
+        }
+
+        $applyProfitTax = true;
+        if ($supplierId = $get('supplier_id')) {
+            $applyProfitTax = ! (bool) (Supplier::find($supplierId)?->profit_tax_exempt ?? false);
+        }
+
+        $vatRate = (float) config('procurement.vat_percentage', 14);
+        $profitRate = (float) config('procurement.profit_tax_percentage', 1);
+        $vat = round($subtotal * $vatRate / 100, 2);
+        $profitTax = $applyProfitTax ? round($subtotal * $profitRate / 100, 2) : 0.0;
+        $total = round($subtotal + $vat - $profitTax, 2);
+
+        $fmt = fn (float $n): string => number_format($n, 2) . ' ' . __('resources.common.currency');
+
+        $rows = [
+            __('resources.purchase_orders.fields.subtotal') => $fmt($subtotal),
+            __('resources.purchase_orders.fields.vat_amount', ['rate' => (int) $vatRate]) => $fmt($vat),
+            __('resources.purchase_orders.fields.profit_tax_amount', ['rate' => (int) $profitRate]) => '− ' . $fmt($profitTax),
+            __('resources.purchase_orders.fields.total_amount') => $fmt($total),
+        ];
+
+        $html = '<div style="display:flex;flex-direction:column;gap:.25rem">';
+        foreach ($rows as $label => $value) {
+            $html .= '<div style="display:flex;justify-content:space-between;gap:2rem"><span>'
+                . e($label) . '</span><span style="font-variant-numeric:tabular-nums">' . e($value) . '</span></div>';
+        }
+        $html .= '</div>';
+
+        return new HtmlString($html);
     }
 
     public static function getPages(): array

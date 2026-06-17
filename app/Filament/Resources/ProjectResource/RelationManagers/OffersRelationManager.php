@@ -52,10 +52,6 @@ class OffersRelationManager extends RelationManager
                         ->default(now())
                         ->required(),
 
-                    MoneyInput::make('technical_amount')
-                        ->label(__('resources.project_offers.fields.technical_amount'))
-                        ->helperText(__('resources.project_offers.fields.technical_amount_helper')),
-
                     Forms\Components\TextInput::make('vat_percentage')
                         ->label(__('resources.project_offers.fields.vat_percentage'))
                         ->numeric()
@@ -243,11 +239,6 @@ class OffersRelationManager extends RelationManager
                     ->money('EGP')
                     ->weight('bold')
                     ->sortable(),
-
-                Tables\Columns\TextColumn::make('technical_amount')
-                    ->label(__('resources.project_offers.columns.technical_amount'))
-                    ->money('EGP')
-                    ->placeholder('—'),
 
                 Tables\Columns\IconColumn::make('is_winning')
                     ->label(__('resources.project_offers.columns.is_winning'))
