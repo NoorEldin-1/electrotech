@@ -83,6 +83,40 @@ class StockReservationTest extends TestCase
         app(ReservationService::class)->reserveForProject($project, $item, 20, WarehouseType::RawMaterials);
     }
 
+    public function test_reservable_items_exclude_zero_and_fully_held_stock(): void
+    {
+        // Has free stock → reservable.
+        $available = $this->stockedItem(10);
+
+        // Never received any stock → not reservable.
+        $zeroStock = Item::factory()->create(['type' => ItemType::RawMaterial, 'unit_cost' => 5]);
+
+        // On-hand but entirely held → 0 available → not reservable.
+        $fullyHeld = $this->stockedItem(5);
+        $project = Project::factory()->active()->create();
+        app(ReservationService::class)->reserveForProject($project, $fullyHeld, 5, WarehouseType::RawMaterials);
+
+        $ids = Item::withAvailableStockIn(WarehouseType::RawMaterials)->pluck('id');
+
+        $this->assertTrue($ids->contains($available->id));
+        $this->assertFalse($ids->contains($zeroStock->id));
+        $this->assertFalse($ids->contains($fullyHeld->id));
+    }
+
+    public function test_reservable_items_are_scoped_to_the_requested_warehouse(): void
+    {
+        // Stock lives only in raw materials, so the item is reservable there
+        // but not from the finished-goods store.
+        $item = $this->stockedItem(10);
+
+        $this->assertTrue(
+            Item::withAvailableStockIn(WarehouseType::RawMaterials)->pluck('id')->contains($item->id)
+        );
+        $this->assertFalse(
+            Item::withAvailableStockIn(WarehouseType::FinishedGoods)->pluck('id')->contains($item->id)
+        );
+    }
+
     public function test_reserve_approved_bom_reserves_each_line(): void
     {
         $project = Project::factory()->active()->create();

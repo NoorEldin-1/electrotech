@@ -8,6 +8,7 @@ use App\Enums\ItemType;
 use App\Enums\UnitOfMeasure;
 use App\Enums\WarehouseType;
 use App\Sync\Concerns\Syncable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -117,6 +118,19 @@ class Item extends Model
         }
 
         return (float) $row->on_hand_quantity - (float) $row->on_hold_quantity;
+    }
+
+    /**
+     * Items that currently have available stock (on_hand − on_hold > 0) in the
+     * given warehouse. Backs the manual stock-reservation picker (حجز مخزون):
+     * you can only reserve an item that has free quantity to hold, so items at
+     * zero available are excluded from the list entirely.
+     */
+    public function scopeWithAvailableStockIn(Builder $query, WarehouseType $warehouse): Builder
+    {
+        return $query->whereHas('inventories', fn (Builder $inventory) => $inventory
+            ->where('warehouse_type', $warehouse->value)
+            ->whereRaw('on_hand_quantity - on_hold_quantity > 0'));
     }
 
     /**

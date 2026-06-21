@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use App\Enums\AttachmentCategory;
 use App\Enums\VoucherStatus;
 use App\Filament\Resources\AdditionVoucherResource\Pages;
-use App\Filament\Support\EntityAttachments;
 use App\Models\AdditionVoucher;
 use App\Services\AdditionVoucherService;
 use Filament\Forms;
@@ -125,6 +123,11 @@ class AdditionVoucherResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
+                                    // ->live() so the quick-view suffix action
+                                    // re-renders (becomes visible) once an item
+                                    // is picked.
+                                    ->live()
+                                    ->suffixAction(ItemResource::quickViewAction())
                                     ->columnSpan(static::canViewPricing() ? 1 : 2),
 
                                 Forms\Components\TextInput::make('quantity')
@@ -143,15 +146,6 @@ class AdditionVoucherResource extends Resource
                             ->disabled(fn (?AdditionVoucher $record) => $record?->isPosted() ?? false)
                             ->columnSpanFull(),
                     ]),
-
-                // Slide 7: attach the scanned إذن إضافة (the file, not a note).
-                Forms\Components\Section::make(__('resources.addition_vouchers.sections.documents'))
-                    ->icon('heroicon-o-paper-clip')
-                    ->columns(1)
-                    ->schema(EntityAttachments::fileUploads(
-                        AttachmentCategory::additionVoucherCategories(),
-                        'addition-voucher-attachments',
-                    )),
             ]);
     }
 

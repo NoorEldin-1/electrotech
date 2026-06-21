@@ -409,6 +409,20 @@ return [
             'on_hold' => 'المحجوز',
             'minimum_stock' => 'الحد الأدنى',
         ],
+
+        'actions' => [
+            'quick_view' => 'عرض الصنف',
+            'close' => 'إغلاق',
+        ],
+
+        'modal' => [
+            'stock' => 'المخزون',
+            'on_hand' => 'الرصيد الفعلي',
+            'on_hold' => 'المحجوز',
+            'available' => 'المتاح',
+            'below_minimum' => 'الرصيد المتاح أقل من الحد الأدنى.',
+            'not_found' => 'الصنف غير موجود.',
+        ],
     ],
 
     /*
@@ -478,6 +492,8 @@ return [
         'fields' => [
             'po_number' => 'رقم أمر الشراء',
             'project' => 'المشروع',
+            'project_placeholder' => 'بدون مشروع — شراء للمخازن',
+            'project_help' => 'اتركه فارغًا لأمر شراء خاص بالمخازن/المخزون غير مرتبط بأي عملية.',
             'supplier' => 'المورد',
             'supplier_name' => 'اسم المورد',
             'supplier_contact' => 'بيانات تواصل المورد',
@@ -497,6 +513,7 @@ return [
         'columns' => [
             'po_number' => 'رقم الأمر',
             'project' => 'المشروع',
+            'warehouse_po' => 'المخازن',
             'sales_stage' => 'مرحلة المبيعات',
             'supplier_name' => 'المورد',
             'status' => 'الحالة',
@@ -533,6 +550,7 @@ return [
             'supplier' => 'المورد',
             'tax_number' => 'الرقم الضريبي',
             'project' => 'المشروع',
+            'warehouse' => 'المخازن (شراء للمخزون)',
             'status' => 'الحالة',
             'item_no' => 'م',
             'item' => 'الصنف',
@@ -1017,6 +1035,7 @@ return [
             'item' => 'الصنف',
             'warehouse' => 'المخزن',
             'quantity' => 'الكمية',
+            'quantity_available' => 'المتاح للحجز: :qty',
             'notes' => 'ملاحظات',
         ],
         'actions' => [

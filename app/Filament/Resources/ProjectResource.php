@@ -10,6 +10,7 @@ use App\Enums\ConductorType;
 use App\Enums\ProjectStatus;
 use App\Filament\Resources\ProjectResource\Pages;
 use App\Filament\Support\MoneyInput;
+use App\Filament\Support\PhoneInput;
 use App\Models\Project;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -90,10 +91,8 @@ class ProjectResource extends Resource
                                 Forms\Components\TextInput::make('contact_person')
                                     ->label(__('resources.customers.fields.contact_person'))
                                     ->maxLength(255),
-                                Forms\Components\TextInput::make('phone')
-                                    ->label(__('resources.customers.fields.phone'))
-                                    ->tel()
-                                    ->maxLength(50),
+                                PhoneInput::make('phone')
+                                    ->label(__('resources.customers.fields.phone')),
                                 Forms\Components\TextInput::make('email')
                                     ->label(__('resources.customers.fields.email'))
                                     ->email()
@@ -230,7 +229,17 @@ class ProjectResource extends Resource
             // active" action) is stored as a project attachment under the same
             // category/directory, so it surfaces in — and can be managed from —
             // this section.
-            if ($category === AttachmentCategory::CustomerDocument) {
+            //
+            // PO / Addition-Voucher scans are uploaded directly on their own
+            // records (not here): their upload fields were removed from the PO
+            // and Addition Voucher forms too, so they're skipped on the project
+            // form as well to keep the surfaces consistent. The enum cases stay
+            // for any already-stored rows and the persistence layer.
+            if (in_array($category, [
+                AttachmentCategory::CustomerDocument,
+                AttachmentCategory::PurchaseOrderScan,
+                AttachmentCategory::AdditionVoucherScan,
+            ], true)) {
                 continue;
             }
 

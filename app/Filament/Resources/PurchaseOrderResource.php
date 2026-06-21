@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use App\Enums\AttachmentCategory;
 use App\Enums\ProjectStatus;
 use App\Enums\PurchaseOrderStatus;
-use App\Filament\Resources\ItemResource;
 use App\Filament\Resources\PurchaseOrderResource\Pages;
-use App\Filament\Support\EntityAttachments;
+use App\Filament\Support\PhoneInput;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
@@ -72,6 +70,9 @@ class PurchaseOrderResource extends Resource
 
                         // Slide 4: only active projects (in-hand / in-progress)
                         // can carry a purchase order.
+                        // Procurement feedback: the project is OPTIONAL — leaving
+                        // it empty marks the order as a warehouse/stock purchase
+                        // (مربوط بالمخازن) not tied to any operation.
                         Forms\Components\Select::make('project_id')
                             ->label(__('resources.purchase_orders.fields.project'))
                             ->relationship(
@@ -84,7 +85,8 @@ class PurchaseOrderResource extends Resource
                             )
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->placeholder(__('resources.purchase_orders.fields.project_placeholder'))
+                            ->helperText(__('resources.purchase_orders.fields.project_help')),
 
                         // Slide 3: a PO may only target a registered supplier.
                         // The free-text supplier name/contact were dropped — the
@@ -102,10 +104,8 @@ class PurchaseOrderResource extends Resource
                                     ->label(__('resources.suppliers.fields.name'))
                                     ->required()
                                     ->maxLength(255),
-                                Forms\Components\TextInput::make('phone')
-                                    ->label(__('resources.suppliers.fields.phone'))
-                                    ->tel()
-                                    ->maxLength(50),
+                                PhoneInput::make('phone')
+                                    ->label(__('resources.suppliers.fields.phone')),
                                 Forms\Components\TextInput::make('tax_number')
                                     ->label(__('resources.suppliers.fields.tax_number'))
                                     ->maxLength(100),
@@ -148,18 +148,9 @@ class PurchaseOrderResource extends Resource
                                     ->preload()
                                     ->required()
                                     ->live()
-                                    // Slide 10: open the item "card" in a new tab.
-                                    ->suffixAction(
-                                        Forms\Components\Actions\Action::make('open_item')
-                                            ->label(__('resources.purchase_orders.actions.open_item'))
-                                            ->icon('heroicon-m-arrow-top-right-on-square')
-                                            ->url(fn (Forms\Get $get): ?string => filled($get('item_id'))
-                                                ? ItemResource::getUrl('view', ['record' => $get('item_id')])
-                                                : null)
-                                            ->openUrlInNewTab()
-                                            ->visible(fn (Forms\Get $get): bool => filled($get('item_id'))
-                                                && (auth()->user()?->can('items.view') ?? false)),
-                                    )
+                                    // Slide 10: review the item "card" in a modal
+                                    // without leaving the purchase order.
+                                    ->suffixAction(ItemResource::quickViewAction())
                                     ->columnSpan(1),
 
                                 Forms\Components\TextInput::make('quantity')
@@ -197,16 +188,6 @@ class PurchaseOrderResource extends Resource
                             ->visible(fn () => auth()->user()?->can('inventory.view_pricing'))
                             ->content(fn (Forms\Get $get): HtmlString => static::totalsPreview($get)),
                     ]),
-
-                // Slide 6: scanned/printed PO image (holds the richer tax detail).
-                Forms\Components\Section::make(__('resources.purchase_orders.sections.attachment'))
-                    ->icon('heroicon-o-paper-clip')
-                    ->columns(1)
-                    ->disabled(fn () => ! (auth()->user()?->can('purchase_orders.edit') ?? false))
-                    ->schema(EntityAttachments::fileUploads(
-                        AttachmentCategory::purchaseOrderCategories(),
-                        'po-attachments',
-                    )),
             ]);
     }
 
@@ -221,15 +202,19 @@ class PurchaseOrderResource extends Resource
                     ->copyable()
                     ->weight('bold'),
 
+                // A PO with no operation is a warehouse/stock purchase — show
+                // the "warehouse" label in place of the empty project name.
                 Tables\Columns\TextColumn::make('project.name')
                     ->label(__('resources.purchase_orders.columns.project'))
                     ->searchable()
                     ->sortable()
-                    ->limit(30),
+                    ->limit(30)
+                    ->placeholder(__('resources.purchase_orders.columns.warehouse_po')),
 
                 Tables\Columns\TextColumn::make('project.status')
                     ->label(__('resources.purchase_orders.columns.sales_stage'))
                     ->badge()
+                    ->placeholder('—')
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('supplier_name')
@@ -402,19 +387,19 @@ class PurchaseOrderResource extends Resource
         $profitTax = $applyProfitTax ? round($subtotal * $profitRate / 100, 2) : 0.0;
         $total = round($subtotal + $vat - $profitTax, 2);
 
-        $fmt = fn (float $n): string => number_format($n, 2) . ' ' . __('resources.common.currency');
+        $fmt = fn (float $n): string => number_format($n, 2).' '.__('resources.common.currency');
 
         $rows = [
             __('resources.purchase_orders.fields.subtotal') => $fmt($subtotal),
             __('resources.purchase_orders.fields.vat_amount', ['rate' => (int) $vatRate]) => $fmt($vat),
-            __('resources.purchase_orders.fields.profit_tax_amount', ['rate' => (int) $profitRate]) => '− ' . $fmt($profitTax),
+            __('resources.purchase_orders.fields.profit_tax_amount', ['rate' => (int) $profitRate]) => '− '.$fmt($profitTax),
             __('resources.purchase_orders.fields.total_amount') => $fmt($total),
         ];
 
         $html = '<div style="display:flex;flex-direction:column;gap:.25rem">';
         foreach ($rows as $label => $value) {
             $html .= '<div style="display:flex;justify-content:space-between;gap:2rem"><span>'
-                . e($label) . '</span><span style="font-variant-numeric:tabular-nums">' . e($value) . '</span></div>';
+                .e($label).'</span><span style="font-variant-numeric:tabular-nums">'.e($value).'</span></div>';
         }
         $html .= '</div>';
 

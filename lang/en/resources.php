@@ -409,6 +409,20 @@ return [
             'on_hold' => 'On Hold',
             'minimum_stock' => 'Min. Stock',
         ],
+
+        'actions' => [
+            'quick_view' => 'View item',
+            'close' => 'Close',
+        ],
+
+        'modal' => [
+            'stock' => 'Stock',
+            'on_hand' => 'On Hand',
+            'on_hold' => 'On Hold',
+            'available' => 'Available',
+            'below_minimum' => 'Available stock is below the minimum level.',
+            'not_found' => 'Item not found.',
+        ],
     ],
 
     /*
@@ -478,6 +492,8 @@ return [
         'fields' => [
             'po_number' => 'PO Number',
             'project' => 'Project',
+            'project_placeholder' => 'No project — warehouse purchase',
+            'project_help' => 'Leave empty for a warehouse/stock purchase not tied to any operation.',
             'supplier' => 'Supplier',
             'supplier_name' => 'Supplier Name',
             'supplier_contact' => 'Supplier Contact',
@@ -497,6 +513,7 @@ return [
         'columns' => [
             'po_number' => 'PO #',
             'project' => 'Project',
+            'warehouse_po' => 'Warehouse',
             'sales_stage' => 'Sales Stage',
             'supplier_name' => 'Supplier',
             'status' => 'Status',
@@ -533,6 +550,7 @@ return [
             'supplier' => 'Supplier',
             'tax_number' => 'Tax No.',
             'project' => 'Project',
+            'warehouse' => 'Warehouse (stock purchase)',
             'status' => 'Status',
             'item_no' => '#',
             'item' => 'Item',
@@ -1017,6 +1035,7 @@ return [
             'item' => 'Item',
             'warehouse' => 'Warehouse',
             'quantity' => 'Quantity',
+            'quantity_available' => 'Available to reserve: :qty',
             'notes' => 'Notes',
         ],
         'actions' => [

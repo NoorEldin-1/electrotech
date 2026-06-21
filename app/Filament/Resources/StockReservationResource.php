@@ -114,18 +114,40 @@ class StockReservationResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('item_id')
                             ->label(__('resources.stock_reservations.fields.item'))
-                            ->options(fn () => Item::query()->orderBy('name')->pluck('name', 'id'))
+                            // Only items with free stock in the raw-materials store
+                            // can be reserved, so zero/fully-held items never appear.
+                            ->options(fn () => Item::query()
+                                ->withAvailableStockIn(WarehouseType::RawMaterials)
+                                ->orderBy('name')
+                                ->pluck('name', 'id'))
                             ->searchable()
-                            ->required(),
+                            ->required()
+                            // ->live() so the quick-view suffix action re-renders
+                            // (becomes visible) and the quantity cap/hint refresh
+                            // once an item is picked.
+                            ->live()
+                            ->suffixAction(ItemResource::quickViewAction()),
+                        // Reservations are always against the raw-materials store
+                        // (الحجز كله من مخزن الخامات) — shown but locked.
                         Forms\Components\Select::make('warehouse_type')
                             ->label(__('resources.stock_reservations.fields.warehouse'))
                             ->options(WarehouseType::class)
                             ->default(WarehouseType::RawMaterials->value)
-                            ->required(),
+                            ->disabled()
+                            ->dehydrated(false),
                         Forms\Components\TextInput::make('quantity')
                             ->label(__('resources.stock_reservations.fields.quantity'))
                             ->numeric()
                             ->minValue(0.0001)
+                            // Cap at what's actually available so a reservation
+                            // larger than stock is rejected before submit; the
+                            // service stays the authoritative, race-safe guard.
+                            ->maxValue(fn (Forms\Get $get) => static::availableRawStock($get('item_id')))
+                            ->helperText(fn (Forms\Get $get) => filled($get('item_id'))
+                                ? __('resources.stock_reservations.fields.quantity_available', [
+                                    'qty' => static::availableRawStock($get('item_id')),
+                                ])
+                                : null)
                             ->required(),
                         Forms\Components\TextInput::make('notes')
                             ->label(__('resources.stock_reservations.fields.notes'))
@@ -137,7 +159,7 @@ class StockReservationResource extends Resource
                                 project: Project::findOrFail($data['project_id']),
                                 item: Item::findOrFail($data['item_id']),
                                 quantity: (float) $data['quantity'],
-                                warehouse: WarehouseType::from($data['warehouse_type']),
+                                warehouse: WarehouseType::RawMaterials,
                                 notes: $data['notes'] ?? null,
                             );
                             Notification::make()
@@ -177,6 +199,20 @@ class StockReservationResource extends Resource
                         }
                     }),
             ]);
+    }
+
+    /**
+     * Available (on_hand − on_hold) quantity of an item in the raw-materials
+     * store, or null when no item is selected. Drives the quantity cap and the
+     * "available" hint on the reserve form.
+     */
+    protected static function availableRawStock(int|string|null $itemId): ?float
+    {
+        if (blank($itemId)) {
+            return null;
+        }
+
+        return Item::find($itemId)?->availableIn(WarehouseType::RawMaterials);
     }
 
     public static function getPages(): array

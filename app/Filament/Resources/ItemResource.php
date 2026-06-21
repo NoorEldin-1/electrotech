@@ -11,6 +11,7 @@ use App\Models\Item;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -97,6 +98,33 @@ class ItemResource extends Resource
             ]);
     }
 
+    /**
+     * A reusable "quick view" action for item Select fields across the app
+     * (purchase orders, addition vouchers, BOMs, …). Instead of navigating to
+     * the item page, it opens the item card in a modal so the user can review
+     * the item without leaving the form they are filling. Attach it with
+     * `->suffixAction(ItemResource::quickViewAction())`.
+     */
+    public static function quickViewAction(): Forms\Components\Actions\Action
+    {
+        return Forms\Components\Actions\Action::make('quickViewItem')
+            ->label(__('resources.items.actions.quick_view'))
+            ->icon('heroicon-m-eye')
+            ->color('gray')
+            ->modalHeading(fn (Forms\Get $get): string => Item::find($get('item_id'))?->name
+                ?? __('resources.items.label'))
+            ->modalContent(fn (Forms\Get $get) => view('filament.items.quick-view', [
+                'item' => filled($get('item_id'))
+                    ? Item::with('inventories')->find($get('item_id'))
+                    : null,
+            ]))
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel(__('resources.items.actions.close'))
+            ->modalWidth(MaxWidth::TwoExtraLarge)
+            ->visible(fn (Forms\Get $get): bool => filled($get('item_id'))
+                && (auth()->user()?->can('items.view') ?? false));
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -148,6 +176,10 @@ class ItemResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('name')
+            // Clicking a row opens the quick-view modal (the 'view' action)
+            // instead of navigating to a standalone page.
+            ->recordUrl(null)
+            ->recordAction('view')
             ->filters([
                 Tables\Filters\SelectFilter::make('type')
                     ->label(__('resources.items.columns.type'))
@@ -156,7 +188,16 @@ class ItemResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                // Open the item card in a modal (same quick view used elsewhere)
+                // instead of navigating to a standalone page.
+                Tables\Actions\ViewAction::make()
+                    ->modalHeading(fn (Item $record): string => $record->name)
+                    ->modalContent(fn (Item $record) => view('filament.items.quick-view', [
+                        'item' => $record->loadMissing('inventories'),
+                    ]))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel(__('resources.items.actions.close'))
+                    ->modalWidth(MaxWidth::TwoExtraLarge),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

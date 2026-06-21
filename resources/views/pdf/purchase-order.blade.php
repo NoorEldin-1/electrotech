@@ -65,7 +65,7 @@
         </tr>
         <tr>
             <td class="k">{{ __('resources.purchase_orders.pdf.project') }}</td>
-            <td>{{ $po->project?->name }}</td>
+            <td>{{ $po->project?->name ?: __('resources.purchase_orders.pdf.warehouse') }}</td>
             <td class="k">{{ __('resources.purchase_orders.pdf.status') }}</td>
             <td>{{ $po->status?->getLabel() }}</td>
         </tr>

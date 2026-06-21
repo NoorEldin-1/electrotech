@@ -1,0 +1,1367 @@
+﻿diff --git a/app/Filament/Resources/AdditionVoucherResource.php b/app/Filament/Resources/AdditionVoucherResource.php
+index 1820479..8d7198e 100644
+--- a/app/Filament/Resources/AdditionVoucherResource.php
++++ b/app/Filament/Resources/AdditionVoucherResource.php
+@@ -4,10 +4,8 @@
+ 
+ namespace App\Filament\Resources;
+ 
+-use App\Enums\AttachmentCategory;
+ use App\Enums\VoucherStatus;
+ use App\Filament\Resources\AdditionVoucherResource\Pages;
+-use App\Filament\Support\EntityAttachments;
+ use App\Models\AdditionVoucher;
+ use App\Services\AdditionVoucherService;
+ use Filament\Forms;
+@@ -125,6 +123,11 @@ public static function form(Form $form): Form
+                                     ->searchable()
+                                     ->preload()
+                                     ->required()
++                                    // ->live() so the quick-view suffix action
++                                    // re-renders (becomes visible) once an item
++                                    // is picked.
++                                    ->live()
++                                    ->suffixAction(ItemResource::quickViewAction())
+                                     ->columnSpan(static::canViewPricing() ? 1 : 2),
+ 
+                                 Forms\Components\TextInput::make('quantity')
+@@ -143,15 +146,6 @@ public static function form(Form $form): Form
+                             ->disabled(fn (?AdditionVoucher $record) => $record?->isPosted() ?? false)
+                             ->columnSpanFull(),
+                     ]),
+-
+-                // Slide 7: attach the scanned ╪Ñ╪░┘å ╪Ñ╪╢╪º┘ü╪⌐ (the file, not a note).
+-                Forms\Components\Section::make(__('resources.addition_vouchers.sections.documents'))
+-                    ->icon('heroicon-o-paper-clip')
+-                    ->columns(1)
+-                    ->schema(EntityAttachments::fileUploads(
+-                        AttachmentCategory::additionVoucherCategories(),
+-                        'addition-voucher-attachments',
+-                    )),
+             ]);
+     }
+ 
+diff --git a/app/Filament/Resources/BomResource.php b/app/Filament/Resources/BomResource.php
+index d0f0409..ff775b6 100644
+--- a/app/Filament/Resources/BomResource.php
++++ b/app/Filament/Resources/BomResource.php
+@@ -95,6 +95,11 @@ public static function form(Form $form): Form
+                                     ->searchable()
+                                     ->preload()
+                                     ->required()
++                                    // ->live() so the quick-view suffix action
++                                    // re-renders (becomes visible) once an item
++                                    // is picked.
++                                    ->live()
++                                    ->suffixAction(ItemResource::quickViewAction())
+                                     ->columnSpan(1),
+ 
+                                 Forms\Components\TextInput::make('quantity')
+diff --git a/app/Filament/Resources/CustomerResource.php b/app/Filament/Resources/CustomerResource.php
+index 799e2d8..2e238e2 100644
+--- a/app/Filament/Resources/CustomerResource.php
++++ b/app/Filament/Resources/CustomerResource.php
+@@ -7,6 +7,7 @@
+ use App\Enums\AttachmentCategory;
+ use App\Filament\Resources\CustomerResource\Pages;
+ use App\Filament\Support\EntityAttachments;
++use App\Filament\Support\PhoneInput;
+ use App\Models\Customer;
+ use Filament\Forms;
+ use Filament\Forms\Form;
+@@ -63,10 +64,8 @@ public static function form(Form $form): Form
+                             ->label(__('resources.customers.fields.contact_person'))
+                             ->maxLength(255),
+ 
+-                        Forms\Components\TextInput::make('phone')
+-                            ->label(__('resources.customers.fields.phone'))
+-                            ->tel()
+-                            ->maxLength(50),
++                        PhoneInput::make('phone')
++                            ->label(__('resources.customers.fields.phone')),
+ 
+                         Forms\Components\TextInput::make('email')
+                             ->label(__('resources.customers.fields.email'))
+diff --git a/app/Filament/Resources/DeliveryVoucherResource.php b/app/Filament/Resources/DeliveryVoucherResource.php
+index 93d086f..2efbc88 100644
+--- a/app/Filament/Resources/DeliveryVoucherResource.php
++++ b/app/Filament/Resources/DeliveryVoucherResource.php
+@@ -127,6 +127,11 @@ public static function form(Form $form): Form
+                                     ->searchable()
+                                     ->preload()
+                                     ->required()
++                                    // ->live() so the quick-view suffix action
++                                    // re-renders (becomes visible) once an item
++                                    // is picked.
++                                    ->live()
++                                    ->suffixAction(ItemResource::quickViewAction())
+                                     ->columnSpan(static::canViewPricing() ? 1 : 2),
+ 
+                                 Forms\Components\TextInput::make('quantity')
+diff --git a/app/Filament/Resources/IssueVoucherResource.php b/app/Filament/Resources/IssueVoucherResource.php
+index 1482eaf..bb7a01d 100644
+--- a/app/Filament/Resources/IssueVoucherResource.php
++++ b/app/Filament/Resources/IssueVoucherResource.php
+@@ -99,6 +99,11 @@ public static function form(Form $form): Form
+                                     ->searchable()
+                                     ->preload()
+                                     ->required()
++                                    // ->live() so the quick-view suffix action
++                                    // re-renders (becomes visible) once an item
++                                    // is picked.
++                                    ->live()
++                                    ->suffixAction(ItemResource::quickViewAction())
+                                     ->columnSpan(static::canViewPricing() ? 1 : 2),
+ 
+                                 Forms\Components\TextInput::make('quantity')
+diff --git a/app/Filament/Resources/ItemResource.php b/app/Filament/Resources/ItemResource.php
+index 61f57e2..5d39577 100644
+--- a/app/Filament/Resources/ItemResource.php
++++ b/app/Filament/Resources/ItemResource.php
+@@ -11,6 +11,7 @@
+ use Filament\Forms;
+ use Filament\Forms\Form;
+ use Filament\Resources\Resource;
++use Filament\Support\Enums\MaxWidth;
+ use Filament\Tables;
+ use Filament\Tables\Table;
+ use Illuminate\Database\Eloquent\Builder;
+@@ -97,6 +98,33 @@ public static function form(Form $form): Form
+             ]);
+     }
+ 
++    /**
++     * A reusable "quick view" action for item Select fields across the app
++     * (purchase orders, addition vouchers, BOMs, ΓÇª). Instead of navigating to
++     * the item page, it opens the item card in a modal so the user can review
++     * the item without leaving the form they are filling. Attach it with
++     * `->suffixAction(ItemResource::quickViewAction())`.
++     */
++    public static function quickViewAction(): Forms\Components\Actions\Action
++    {
++        return Forms\Components\Actions\Action::make('quickViewItem')
++            ->label(__('resources.items.actions.quick_view'))
++            ->icon('heroicon-m-eye')
++            ->color('gray')
++            ->modalHeading(fn (Forms\Get $get): string => Item::find($get('item_id'))?->name
++                ?? __('resources.items.label'))
++            ->modalContent(fn (Forms\Get $get) => view('filament.items.quick-view', [
++                'item' => filled($get('item_id'))
++                    ? Item::with('inventories')->find($get('item_id'))
++                    : null,
++            ]))
++            ->modalSubmitAction(false)
++            ->modalCancelActionLabel(__('resources.items.actions.close'))
++            ->modalWidth(MaxWidth::TwoExtraLarge)
++            ->visible(fn (Forms\Get $get): bool => filled($get('item_id'))
++                && (auth()->user()?->can('items.view') ?? false));
++    }
++
+     public static function table(Table $table): Table
+     {
+         return $table
+@@ -148,6 +176,10 @@ public static function table(Table $table): Table
+                     ->toggleable(isToggledHiddenByDefault: true),
+             ])
+             ->defaultSort('name')
++            // Clicking a row opens the quick-view modal (the 'view' action)
++            // instead of navigating to a standalone page.
++            ->recordUrl(null)
++            ->recordAction('view')
+             ->filters([
+                 Tables\Filters\SelectFilter::make('type')
+                     ->label(__('resources.items.columns.type'))
+@@ -156,7 +188,16 @@ public static function table(Table $table): Table
+                 Tables\Filters\TrashedFilter::make(),
+             ])
+             ->actions([
+-                Tables\Actions\ViewAction::make(),
++                // Open the item card in a modal (same quick view used elsewhere)
++                // instead of navigating to a standalone page.
++                Tables\Actions\ViewAction::make()
++                    ->modalHeading(fn (Item $record): string => $record->name)
++                    ->modalContent(fn (Item $record) => view('filament.items.quick-view', [
++                        'item' => $record->loadMissing('inventories'),
++                    ]))
++                    ->modalSubmitAction(false)
++                    ->modalCancelActionLabel(__('resources.items.actions.close'))
++                    ->modalWidth(MaxWidth::TwoExtraLarge),
+                 Tables\Actions\EditAction::make(),
+             ])
+             ->bulkActions([
+diff --git a/app/Filament/Resources/ProjectResource.php b/app/Filament/Resources/ProjectResource.php
+index 4548c93..bb27d22 100644
+--- a/app/Filament/Resources/ProjectResource.php
++++ b/app/Filament/Resources/ProjectResource.php
+@@ -10,6 +10,7 @@
+ use App\Enums\ProjectStatus;
+ use App\Filament\Resources\ProjectResource\Pages;
+ use App\Filament\Support\MoneyInput;
++use App\Filament\Support\PhoneInput;
+ use App\Models\Project;
+ use Filament\Forms;
+ use Filament\Forms\Form;
+@@ -90,10 +91,8 @@ public static function form(Form $form): Form
+                                 Forms\Components\TextInput::make('contact_person')
+                                     ->label(__('resources.customers.fields.contact_person'))
+                                     ->maxLength(255),
+-                                Forms\Components\TextInput::make('phone')
+-                                    ->label(__('resources.customers.fields.phone'))
+-                                    ->tel()
+-                                    ->maxLength(50),
++                                PhoneInput::make('phone')
++                                    ->label(__('resources.customers.fields.phone')),
+                                 Forms\Components\TextInput::make('email')
+                                     ->label(__('resources.customers.fields.email'))
+                                     ->email()
+@@ -230,7 +229,17 @@ protected static function attachmentCategorySchema(): array
+             // active" action) is stored as a project attachment under the same
+             // category/directory, so it surfaces in ΓÇö and can be managed from ΓÇö
+             // this section.
+-            if ($category === AttachmentCategory::CustomerDocument) {
++            //
++            // PO / Addition-Voucher scans are uploaded directly on their own
++            // records (not here): their upload fields were removed from the PO
++            // and Addition Voucher forms too, so they're skipped on the project
++            // form as well to keep the surfaces consistent. The enum cases stay
++            // for any already-stored rows and the persistence layer.
++            if (in_array($category, [
++                AttachmentCategory::CustomerDocument,
++                AttachmentCategory::PurchaseOrderScan,
++                AttachmentCategory::AdditionVoucherScan,
++            ], true)) {
+                 continue;
+             }
+ 
+diff --git a/app/Filament/Resources/PurchaseOrderResource.php b/app/Filament/Resources/PurchaseOrderResource.php
+index eec0359..e88c8db 100644
+--- a/app/Filament/Resources/PurchaseOrderResource.php
++++ b/app/Filament/Resources/PurchaseOrderResource.php
+@@ -4,12 +4,10 @@
+ 
+ namespace App\Filament\Resources;
+ 
+-use App\Enums\AttachmentCategory;
+ use App\Enums\ProjectStatus;
+ use App\Enums\PurchaseOrderStatus;
+-use App\Filament\Resources\ItemResource;
+ use App\Filament\Resources\PurchaseOrderResource\Pages;
+-use App\Filament\Support\EntityAttachments;
++use App\Filament\Support\PhoneInput;
+ use App\Models\PurchaseOrder;
+ use App\Models\PurchaseOrderItem;
+ use App\Models\Supplier;
+@@ -72,6 +70,9 @@ public static function form(Form $form): Form
+ 
+                         // Slide 4: only active projects (in-hand / in-progress)
+                         // can carry a purchase order.
++                        // Procurement feedback: the project is OPTIONAL ΓÇö leaving
++                        // it empty marks the order as a warehouse/stock purchase
++                        // (┘à╪▒╪¿┘ê╪╖ ╪¿╪º┘ä┘à╪«╪º╪▓┘å) not tied to any operation.
+                         Forms\Components\Select::make('project_id')
+                             ->label(__('resources.purchase_orders.fields.project'))
+                             ->relationship(
+@@ -84,7 +85,8 @@ public static function form(Form $form): Form
+                             )
+                             ->searchable()
+                             ->preload()
+-                            ->required(),
++                            ->placeholder(__('resources.purchase_orders.fields.project_placeholder'))
++                            ->helperText(__('resources.purchase_orders.fields.project_help')),
+ 
+                         // Slide 3: a PO may only target a registered supplier.
+                         // The free-text supplier name/contact were dropped ΓÇö the
+@@ -102,10 +104,8 @@ public static function form(Form $form): Form
+                                     ->label(__('resources.suppliers.fields.name'))
+                                     ->required()
+                                     ->maxLength(255),
+-                                Forms\Components\TextInput::make('phone')
+-                                    ->label(__('resources.suppliers.fields.phone'))
+-                                    ->tel()
+-                                    ->maxLength(50),
++                                PhoneInput::make('phone')
++                                    ->label(__('resources.suppliers.fields.phone')),
+                                 Forms\Components\TextInput::make('tax_number')
+                                     ->label(__('resources.suppliers.fields.tax_number'))
+                                     ->maxLength(100),
+@@ -148,18 +148,9 @@ public static function form(Form $form): Form
+                                     ->preload()
+                                     ->required()
+                                     ->live()
+-                                    // Slide 10: open the item "card" in a new tab.
+-                                    ->suffixAction(
+-                                        Forms\Components\Actions\Action::make('open_item')
+-                                            ->label(__('resources.purchase_orders.actions.open_item'))
+-                                            ->icon('heroicon-m-arrow-top-right-on-square')
+-                                            ->url(fn (Forms\Get $get): ?string => filled($get('item_id'))
+-                                                ? ItemResource::getUrl('view', ['record' => $get('item_id')])
+-                                                : null)
+-                                            ->openUrlInNewTab()
+-                                            ->visible(fn (Forms\Get $get): bool => filled($get('item_id'))
+-                                                && (auth()->user()?->can('items.view') ?? false)),
+-                                    )
++                                    // Slide 10: review the item "card" in a modal
++                                    // without leaving the purchase order.
++                                    ->suffixAction(ItemResource::quickViewAction())
+                                     ->columnSpan(1),
+ 
+                                 Forms\Components\TextInput::make('quantity')
+@@ -197,16 +188,6 @@ public static function form(Form $form): Form
+                             ->visible(fn () => auth()->user()?->can('inventory.view_pricing'))
+                             ->content(fn (Forms\Get $get): HtmlString => static::totalsPreview($get)),
+                     ]),
+-
+-                // Slide 6: scanned/printed PO image (holds the richer tax detail).
+-                Forms\Components\Section::make(__('resources.purchase_orders.sections.attachment'))
+-                    ->icon('heroicon-o-paper-clip')
+-                    ->columns(1)
+-                    ->disabled(fn () => ! (auth()->user()?->can('purchase_orders.edit') ?? false))
+-                    ->schema(EntityAttachments::fileUploads(
+-                        AttachmentCategory::purchaseOrderCategories(),
+-                        'po-attachments',
+-                    )),
+             ]);
+     }
+ 
+@@ -221,15 +202,19 @@ public static function table(Table $table): Table
+                     ->copyable()
+                     ->weight('bold'),
+ 
++                // A PO with no operation is a warehouse/stock purchase ΓÇö show
++                // the "warehouse" label in place of the empty project name.
+                 Tables\Columns\TextColumn::make('project.name')
+                     ->label(__('resources.purchase_orders.columns.project'))
+                     ->searchable()
+                     ->sortable()
+-                    ->limit(30),
++                    ->limit(30)
++                    ->placeholder(__('resources.purchase_orders.columns.warehouse_po')),
+ 
+                 Tables\Columns\TextColumn::make('project.status')
+                     ->label(__('resources.purchase_orders.columns.sales_stage'))
+                     ->badge()
++                    ->placeholder('ΓÇö')
+                     ->toggleable(),
+ 
+                 Tables\Columns\TextColumn::make('supplier_name')
+@@ -402,19 +387,19 @@ protected static function totalsPreview(Forms\Get $get): HtmlString
+         $profitTax = $applyProfitTax ? round($subtotal * $profitRate / 100, 2) : 0.0;
+         $total = round($subtotal + $vat - $profitTax, 2);
+ 
+-        $fmt = fn (float $n): string => number_format($n, 2) . ' ' . __('resources.common.currency');
++        $fmt = fn (float $n): string => number_format($n, 2).' '.__('resources.common.currency');
+ 
+         $rows = [
+             __('resources.purchase_orders.fields.subtotal') => $fmt($subtotal),
+             __('resources.purchase_orders.fields.vat_amount', ['rate' => (int) $vatRate]) => $fmt($vat),
+-            __('resources.purchase_orders.fields.profit_tax_amount', ['rate' => (int) $profitRate]) => 'ΓêÆ ' . $fmt($profitTax),
++            __('resources.purchase_orders.fields.profit_tax_amount', ['rate' => (int) $profitRate]) => 'ΓêÆ '.$fmt($profitTax),
+             __('resources.purchase_orders.fields.total_amount') => $fmt($total),
+         ];
+ 
+         $html = '<div style="display:flex;flex-direction:column;gap:.25rem">';
+         foreach ($rows as $label => $value) {
+             $html .= '<div style="display:flex;justify-content:space-between;gap:2rem"><span>'
+-                . e($label) . '</span><span style="font-variant-numeric:tabular-nums">' . e($value) . '</span></div>';
++                .e($label).'</span><span style="font-variant-numeric:tabular-nums">'.e($value).'</span></div>';
+         }
+         $html .= '</div>';
+ 
+diff --git a/app/Filament/Resources/StockReservationResource.php b/app/Filament/Resources/StockReservationResource.php
+index 638caef..e1d85d5 100644
+--- a/app/Filament/Resources/StockReservationResource.php
++++ b/app/Filament/Resources/StockReservationResource.php
+@@ -114,18 +114,40 @@ public static function table(Table $table): Table
+                             ->required(),
+                         Forms\Components\Select::make('item_id')
+                             ->label(__('resources.stock_reservations.fields.item'))
+-                            ->options(fn () => Item::query()->orderBy('name')->pluck('name', 'id'))
++                            // Only items with free stock in the raw-materials store
++                            // can be reserved, so zero/fully-held items never appear.
++                            ->options(fn () => Item::query()
++                                ->withAvailableStockIn(WarehouseType::RawMaterials)
++                                ->orderBy('name')
++                                ->pluck('name', 'id'))
+                             ->searchable()
+-                            ->required(),
++                            ->required()
++                            // ->live() so the quick-view suffix action re-renders
++                            // (becomes visible) and the quantity cap/hint refresh
++                            // once an item is picked.
++                            ->live()
++                            ->suffixAction(ItemResource::quickViewAction()),
++                        // Reservations are always against the raw-materials store
++                        // (╪º┘ä╪¡╪¼╪▓ ┘â┘ä┘ç ┘à┘å ┘à╪«╪▓┘å ╪º┘ä╪«╪º┘à╪º╪¬) ΓÇö shown but locked.
+                         Forms\Components\Select::make('warehouse_type')
+                             ->label(__('resources.stock_reservations.fields.warehouse'))
+                             ->options(WarehouseType::class)
+                             ->default(WarehouseType::RawMaterials->value)
+-                            ->required(),
++                            ->disabled()
++                            ->dehydrated(false),
+                         Forms\Components\TextInput::make('quantity')
+                             ->label(__('resources.stock_reservations.fields.quantity'))
+                             ->numeric()
+                             ->minValue(0.0001)
++                            // Cap at what's actually available so a reservation
++                            // larger than stock is rejected before submit; the
++                            // service stays the authoritative, race-safe guard.
++                            ->maxValue(fn (Forms\Get $get) => static::availableRawStock($get('item_id')))
++                            ->helperText(fn (Forms\Get $get) => filled($get('item_id'))
++                                ? __('resources.stock_reservations.fields.quantity_available', [
++                                    'qty' => static::availableRawStock($get('item_id')),
++                                ])
++                                : null)
+                             ->required(),
+                         Forms\Components\TextInput::make('notes')
+                             ->label(__('resources.stock_reservations.fields.notes'))
+@@ -137,7 +159,7 @@ public static function table(Table $table): Table
+                                 project: Project::findOrFail($data['project_id']),
+                                 item: Item::findOrFail($data['item_id']),
+                                 quantity: (float) $data['quantity'],
+-                                warehouse: WarehouseType::from($data['warehouse_type']),
++                                warehouse: WarehouseType::RawMaterials,
+                                 notes: $data['notes'] ?? null,
+                             );
+                             Notification::make()
+@@ -179,6 +201,20 @@ public static function table(Table $table): Table
+             ]);
+     }
+ 
++    /**
++     * Available (on_hand ΓêÆ on_hold) quantity of an item in the raw-materials
++     * store, or null when no item is selected. Drives the quantity cap and the
++     * "available" hint on the reserve form.
++     */
++    protected static function availableRawStock(int|string|null $itemId): ?float
++    {
++        if (blank($itemId)) {
++            return null;
++        }
++
++        return Item::find($itemId)?->availableIn(WarehouseType::RawMaterials);
++    }
++
+     public static function getPages(): array
+     {
+         return [
+diff --git a/app/Filament/Resources/SupplierResource.php b/app/Filament/Resources/SupplierResource.php
+index a9a0025..77459f2 100644
+--- a/app/Filament/Resources/SupplierResource.php
++++ b/app/Filament/Resources/SupplierResource.php
+@@ -7,6 +7,7 @@
+ use App\Enums\AttachmentCategory;
+ use App\Filament\Resources\SupplierResource\Pages;
+ use App\Filament\Support\EntityAttachments;
++use App\Filament\Support\PhoneInput;
+ use App\Models\Supplier;
+ use Filament\Forms;
+ use Filament\Forms\Form;
+@@ -63,10 +64,8 @@ public static function form(Form $form): Form
+                             ->label(__('resources.suppliers.fields.contact_person'))
+                             ->maxLength(255),
+ 
+-                        Forms\Components\TextInput::make('phone')
+-                            ->label(__('resources.suppliers.fields.phone'))
+-                            ->tel()
+-                            ->maxLength(50),
++                        PhoneInput::make('phone')
++                            ->label(__('resources.suppliers.fields.phone')),
+ 
+                         Forms\Components\TextInput::make('email')
+                             ->label(__('resources.suppliers.fields.email'))
+diff --git a/app/Filament/Support/PhoneInput.php b/app/Filament/Support/PhoneInput.php
+new file mode 100644
+index 0000000..f46b932
+--- /dev/null
++++ b/app/Filament/Support/PhoneInput.php
+@@ -0,0 +1,75 @@
++<?php
++
++declare(strict_types=1);
++
++namespace App\Filament\Support;
++
++use Closure;
++use Filament\Forms\Components\TextInput;
++
++/**
++ * Phone input that tolerates how Egyptian users actually type a number.
++ *
++ * Filament's ->tel() silently attaches a strict, ASCII-only regex rule
++ * (/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\.\/0-9]*$/). That regex rejects
++ * Arabic-Indic numerals (┘á-┘⌐) and Persian numerals (█░-█╣) ΓÇö the digits a phone
++ * typed on an Arabic keyboard produces ΓÇö and also a stray leading space, which
++ * is what surfaced the raw "validation.regex" error on the supplier form
++ * (╪º┘ä┘à╪┤╪¬╪▒┘è╪º╪¬ feedback). The failure was intermittent: it only bit users typing
++ * in Arabic numerals, never a tester typing ASCII.
++ *
++ * This input keeps the `tel` keyboard hint but drops the brittle format regex.
++ * Instead it normalises Arabic/Persian numerals to ASCII and trims on dehydrate
++ * so the stored value is clean, and validates leniently ΓÇö a filled value must
++ * carry at least a handful of digits (checked against the normalised value, so
++ * Arabic numerals count).
++ *
++ * Reuse everywhere a phone is entered (suppliers, customers, PO/project contact)
++ * so the behaviour stays identical across the app.
++ */
++final class PhoneInput
++{
++    /** Minimum number of digits a filled phone must contain. */
++    private const MIN_DIGITS = 6;
++
++    public static function make(string $name = 'phone'): TextInput
++    {
++        return TextInput::make($name)
++            ->type('tel')
++            ->maxLength(50)
++            ->dehydrateStateUsing(static fn (?string $state): ?string => self::normalize($state))
++            ->rule(static function (): Closure {
++                return static function (string $attribute, mixed $value, Closure $fail): void {
++                    if (blank($value)) {
++                        return;
++                    }
++
++                    $digits = preg_replace('/\D/', '', (string) self::normalize((string) $value));
++
++                    if (mb_strlen((string) $digits) < self::MIN_DIGITS) {
++                        $fail(__('validation.phone'));
++                    }
++                };
++            });
++    }
++
++    /**
++     * Convert Arabic-Indic (┘á-┘⌐) and Persian (█░-█╣) numerals to ASCII digits and
++     * trim surrounding whitespace. A null value passes through untouched.
++     */
++    public static function normalize(?string $value): ?string
++    {
++        if ($value === null) {
++            return null;
++        }
++
++        $value = strtr($value, [
++            '┘á' => '0', '┘í' => '1', '┘ó' => '2', '┘ú' => '3', '┘ñ' => '4',
++            '┘Ñ' => '5', '┘ª' => '6', '┘º' => '7', '┘¿' => '8', '┘⌐' => '9',
++            '█░' => '0', '█▒' => '1', '█▓' => '2', '█│' => '3', '█┤' => '4',
++            '█╡' => '5', '█╢' => '6', '█╖' => '7', '█╕' => '8', '█╣' => '9',
++        ]);
++
++        return trim($value);
++    }
++}
+diff --git a/app/Models/Item.php b/app/Models/Item.php
+index e291f88..2f3e037 100644
+--- a/app/Models/Item.php
++++ b/app/Models/Item.php
+@@ -8,6 +8,7 @@
+ use App\Enums\UnitOfMeasure;
+ use App\Enums\WarehouseType;
+ use App\Sync\Concerns\Syncable;
++use Illuminate\Database\Eloquent\Builder;
+ use Illuminate\Database\Eloquent\Factories\HasFactory;
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Database\Eloquent\Relations\HasMany;
+@@ -119,6 +120,19 @@ public function availableIn(WarehouseType $warehouse): float
+         return (float) $row->on_hand_quantity - (float) $row->on_hold_quantity;
+     }
+ 
++    /**
++     * Items that currently have available stock (on_hand ΓêÆ on_hold > 0) in the
++     * given warehouse. Backs the manual stock-reservation picker (╪¡╪¼╪▓ ┘à╪«╪▓┘ê┘å):
++     * you can only reserve an item that has free quantity to hold, so items at
++     * zero available are excluded from the list entirely.
++     */
++    public function scopeWithAvailableStockIn(Builder $query, WarehouseType $warehouse): Builder
++    {
++        return $query->whereHas('inventories', fn (Builder $inventory) => $inventory
++            ->where('warehouse_type', $warehouse->value)
++            ->whereRaw('on_hand_quantity - on_hold_quantity > 0'));
++    }
++
+     /**
+      * Total available quantity across every warehouse (on_hand - on_hold).
+      */
+diff --git a/database/factories/PurchaseOrderFactory.php b/database/factories/PurchaseOrderFactory.php
+index d3299c0..c0e6a60 100644
+--- a/database/factories/PurchaseOrderFactory.php
++++ b/database/factories/PurchaseOrderFactory.php
+@@ -26,4 +26,15 @@ public function definition(): array
+             'created_by' => User::factory(),
+         ];
+     }
++
++    /**
++     * A warehouse/stock purchase order not tied to any operation
++     * (project left empty) ΓÇö ┘à╪▒╪¿┘ê╪╖ ╪¿╪º┘ä┘à╪«╪º╪▓┘å.
++     */
++    public function warehouse(): static
++    {
++        return $this->state(fn (array $attributes): array => [
++            'project_id' => null,
++        ]);
++    }
+ }
+diff --git a/database/migrations/2026_06_21_000001_make_project_id_nullable_on_purchase_orders.php b/database/migrations/2026_06_21_000001_make_project_id_nullable_on_purchase_orders.php
+new file mode 100644
+index 0000000..b44b2e4
+--- /dev/null
++++ b/database/migrations/2026_06_21_000001_make_project_id_nullable_on_purchase_orders.php
+@@ -0,0 +1,46 @@
++<?php
++
++declare(strict_types=1);
++
++use Illuminate\Database\Migrations\Migration;
++use Illuminate\Database\Schema\Blueprint;
++use Illuminate\Support\Facades\Schema;
++
++/**
++ * Procurement feedback: a purchase order need not belong to an operation.
++ * Some POs are warehouse/stock purchases with no project link ΓÇö leaving the
++ * project empty makes the order a "warehouse" PO. So project_id becomes
++ * nullable, and deleting a project now detaches its orders (nullOnDelete)
++ * instead of cascading them away ΓÇö the orders survive as warehouse POs and
++ * their financial history is preserved.
++ */
++return new class extends Migration
++{
++    public function up(): void
++    {
++        Schema::table('purchase_orders', function (Blueprint $table) {
++            $table->dropForeign(['project_id']);
++        });
++
++        Schema::table('purchase_orders', function (Blueprint $table) {
++            $table->foreignId('project_id')->nullable()->change();
++            $table->foreign('project_id')->references('id')->on('projects')->nullOnDelete();
++        });
++    }
++
++    public function down(): void
++    {
++        // Detached warehouse POs (project_id = null) would violate the NOT NULL
++        // constraint on rollback; drop them so the column can revert cleanly.
++        Schema::table('purchase_orders', function (Blueprint $table) {
++            $table->dropForeign(['project_id']);
++        });
++
++        \Illuminate\Support\Facades\DB::table('purchase_orders')->whereNull('project_id')->delete();
++
++        Schema::table('purchase_orders', function (Blueprint $table) {
++            $table->foreignId('project_id')->nullable(false)->change();
++            $table->foreign('project_id')->references('id')->on('projects')->cascadeOnDelete();
++        });
++    }
++};
+diff --git a/lang/ar/resources.php b/lang/ar/resources.php
+index 85a6d2d..6f0c043 100644
+--- a/lang/ar/resources.php
++++ b/lang/ar/resources.php
+@@ -409,6 +409,20 @@
+             'on_hold' => '╪º┘ä┘à╪¡╪¼┘ê╪▓',
+             'minimum_stock' => '╪º┘ä╪¡╪» ╪º┘ä╪ú╪»┘å┘ë',
+         ],
++
++        'actions' => [
++            'quick_view' => '╪╣╪▒╪╢ ╪º┘ä╪╡┘å┘ü',
++            'close' => '╪Ñ╪║┘ä╪º┘é',
++        ],
++
++        'modal' => [
++            'stock' => '╪º┘ä┘à╪«╪▓┘ê┘å',
++            'on_hand' => '╪º┘ä╪▒╪╡┘è╪» ╪º┘ä┘ü╪╣┘ä┘è',
++            'on_hold' => '╪º┘ä┘à╪¡╪¼┘ê╪▓',
++            'available' => '╪º┘ä┘à╪¬╪º╪¡',
++            'below_minimum' => '╪º┘ä╪▒╪╡┘è╪» ╪º┘ä┘à╪¬╪º╪¡ ╪ú┘é┘ä ┘à┘å ╪º┘ä╪¡╪» ╪º┘ä╪ú╪»┘å┘ë.',
++            'not_found' => '╪º┘ä╪╡┘å┘ü ╪║┘è╪▒ ┘à┘ê╪¼┘ê╪».',
++        ],
+     ],
+ 
+     /*
+@@ -478,6 +492,8 @@
+         'fields' => [
+             'po_number' => '╪▒┘é┘à ╪ú┘à╪▒ ╪º┘ä╪┤╪▒╪º╪í',
+             'project' => '╪º┘ä┘à╪┤╪▒┘ê╪╣',
++            'project_placeholder' => '╪¿╪»┘ê┘å ┘à╪┤╪▒┘ê╪╣ ΓÇö ╪┤╪▒╪º╪í ┘ä┘ä┘à╪«╪º╪▓┘å',
++            'project_help' => '╪º╪¬╪▒┘â┘ç ┘ü╪º╪▒╪║┘ï╪º ┘ä╪ú┘à╪▒ ╪┤╪▒╪º╪í ╪«╪º╪╡ ╪¿╪º┘ä┘à╪«╪º╪▓┘å/╪º┘ä┘à╪«╪▓┘ê┘å ╪║┘è╪▒ ┘à╪▒╪¬╪¿╪╖ ╪¿╪ú┘è ╪╣┘à┘ä┘è╪⌐.',
+             'supplier' => '╪º┘ä┘à┘ê╪▒╪»',
+             'supplier_name' => '╪º╪│┘à ╪º┘ä┘à┘ê╪▒╪»',
+             'supplier_contact' => '╪¿┘è╪º┘å╪º╪¬ ╪¬┘ê╪º╪╡┘ä ╪º┘ä┘à┘ê╪▒╪»',
+@@ -497,6 +513,7 @@
+         'columns' => [
+             'po_number' => '╪▒┘é┘à ╪º┘ä╪ú┘à╪▒',
+             'project' => '╪º┘ä┘à╪┤╪▒┘ê╪╣',
++            'warehouse_po' => '╪º┘ä┘à╪«╪º╪▓┘å',
+             'sales_stage' => '┘à╪▒╪¡┘ä╪⌐ ╪º┘ä┘à╪¿┘è╪╣╪º╪¬',
+             'supplier_name' => '╪º┘ä┘à┘ê╪▒╪»',
+             'status' => '╪º┘ä╪¡╪º┘ä╪⌐',
+@@ -533,6 +550,7 @@
+             'supplier' => '╪º┘ä┘à┘ê╪▒╪»',
+             'tax_number' => '╪º┘ä╪▒┘é┘à ╪º┘ä╪╢╪▒┘è╪¿┘è',
+             'project' => '╪º┘ä┘à╪┤╪▒┘ê╪╣',
++            'warehouse' => '╪º┘ä┘à╪«╪º╪▓┘å (╪┤╪▒╪º╪í ┘ä┘ä┘à╪«╪▓┘ê┘å)',
+             'status' => '╪º┘ä╪¡╪º┘ä╪⌐',
+             'item_no' => '┘à',
+             'item' => '╪º┘ä╪╡┘å┘ü',
+@@ -1017,6 +1035,7 @@
+             'item' => '╪º┘ä╪╡┘å┘ü',
+             'warehouse' => '╪º┘ä┘à╪«╪▓┘å',
+             'quantity' => '╪º┘ä┘â┘à┘è╪⌐',
++            'quantity_available' => '╪º┘ä┘à╪¬╪º╪¡ ┘ä┘ä╪¡╪¼╪▓: :qty',
+             'notes' => '┘à┘ä╪º╪¡╪╕╪º╪¬',
+         ],
+         'actions' => [
+diff --git a/lang/ar/validation.php b/lang/ar/validation.php
+new file mode 100644
+index 0000000..d4ea66f
+--- /dev/null
++++ b/lang/ar/validation.php
+@@ -0,0 +1,211 @@
++<?php
++
++declare(strict_types=1);
++
++/*
++|--------------------------------------------------------------------------
++| Arabic validation messages
++|--------------------------------------------------------------------------
++|
++| Laravel ships English validation strings inside the framework, but no
++| Arabic ones ΓÇö so under the `ar` locale (set by the language switcher via
++| App\Http\Middleware\SetLocale) every failure surfaced as a raw key such as
++| "validation.regex" instead of a readable sentence. This file provides the
++| full Arabic set so all validation errors read correctly across the app.
++|
++| `phone` is a custom rule used by App\Filament\Support\PhoneInput.
++|
++*/
++
++return [
++
++    'accepted' => '┘è╪¼╪¿ ┘é╪¿┘ê┘ä :attribute.',
++    'accepted_if' => '┘è╪¼╪¿ ┘é╪¿┘ê┘ä :attribute ╪╣┘å╪»┘à╪º ┘è┘â┘ê┘å :other ┘ç┘ê :value.',
++    'active_url' => ':attribute ┘ä┘è╪│ ╪▒╪º╪¿╪╖┘ï╪º ╪╡╪¡┘è╪¡┘ï╪º.',
++    'after' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪¬╪º╪▒┘è╪«┘ï╪º ╪¿╪╣╪» :date.',
++    'after_or_equal' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪¬╪º╪▒┘è╪«┘ï╪º ╪¿╪╣╪» ╪ú┘ê ┘è╪│╪º┘ê┘è :date.',
++    'alpha' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪¡╪▒┘ê┘ü ┘ü┘é╪╖.',
++    'alpha_dash' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪¡╪▒┘ê┘ü ┘ê╪ú╪▒┘é╪º┘à ┘ê╪┤╪▒╪╖╪º╪¬ ┘ê╪┤╪▒╪╖╪º╪¬ ╪│┘ü┘ä┘è╪⌐ ┘ü┘é╪╖.',
++    'alpha_num' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪¡╪▒┘ê┘ü ┘ê╪ú╪▒┘é╪º┘à ┘ü┘é╪╖.',
++    'any_of' => ':attribute ╪║┘è╪▒ ╪╡╪º┘ä╪¡.',
++    'array' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘à╪╡┘ü┘ê┘ü╪⌐.',
++    'ascii' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪¡╪▒┘ê┘ü ┘ê╪ú╪▒┘é╪º┘à ┘ê╪▒┘à┘ê╪▓ ╪ú╪¡╪º╪»┘è╪⌐ ╪º┘ä╪¿╪º┘è╪¬ ┘ü┘é╪╖.',
++    'before' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪¬╪º╪▒┘è╪«┘ï╪º ┘é╪¿┘ä :date.',
++    'before_or_equal' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪¬╪º╪▒┘è╪«┘ï╪º ┘é╪¿┘ä ╪ú┘ê ┘è╪│╪º┘ê┘è :date.',
++    'between' => [
++        'array' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪╣╪»╪» ╪╣┘å╪º╪╡╪▒ ╪¿┘è┘å :min ┘ê :max.',
++        'file' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪¡╪¼┘à :attribute ╪¿┘è┘å :min ┘ê :max ┘â┘è┘ä┘ê╪¿╪º┘è╪¬.',
++        'numeric' => '┘è╪¼╪¿ ╪ú┘å ╪¬┘â┘ê┘å ┘é┘è┘à╪⌐ :attribute ╪¿┘è┘å :min ┘ê :max.',
++        'string' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪╣╪»╪» ╪¡╪▒┘ê┘ü :attribute ╪¿┘è┘å :min ┘ê :max.',
++    ],
++    'boolean' => '┘è╪¼╪¿ ╪ú┘å ╪¬┘â┘ê┘å ┘é┘è┘à╪⌐ :attribute ╪Ñ┘à╪º ╪╡╪¡ ╪ú┘ê ╪«╪╖╪ú.',
++    'can' => '┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ┘é┘è┘à╪⌐ ╪║┘è╪▒ ┘à╪╡╪▒┘æ╪¡ ╪¿┘ç╪º.',
++    'confirmed' => '╪¡┘é┘ä ╪¬╪ú┘â┘è╪» :attribute ╪║┘è╪▒ ┘à╪¬╪╖╪º╪¿┘é.',
++    'contains' => '╪¡┘é┘ä :attribute ╪¬┘å┘é╪╡┘ç ┘é┘è┘à╪⌐ ┘à╪╖┘ä┘ê╪¿╪⌐.',
++    'current_password' => '┘â┘ä┘à╪⌐ ╪º┘ä┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐.',
++    'date' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪¬╪º╪▒┘è╪«┘ï╪º ╪╡╪¡┘è╪¡┘ï╪º.',
++    'date_equals' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪¬╪º╪▒┘è╪«┘ï╪º ┘è╪│╪º┘ê┘è :date.',
++    'date_format' => '┘è╪¼╪¿ ╪ú┘å ┘è╪╖╪º╪¿┘é :attribute ╪º┘ä╪╡┘è╪║╪⌐ :format.',
++    'decimal' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë :decimal ╪ú╪▒┘é╪º┘à ╪╣╪┤╪▒┘è╪⌐.',
++    'declined' => '┘è╪¼╪¿ ╪▒┘ü╪╢ :attribute.',
++    'declined_if' => '┘è╪¼╪¿ ╪▒┘ü╪╢ :attribute ╪╣┘å╪»┘à╪º ┘è┘â┘ê┘å :other ┘ç┘ê :value.',
++    'different' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘ê :other ┘à╪«╪¬┘ä┘ü┘è┘å.',
++    'digits' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¬┘â┘ê┘æ┘å :attribute ┘à┘å :digits ╪ú╪▒┘é╪º┘à.',
++    'digits_between' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¬┘â┘ê┘æ┘å :attribute ┘à┘å ╪╣╪»╪» ╪ú╪▒┘é╪º┘à ╪¿┘è┘å :min ┘ê :max.',
++    'dimensions' => '╪ú╪¿╪╣╪º╪» ╪╡┘ê╪▒╪⌐ :attribute ╪║┘è╪▒ ╪╡╪º┘ä╪¡╪⌐.',
++    'distinct' => '┘é┘è┘à╪⌐ :attribute ┘à┘â╪▒╪▒╪⌐.',
++    'doesnt_contain' => '┘è╪¼╪¿ ╪ú┘ä╪º ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪ú┘è ┘à┘à╪º ┘è┘ä┘è: :values.',
++    'doesnt_end_with' => '┘è╪¼╪¿ ╪ú┘ä╪º ┘è┘å╪¬┘ç┘è :attribute ╪¿╪ú┘è ┘à┘à╪º ┘è┘ä┘è: :values.',
++    'doesnt_start_with' => '┘è╪¼╪¿ ╪ú┘ä╪º ┘è╪¿╪»╪ú :attribute ╪¿╪ú┘è ┘à┘à╪º ┘è┘ä┘è: :values.',
++    'email' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪¿╪▒┘è╪»┘ï╪º ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è┘ï╪º ╪╡╪¡┘è╪¡┘ï╪º.',
++    'encoding' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪¬╪▒┘à┘è╪▓ :attribute ╪¿╪╡┘è╪║╪⌐ :encoding.',
++    'ends_with' => '┘è╪¼╪¿ ╪ú┘å ┘è┘å╪¬┘ç┘è :attribute ╪¿╪ú╪¡╪» ╪º┘ä┘é┘è┘à ╪º┘ä╪¬╪º┘ä┘è╪⌐: :values.',
++    'enum' => '┘é┘è┘à╪⌐ :attribute ╪º┘ä┘à╪¡╪»╪»╪⌐ ╪║┘è╪▒ ╪╡╪º┘ä╪¡╪⌐.',
++    'exists' => '┘é┘è┘à╪⌐ :attribute ╪º┘ä┘à╪¡╪»╪»╪⌐ ╪║┘è╪▒ ╪╡╪º┘ä╪¡╪⌐.',
++    'extensions' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪º┘à╪¬╪»╪º╪» :attribute ╪ú╪¡╪» ╪º┘ä╪º┘à╪¬╪»╪º╪»╪º╪¬ ╪º┘ä╪¬╪º┘ä┘è╪⌐: :values.',
++    'file' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘à┘ä┘ü┘ï╪º.',
++    'filled' => '┘è╪¼╪¿ ╪Ñ╪»╪«╪º┘ä ┘é┘è┘à╪⌐ ┘ü┘è :attribute.',
++    'gt' => [
++        'array' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪ú┘â╪½╪▒ ┘à┘å :value ╪╣┘å╪╡╪▒.',
++        'file' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪¡╪¼┘à :attribute ╪ú┘â╪¿╪▒ ┘à┘å :value ┘â┘è┘ä┘ê╪¿╪º┘è╪¬.',
++        'numeric' => '┘è╪¼╪¿ ╪ú┘å ╪¬┘â┘ê┘å ┘é┘è┘à╪⌐ :attribute ╪ú┘â╪¿╪▒ ┘à┘å :value.',
++        'string' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪╣╪»╪» ╪¡╪▒┘ê┘ü :attribute ╪ú┘â╪¿╪▒ ┘à┘å :value.',
++    ],
++    'gte' => [
++        'array' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë :value ╪╣┘å╪╡╪▒ ╪ú┘ê ╪ú┘â╪½╪▒.',
++        'file' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪¡╪¼┘à :attribute ╪ú┘â╪¿╪▒ ┘à┘å ╪ú┘ê ┘è╪│╪º┘ê┘è :value ┘â┘è┘ä┘ê╪¿╪º┘è╪¬.',
++        'numeric' => '┘è╪¼╪¿ ╪ú┘å ╪¬┘â┘ê┘å ┘é┘è┘à╪⌐ :attribute ╪ú┘â╪¿╪▒ ┘à┘å ╪ú┘ê ╪¬╪│╪º┘ê┘è :value.',
++        'string' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪╣╪»╪» ╪¡╪▒┘ê┘ü :attribute ╪ú┘â╪¿╪▒ ┘à┘å ╪ú┘ê ┘è╪│╪º┘ê┘è :value.',
++    ],
++    'hex_color' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘ä┘ê┘å┘ï╪º ╪│╪»╪º╪│┘è┘ï╪º ╪╡╪¡┘è╪¡┘ï╪º.',
++    'image' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪╡┘ê╪▒╪⌐.',
++    'in' => '┘é┘è┘à╪⌐ :attribute ╪º┘ä┘à╪¡╪»╪»╪⌐ ╪║┘è╪▒ ╪╡╪º┘ä╪¡╪⌐.',
++    'in_array' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘à┘ê╪¼┘ê╪»┘ï╪º ╪╢┘à┘å :other.',
++    'in_array_keys' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ┘ê╪º╪¡╪» ╪╣┘ä┘ë ╪º┘ä╪ú┘é┘ä ┘à┘å ╪º┘ä┘à┘ü╪º╪¬┘è╪¡ ╪º┘ä╪¬╪º┘ä┘è╪⌐: :values.',
++    'integer' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪▒┘é┘à┘ï╪º ╪╡╪¡┘è╪¡┘ï╪º.',
++    'ip' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪╣┘å┘ê╪º┘å IP ╪╡╪¡┘è╪¡┘ï╪º.',
++    'ipv4' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪╣┘å┘ê╪º┘å IPv4 ╪╡╪¡┘è╪¡┘ï╪º.',
++    'ipv6' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪╣┘å┘ê╪º┘å IPv6 ╪╡╪¡┘è╪¡┘ï╪º.',
++    'json' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘å╪╡ JSON ╪╡╪¡┘è╪¡┘ï╪º.',
++    'list' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘é╪º╪ª┘à╪⌐.',
++    'lowercase' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪¿╪ú╪¡╪▒┘ü ╪╡╪║┘è╪▒╪⌐.',
++    'lt' => [
++        'array' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪ú┘é┘ä ┘à┘å :value ╪╣┘å╪╡╪▒.',
++        'file' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪¡╪¼┘à :attribute ╪ú┘é┘ä ┘à┘å :value ┘â┘è┘ä┘ê╪¿╪º┘è╪¬.',
++        'numeric' => '┘è╪¼╪¿ ╪ú┘å ╪¬┘â┘ê┘å ┘é┘è┘à╪⌐ :attribute ╪ú┘é┘ä ┘à┘å :value.',
++        'string' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪╣╪»╪» ╪¡╪▒┘ê┘ü :attribute ╪ú┘é┘ä ┘à┘å :value.',
++    ],
++    'lte' => [
++        'array' => '┘è╪¼╪¿ ╪ú┘ä╪º ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪ú┘â╪½╪▒ ┘à┘å :value ╪╣┘å╪╡╪▒.',
++        'file' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪¡╪¼┘à :attribute ╪ú┘é┘ä ┘à┘å ╪ú┘ê ┘è╪│╪º┘ê┘è :value ┘â┘è┘ä┘ê╪¿╪º┘è╪¬.',
++        'numeric' => '┘è╪¼╪¿ ╪ú┘å ╪¬┘â┘ê┘å ┘é┘è┘à╪⌐ :attribute ╪ú┘é┘ä ┘à┘å ╪ú┘ê ╪¬╪│╪º┘ê┘è :value.',
++        'string' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪╣╪»╪» ╪¡╪▒┘ê┘ü :attribute ╪ú┘é┘ä ┘à┘å ╪ú┘ê ┘è╪│╪º┘ê┘è :value.',
++    ],
++    'mac_address' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪╣┘å┘ê╪º┘å MAC ╪╡╪¡┘è╪¡┘ï╪º.',
++    'max' => [
++        'array' => '┘è╪¼╪¿ ╪ú┘ä╪º ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪ú┘â╪½╪▒ ┘à┘å :max ╪╣┘å╪╡╪▒.',
++        'file' => '┘è╪¼╪¿ ╪ú┘ä╪º ┘è╪▓┘è╪» ╪¡╪¼┘à :attribute ╪╣┘å :max ┘â┘è┘ä┘ê╪¿╪º┘è╪¬.',
++        'numeric' => '┘è╪¼╪¿ ╪ú┘ä╪º ╪¬╪▓┘è╪» ┘é┘è┘à╪⌐ :attribute ╪╣┘å :max.',
++        'string' => '┘è╪¼╪¿ ╪ú┘ä╪º ┘è╪▓┘è╪» ╪╣╪»╪» ╪¡╪▒┘ê┘ü :attribute ╪╣┘å :max.',
++    ],
++    'max_digits' => '┘è╪¼╪¿ ╪ú┘ä╪º ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪ú┘â╪½╪▒ ┘à┘å :max ╪▒┘é┘à.',
++    'mimes' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘à┘ä┘ü┘ï╪º ┘à┘å ┘å┘ê╪╣: :values.',
++    'mimetypes' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘à┘ä┘ü┘ï╪º ┘à┘å ┘å┘ê╪╣: :values.',
++    'min' => [
++        'array' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë :min ╪╣┘å╪╡╪▒ ╪╣┘ä┘ë ╪º┘ä╪ú┘é┘ä.',
++        'file' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪¡╪¼┘à :attribute :min ┘â┘è┘ä┘ê╪¿╪º┘è╪¬ ╪╣┘ä┘ë ╪º┘ä╪ú┘é┘ä.',
++        'numeric' => '┘è╪¼╪¿ ╪ú┘å ╪¬┘â┘ê┘å ┘é┘è┘à╪⌐ :attribute :min ╪╣┘ä┘ë ╪º┘ä╪ú┘é┘ä.',
++        'string' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪╣╪»╪» ╪¡╪▒┘ê┘ü :attribute :min ╪╣┘ä┘ë ╪º┘ä╪ú┘é┘ä.',
++    ],
++    'min_digits' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë :min ╪▒┘é┘à ╪╣┘ä┘ë ╪º┘ä╪ú┘é┘ä.',
++    'missing' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪║┘è╪▒ ┘à┘ê╪¼┘ê╪».',
++    'missing_if' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪║┘è╪▒ ┘à┘ê╪¼┘ê╪» ╪╣┘å╪»┘à╪º ┘è┘â┘ê┘å :other ┘ç┘ê :value.',
++    'missing_unless' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪║┘è╪▒ ┘à┘ê╪¼┘ê╪» ┘à╪º ┘ä┘à ┘è┘â┘å :other ┘ç┘ê :value.',
++    'missing_with' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪║┘è╪▒ ┘à┘ê╪¼┘ê╪» ╪╣┘å╪» ┘ê╪¼┘ê╪» :values.',
++    'missing_with_all' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪║┘è╪▒ ┘à┘ê╪¼┘ê╪» ╪╣┘å╪» ┘ê╪¼┘ê╪» :values.',
++    'multiple_of' => '┘è╪¼╪¿ ╪ú┘å ╪¬┘â┘ê┘å ┘é┘è┘à╪⌐ :attribute ┘à┘å ┘à╪╢╪º╪╣┘ü╪º╪¬ :value.',
++    'not_in' => '┘é┘è┘à╪⌐ :attribute ╪º┘ä┘à╪¡╪»╪»╪⌐ ╪║┘è╪▒ ╪╡╪º┘ä╪¡╪⌐.',
++    'not_regex' => '╪╡┘è╪║╪⌐ :attribute ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐.',
++    'numeric' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪▒┘é┘à┘ï╪º.',
++    'password' => [
++        'letters' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪¡╪▒┘ü ┘ê╪º╪¡╪» ╪╣┘ä┘ë ╪º┘ä╪ú┘é┘ä.',
++        'mixed' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪¡╪▒┘ü ┘â╪¿┘è╪▒ ┘ê╪¡╪▒┘ü ╪╡╪║┘è╪▒ ╪╣┘ä┘ë ╪º┘ä╪ú┘é┘ä.',
++        'numbers' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪▒┘é┘à ┘ê╪º╪¡╪» ╪╣┘ä┘ë ╪º┘ä╪ú┘é┘ä.',
++        'symbols' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ╪▒┘à╪▓ ┘ê╪º╪¡╪» ╪╣┘ä┘ë ╪º┘ä╪ú┘é┘ä.',
++        'uncompromised' => '╪╕┘ç╪▒ :attribute ╪º┘ä┘à┘Å╪»╪«┘ä ╪╢┘à┘å ╪¬╪│╪▒┘è╪¿ ╪¿┘è╪º┘å╪º╪¬. ┘è┘Å╪▒╪¼┘ë ╪º╪«╪¬┘è╪º╪▒ ┘é┘è┘à╪⌐ ╪ú╪«╪▒┘ë.',
++    ],
++    'phone' => '╪╡┘è╪║╪⌐ ╪▒┘é┘à ╪º┘ä┘ç╪º╪¬┘ü ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐.',
++    'present' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘à┘ê╪¼┘ê╪»┘ï╪º.',
++    'present_if' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘à┘ê╪¼┘ê╪»┘ï╪º ╪╣┘å╪»┘à╪º ┘è┘â┘ê┘å :other ┘ç┘ê :value.',
++    'present_unless' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘à┘ê╪¼┘ê╪»┘ï╪º ┘à╪º ┘ä┘à ┘è┘â┘å :other ┘ç┘ê :value.',
++    'present_with' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘à┘ê╪¼┘ê╪»┘ï╪º ╪╣┘å╪» ┘ê╪¼┘ê╪» :values.',
++    'present_with_all' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘à┘ê╪¼┘ê╪»┘ï╪º ╪╣┘å╪» ┘ê╪¼┘ê╪» :values.',
++    'prohibited' => ':attribute ┘à╪¡╪╕┘ê╪▒.',
++    'prohibited_if' => ':attribute ┘à╪¡╪╕┘ê╪▒ ╪╣┘å╪»┘à╪º ┘è┘â┘ê┘å :other ┘ç┘ê :value.',
++    'prohibited_if_accepted' => ':attribute ┘à╪¡╪╕┘ê╪▒ ╪╣┘å╪» ┘é╪¿┘ê┘ä :other.',
++    'prohibited_if_declined' => ':attribute ┘à╪¡╪╕┘ê╪▒ ╪╣┘å╪» ╪▒┘ü╪╢ :other.',
++    'prohibited_unless' => ':attribute ┘à╪¡╪╕┘ê╪▒ ┘à╪º ┘ä┘à ┘è┘â┘å :other ╪╢┘à┘å :values.',
++    'prohibits' => '┘ê╪¼┘ê╪» :attribute ┘è┘à┘å╪╣ ┘ê╪¼┘ê╪» :other.',
++    'regex' => '╪╡┘è╪║╪⌐ :attribute ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐.',
++    'required' => '╪¡┘é┘ä :attribute ┘à╪╖┘ä┘ê╪¿.',
++    'required_array_keys' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë ┘à╪»╪«┘ä╪º╪¬ ┘ä┘Ç: :values.',
++    'required_if' => '╪¡┘é┘ä :attribute ┘à╪╖┘ä┘ê╪¿ ╪╣┘å╪»┘à╪º ┘è┘â┘ê┘å :other ┘ç┘ê :value.',
++    'required_if_accepted' => '╪¡┘é┘ä :attribute ┘à╪╖┘ä┘ê╪¿ ╪╣┘å╪» ┘é╪¿┘ê┘ä :other.',
++    'required_if_declined' => '╪¡┘é┘ä :attribute ┘à╪╖┘ä┘ê╪¿ ╪╣┘å╪» ╪▒┘ü╪╢ :other.',
++    'required_unless' => '╪¡┘é┘ä :attribute ┘à╪╖┘ä┘ê╪¿ ┘à╪º ┘ä┘à ┘è┘â┘å :other ╪╢┘à┘å :values.',
++    'required_with' => '╪¡┘é┘ä :attribute ┘à╪╖┘ä┘ê╪¿ ╪╣┘å╪» ┘ê╪¼┘ê╪» :values.',
++    'required_with_all' => '╪¡┘é┘ä :attribute ┘à╪╖┘ä┘ê╪¿ ╪╣┘å╪» ┘ê╪¼┘ê╪» :values.',
++    'required_without' => '╪¡┘é┘ä :attribute ┘à╪╖┘ä┘ê╪¿ ╪╣┘å╪» ╪╣╪»┘à ┘ê╪¼┘ê╪» :values.',
++    'required_without_all' => '╪¡┘é┘ä :attribute ┘à╪╖┘ä┘ê╪¿ ╪╣┘å╪» ╪╣╪»┘à ┘ê╪¼┘ê╪» ╪ú┘è ┘à┘å :values.',
++    'same' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¬╪╖╪º╪¿┘é :attribute ┘à╪╣ :other.',
++    'size' => [
++        'array' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¡╪¬┘ê┘è :attribute ╪╣┘ä┘ë :size ╪╣┘å╪╡╪▒.',
++        'file' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪¡╪¼┘à :attribute :size ┘â┘è┘ä┘ê╪¿╪º┘è╪¬.',
++        'numeric' => '┘è╪¼╪¿ ╪ú┘å ╪¬┘â┘ê┘å ┘é┘è┘à╪⌐ :attribute :size.',
++        'string' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å ╪╣╪»╪» ╪¡╪▒┘ê┘ü :attribute :size.',
++    ],
++    'starts_with' => '┘è╪¼╪¿ ╪ú┘å ┘è╪¿╪»╪ú :attribute ╪¿╪ú╪¡╪» ╪º┘ä┘é┘è┘à ╪º┘ä╪¬╪º┘ä┘è╪⌐: :values.',
++    'string' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘å╪╡┘ï╪º.',
++    'timezone' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ┘à┘å╪╖┘é╪⌐ ╪▓┘à┘å┘è╪⌐ ╪╡╪¡┘è╪¡╪⌐.',
++    'unique' => '┘é┘è┘à╪⌐ :attribute ┘à╪│╪¬╪«╪»┘à╪⌐ ┘à┘å ┘é╪¿┘ä.',
++    'uploaded' => '┘ü╪┤┘ä ╪▒┘ü╪╣ :attribute.',
++    'uppercase' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪¿╪ú╪¡╪▒┘ü ┘â╪¿┘è╪▒╪⌐.',
++    'url' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪▒╪º╪¿╪╖┘ï╪º ╪╡╪¡┘è╪¡┘ï╪º.',
++    'ulid' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪▒┘à╪▓ ULID ╪╡╪¡┘è╪¡┘ï╪º.',
++    'uuid' => '┘è╪¼╪¿ ╪ú┘å ┘è┘â┘ê┘å :attribute ╪▒┘à╪▓ UUID ╪╡╪¡┘è╪¡┘ï╪º.',
++
++    /*
++    |--------------------------------------------------------------------------
++    | Custom Validation Language Lines
++    |--------------------------------------------------------------------------
++    */
++
++    'custom' => [
++        'attribute-name' => [
++            'rule-name' => 'custom-message',
++        ],
++    ],
++
++    /*
++    |--------------------------------------------------------------------------
++    | Custom Validation Attributes
++    |--------------------------------------------------------------------------
++    |
++    | Friendly Arabic names so messages read "╪¡┘é┘ä ╪º╪│┘à ╪º┘ä┘à┘ê╪▒╪» ┘à╪╖┘ä┘ê╪¿" instead of
++    | "╪¡┘é┘ä name ┘à╪╖┘ä┘ê╪¿". Filament already swaps :attribute for a field's label
++    | when one is set; these cover plain (non-Filament) validation too.
++    |
++    */
++
++    'attributes' => [
++        'name' => '╪º┘ä╪º╪│┘à',
++        'contact_person' => '┘à╪│╪ñ┘ê┘ä ╪º┘ä╪¬┘ê╪º╪╡┘ä',
++        'phone' => '╪▒┘é┘à ╪º┘ä┘ç╪º╪¬┘ü',
++        'email' => '╪º┘ä╪¿╪▒┘è╪» ╪º┘ä╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è',
++        'tax_number' => '╪º┘ä╪▒┘é┘à ╪º┘ä╪╢╪▒┘è╪¿┘è',
++        'address' => '╪º┘ä╪╣┘å┘ê╪º┘å',
++        'notes' => '╪º┘ä┘à┘ä╪º╪¡╪╕╪º╪¬',
++        'password' => '┘â┘ä┘à╪⌐ ╪º┘ä┘à╪▒┘ê╪▒',
++    ],
++
++];
+diff --git a/lang/en/resources.php b/lang/en/resources.php
+index 9592b7b..43df13c 100644
+--- a/lang/en/resources.php
++++ b/lang/en/resources.php
+@@ -409,6 +409,20 @@
+             'on_hold' => 'On Hold',
+             'minimum_stock' => 'Min. Stock',
+         ],
++
++        'actions' => [
++            'quick_view' => 'View item',
++            'close' => 'Close',
++        ],
++
++        'modal' => [
++            'stock' => 'Stock',
++            'on_hand' => 'On Hand',
++            'on_hold' => 'On Hold',
++            'available' => 'Available',
++            'below_minimum' => 'Available stock is below the minimum level.',
++            'not_found' => 'Item not found.',
++        ],
+     ],
+ 
+     /*
+@@ -478,6 +492,8 @@
+         'fields' => [
+             'po_number' => 'PO Number',
+             'project' => 'Project',
++            'project_placeholder' => 'No project ΓÇö warehouse purchase',
++            'project_help' => 'Leave empty for a warehouse/stock purchase not tied to any operation.',
+             'supplier' => 'Supplier',
+             'supplier_name' => 'Supplier Name',
+             'supplier_contact' => 'Supplier Contact',
+@@ -497,6 +513,7 @@
+         'columns' => [
+             'po_number' => 'PO #',
+             'project' => 'Project',
++            'warehouse_po' => 'Warehouse',
+             'sales_stage' => 'Sales Stage',
+             'supplier_name' => 'Supplier',
+             'status' => 'Status',
+@@ -533,6 +550,7 @@
+             'supplier' => 'Supplier',
+             'tax_number' => 'Tax No.',
+             'project' => 'Project',
++            'warehouse' => 'Warehouse (stock purchase)',
+             'status' => 'Status',
+             'item_no' => '#',
+             'item' => 'Item',
+@@ -1017,6 +1035,7 @@
+             'item' => 'Item',
+             'warehouse' => 'Warehouse',
+             'quantity' => 'Quantity',
++            'quantity_available' => 'Available to reserve: :qty',
+             'notes' => 'Notes',
+         ],
+         'actions' => [
+diff --git a/lang/en/validation.php b/lang/en/validation.php
+new file mode 100644
+index 0000000..c81281f
+--- /dev/null
++++ b/lang/en/validation.php
+@@ -0,0 +1,31 @@
++<?php
++
++declare(strict_types=1);
++
++/*
++|--------------------------------------------------------------------------
++| English validation overrides
++|--------------------------------------------------------------------------
++|
++| Laravel's FileLoader merges the framework's built-in English validation
++| strings with this file (array_replace_recursive), so we only need to add
++| what the framework does not ship: the custom `phone` rule message used by
++| App\Filament\Support\PhoneInput, plus friendly attribute names.
++|
++*/
++
++return [
++
++    'phone' => 'The phone number format is invalid.',
++
++    'attributes' => [
++        'name' => 'name',
++        'contact_person' => 'contact person',
++        'phone' => 'phone',
++        'email' => 'email',
++        'tax_number' => 'tax number',
++        'address' => 'address',
++        'notes' => 'notes',
++    ],
++
++];
+diff --git a/resources/views/filament/items/quick-view.blade.php b/resources/views/filament/items/quick-view.blade.php
+new file mode 100644
+index 0000000..fabf11c
+--- /dev/null
++++ b/resources/views/filament/items/quick-view.blade.php
+@@ -0,0 +1,106 @@
++{{--
++    Reusable item "quick view" card. Rendered inside a Filament modal so the user
++    can review an item (catalog data + live stock) without leaving the page they
++    are on ΓÇö the items list, a purchase order, an addition voucher, etc.
++
++    Expects:
++      - $item: ?App\Models\Item  (with `inventories` eager-loaded)
++--}}
++@php
++    /** @var \App\Models\Item|null $item */
++    $canViewPricing = auth()->user()?->can('inventory.view_pricing') ?? false;
++
++    // Quantities are decimals (e.g. metres); trim trailing zeros for readability.
++    $qty = static fn ($value): string => rtrim(rtrim(number_format((float) ($value ?? 0), 4, '.', ','), '0'), '.') ?: '0';
++@endphp
++
++@if (! $item)
++    <div class="p-4 text-sm text-gray-500 dark:text-gray-400">
++        {{ __('resources.items.modal.not_found') }}
++    </div>
++@else
++    @php
++        $onHand = $item->inventories->sum(fn ($row) => (float) $row->on_hand_quantity);
++        $onHold = $item->inventories->sum(fn ($row) => (float) $row->on_hold_quantity);
++        $available = (float) $item->available_quantity;
++        $belowMinimum = $item->isBelowMinimumStock();
++    @endphp
++
++    <div class="space-y-6 text-sm">
++        {{-- Identity / catalog data --}}
++        <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
++            <div>
++                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('resources.items.fields.sku') }}</div>
++                <div class="mt-1 font-mono text-gray-950 dark:text-white">{{ $item->sku }}</div>
++            </div>
++
++            <div>
++                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('resources.items.fields.name') }}</div>
++                <div class="mt-1 font-medium text-gray-950 dark:text-white">{{ $item->name }}</div>
++            </div>
++
++            <div>
++                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('resources.items.fields.type') }}</div>
++                <div class="mt-1 text-gray-950 dark:text-white">{{ $item->type?->getLabel() ?? 'ΓÇö' }}</div>
++            </div>
++
++            <div>
++                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('resources.items.fields.unit') }}</div>
++                <div class="mt-1 text-gray-950 dark:text-white">{{ $item->unit?->getLabel() ?? 'ΓÇö' }}</div>
++            </div>
++
++            @if ($canViewPricing)
++                <div>
++                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('resources.items.fields.unit_cost') }}</div>
++                    <div class="mt-1 font-semibold text-gray-950 dark:text-white">{{ number_format((float) $item->unit_cost, 2) }} EGP</div>
++                </div>
++            @endif
++
++            @if (filled($item->description))
++                <div class="sm:col-span-2">
++                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('resources.items.fields.description') }}</div>
++                    <div class="mt-1 whitespace-pre-line text-gray-950 dark:text-white">{{ $item->description }}</div>
++                </div>
++            @endif
++        </div>
++
++        {{-- Live stock --}}
++        <div>
++            <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
++                {{ __('resources.items.modal.stock') }}
++            </div>
++
++            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
++                <div class="rounded-lg bg-gray-50 p-3 dark:bg-white/5">
++                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ __('resources.items.modal.on_hand') }}</div>
++                    <div class="mt-1 text-base font-semibold text-gray-950 dark:text-white">{{ $qty($onHand) }}</div>
++                </div>
++
++                <div class="rounded-lg bg-gray-50 p-3 dark:bg-white/5">
++                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ __('resources.items.modal.on_hold') }}</div>
++                    <div class="mt-1 text-base font-semibold text-warning-600 dark:text-warning-400">{{ $qty($onHold) }}</div>
++                </div>
++
++                <div class="rounded-lg bg-gray-50 p-3 dark:bg-white/5">
++                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ __('resources.items.modal.available') }}</div>
++                    <div @class([
++                        'mt-1 text-base font-semibold',
++                        'text-danger-600 dark:text-danger-400' => $belowMinimum,
++                        'text-success-600 dark:text-success-400' => ! $belowMinimum,
++                    ])>{{ $qty($available) }}</div>
++                </div>
++
++                <div class="rounded-lg bg-gray-50 p-3 dark:bg-white/5">
++                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ __('resources.items.fields.minimum_stock') }}</div>
++                    <div class="mt-1 text-base font-semibold text-gray-950 dark:text-white">{{ $qty($item->minimum_stock) }}</div>
++                </div>
++            </div>
++
++            @if ($belowMinimum)
++                <div class="mt-2 text-xs font-medium text-danger-600 dark:text-danger-400">
++                    {{ __('resources.items.modal.below_minimum') }}
++                </div>
++            @endif
++        </div>
++    </div>
++@endif
+diff --git a/resources/views/pdf/purchase-order.blade.php b/resources/views/pdf/purchase-order.blade.php
+index d650add..f1acdcb 100644
+--- a/resources/views/pdf/purchase-order.blade.php
++++ b/resources/views/pdf/purchase-order.blade.php
+@@ -65,7 +65,7 @@
+         </tr>
+         <tr>
+             <td class="k">{{ __('resources.purchase_orders.pdf.project') }}</td>
+-            <td>{{ $po->project?->name }}</td>
++            <td>{{ $po->project?->name ?: __('resources.purchase_orders.pdf.warehouse') }}</td>
+             <td class="k">{{ __('resources.purchase_orders.pdf.status') }}</td>
+             <td>{{ $po->status?->getLabel() }}</td>
+         </tr>
+diff --git a/tests/Feature/GeneralManagement/StockReservationTest.php b/tests/Feature/GeneralManagement/StockReservationTest.php
+index e7346bc..86e02a8 100644
+--- a/tests/Feature/GeneralManagement/StockReservationTest.php
++++ b/tests/Feature/GeneralManagement/StockReservationTest.php
+@@ -83,6 +83,40 @@ public function test_reserving_above_available_throws(): void
+         app(ReservationService::class)->reserveForProject($project, $item, 20, WarehouseType::RawMaterials);
+     }
+ 
++    public function test_reservable_items_exclude_zero_and_fully_held_stock(): void
++    {
++        // Has free stock ΓåÆ reservable.
++        $available = $this->stockedItem(10);
++
++        // Never received any stock ΓåÆ not reservable.
++        $zeroStock = Item::factory()->create(['type' => ItemType::RawMaterial, 'unit_cost' => 5]);
++
++        // On-hand but entirely held ΓåÆ 0 available ΓåÆ not reservable.
++        $fullyHeld = $this->stockedItem(5);
++        $project = Project::factory()->active()->create();
++        app(ReservationService::class)->reserveForProject($project, $fullyHeld, 5, WarehouseType::RawMaterials);
++
++        $ids = Item::withAvailableStockIn(WarehouseType::RawMaterials)->pluck('id');
++
++        $this->assertTrue($ids->contains($available->id));
++        $this->assertFalse($ids->contains($zeroStock->id));
++        $this->assertFalse($ids->contains($fullyHeld->id));
++    }
++
++    public function test_reservable_items_are_scoped_to_the_requested_warehouse(): void
++    {
++        // Stock lives only in raw materials, so the item is reservable there
++        // but not from the finished-goods store.
++        $item = $this->stockedItem(10);
++
++        $this->assertTrue(
++            Item::withAvailableStockIn(WarehouseType::RawMaterials)->pluck('id')->contains($item->id)
++        );
++        $this->assertFalse(
++            Item::withAvailableStockIn(WarehouseType::FinishedGoods)->pluck('id')->contains($item->id)
++        );
++    }
++
+     public function test_reserve_approved_bom_reserves_each_line(): void
+     {
+         $project = Project::factory()->active()->create();
+diff --git a/tests/Feature/Procurement/PurchaseOrderWarehouseTest.php b/tests/Feature/Procurement/PurchaseOrderWarehouseTest.php
+new file mode 100644
+index 0000000..86c5502
+--- /dev/null
++++ b/tests/Feature/Procurement/PurchaseOrderWarehouseTest.php
+@@ -0,0 +1,83 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Tests\Feature\Procurement;
++
++use App\Enums\ItemType;
++use App\Enums\PurchaseOrderStatus;
++use App\Enums\WarehouseType;
++use App\Models\AccountEntry;
++use App\Models\Item;
++use App\Models\Project;
++use App\Models\PurchaseOrder;
++use App\Models\Supplier;
++use App\Models\User;
++use App\Services\PurchaseOrderService;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Tests\TestCase;
++
++/**
++ * Procurement feedback: a purchase order need not belong to an operation.
++ * Leaving the project empty makes it a warehouse/stock purchase (┘à╪▒╪¿┘ê╪╖ ╪¿╪º┘ä┘à╪«╪º╪▓┘å).
++ * Such orders receive into the item's home warehouse exactly like any other ΓÇö
++ * the stock/ledger flow never depended on the project.
++ */
++class PurchaseOrderWarehouseTest extends TestCase
++{
++    use RefreshDatabase;
++
++    protected function setUp(): void
++    {
++        parent::setUp();
++        $this->actingAs(User::factory()->create());
++    }
++
++    public function test_a_purchase_order_can_be_created_without_a_project(): void
++    {
++        $po = PurchaseOrder::factory()->warehouse()->create();
++
++        $this->assertNull($po->fresh()->project_id);
++        $this->assertNull($po->project);
++    }
++
++    public function test_warehouse_po_receives_into_stock_and_credits_supplier(): void
++    {
++        $supplier = Supplier::factory()->create();
++        $po = PurchaseOrder::factory()->warehouse()->create([
++            'supplier_id' => $supplier->id,
++            'supplier_name' => $supplier->name,
++            'status' => PurchaseOrderStatus::Submitted,
++        ]);
++        $item = Item::factory()->create(['type' => ItemType::RawMaterial]);
++        $poItem = $po->items()->create(['item_id' => $item->id, 'quantity' => 8, 'unit_price' => 15]);
++
++        $voucher = app(PurchaseOrderService::class)->receiveItems($po->fresh(), [$poItem->id => 8]);
++
++        // Stock lands in the item's home warehouse ΓÇö independent of any project.
++        $this->assertEquals(8, $item->fresh()->quantityIn(WarehouseType::RawMaterials));
++
++        // PO closed by comparison and the linked voucher posted.
++        $po->refresh();
++        $this->assertSame(PurchaseOrderStatus::Received, $po->status);
++        $this->assertSame($po->id, $voucher->purchase_order_id);
++
++        // Supplier credited (8 ├ù 15) with a null operation name (no project).
++        $this->assertEquals(120, $supplier->fresh()->balance);
++        $entry = AccountEntry::where('party_id', $supplier->id)->firstOrFail();
++        $this->assertNull($entry->operation_name);
++    }
++
++    public function test_force_deleting_a_project_detaches_its_orders_as_warehouse_pos(): void
++    {
++        $project = Project::factory()->create();
++        $po = PurchaseOrder::factory()->create(['project_id' => $project->id]);
++
++        $project->forceDelete();
++
++        // nullOnDelete: the order survives as a warehouse PO instead of cascading.
++        $po->refresh();
++        $this->assertTrue($po->exists);
++        $this->assertNull($po->project_id);
++    }
++}
+diff --git a/tests/Feature/Procurement/SupplierPhoneNormalizationTest.php b/tests/Feature/Procurement/SupplierPhoneNormalizationTest.php
+new file mode 100644
+index 0000000..4fe6ce1
+--- /dev/null
++++ b/tests/Feature/Procurement/SupplierPhoneNormalizationTest.php
+@@ -0,0 +1,75 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Tests\Feature\Procurement;
++
++use App\Filament\Resources\SupplierResource\Pages\CreateSupplier;
++use App\Filament\Support\PhoneInput;
++use App\Models\User;
++use Database\Seeders\RoleAndPermissionSeeder;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Livewire\Livewire;
++use Tests\TestCase;
++
++/**
++ * Regression for the ╪º┘ä┘à╪┤╪¬╪▒┘è╪º╪¬ feedback: a phone typed on an Arabic keyboard
++ * (Arabic-Indic numerals) or with a stray leading space was rejected with the
++ * raw "validation.regex" error, because Filament's ->tel() attaches a strict
++ * ASCII-only regex. App\Filament\Support\PhoneInput drops that regex, accepts
++ * the input, and normalises it to ASCII on save.
++ */
++class SupplierPhoneNormalizationTest extends TestCase
++{
++    use RefreshDatabase;
++
++    protected function setUp(): void
++    {
++        parent::setUp();
++        $this->seed(RoleAndPermissionSeeder::class);
++
++        $admin = User::factory()->create();
++        $admin->assignRole('Admin');
++        $this->actingAs($admin);
++    }
++
++    public function test_supplier_accepts_arabic_numeral_phone_and_stores_it_as_ascii(): void
++    {
++        Livewire::test(CreateSupplier::class)
++            ->fillForm([
++                'name' => '╪½╪▒┘è ╪Ñ┘à ┘ä┘ä┘å╪╕┘à ╪º┘ä┘â┘ç╪▒╪¿╪º╪ª┘è╪⌐',
++                'phone' => '┘á┘í┘ó┘á┘ó┘ó┘á┘á┘º┘Ñ┘ú', // Arabic-Indic numerals
++            ])
++            ->call('create')
++            ->assertHasNoFormErrors();
++
++        $this->assertDatabaseHas('suppliers', [
++            'name' => '╪½╪▒┘è ╪Ñ┘à ┘ä┘ä┘å╪╕┘à ╪º┘ä┘â┘ç╪▒╪¿╪º╪ª┘è╪⌐',
++            'phone' => '01202200753',
++        ]);
++    }
++
++    public function test_supplier_accepts_phone_with_leading_space_and_trims_it(): void
++    {
++        Livewire::test(CreateSupplier::class)
++            ->fillForm([
++                'name' => 'Acme Supplies',
++                'phone' => '  012 0220 0753 ',
++            ])
++            ->call('create')
++            ->assertHasNoFormErrors();
++
++        $this->assertDatabaseHas('suppliers', [
++            'name' => 'Acme Supplies',
++            'phone' => '012 0220 0753',
++        ]);
++    }
++
++    public function test_normalize_converts_arabic_and_persian_numerals(): void
++    {
++        $this->assertSame('01202200753', PhoneInput::normalize('┘á┘í┘ó┘á┘ó┘ó┘á┘á┘º┘Ñ┘ú'));
++        $this->assertSame('01202200753', PhoneInput::normalize('█░█▒█▓█░█▓█▓█░█░█╖█╡█│'));
++        $this->assertSame('012 0220', PhoneInput::normalize('  012 0220  '));
++        $this->assertNull(PhoneInput::normalize(null));
++    }
++}

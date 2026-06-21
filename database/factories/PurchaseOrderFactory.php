@@ -26,4 +26,15 @@ class PurchaseOrderFactory extends Factory
             'created_by' => User::factory(),
         ];
     }
+
+    /**
+     * A warehouse/stock purchase order not tied to any operation
+     * (project left empty) — مربوط بالمخازن.
+     */
+    public function warehouse(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'project_id' => null,
+        ]);
+    }
 }

@@ -7,6 +7,7 @@ namespace App\Filament\Resources;
 use App\Enums\AttachmentCategory;
 use App\Filament\Resources\CustomerResource\Pages;
 use App\Filament\Support\EntityAttachments;
+use App\Filament\Support\PhoneInput;
 use App\Models\Customer;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -63,10 +64,8 @@ class CustomerResource extends Resource
                             ->label(__('resources.customers.fields.contact_person'))
                             ->maxLength(255),
 
-                        Forms\Components\TextInput::make('phone')
-                            ->label(__('resources.customers.fields.phone'))
-                            ->tel()
-                            ->maxLength(50),
+                        PhoneInput::make('phone')
+                            ->label(__('resources.customers.fields.phone')),
 
                         Forms\Components\TextInput::make('email')
                             ->label(__('resources.customers.fields.email'))

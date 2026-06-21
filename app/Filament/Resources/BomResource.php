@@ -95,6 +95,11 @@ class BomResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
+                                    // ->live() so the quick-view suffix action
+                                    // re-renders (becomes visible) once an item
+                                    // is picked.
+                                    ->live()
+                                    ->suffixAction(ItemResource::quickViewAction())
                                     ->columnSpan(1),
 
                                 Forms\Components\TextInput::make('quantity')

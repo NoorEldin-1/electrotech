@@ -7,6 +7,7 @@ namespace App\Filament\Resources;
 use App\Enums\AttachmentCategory;
 use App\Filament\Resources\SupplierResource\Pages;
 use App\Filament\Support\EntityAttachments;
+use App\Filament\Support\PhoneInput;
 use App\Models\Supplier;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -63,10 +64,8 @@ class SupplierResource extends Resource
                             ->label(__('resources.suppliers.fields.contact_person'))
                             ->maxLength(255),
 
-                        Forms\Components\TextInput::make('phone')
-                            ->label(__('resources.suppliers.fields.phone'))
-                            ->tel()
-                            ->maxLength(50),
+                        PhoneInput::make('phone')
+                            ->label(__('resources.suppliers.fields.phone')),
 
                         Forms\Components\TextInput::make('email')
                             ->label(__('resources.suppliers.fields.email'))
