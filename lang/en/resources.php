@@ -420,9 +420,16 @@ return [
             'on_hand' => 'On Hand',
             'on_hold' => 'On Hold',
             'available' => 'Available',
+            'value' => 'Value',
+            'scrap' => 'Scrap',
+            'scrap_on_hand' => 'Scrap On Hand',
+            'scrap_value' => 'Scrap Value',
             'below_minimum' => 'Available stock is below the minimum level.',
             'not_found' => 'Item not found.',
         ],
+
+        // Suffix appended to an auto-created scrap variant's name.
+        'scrap_label' => 'Scrap',
     ],
 
     /*
@@ -754,6 +761,50 @@ return [
 
         'notifications' => [
             'posted' => 'Issue voucher posted — materials moved to work-in-progress.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Return Voucher Resource (إذن ارتداد)
+    |--------------------------------------------------------------------------
+    */
+    'return_vouchers' => [
+        'label' => 'Return Voucher',
+        'plural_label' => 'Return Vouchers',
+        'navigation_label' => 'Return Vouchers',
+
+        'sections' => [
+            'details' => 'Voucher Details',
+            'lines' => 'Returned Items',
+        ],
+
+        'fields' => [
+            'voucher_number' => 'Voucher Number',
+            'work_order' => 'Work Order',
+            'voucher_date' => 'Date',
+            'notes' => 'Notes',
+            'lines' => 'Items',
+            'item' => 'Item',
+            'quantity' => 'Quantity',
+            'unit_cost' => 'Unit Cost',
+        ],
+
+        'columns' => [
+            'voucher_number' => 'Number',
+            'work_order' => 'Work Order',
+            'voucher_date' => 'Date',
+            'total_value' => 'Total Value',
+            'status' => 'Status',
+        ],
+
+        'actions' => [
+            'post' => 'Post',
+            'post_confirm' => 'Posting returns the scrap from work-in-progress to raw stock under a different code and reverses its cost off the operation. This cannot be undone.',
+        ],
+
+        'notifications' => [
+            'posted' => 'Return voucher posted — scrap returned to raw stock.',
         ],
     ],
 
@@ -1446,6 +1497,7 @@ return [
         'actions' => [
             'start' => 'Start',
             'issue_materials' => 'Issue Materials',
+            'return_scrap' => 'Return Scrap',
             'submit_qa' => 'Submit QA',
             'approve_qa' => 'Approve QA',
             'complete' => 'Complete',
@@ -1454,6 +1506,7 @@ return [
         'notifications' => [
             'started' => 'Work Order started',
             'issue_voucher_created' => 'Draft issue voucher created',
+            'return_voucher_created' => 'Draft return voucher created',
             'submitted_qa' => 'Submitted for QA',
             'qa_approved' => 'QA Approved',
             'completed' => 'Work Order completed',
@@ -1545,6 +1598,7 @@ return [
             'transactions' => 'Inventory Transactions',
             'addition_vouchers' => 'Addition Vouchers',
             'issue_vouchers' => 'Issue Vouchers',
+            'return_vouchers' => 'Return Vouchers',
             'delivery_vouchers' => 'Delivery Vouchers',
             'production_entries' => 'Production & Loss',
             'scrap' => 'Scrap / Loss',
@@ -1633,6 +1687,11 @@ return [
                 'view' => 'View Issue Vouchers',
                 'create' => 'Create Issue Voucher',
                 'post' => 'Post Issue Voucher',
+            ],
+            'return_vouchers' => [
+                'view' => 'View Return Vouchers',
+                'create' => 'Create Return Voucher',
+                'post' => 'Post Return Voucher',
             ],
             'delivery_vouchers' => [
                 'view' => 'View Delivery Vouchers',

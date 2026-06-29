@@ -11,6 +11,7 @@ use App\Sync\Concerns\Syncable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -36,6 +37,8 @@ class Item extends Model
         'name',
         'sku',
         'type',
+        'is_scrap',
+        'scrap_source_item_id',
         'unit',
         'unit_cost',
         'description',
@@ -46,6 +49,7 @@ class Item extends Model
     {
         return [
             'type' => ItemType::class,
+            'is_scrap' => 'boolean',
             'unit' => UnitOfMeasure::class,
             'unit_cost' => 'decimal:2',
             'minimum_stock' => 'decimal:4',
@@ -84,6 +88,33 @@ class Item extends Model
         return $this->hasMany(BomItem::class);
     }
 
+    /**
+     * The scrap variant of this raw item (إذن ارتداد routes returned scrap
+     * here under a different code). Null until the first return is posted.
+     */
+    public function scrapVariant(): HasOne
+    {
+        return $this->hasOne(Item::class, 'scrap_source_item_id');
+    }
+
+    /**
+     * The original item this scrap variant was derived from (inverse of
+     * scrapVariant); null for normal items.
+     */
+    public function scrapSource(): BelongsTo
+    {
+        return $this->belongsTo(Item::class, 'scrap_source_item_id');
+    }
+
+    /**
+     * Exclude scrap variant items from a query (e.g. pickers that should only
+     * offer original raw materials to return).
+     */
+    public function scopeNotScrap(Builder $query): Builder
+    {
+        return $query->where('is_scrap', false);
+    }
+
     public function inventoryTransactions(): HasMany
     {
         return $this->hasMany(InventoryTransaction::class);
@@ -104,6 +135,15 @@ class Item extends Model
     {
         return (float) ($this->inventories
             ->firstWhere('warehouse_type', $warehouse->value)?->on_hand_quantity ?? 0);
+    }
+
+    /**
+     * Stock value (on_hand × unit_cost) in a specific warehouse. Backs the
+     * item card's رصيد وقيمة for the item and its scrap variant.
+     */
+    public function valueIn(WarehouseType $warehouse): float
+    {
+        return $this->quantityIn($warehouse) * (float) $this->unit_cost;
     }
 
     /**

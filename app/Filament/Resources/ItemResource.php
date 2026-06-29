@@ -115,7 +115,7 @@ class ItemResource extends Resource
                 ?? __('resources.items.label'))
             ->modalContent(fn (Forms\Get $get) => view('filament.items.quick-view', [
                 'item' => filled($get('item_id'))
-                    ? Item::with('inventories')->find($get('item_id'))
+                    ? Item::with(['inventories', 'scrapVariant.inventories'])->find($get('item_id'))
                     : null,
             ]))
             ->modalSubmitAction(false)
@@ -193,7 +193,7 @@ class ItemResource extends Resource
                 Tables\Actions\ViewAction::make()
                     ->modalHeading(fn (Item $record): string => $record->name)
                     ->modalContent(fn (Item $record) => view('filament.items.quick-view', [
-                        'item' => $record->loadMissing('inventories'),
+                        'item' => $record->loadMissing(['inventories', 'scrapVariant.inventories']),
                     ]))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel(__('resources.items.actions.close'))
@@ -209,7 +209,9 @@ class ItemResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            ItemResource\RelationManagers\InventoryTransactionsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

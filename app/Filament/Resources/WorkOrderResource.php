@@ -7,6 +7,7 @@ namespace App\Filament\Resources;
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource\Pages;
 use App\Models\WorkOrder;
+use App\Services\ReturnVoucherService;
 use App\Services\WorkOrderService;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -334,6 +335,30 @@ class WorkOrderResource extends Resource
                             Notification::make()
                                 ->success()
                                 ->title(__('resources.work_orders.notifications.issue_voucher_created'))
+                                ->body($voucher->voucher_number)
+                                ->send();
+                        } catch (\RuntimeException $e) {
+                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                        }
+                    }),
+
+                // Return scrap — creates a DRAFT return voucher (إذن ارتداد)
+                // pre-filled with the issued materials. The warehouse sets the
+                // scrap quantities and posts it, sending the scrap back to raw
+                // stock under a different code and reversing its cost.
+                Tables\Actions\Action::make('return_scrap')
+                    ->label(__('resources.work_orders.actions.return_scrap'))
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::InProgress
+                        && auth()->user()?->can('return_vouchers.create'))
+                    ->action(function (WorkOrder $record) {
+                        try {
+                            $voucher = app(ReturnVoucherService::class)->createFromWorkOrder($record);
+                            Notification::make()
+                                ->success()
+                                ->title(__('resources.work_orders.notifications.return_voucher_created'))
                                 ->body($voucher->voucher_number)
                                 ->send();
                         } catch (\RuntimeException $e) {
