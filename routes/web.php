@@ -3,6 +3,7 @@
 use App\Http\Controllers\OfferPdfController;
 use App\Http\Controllers\PingController;
 use App\Http\Controllers\PurchaseOrderPdfController;
+use App\Http\Controllers\QualitySheetPdfController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Routing\Middleware\SubstituteBindings;
@@ -42,3 +43,9 @@ Route::middleware('auth')
 Route::middleware('auth')
     ->get('purchase-orders/{purchaseOrder}/pdf', [PurchaseOrderPdfController::class, 'show'])
     ->name('purchase_orders.pdf');
+
+// Printable quality sheet (Manufacturing slide 3). Gated by
+// QualitySheetPolicy::print (quality_sheets.print).
+Route::middleware('auth')
+    ->get('quality-sheets/{qualitySheet}/pdf', [QualitySheetPdfController::class, 'show'])
+    ->name('quality_sheets.pdf');

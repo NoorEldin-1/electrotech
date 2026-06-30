@@ -108,6 +108,7 @@ class ChartOfAccountsSeeder extends Seeder
             ['5030', 'مصروفات عمومية', $expense, 'EGP'],
             ['5040', 'مصروفات تمويلية', $expense, 'EGP'],
             ['5050', 'مصروفات تصدير', $expense, 'EGP'],
+            ['5060', 'هالك التصنيع', $expense, 'EGP'],
         ];
     }
 }

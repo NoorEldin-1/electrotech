@@ -599,6 +599,39 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Stock Card (Moving Weighted Average)
+    |--------------------------------------------------------------------------
+    */
+    'stock_card' => [
+        'heading' => 'كرت الصنف',
+        'subheading' => 'تقييم بطريقة المتوسط المرجح المتحرك',
+        'warehouse' => 'المخزن',
+        'empty' => 'لا توجد حركات مخزون مسجّلة لهذا المخزن حتى الآن.',
+        'groups' => [
+            'incoming' => 'وارد',
+            'outgoing' => 'صادر',
+            'balance' => 'الرصيد',
+        ],
+        'columns' => [
+            'date' => 'التاريخ',
+            'statement' => 'بيان',
+            'quantity' => 'كمية',
+            'price' => 'سعر',
+            'value' => 'رصيد',
+        ],
+        'total' => 'الإجمالي',
+        'documents' => [
+            'AdditionVoucher' => 'إذن إضافة',
+            'IssueVoucher' => 'إذن صرف',
+            'ReturnVoucher' => 'إذن ارتداد',
+            'DeliveryVoucher' => 'إذن تسليم',
+            'PurchaseOrder' => 'أمر شراء',
+            'WorkOrder' => 'أمر تشغيل',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | الموردون - Supplier Resource
     |--------------------------------------------------------------------------
     */
@@ -806,6 +839,50 @@ return [
         'notifications' => [
             'posted' => 'تم ترحيل إذن الارتداد — تم إرجاع الفضلات إلى مخزن الخامات.',
         ],
+    ],
+
+    'depreciation_vouchers' => [
+        'label' => 'إذن إهلاك',
+        'plural_label' => 'أذون الإهلاك',
+        'navigation_label' => 'أذون الإهلاك',
+
+        'sections' => [
+            'details' => 'بيانات الإذن',
+            'lines' => 'الأصناف الهالكة',
+        ],
+
+        'fields' => [
+            'voucher_number' => 'رقم الإذن',
+            'work_order' => 'أمر التشغيل',
+            'loss_type' => 'نوع الهالك',
+            'loss_type_hint' => 'الهالك الغير طبيعي يُخرَج من العملية، أما الطبيعي فيبقى محمَّلاً عليها.',
+            'voucher_date' => 'التاريخ',
+            'notes' => 'ملاحظات',
+            'lines' => 'الأصناف',
+            'item' => 'الصنف',
+            'quantity' => 'الكمية',
+            'unit_cost' => 'تكلفة الوحدة',
+        ],
+
+        'columns' => [
+            'voucher_number' => 'الرقم',
+            'work_order' => 'أمر التشغيل',
+            'loss_type' => 'نوع الهالك',
+            'voucher_date' => 'التاريخ',
+            'total_value' => 'إجمالي القيمة',
+            'status' => 'الحالة',
+        ],
+
+        'actions' => [
+            'post' => 'ترحيل',
+            'post_confirm' => 'الترحيل يُخرج الهالك من تحت التشغيل ويخفّض قيمة الصنف على كرت الصنف ويُرحّله إلى حساب الهالك بقيد محاسبي. والهالك الغير طبيعي يُعكَس أيضاً عن العملية. لا يمكن التراجع.',
+        ],
+
+        'notifications' => [
+            'posted' => 'تم ترحيل إذن الإهلاك — تم ترحيل الهالك إلى حساب الهالك.',
+        ],
+
+        'journal_description' => 'إهلاك هالك تصنيع :number (أمر تشغيل #:wo)',
     ],
 
     /*
@@ -1476,6 +1553,9 @@ return [
             'planned_end_date' => 'تاريخ النهاية المخطط',
             'qa_status' => 'حالة ضمان الجودة',
             'qa_notes' => 'ملاحظات ضمان الجودة',
+            'manufacturing_finished_at' => 'انتهاء التصنيع',
+            'manufacturing_duration' => 'مدة التصنيع',
+            'manufacturing_finished_by' => 'أنهى التصنيع',
             'description' => 'الوصف',
         ],
 
@@ -1492,24 +1572,33 @@ return [
             'cost_variance' => 'انحراف التكلفة',
             'assigned_to' => 'مسند إلى',
             'start_date' => 'البداية',
+            'finished_at' => 'انتهاء التصنيع',
+            'duration' => 'مدة التصنيع',
         ],
 
         'actions' => [
             'start' => 'بدء',
             'issue_materials' => 'صرف الخامات',
             'return_scrap' => 'ارتداد فضلات',
+            'write_off_loss' => 'إهلاك',
             'submit_qa' => 'إرسال لضمان الجودة',
             'approve_qa' => 'اعتماد الجودة',
             'complete' => 'إتمام',
+            'finish_manufacturing' => 'انتهاء التصنيع',
         ],
 
         'notifications' => [
             'started' => 'تم بدء أمر التشغيل',
             'issue_voucher_created' => 'تم إنشاء إذن صرف (مسودة)',
             'return_voucher_created' => 'تم إنشاء إذن ارتداد (مسودة)',
+            'depreciation_voucher_created' => 'تم إنشاء إذن إهلاك (مسودة)',
             'submitted_qa' => 'تم الإرسال لضمان الجودة',
             'qa_approved' => 'تم اعتماد الجودة',
             'completed' => 'تم إتمام أمر التشغيل',
+            'manufacturing_finished' => 'تم إنهاء التصنيع — وتم تنبيه الأقسام',
+            'ready_for_delivery_title' => 'المنتج جاهز للتسليم',
+            'ready_for_delivery_body' => 'انتهى تصنيع :product (أمر التشغيل :wo_number) وأصبح جاهزاً للتسليم.',
+            'view_work_order' => 'عرض أمر التشغيل',
             'failed' => 'فشل',
         ],
 
@@ -1518,11 +1607,123 @@ return [
             'pending' => '⏳ في انتظار مراجعة الجودة',
         ],
 
+        'manufacturing' => [
+            'finished_at' => '🏁 انتهى في :date · المدة: :duration · بواسطة :name',
+            'not_finished' => '⏳ التصنيع جارٍ',
+        ],
+
         'priority_options' => [
             'low' => 'منخفضة',
             'normal' => 'عادية',
             'high' => 'عالية',
             'urgent' => 'عاجلة',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | ورقة الجودة - Quality Sheet Resource
+    |--------------------------------------------------------------------------
+    */
+    'quality_sheets' => [
+        'label' => 'ورقة جودة',
+        'plural_label' => 'أوراق الجودة',
+        'navigation_label' => 'أوراق الجودة',
+
+        'sections' => [
+            'details' => 'بيانات العملية',
+            'lines' => 'اختبارات الجودة',
+            'lines_description' => 'صف لكل قطعة مفحوصة — تُسجَّل الجودة الظاهرية والمقاس المطلوب ونتائج اختبارات العزل/الاستمرارية.',
+            'approval' => 'الاعتماد',
+        ],
+
+        'line_label' => 'بند رقم (:no)',
+
+        'fields' => [
+            'sheet_number' => 'رقم الورقة',
+            'work_order' => 'أمر التشغيل',
+            'test_date' => 'تاريخ الاختبار',
+            'operation_name' => 'اسم العملية',
+            'conductor_type' => 'نوع الموصل',
+            'connection_type' => 'نوع التوصيل',
+            'cross_section' => 'مساحة المقطع',
+            'poles_count' => 'عدد الأقطاب',
+            'notes' => 'ملاحظات',
+            'lines' => 'بنود الاختبار',
+            'piece_number' => 'رقم القطعة',
+            'assembly' => 'التجميع',
+            'visual_quality' => 'الجودة الظاهرية',
+            'required_size' => 'المقاس المطلوب',
+            'test_pe_l123n' => 'PE-(L1&L2&L3&N)',
+            'test_fe_l123n' => 'FE-(L1&L2&L3&N)',
+            'test_n_l12l3' => 'N-(L1&L2&L3)',
+            'test_l1_l2l3' => 'L1-(L2&L3)',
+            'test_l2_l3' => 'L2-L3',
+            'line_notes' => 'ملاحظات',
+            'qa_fill_status' => 'حالة ملء الجودة',
+            'factory_approval_status' => 'اعتماد مدير المصنع',
+            'qa_inspector_notes' => 'ملاحظات مراقب الجودة',
+        ],
+
+        'columns' => [
+            'sheet_number' => 'الرقم',
+            'work_order' => 'أمر التشغيل',
+            'status' => 'الحالة',
+            'qa_filled_by' => 'مَلأها',
+            'factory_approved_by' => 'اعتمدها',
+            'test_date' => 'تاريخ الاختبار',
+        ],
+
+        'actions' => [
+            'fill' => 'ملء (الجودة)',
+            'approve' => 'اعتماد (مدير المصنع)',
+            'approve_confirm' => 'الاعتماد النهائي يوقّع ورقة الجودة ويُنبّه كل الأقسام أن العملية تم الانتهاء من تصنيعها. لا يمكن التراجع.',
+            'print' => 'طباعة',
+            'print_ar' => 'طباعة (عربي)',
+            'print_en' => 'طباعة (إنجليزي)',
+        ],
+
+        'notifications' => [
+            'filled' => 'تم ملء ورقة الجودة وتوقيعها من قسم الجودة.',
+            'approved' => 'تم اعتماد ورقة الجودة — تم تنبيه الأقسام.',
+            'approved_alert_title' => 'تم الانتهاء من تصنيع العملية',
+            'approved_alert_body' => 'تم اعتماد ورقة الجودة :sheet_number (أمر التشغيل :wo_number) — تم الانتهاء من تصنيع العملية.',
+            'view_quality_sheet' => 'عرض ورقة الجودة',
+        ],
+
+        'status_lines' => [
+            'qa_filled' => '✅ مَلأها :name بتاريخ :date',
+            'qa_pending' => '⏳ في انتظار قسم الجودة',
+            'approved' => '✅ اعتمدها :name بتاريخ :date',
+            'approval_pending' => '⏳ في انتظار اعتماد مدير المصنع',
+        ],
+
+        'pdf' => [
+            'company_name' => 'الإلكتروتك لصناعات المنتجات الكهربائية',
+            'title' => 'ورقة اختبار التصنيع',
+            'sheet_number' => 'رقم الورقة',
+            'test_date' => 'التاريخ',
+            'work_order' => 'أمر التشغيل',
+            'operation_name' => 'العملية',
+            'conductor_type' => 'نوع الموصل',
+            'poles_count' => 'الأقطاب',
+            'connection_type' => 'نوع التوصيل',
+            'cross_section' => 'مساحة المقطع',
+            'status' => 'الحالة',
+            'line_no' => 'م',
+            'piece_number' => 'رقم القطعة',
+            'assembly' => 'التجميع',
+            'visual_quality' => 'الجودة الظاهرية',
+            'required_size' => 'المقاس المطلوب',
+            'test_pe_l123n' => 'PE-(L1&L2&L3&N)',
+            'test_fe_l123n' => 'FE-(L1&L2&L3&N)',
+            'test_n_l12l3' => 'N-(L1&L2&L3)',
+            'test_l1_l2l3' => 'L1-(L2&L3)',
+            'test_l2_l3' => 'L2-L3',
+            'notes' => 'ملاحظات',
+            'inspector_notes' => 'ملاحظات مراقب الجودة',
+            'qa_inspector' => 'إمضاء مراقب الجودة',
+            'factory_manager' => 'إمضاء مدير المصنع',
         ],
     ],
 
@@ -1599,6 +1800,7 @@ return [
             'addition_vouchers' => 'أذون الإضافة',
             'issue_vouchers' => 'أذون الصرف',
             'return_vouchers' => 'أذون الارتداد',
+            'depreciation_vouchers' => 'أذون الإهلاك',
             'delivery_vouchers' => 'أذون التسليم',
             'production_entries' => 'الإنتاج والفاقد',
             'scrap' => 'الفاقد',
@@ -1620,6 +1822,7 @@ return [
             'installations' => 'التركيبات',
             'site_surveys' => 'معاينات الموقع',
             'work_orders' => 'أوامر التشغيل',
+            'quality_sheets' => 'أوراق الجودة',
             'users' => 'إدارة المستخدمين',
             'roles' => 'إدارة الأدوار',
             'activity_log' => 'سجلات النشاط',
@@ -1692,6 +1895,11 @@ return [
                 'view' => 'عرض أذون الارتداد',
                 'create' => 'إنشاء إذن ارتداد',
                 'post' => 'ترحيل إذن الارتداد',
+            ],
+            'depreciation_vouchers' => [
+                'view' => 'عرض أذون الإهلاك',
+                'create' => 'إنشاء إذن إهلاك',
+                'post' => 'ترحيل إذن الإهلاك',
             ],
             'delivery_vouchers' => [
                 'view' => 'عرض أذون التسليم',
@@ -1798,7 +2006,15 @@ return [
                 'submit_qa' => 'إرسال لضمان الجودة',
                 'approve_qa' => 'اعتماد ضمان الجودة',
                 'complete' => 'إتمام أمر التشغيل',
+                'finish_manufacturing' => 'إنهاء التصنيع',
                 'delete' => 'حذف أوامر التشغيل',
+            ],
+            'quality_sheets' => [
+                'view' => 'عرض أوراق الجودة',
+                'create' => 'إنشاء ورقة جودة',
+                'fill' => 'ملء ورقة الجودة (الجودة)',
+                'approve' => 'اعتماد ورقة الجودة',
+                'print' => 'طباعة ورقة الجودة',
             ],
             'users' => [
                 'view' => 'عرض المستخدمين',
@@ -2033,6 +2249,12 @@ return [
             'cancelled' => 'ملغي',
         ],
 
+        'quality_sheet_status' => [
+            'draft' => 'مسودة',
+            'qa_filled' => 'مَلأتها الجودة',
+            'approved' => 'معتمدة',
+        ],
+
         'purchase_order_status' => [
             'draft' => 'مسودة',
             'submitted' => 'مُرسَل',
@@ -2064,6 +2286,11 @@ return [
         'voucher_status' => [
             'draft' => 'مسودة',
             'posted' => 'مُرحَّل',
+        ],
+
+        'loss_type' => [
+            'natural' => 'هالك طبيعي',
+            'abnormal' => 'هالك غير طبيعي',
         ],
 
         'account_direction' => [

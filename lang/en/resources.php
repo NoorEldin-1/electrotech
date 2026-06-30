@@ -599,6 +599,39 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Stock Card (Moving Weighted Average)
+    |--------------------------------------------------------------------------
+    */
+    'stock_card' => [
+        'heading' => 'Stock Card',
+        'subheading' => 'Moving weighted-average valuation',
+        'warehouse' => 'Warehouse',
+        'empty' => 'No stock movements recorded for this warehouse yet.',
+        'groups' => [
+            'incoming' => 'Incoming',
+            'outgoing' => 'Outgoing',
+            'balance' => 'Balance',
+        ],
+        'columns' => [
+            'date' => 'Date',
+            'statement' => 'Statement',
+            'quantity' => 'Qty',
+            'price' => 'Price',
+            'value' => 'Value',
+        ],
+        'total' => 'Total',
+        'documents' => [
+            'AdditionVoucher' => 'Addition Voucher',
+            'IssueVoucher' => 'Issue Voucher',
+            'ReturnVoucher' => 'Return Voucher',
+            'DeliveryVoucher' => 'Delivery Voucher',
+            'PurchaseOrder' => 'Purchase Order',
+            'WorkOrder' => 'Work Order',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Supplier Resource
     |--------------------------------------------------------------------------
     */
@@ -806,6 +839,50 @@ return [
         'notifications' => [
             'posted' => 'Return voucher posted — scrap returned to raw stock.',
         ],
+    ],
+
+    'depreciation_vouchers' => [
+        'label' => 'Depreciation Voucher',
+        'plural_label' => 'Depreciation Vouchers',
+        'navigation_label' => 'Depreciation Vouchers',
+
+        'sections' => [
+            'details' => 'Voucher Details',
+            'lines' => 'Written-off Items',
+        ],
+
+        'fields' => [
+            'voucher_number' => 'Voucher Number',
+            'work_order' => 'Work Order',
+            'loss_type' => 'Loss Type',
+            'loss_type_hint' => 'Abnormal loss is removed from the operation; natural loss stays loaded on it.',
+            'voucher_date' => 'Date',
+            'notes' => 'Notes',
+            'lines' => 'Items',
+            'item' => 'Item',
+            'quantity' => 'Quantity',
+            'unit_cost' => 'Unit Cost',
+        ],
+
+        'columns' => [
+            'voucher_number' => 'Number',
+            'work_order' => 'Work Order',
+            'loss_type' => 'Loss Type',
+            'voucher_date' => 'Date',
+            'total_value' => 'Total Value',
+            'status' => 'Status',
+        ],
+
+        'actions' => [
+            'post' => 'Post',
+            'post_confirm' => 'Posting takes the loss out of work-in-progress, lowers the item value on its card, and carries it to the loss account with a journal entry. Abnormal loss is also reversed off the operation. This cannot be undone.',
+        ],
+
+        'notifications' => [
+            'posted' => 'Depreciation voucher posted — loss written off to the loss account.',
+        ],
+
+        'journal_description' => 'Manufacturing loss write-off :number (WO #:wo)',
     ],
 
     /*
@@ -1476,6 +1553,9 @@ return [
             'planned_end_date' => 'Planned End Date',
             'qa_status' => 'QA Status',
             'qa_notes' => 'QA Notes',
+            'manufacturing_finished_at' => 'Manufacturing Finished',
+            'manufacturing_duration' => 'Manufacturing Duration',
+            'manufacturing_finished_by' => 'Finished By',
             'description' => 'Description',
         ],
 
@@ -1492,24 +1572,33 @@ return [
             'cost_variance' => 'Cost Variance',
             'assigned_to' => 'Assigned To',
             'start_date' => 'Start',
+            'finished_at' => 'Mfg. Finished',
+            'duration' => 'Mfg. Duration',
         ],
 
         'actions' => [
             'start' => 'Start',
             'issue_materials' => 'Issue Materials',
             'return_scrap' => 'Return Scrap',
+            'write_off_loss' => 'Write Off Loss',
             'submit_qa' => 'Submit QA',
             'approve_qa' => 'Approve QA',
             'complete' => 'Complete',
+            'finish_manufacturing' => 'Finish Manufacturing',
         ],
 
         'notifications' => [
             'started' => 'Work Order started',
             'issue_voucher_created' => 'Draft issue voucher created',
             'return_voucher_created' => 'Draft return voucher created',
+            'depreciation_voucher_created' => 'Draft depreciation voucher created',
             'submitted_qa' => 'Submitted for QA',
             'qa_approved' => 'QA Approved',
             'completed' => 'Work Order completed',
+            'manufacturing_finished' => 'Manufacturing finished — departments notified',
+            'ready_for_delivery_title' => 'Product ready for delivery',
+            'ready_for_delivery_body' => ':product (WO :wo_number) has finished manufacturing and is ready for delivery.',
+            'view_work_order' => 'View Work Order',
             'failed' => 'Failed',
         ],
 
@@ -1518,11 +1607,123 @@ return [
             'pending' => '⏳ Pending QA Review',
         ],
 
+        'manufacturing' => [
+            'finished_at' => '🏁 Finished on :date · Duration: :duration · By :name',
+            'not_finished' => '⏳ Manufacturing in progress',
+        ],
+
         'priority_options' => [
             'low' => 'Low',
             'normal' => 'Normal',
             'high' => 'High',
             'urgent' => 'Urgent',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Quality Sheet Resource (ورقة الجودة)
+    |--------------------------------------------------------------------------
+    */
+    'quality_sheets' => [
+        'label' => 'Quality Sheet',
+        'plural_label' => 'Quality Sheets',
+        'navigation_label' => 'Quality Sheets',
+
+        'sections' => [
+            'details' => 'Operation Data',
+            'lines' => 'Inspection Tests',
+            'lines_description' => 'One row per inspected piece — record the visual check, required size and the insulation / continuity test results.',
+            'approval' => 'Approval',
+        ],
+
+        'line_label' => 'Item No. (:no)',
+
+        'fields' => [
+            'sheet_number' => 'Sheet Number',
+            'work_order' => 'Work Order',
+            'test_date' => 'Test Date',
+            'operation_name' => 'Operation Name',
+            'conductor_type' => 'Conductor Type',
+            'connection_type' => 'Connection Type',
+            'cross_section' => 'Cross Section',
+            'poles_count' => 'Poles Count',
+            'notes' => 'Notes',
+            'lines' => 'Test Rows',
+            'piece_number' => 'Piece No.',
+            'assembly' => 'Assembly',
+            'visual_quality' => 'Visual Quality',
+            'required_size' => 'Required Size',
+            'test_pe_l123n' => 'PE-(L1&L2&L3&N)',
+            'test_fe_l123n' => 'FE-(L1&L2&L3&N)',
+            'test_n_l12l3' => 'N-(L1&L2&L3)',
+            'test_l1_l2l3' => 'L1-(L2&L3)',
+            'test_l2_l3' => 'L2-L3',
+            'line_notes' => 'Notes',
+            'qa_fill_status' => 'QA Fill Status',
+            'factory_approval_status' => 'Factory Manager Approval',
+            'qa_inspector_notes' => 'QA Inspector Notes',
+        ],
+
+        'columns' => [
+            'sheet_number' => 'Number',
+            'work_order' => 'Work Order',
+            'status' => 'Status',
+            'qa_filled_by' => 'Filled By',
+            'factory_approved_by' => 'Approved By',
+            'test_date' => 'Test Date',
+        ],
+
+        'actions' => [
+            'fill' => 'Fill (QA)',
+            'approve' => 'Approve (Factory Manager)',
+            'approve_confirm' => 'Final approval signs off the quality sheet and notifies every department that the operation has finished manufacturing. This cannot be undone.',
+            'print' => 'Print',
+            'print_ar' => 'Print (Arabic)',
+            'print_en' => 'Print (English)',
+        ],
+
+        'notifications' => [
+            'filled' => 'Quality sheet filled and signed by QA.',
+            'approved' => 'Quality sheet approved — departments notified.',
+            'approved_alert_title' => 'Operation finished manufacturing',
+            'approved_alert_body' => 'Quality sheet :sheet_number (WO :wo_number) has been approved — the operation has finished manufacturing.',
+            'view_quality_sheet' => 'View Quality Sheet',
+        ],
+
+        'status_lines' => [
+            'qa_filled' => '✅ Filled by :name on :date',
+            'qa_pending' => '⏳ Awaiting QA',
+            'approved' => '✅ Approved by :name on :date',
+            'approval_pending' => '⏳ Awaiting factory manager approval',
+        ],
+
+        'pdf' => [
+            'company_name' => 'Electrotech for Electrical Industries',
+            'title' => 'Manufacturing Test Sheet',
+            'sheet_number' => 'Sheet No.',
+            'test_date' => 'Date',
+            'work_order' => 'Work Order',
+            'operation_name' => 'Operation',
+            'conductor_type' => 'Conductor Type',
+            'poles_count' => 'Poles',
+            'connection_type' => 'Connection Type',
+            'cross_section' => 'Cross Section',
+            'status' => 'Status',
+            'line_no' => '#',
+            'piece_number' => 'Piece No.',
+            'assembly' => 'Assembly',
+            'visual_quality' => 'Visual Quality',
+            'required_size' => 'Required Size',
+            'test_pe_l123n' => 'PE-(L1&L2&L3&N)',
+            'test_fe_l123n' => 'FE-(L1&L2&L3&N)',
+            'test_n_l12l3' => 'N-(L1&L2&L3)',
+            'test_l1_l2l3' => 'L1-(L2&L3)',
+            'test_l2_l3' => 'L2-L3',
+            'notes' => 'Notes',
+            'inspector_notes' => 'QA Inspector Notes',
+            'qa_inspector' => 'QA Inspector Signature',
+            'factory_manager' => 'Factory Manager Signature',
         ],
     ],
 
@@ -1599,6 +1800,7 @@ return [
             'addition_vouchers' => 'Addition Vouchers',
             'issue_vouchers' => 'Issue Vouchers',
             'return_vouchers' => 'Return Vouchers',
+            'depreciation_vouchers' => 'Depreciation Vouchers',
             'delivery_vouchers' => 'Delivery Vouchers',
             'production_entries' => 'Production & Loss',
             'scrap' => 'Scrap / Loss',
@@ -1620,6 +1822,7 @@ return [
             'installations' => 'Installations',
             'site_surveys' => 'Site Surveys',
             'work_orders' => 'Work Orders',
+            'quality_sheets' => 'Quality Sheets',
             'users' => 'Users Management',
             'roles' => 'Roles Management',
             'activity_log' => 'Activity Logs',
@@ -1692,6 +1895,11 @@ return [
                 'view' => 'View Return Vouchers',
                 'create' => 'Create Return Voucher',
                 'post' => 'Post Return Voucher',
+            ],
+            'depreciation_vouchers' => [
+                'view' => 'View Depreciation Vouchers',
+                'create' => 'Create Depreciation Voucher',
+                'post' => 'Post Depreciation Voucher',
             ],
             'delivery_vouchers' => [
                 'view' => 'View Delivery Vouchers',
@@ -1798,7 +2006,15 @@ return [
                 'submit_qa' => 'Submit to QA',
                 'approve_qa' => 'Approve QA',
                 'complete' => 'Complete Work Order',
+                'finish_manufacturing' => 'Finish Manufacturing',
                 'delete' => 'Delete Work Orders',
+            ],
+            'quality_sheets' => [
+                'view' => 'View Quality Sheets',
+                'create' => 'Create Quality Sheet',
+                'fill' => 'Fill Quality Sheet (QA)',
+                'approve' => 'Approve Quality Sheet',
+                'print' => 'Print Quality Sheet',
             ],
             'users' => [
                 'view' => 'View Users',
@@ -2033,6 +2249,12 @@ return [
             'cancelled' => 'Cancelled',
         ],
 
+        'quality_sheet_status' => [
+            'draft' => 'Draft',
+            'qa_filled' => 'QA Filled',
+            'approved' => 'Approved',
+        ],
+
         'purchase_order_status' => [
             'draft' => 'Draft',
             'submitted' => 'Submitted',
@@ -2064,6 +2286,11 @@ return [
         'voucher_status' => [
             'draft' => 'Draft',
             'posted' => 'Posted',
+        ],
+
+        'loss_type' => [
+            'natural' => 'Natural Loss',
+            'abnormal' => 'Abnormal Loss',
         ],
 
         'account_direction' => [

@@ -38,6 +38,9 @@ class WorkOrder extends Model
         'planned_end_date',
         'actual_start_date',
         'actual_end_date',
+        'manufacturing_finished_at',
+        'manufacturing_duration_minutes',
+        'manufacturing_finished_by',
         'assigned_to',
         'created_by',
         'qa_approved_by',
@@ -62,6 +65,9 @@ class WorkOrder extends Model
             'waste_quantity',
             'actual_start_date',
             'actual_end_date',
+            'manufacturing_finished_at',
+            'manufacturing_duration_minutes',
+            'manufacturing_finished_by',
             'qa_approved_by',
             'qa_approved_at',
             'qa_notes',
@@ -82,6 +88,8 @@ class WorkOrder extends Model
             'planned_end_date' => 'date',
             'actual_start_date' => 'datetime',
             'actual_end_date' => 'datetime',
+            'manufacturing_finished_at' => 'datetime',
+            'manufacturing_duration_minutes' => 'integer',
             'qa_approved_at' => 'datetime',
         ];
     }
@@ -100,7 +108,7 @@ class WorkOrder extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['wo_number', 'status', 'produced_quantity', 'waste_quantity', 'qa_approved_by'])
+            ->logOnly(['wo_number', 'status', 'produced_quantity', 'waste_quantity', 'qa_approved_by', 'manufacturing_finished_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "WO #{$this->wo_number} was {$eventName}");
@@ -131,6 +139,16 @@ class WorkOrder extends Model
         return $this->hasMany(ProductionEntry::class);
     }
 
+    public function depreciationVouchers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DepreciationVoucher::class);
+    }
+
+    public function qualitySheets(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(QualitySheet::class);
+    }
+
     public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
@@ -144,6 +162,11 @@ class WorkOrder extends Model
     public function qaApprovedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'qa_approved_by');
+    }
+
+    public function manufacturingFinishedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'manufacturing_finished_by');
     }
 
     /**
@@ -199,6 +222,32 @@ class WorkOrder extends Model
     public function isQaApproved(): bool
     {
         return $this->qa_approved_by !== null && $this->qa_approved_at !== null;
+    }
+
+    /**
+     * Whether manufacturing has been marked finished as a whole (التصنيع سلايد
+     * 2) — the stage-independent "انتهاء التصنيع" signal, distinct from the
+     * QA-gated completion.
+     */
+    public function isManufacturingFinished(): bool
+    {
+        return $this->manufacturing_finished_at !== null;
+    }
+
+    /**
+     * Human-readable manufacturing duration (e.g. "2 days 3 hours"), localized
+     * to the app locale so it reads naturally in Arabic/RTL. Null until the WO
+     * is marked finished.
+     */
+    public function getManufacturingDurationHumanAttribute(): ?string
+    {
+        if ($this->manufacturing_duration_minutes === null) {
+            return null;
+        }
+
+        return \Carbon\CarbonInterval::minutes($this->manufacturing_duration_minutes)
+            ->cascade()
+            ->forHumans(['short' => false]);
     }
 
     /**

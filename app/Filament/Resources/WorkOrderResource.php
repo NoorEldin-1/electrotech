@@ -7,6 +7,8 @@ namespace App\Filament\Resources;
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource\Pages;
 use App\Models\WorkOrder;
+use App\Services\DepreciationVoucherService;
+use App\Services\QualitySheetService;
 use App\Services\ReturnVoucherService;
 use App\Services\WorkOrderService;
 use Filament\Forms;
@@ -171,6 +173,16 @@ class WorkOrderResource extends Resource
                                 ])
                                 : __('resources.work_orders.qa.pending')),
 
+                        Forms\Components\Placeholder::make('manufacturing_finish_status')
+                            ->label(__('resources.work_orders.fields.manufacturing_finished_at'))
+                            ->content(fn (?WorkOrder $record) => $record?->isManufacturingFinished()
+                                ? __('resources.work_orders.manufacturing.finished_at', [
+                                    'date' => $record->manufacturing_finished_at?->format('Y-m-d H:i'),
+                                    'duration' => $record->manufacturing_duration_human ?? '—',
+                                    'name' => $record->manufacturingFinishedBy?->name ?? '—',
+                                ])
+                                : __('resources.work_orders.manufacturing.not_finished')),
+
                         Forms\Components\Textarea::make('qa_notes')
                             ->label(__('resources.work_orders.fields.qa_notes'))
                             ->rows(3)
@@ -265,6 +277,18 @@ class WorkOrderResource extends Resource
                     ->label(__('resources.work_orders.columns.start_date'))
                     ->date()
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('manufacturing_finished_at')
+                    ->label(__('resources.work_orders.columns.finished_at'))
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('manufacturing_duration_human')
+                    ->label(__('resources.work_orders.columns.duration'))
+                    ->state(fn (WorkOrder $record): ?string => $record->manufacturing_duration_human)
+                    ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
@@ -366,6 +390,30 @@ class WorkOrderResource extends Resource
                         }
                     }),
 
+                // Write off loss — creates a DRAFT depreciation voucher (إذن
+                // إهلاك) pre-filled with the issued materials. The user picks the
+                // loss type and quantities and posts it, taking the loss out of
+                // WIP and carrying its value to the loss account.
+                Tables\Actions\Action::make('write_off_loss')
+                    ->label(__('resources.work_orders.actions.write_off_loss'))
+                    ->icon('heroicon-o-fire')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::InProgress
+                        && auth()->user()?->can('depreciation_vouchers.create'))
+                    ->action(function (WorkOrder $record) {
+                        try {
+                            $voucher = app(DepreciationVoucherService::class)->createFromWorkOrder($record);
+                            Notification::make()
+                                ->success()
+                                ->title(__('resources.work_orders.notifications.depreciation_voucher_created'))
+                                ->body($voucher->voucher_number)
+                                ->send();
+                        } catch (\RuntimeException $e) {
+                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                        }
+                    }),
+
                 // Submit for QA — same idempotency story as `start`.
                 Tables\Actions\Action::make('submit_qa')
                     ->label(__('resources.work_orders.actions.submit_qa'))
@@ -452,6 +500,51 @@ class WorkOrderResource extends Resource
                         } catch (\RuntimeException $e) {
                             Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
                         }
+                    }),
+
+                // Finish Manufacturing (انتهاء التصنيع) — a stage-independent
+                // signal that records the manufacturing time and tells every
+                // department the product is ready for delivery (التصنيع سلايد 2).
+                // Orthogonal to the QA gate / complete() flow: it works
+                // "regardless of the stages" and never touches stock or cost.
+                // Idempotent on retry (re-reads fresh and succeeds silently).
+                Tables\Actions\Action::make('finish_manufacturing')
+                    ->label(__('resources.work_orders.actions.finish_manufacturing'))
+                    ->icon('heroicon-o-flag')
+                    ->color('primary')
+                    ->requiresConfirmation()
+                    ->visible(fn (WorkOrder $record) => $record->actual_start_date !== null
+                        && $record->manufacturing_finished_at === null
+                        && in_array($record->status, [WorkOrderStatus::InProgress, WorkOrderStatus::QaReview], true)
+                        && auth()->user()?->can('work_orders.finish_manufacturing'))
+                    ->action(function (WorkOrder $record) {
+                        $fresh = $record->fresh();
+                        if ($fresh && $fresh->isManufacturingFinished()) {
+                            Notification::make()->success()->title(__('resources.work_orders.notifications.manufacturing_finished'))->send();
+                            return;
+                        }
+                        try {
+                            app(WorkOrderService::class)->finishManufacturing($record);
+                            Notification::make()->success()->title(__('resources.work_orders.notifications.manufacturing_finished'))->send();
+                        } catch (\RuntimeException $e) {
+                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                        }
+                    }),
+
+                // Quality Sheet (ورقة الجودة) — opens (or creates) the work
+                // order's quality sheet for the QA department to fill and the
+                // factory manager to approve (التصنيع سلايد 2 سفلي + 3).
+                // Available once manufacturing has finished.
+                Tables\Actions\Action::make('quality_sheet')
+                    ->label(__('resources.work_orders.actions.quality_sheet'))
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->color('primary')
+                    ->visible(fn (WorkOrder $record) => $record->manufacturing_finished_at !== null
+                        && auth()->user()?->can('quality_sheets.create'))
+                    ->action(function (WorkOrder $record) {
+                        $sheet = app(QualitySheetService::class)->ensureForWorkOrder($record);
+
+                        return redirect(QualitySheetResource::getUrl('edit', ['record' => $sheet->getKey()]));
                     }),
             ])
             ->bulkActions([

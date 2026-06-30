@@ -46,6 +46,12 @@ return [
         'not_pending_qa' => 'Work Order :number is not pending QA review.',
         'qa_gate' => 'Work Order :number cannot be completed without QA approval. The QA gate is mandatory.',
         'not_in_qa_review' => 'Work Order :number must be in QA review to complete.',
+        'cannot_finish_manufacturing' => 'Manufacturing for Work Order :number cannot be finished. It must be started first. Current status: :status.',
+    ],
+
+    'quality_sheet' => [
+        'already_approved' => 'Quality sheet :number is already approved and cannot be changed.',
+        'not_filled' => 'Quality sheet :number must be filled by QA before it can be approved.',
     ],
 
     'purchase_order' => [

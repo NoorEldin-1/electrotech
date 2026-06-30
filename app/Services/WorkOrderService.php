@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\WorkOrderStatus;
+use App\Events\ManufacturingFinished;
 use App\Models\WorkOrder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,49 @@ class WorkOrderService
             'status' => WorkOrderStatus::InProgress,
             'actual_start_date' => now(),
         ]);
+    }
+
+    /**
+     * Mark manufacturing finished as a whole (التصنيع.pptx سلايد 2) — the
+     * stage-independent "انتهاء التصنيع" signal. Records the finish time and the
+     * manufacturing duration (from actual_start_date), then announces to every
+     * department that the product is ready for delivery via ManufacturingFinished.
+     *
+     * Deliberately touches neither inventory nor cost: that stays in complete(),
+     * behind the QA gate. This button works "regardless of the stages".
+     *
+     * Idempotent: a retry after the first finish is a silent success.
+     *
+     * @throws \RuntimeException if the WO is not currently in manufacturing
+     */
+    public function finishManufacturing(WorkOrder $workOrder): void
+    {
+        if ($workOrder->isManufacturingFinished()) {
+            return;
+        }
+
+        if ($workOrder->actual_start_date === null
+            || ! in_array($workOrder->status, [WorkOrderStatus::InProgress, WorkOrderStatus::QaReview], true)) {
+            throw new \RuntimeException(__('errors.work_order.cannot_finish_manufacturing', [
+                'number' => $workOrder->wo_number,
+                'status' => $workOrder->status->getLabel(),
+            ]));
+        }
+
+        $finishedAt = now();
+
+        $workOrder->update([
+            'manufacturing_finished_at' => $finishedAt,
+            'manufacturing_finished_by' => Auth::id(),
+            'manufacturing_duration_minutes' => (int) $workOrder->actual_start_date->diffInMinutes($finishedAt),
+        ]);
+
+        // Open a draft quality sheet for the QA department to fill and print
+        // (التصنيع سلايد 2 سفلي: "عند الضغط على زر انتهاء التصنيع... ورقة الجودة").
+        // Idempotent — never creates a second sheet for the same work order.
+        app(QualitySheetService::class)->ensureForWorkOrder($workOrder);
+
+        ManufacturingFinished::dispatch($workOrder);
     }
 
     /**
