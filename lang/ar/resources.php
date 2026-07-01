@@ -1585,6 +1585,7 @@ return [
             'approve_qa' => 'اعتماد الجودة',
             'complete' => 'إتمام',
             'finish_manufacturing' => 'انتهاء التصنيع',
+            'quality_sheet' => 'ورقة الجودة',
         ],
 
         'notifications' => [

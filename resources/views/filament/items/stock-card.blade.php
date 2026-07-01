@@ -22,10 +22,10 @@
         @if (count($warehouseOptions) > 1)
             <select
                 wire:model.live="stockCardWarehouse"
-                class="rounded-lg border-gray-300 bg-white py-1 text-sm font-medium text-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-200"
+                class="rounded-lg border-gray-300 bg-white py-1 text-sm font-medium text-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-900 dark:text-gray-200 dark:[color-scheme:dark]"
             >
                 @foreach ($warehouseOptions as $value => $label)
-                    <option value="{{ $value }}">{{ $label }}</option>
+                    <option value="{{ $value }}" class="bg-white text-gray-950 dark:bg-gray-900 dark:text-white">{{ $label }}</option>
                 @endforeach
             </select>
         @else

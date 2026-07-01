@@ -295,6 +295,7 @@ class QualitySheetResource extends Resource
         return [
             'index' => Pages\ListQualitySheets::route('/'),
             'create' => Pages\CreateQualitySheet::route('/create'),
+            'view' => Pages\ViewQualitySheet::route('/{record}'),
             'edit' => Pages\EditQualitySheet::route('/{record}/edit'),
         ];
     }

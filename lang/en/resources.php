@@ -1585,6 +1585,7 @@ return [
             'approve_qa' => 'Approve QA',
             'complete' => 'Complete',
             'finish_manufacturing' => 'Finish Manufacturing',
+            'quality_sheet' => 'Quality Sheet',
         ],
 
         'notifications' => [

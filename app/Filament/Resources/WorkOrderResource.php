@@ -544,7 +544,11 @@ class WorkOrderResource extends Resource
                     ->action(function (WorkOrder $record) {
                         $sheet = app(QualitySheetService::class)->ensureForWorkOrder($record);
 
-                        return redirect(QualitySheetResource::getUrl('edit', ['record' => $sheet->getKey()]));
+                        // An approved sheet is final and can't be edited (the edit
+                        // policy blocks it → 403), so send it to the read-only view.
+                        $page = $sheet->isApproved() ? 'view' : 'edit';
+
+                        return redirect(QualitySheetResource::getUrl($page, ['record' => $sheet->getKey()]));
                     }),
             ])
             ->bulkActions([
