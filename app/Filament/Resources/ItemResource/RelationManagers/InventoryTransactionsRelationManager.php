@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Filament\Resources\ItemResource\RelationManagers;
 
 use App\Enums\TransactionType;
-use App\Models\Item;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,8 +13,8 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * كرت الصنف — the item's movement ledger. Read-only; lists every stock
- * transaction for the item AND its linked scrap variant, so returned scrap
- * (فضلات) shows on the same card alongside the original material.
+ * transaction for the item, including returned material (إذن ارتداد) which
+ * comes back into the item's own raw stock as an incoming (وارد) movement.
  */
 class InventoryTransactionsRelationManager extends RelationManager
 {
@@ -34,16 +33,7 @@ class InventoryTransactionsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(function (Builder $query) {
-                // Fold in the scrap variant's movements (same card).
-                /** @var Item $owner */
-                $owner = $this->getOwnerRecord();
-                if ($scrapId = $owner->scrapVariant?->id) {
-                    $query->orWhere('item_id', $scrapId);
-                }
-
-                return $query->with(['item:id,name,sku', 'performedBy:id,name']);
-            })
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['item:id,name,sku', 'performedBy:id,name']))
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('resources.inventory_transactions.columns.date'))

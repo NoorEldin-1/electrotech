@@ -25,12 +25,6 @@
         $available = (float) $item->available_quantity;
         $belowMinimum = $item->isBelowMinimumStock();
         $value = $onHand * (float) $item->unit_cost;
-
-        // Linked scrap variant (الفضلات بكود مختلف) — shown on the source item's
-        // card so "كام شريط وكام فضلات كرصيد وقيمة" appear together.
-        $scrap = $item->scrapVariant;
-        $scrapOnHand = $scrap ? $scrap->inventories->sum(fn ($row) => (float) $row->on_hand_quantity) : 0.0;
-        $scrapValue = $scrap ? $scrapOnHand * (float) $scrap->unit_cost : 0.0;
     @endphp
 
     <div class="space-y-6 text-sm">
@@ -116,29 +110,5 @@
                 </div>
             @endif
         </div>
-
-        {{-- Scrap variant (الفضلات) — balance & value of returned scrap --}}
-        @if ($scrap && $scrapOnHand > 0)
-            <div>
-                <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    {{ __('resources.items.modal.scrap') }}
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="rounded-lg bg-warning-50 p-3 dark:bg-warning-400/10">
-                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ __('resources.items.modal.scrap_on_hand') }}</div>
-                        <div class="mt-1 text-base font-semibold text-warning-700 dark:text-warning-400">{{ $qty($scrapOnHand) }}</div>
-                        <div class="mt-1 font-mono text-xs text-gray-500 dark:text-gray-400">{{ $scrap->sku }}</div>
-                    </div>
-
-                    @if ($canViewPricing)
-                        <div class="rounded-lg bg-warning-50 p-3 dark:bg-warning-400/10">
-                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ __('resources.items.modal.scrap_value') }}</div>
-                            <div class="mt-1 text-base font-semibold text-warning-700 dark:text-warning-400">{{ number_format($scrapValue, 2) }} EGP</div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        @endif
     </div>
 @endif

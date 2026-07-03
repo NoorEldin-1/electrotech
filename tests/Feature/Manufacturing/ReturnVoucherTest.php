@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Manufacturing;
 
 use App\Enums\ItemType;
+use App\Enums\TransactionType;
 use App\Enums\VoucherStatus;
 use App\Enums\WarehouseType;
 use App\Models\IssueVoucher;
@@ -66,7 +67,7 @@ class ReturnVoucherTest extends TestCase
         return $voucher->load('lines.item');
     }
 
-    public function test_posting_returns_scrap_to_variant_and_reverses_cost(): void
+    public function test_posting_returns_material_to_same_item_raw_stock_and_reverses_cost(): void
     {
         [$wo, $item, $project] = $this->makeWorkOrderWithWipStock(10, 4);
         $voucher = $this->makeReturnVoucher($wo, $item, 3, 4);
@@ -74,45 +75,45 @@ class ReturnVoucherTest extends TestCase
         app(ReturnVoucherService::class)->post($voucher);
 
         $item->refresh();
-        // Scrap left the original item's WIP balance.
+        // Material left the item's WIP balance...
         $this->assertEquals(7, $item->quantityIn(WarehouseType::WorkInProgress));
-
-        // Scrap landed in the variant's raw stock under a different code.
-        $scrap = $item->scrapVariant;
-        $this->assertNotNull($scrap);
-        $this->assertTrue($scrap->is_scrap);
-        $this->assertSame($item->sku . '-SCRAP', $scrap->sku);
-        $this->assertEquals(3, $scrap->quantityIn(WarehouseType::RawMaterials));
+        // ...and came back into the SAME item's raw stock (no scrap variant).
+        $this->assertEquals(3, $item->quantityIn(WarehouseType::RawMaterials));
+        $this->assertNull($item->scrapVariant);
+        $this->assertSame(0, Item::where('is_scrap', true)->count());
 
         $voucher->refresh();
         $this->assertSame(VoucherStatus::Posted, $voucher->status);
         $this->assertEquals(12, (float) $voucher->total_value); // 3 * 4
 
-        // Value reversed off the operation (40 - 12 = 28) — scrap not loaded.
+        // Value reversed off the operation (40 - 12 = 28) — returned material
+        // is not loaded on it.
         $this->assertEquals(28, (float) $project->fresh()->actual_cost);
         $this->assertEquals(28, (float) $wo->fresh()->actual_material_cost);
     }
 
-    public function test_item_card_value_helpers_reflect_scrap(): void
+    public function test_return_is_incoming_on_the_raw_stock_card_and_outgoing_on_wip(): void
     {
         [$wo, $item] = $this->makeWorkOrderWithWipStock(10, 4);
         app(ReturnVoucherService::class)->post($this->makeReturnVoucher($wo, $item, 5, 4));
 
-        $scrap = $item->fresh()->scrapVariant;
-        $this->assertEquals(5, $scrap->quantityIn(WarehouseType::RawMaterials));
-        $this->assertEquals(20, $scrap->valueIn(WarehouseType::RawMaterials)); // 5 * 4
-    }
+        // The وارد leg lands on the item's raw warehouse (In).
+        $rawIn = $item->inventoryTransactions()
+            ->where('warehouse_type', WarehouseType::RawMaterials->value)
+            ->where('type', TransactionType::In->value)
+            ->exists();
+        $this->assertTrue($rawIn);
 
-    public function test_ensure_scrap_variant_is_idempotent(): void
-    {
-        [, $item] = $this->makeWorkOrderWithWipStock();
-        $service = app(ReturnVoucherService::class);
+        // The صادر leg leaves work-in-progress (Out).
+        $wipOut = $item->inventoryTransactions()
+            ->where('warehouse_type', WarehouseType::WorkInProgress->value)
+            ->where('type', TransactionType::Out->value)
+            ->exists();
+        $this->assertTrue($wipOut);
 
-        $a = $service->ensureScrapVariant($item);
-        $b = $service->ensureScrapVariant($item->fresh());
-
-        $this->assertSame($a->id, $b->id);
-        $this->assertEquals(1, Item::where('scrap_source_item_id', $item->id)->count());
+        // The returned material is now re-issuable raw stock of the same item.
+        $this->assertEquals(5, $item->fresh()->quantityIn(WarehouseType::RawMaterials));
+        $this->assertEquals(20, $item->fresh()->valueIn(WarehouseType::RawMaterials)); // 5 * 4
     }
 
     public function test_zero_quantity_lines_block_an_empty_post(): void

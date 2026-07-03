@@ -4,20 +4,21 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\ItemType;
 use App\Enums\VoucherStatus;
 use App\Enums\WarehouseType;
-use App\Models\Item;
 use App\Models\ReturnVoucher;
 use App\Models\WorkOrder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
- * إذن ارتداد — the inverse of IssueVoucherService. Returns unconsumed scrap
- * (فضلات) from work-in-progress to the raw warehouse under a different code
- * (the linked scrap variant item) and REVERSES its value off the operation.
+ * إذن ارتداد — the exact inverse of IssueVoucherService. Returns the
+ * unconsumed material from work-in-progress back to the SAME item's raw
+ * warehouse (وارد على كرت الخامات) and REVERSES its value off the operation.
+ *
+ * The issue voucher transfers raw → WIP; the return voucher transfers WIP →
+ * raw for the very same item, so the material re-enters stock under its own
+ * code (no separate scrap item) and can be re-issued later.
  */
 class ReturnVoucherService
 {
@@ -26,51 +27,9 @@ class ReturnVoucherService
     ) {}
 
     /**
-     * Find or create the scrap variant for a raw item — a real stock item with
-     * a derived SKU (`<sku>-SCRAP`), flagged `is_scrap`, that holds returned
-     * material under a different code (سلايد 4). Idempotent and race-safe.
-     */
-    public function ensureScrapVariant(Item $original): Item
-    {
-        // An item flagged as scrap is its own variant.
-        if ($original->is_scrap) {
-            return $original;
-        }
-
-        if ($variant = $original->scrapVariant) {
-            return $variant;
-        }
-
-        $sku = $original->sku . '-SCRAP';
-
-        return Cache::lock('scrap_variant:item_' . $original->id, 10)->block(5, function () use ($original, $sku) {
-            return DB::transaction(function () use ($original, $sku) {
-                // Re-check under the lock in case a concurrent return created it.
-                $existing = Item::where('scrap_source_item_id', $original->id)->first()
-                    ?? Item::where('sku', $sku)->first();
-
-                if ($existing) {
-                    return $existing;
-                }
-
-                return Item::create([
-                    'sku' => $sku,
-                    'name' => $original->name . ' (' . __('resources.items.scrap_label') . ')',
-                    'type' => ItemType::RawMaterial,
-                    'is_scrap' => true,
-                    'scrap_source_item_id' => $original->id,
-                    'unit' => $original->unit,
-                    'unit_cost' => $original->unit_cost,
-                    'minimum_stock' => 0,
-                ]);
-            });
-        });
-    }
-
-    /**
      * Build a DRAFT return voucher for a work order, pre-filled with the
      * materials that were issued to it (quantity 0, for the warehouse to set
-     * the actual scrap amounts and drop the rest). No stock moves yet.
+     * the actual returned amounts and drop the rest). No stock moves yet.
      */
     public function createFromWorkOrder(WorkOrder $workOrder): ReturnVoucher
     {
@@ -104,10 +63,11 @@ class ReturnVoucherService
     }
 
     /**
-     * Post a return voucher: for every line with a positive quantity, take the
-     * scrap out of the original item's WIP balance, add it to the scrap
-     * variant's raw stock, and reverse its value off the operation (project +
-     * work order). Lines left at zero are ignored. Idempotent by status.
+     * Post a return voucher: for every line with a positive quantity, transfer
+     * the material out of the item's work-in-progress balance back into its raw
+     * stock (same item, same code) and reverse its value off the operation
+     * (project + work order). Lines left at zero are ignored. Idempotent by
+     * status.
      *
      * @throws \RuntimeException if already posted, has no postable lines, or
      *                           WIP stock is short
@@ -130,34 +90,28 @@ class ReturnVoucherService
             $total = 0.0;
 
             foreach ($postable as $line) {
-                $scrap = $this->ensureScrapVariant($line->item);
                 $qty = (float) $line->quantity;
                 $unitCost = (float) $line->unit_cost;
 
-                // Take the scrap out of the original item's WIP balance.
-                $this->inventoryService->deductStock(
+                // Return the unconsumed material from work-in-progress back to
+                // the SAME item's raw stock — one atomic transfer, the exact
+                // inverse of the issue voucher. It lands as وارد on the item's
+                // raw stock card and leaves WIP (صادر there).
+                $this->inventoryService->transferStock(
                     item: $line->item,
                     quantity: $qty,
+                    from: WarehouseType::WorkInProgress,
+                    to: WarehouseType::RawMaterials,
                     reference: $voucher,
                     notes: "Return voucher {$voucher->voucher_number} for WO #{$voucher->workOrder->wo_number}",
-                    warehouse: WarehouseType::WorkInProgress,
-                    unitCost: $unitCost,
-                );
-
-                // Add it to the scrap variant's raw stock (the different code).
-                $this->inventoryService->addStock(
-                    item: $scrap,
-                    quantity: $qty,
-                    reference: $voucher,
-                    notes: "Scrap return from WO #{$voucher->workOrder->wo_number} ({$voucher->voucher_number})",
-                    warehouse: WarehouseType::RawMaterials,
                     unitCost: $unitCost,
                 );
 
                 $total += $qty * $unitCost;
             }
 
-            // Reverse the value off the operation — scrap is NOT loaded on it.
+            // Reverse the value off the operation — returned material is NOT
+            // loaded on it.
             if ($project = $voucher->workOrder->project) {
                 $project->decrement('actual_cost', $total);
             }
