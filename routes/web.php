@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\OfferPdfController;
 use App\Http\Controllers\PingController;
 use App\Http\Controllers\PurchaseOrderPdfController;
@@ -31,6 +32,14 @@ Route::middleware([
 ])
     ->get('/admin/ping', PingController::class)
     ->name('admin.ping');
+
+// UI language switch, driven by the segmented control inside the user-menu
+// dropdown. Delegates to filament-language-switch's trigger() (session +
+// forever cookie + LocaleChanged event) and redirects back to the referrer.
+Route::middleware('auth')
+    ->get('/admin/locale/{locale}', LocaleController::class)
+    ->whereIn('locale', ['en', 'ar'])
+    ->name('admin.locale');
 
 // Printable PDF quotation for a project offer (Slides 7 & 8). Streamed
 // through PHP and gated by ProjectOfferPolicy::print (project_offers.print).

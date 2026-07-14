@@ -47,7 +47,14 @@ class AppServiceProvider extends ServiceProvider
                 ->labels([
                     'en' => 'English',
                     'ar' => 'العربية',
-                ]);
+                ])
+                // The stand-alone topbar language pill is retired: the switcher
+                // now lives inside the user-menu dropdown next to the theme
+                // switcher (see AdminPanelProvider's USER_MENU_PROFILE_AFTER
+                // render hook + resources/views/filament/user-menu). We keep the
+                // package configured only for its LocaleChanged event, cookie,
+                // and the shared LanguageSwitch::trigger() used by our route.
+                ->visible(insidePanels: false, outsidePanels: false);
         });
 
         Gate::policy(Role::class, RolePolicy::class);

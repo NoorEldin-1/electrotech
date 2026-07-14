@@ -1509,12 +1509,19 @@ return [
 
         'columns' => [
             'work_order' => 'أمر التصنيع',
+            'operation_name' => 'اسم العملية',
             'output_item' => 'المنتج',
             'entry_date' => 'التاريخ',
-            'planned_quantity' => 'المخطط',
-            'produced_quantity' => 'المنتَج',
-            'scrap_quantity' => 'الفاقد',
-            'scrap_percentage' => 'نسبة الفاقد',
+            // المقارنة القيمية (سلايد 9).
+            'planned_cost' => 'المخطط',
+            'actual_cost' => 'المنتج (الفعلي)',
+            'loss_value' => 'الفاقد',
+            'loss_percentage' => 'نسبة الفاقد',
+            // أعمدة الكمية (اختيارية).
+            'planned_quantity' => 'المخطط (كمية)',
+            'produced_quantity' => 'المنتَج (كمية)',
+            'scrap_quantity' => 'الفاقد (كمية)',
+            'scrap_percentage' => 'نسبة الفاقد (كمية)',
         ],
 
         'filters' => [

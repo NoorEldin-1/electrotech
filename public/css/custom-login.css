@@ -1,316 +1,506 @@
 /* ===================================================================
-   GLASSMORPHIC LOGIN — Gradient Mesh BG + Frosted Card
+   ELECTROTECH ORWA — PREMIUM SPLIT-SCREEN LOGIN
+   -------------------------------------------------------------------
+   ONE fixed visual style. This page must look identical regardless of
+   the visitor's light/dark preference, so every rule here is written
+   mode-agnostic and uses `!important` to override Filament's `.dark`
+   component styles. There are deliberately NO `.dark` selectors below.
+   -------------------------------------------------------------------
+   Layout (desktop):  [ dark brand showcase | light login form ]
+   Layout (< 1024px): showcase hidden, form full-width & centered.
+   RTL-safe: logical properties only (inset-inline / margin-inline).
    =================================================================== */
 
-/* --- Base canvas ---------------------------------------------------- */
-html {
-    background-color: #faf6ef !important;
+:root {
+    /* Showcase (dark) */
+    --et-ink:          #12161f;
+    --et-ink-2:        #0b0e15;
+    --et-ink-3:        #191f2b;
+    /* Brand ember */
+    --et-ember:        #e8863c;
+    --et-ember-2:      #d9723b;
+    --et-ember-3:      #f4a866;
+    /* Light form side */
+    --et-page:         #f4f1ea;
+    --et-surface:      #ffffff;
+    --et-text:         #1d2530;
+    --et-text-muted:   #5f6b7a;
+    --et-line:         rgba(18, 22, 31, 0.10);
+    --et-showcase-w:   52vw;
 }
 
-.dark html {
-    background-color: #0a1320 !important;
+/* --- Base canvas (single, fixed light base) ------------------------ */
+html {
+    background-color: var(--et-page) !important;
 }
 
 body {
-    background-color: transparent !important;
+    background-color: var(--et-page) !important;
     position: relative;
     z-index: 0;
     overflow-x: hidden;
-}
-
-/* --- Gradient Mesh Background --------------------------------------
-   Multiple radial gradients layered on one fixed element. Each blob is
-   anchored at a different position with its own size & warm tone, so the
-   composite reads as a rich, organic mesh instead of a flat color. */
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -2;
-    pointer-events: none;
-    background-image:
-        radial-gradient(60vw 60vw at 12% 18%, rgba(237, 166, 110, 0.55) 0%, rgba(237, 166, 110, 0) 60%),
-        radial-gradient(50vw 50vw at 88% 22%, rgba(217, 114, 59, 0.40) 0%, rgba(217, 114, 59, 0) 65%),
-        radial-gradient(70vw 70vw at 80% 85%, rgba(244, 201, 164, 0.50) 0%, rgba(244, 201, 164, 0) 60%),
-        radial-gradient(55vw 55vw at 15% 92%, rgba(253, 244, 238, 0.65) 0%, rgba(253, 244, 238, 0) 65%),
-        radial-gradient(45vw 45vw at 50% 55%, rgba(228, 135, 69, 0.18) 0%, rgba(228, 135, 69, 0) 70%);
-}
-
-.dark body::before {
-    background-image:
-        radial-gradient(60vw 60vw at 12% 18%, rgba(217, 114, 59, 0.32) 0%, rgba(217, 114, 59, 0) 60%),
-        radial-gradient(50vw 50vw at 88% 22%, rgba(99, 47, 30, 0.55) 0%, rgba(99, 47, 30, 0) 65%),
-        radial-gradient(70vw 70vw at 80% 85%, rgba(228, 135, 69, 0.22) 0%, rgba(228, 135, 69, 0) 60%),
-        radial-gradient(55vw 55vw at 15% 92%, rgba(28, 42, 61, 0.75) 0%, rgba(28, 42, 61, 0) 70%),
-        radial-gradient(45vw 45vw at 50% 55%, rgba(54, 20, 16, 0.40) 0%, rgba(54, 20, 16, 0) 70%);
-}
-
-/* --- Fine grain overlay --------------------------------------------
-   Adds a near-invisible film of noise on top of the mesh. Breaks the
-   gradient banding and gives the surface a tactile, premium texture. */
-body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    opacity: 0.35;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.10 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-.dark body::after {
-    opacity: 0.5;
-}
-
-/* --- Card entrance animation --------------------------------------- */
-main.fi-simple-main {
-    animation: cardRise 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    opacity: 0;
-    transform: translateY(24px) scale(0.985);
-}
-
-@keyframes cardRise {
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-/* --- Glassmorphic Card ---------------------------------------------
-   Semi-transparent fill + heavy backdrop blur lets the mesh bleed through
-   softly. The ::before pseudo paints a 1px gradient border that fakes
-   light catching the top-left edges of a real glass panel. */
-main.fi-simple-main {
-    position: relative;
-    background-color: rgba(255, 255, 255, 0.55) !important;
-    backdrop-filter: blur(24px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-    border: 1px solid transparent !important;
-    border-radius: 1.25rem !important;
-    box-shadow:
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.7),
-        0 30px 60px -20px rgba(99, 47, 30, 0.18),
-        0 12px 24px -10px rgba(99, 47, 30, 0.08) !important;
-    transition: box-shadow 0.4s ease, transform 0.4s ease !important;
-}
-
-main.fi-simple-main::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.95) 0%,
-        rgba(255, 255, 255, 0.45) 30%,
-        rgba(255, 255, 255, 0.05) 55%,
-        rgba(255, 255, 255, 0) 100%
-    );
-    -webkit-mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-            mask-composite: exclude;
-    pointer-events: none;
-}
-
-.dark main.fi-simple-main {
-    background-color: rgba(22, 33, 51, 0.55) !important;
-    box-shadow:
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
-        0 30px 60px -20px rgba(0, 0, 0, 0.6),
-        0 12px 24px -10px rgba(0, 0, 0, 0.4) !important;
-}
-
-.dark main.fi-simple-main::before {
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.20) 0%,
-        rgba(255, 255, 255, 0.07) 30%,
-        rgba(255, 255, 255, 0) 60%
-    );
-}
-
-/* --- Form fields — glassy layered inside the card ------------------ */
-input, button, .fi-btn {
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.fi-input,
-input[type="email"],
-input[type="password"],
-input[type="text"] {
-    background-color: rgba(255, 255, 255, 0.55) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    border-color: rgba(0, 0, 0, 0.08) !important;
-}
-
-.dark .fi-input,
-.dark input[type="email"],
-.dark input[type="password"],
-.dark input[type="text"] {
-    background-color: rgba(255, 255, 255, 0.04) !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-input:hover {
-    background-color: rgba(255, 255, 255, 0.72) !important;
-}
-
-.dark input:hover {
-    background-color: rgba(255, 255, 255, 0.07) !important;
-}
-
-input:focus {
-    transform: translateY(-1px);
-    box-shadow:
-        0 0 0 3px rgba(217, 114, 59, 0.15),
-        0 4px 15px -3px rgba(217, 114, 59, 0.20) !important;
-    border-color: rgba(217, 114, 59, 0.5) !important;
-}
-
-/* --- Primary CTA — keeps the brand orange front-and-center --------- */
-button[type="submit"]:hover,
-.fi-btn-color-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 24px -6px rgba(217, 114, 59, 0.45) !important;
-    filter: brightness(1.05);
-}
-
-button[type="submit"]:active,
-.fi-btn-color-primary:active {
-    transform: translateY(0);
-    box-shadow: 0 4px 10px -3px rgba(217, 114, 59, 0.25) !important;
-}
-
-/* --- Brand block (logo + name stacked, login only) ----------------- */
-.fi-simple-layout .fi-logo,
-.fi-simple-header .fi-logo,
-.fi-simple-main .fi-logo {
-    height: auto !important;
-    width: auto !important;
-    max-height: none !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-}
-
-.fi-simple-layout .fi-brand-wrapper,
-.fi-simple-header .fi-brand-wrapper,
-.fi-simple-main .fi-brand-wrapper {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.fi-simple-layout .fi-brand-wrapper .fi-brand-logo,
-.fi-simple-header .fi-brand-wrapper .fi-brand-logo,
-.fi-simple-main .fi-brand-wrapper .fi-brand-logo {
-    height: 4.5rem;
-    width: auto;
-    border-radius: 0.875rem;
-    object-fit: contain;
-    background-color: white;
-    padding: 0.25rem;
-    box-shadow:
-        0 8px 20px -6px rgba(217, 114, 59, 0.30),
-        0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.fi-simple-layout .fi-brand-wrapper .fi-brand-name,
-.fi-simple-header .fi-brand-wrapper .fi-brand-name,
-.fi-simple-main .fi-brand-wrapper .fi-brand-name {
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    color: #1c2a3d;
-}
-
-.dark .fi-simple-layout .fi-brand-wrapper .fi-brand-name,
-.dark .fi-simple-header .fi-brand-wrapper .fi-brand-name,
-.dark .fi-simple-main .fi-brand-wrapper .fi-brand-name {
-    color: #f8fafc;
+    min-height: 100vh;
 }
 
 /* ===================================================================
-   SCROLLBAR — themed to match project (cream track, primary-tinted thumb)
+   1. BRAND SHOWCASE  (injected at BODY_START on the login route)
+   =================================================================== */
+.et-login-showcase {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: var(--et-showcase-w);
+    overflow: hidden;
+    z-index: 1;
+    background: radial-gradient(120% 120% at 15% 10%, var(--et-ink-3) 0%, var(--et-ink) 42%, var(--et-ink-2) 100%);
+    color: #f5f0e8;
+    isolation: isolate;
+    animation: etShowcaseIn 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes etShowcaseIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Aurora — slowly drifting ember/charcoal mesh */
+.et-showcase-aurora {
+    position: absolute;
+    inset: -20%;
+    z-index: -3;
+    pointer-events: none;
+    background-image:
+        radial-gradient(40% 40% at 22% 28%, rgba(232, 134, 60, 0.42) 0%, rgba(232, 134, 60, 0) 60%),
+        radial-gradient(45% 45% at 82% 24%, rgba(217, 114, 59, 0.30) 0%, rgba(217, 114, 59, 0) 62%),
+        radial-gradient(55% 55% at 78% 86%, rgba(244, 168, 102, 0.24) 0%, rgba(244, 168, 102, 0) 60%),
+        radial-gradient(50% 50% at 12% 88%, rgba(90, 40, 22, 0.55) 0%, rgba(90, 40, 22, 0) 65%);
+    filter: saturate(115%);
+    animation: etAurora 24s ease-in-out infinite alternate;
+}
+
+@keyframes etAurora {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(2%, -1.5%, 0) scale(1.06); }
+    100% { transform: translate3d(-1.5%, 2%, 0) scale(1.02); }
+}
+
+/* Faint engineering grid */
+.et-showcase-grid {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 54px 54px;
+    -webkit-mask-image: radial-gradient(130% 90% at 30% 20%, #000 30%, transparent 78%);
+            mask-image: radial-gradient(130% 90% at 30% 20%, #000 30%, transparent 78%);
+}
+
+/* Soft ember glow orbs */
+.et-showcase-orb {
+    position: absolute;
+    z-index: -2;
+    border-radius: 9999px;
+    pointer-events: none;
+    filter: blur(60px);
+}
+.et-showcase-orb--1 {
+    width: 26rem;
+    height: 26rem;
+    inset-block-start: -6rem;
+    inset-inline-end: -5rem;
+    background: radial-gradient(circle, rgba(232, 134, 60, 0.55) 0%, rgba(232, 134, 60, 0) 70%);
+    animation: etFloat 14s ease-in-out infinite alternate;
+}
+.et-showcase-orb--2 {
+    width: 20rem;
+    height: 20rem;
+    inset-block-end: -4rem;
+    inset-inline-start: -4rem;
+    background: radial-gradient(circle, rgba(217, 114, 59, 0.40) 0%, rgba(217, 114, 59, 0) 72%);
+    animation: etFloat 18s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes etFloat {
+    from { transform: translateY(0); }
+    to   { transform: translateY(26px); }
+}
+
+/* Fine grain film */
+.et-showcase-grain {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.4;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* --- Showcase content ---------------------------------------------- */
+.et-showcase-inner {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2.25rem;
+    padding-inline: clamp(3rem, 5.5vw, 6rem);
+    padding-block: clamp(3rem, 6vh, 5rem);
+    max-width: 40rem;
+}
+
+.et-showcase-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.et-showcase-logo {
+    display: inline-flex;
+    padding: 0.4rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow:
+        0 10px 30px -8px rgba(232, 134, 60, 0.55),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.et-showcase-logo img {
+    height: 3rem;
+    width: 3rem;
+    object-fit: contain;
+    border-radius: 0.7rem;
+    display: block;
+}
+.et-showcase-wordmark {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    color: #ffffff;
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.3);
+}
+
+.et-showcase-tagline {
+    font-size: clamp(1.6rem, 2.6vw, 2.5rem);
+    line-height: 1.28;
+    font-weight: 700;
+    color: #fbf6ee;
+    margin: 0;
+    max-width: 22ch;
+    text-wrap: balance;
+}
+/* Ember underline accent under the tagline */
+.et-showcase-tagline::after {
+    content: '';
+    display: block;
+    width: 3.5rem;
+    height: 4px;
+    margin-block-start: 1.35rem;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, var(--et-ember-3), var(--et-ember-2));
+    box-shadow: 0 0 18px rgba(232, 134, 60, 0.7);
+}
+
+/* Feature list */
+.et-showcase-features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+}
+.et-showcase-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+.et-showcase-feature-icon {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.65rem;
+    height: 2.65rem;
+    border-radius: 0.85rem;
+    color: var(--et-ember-3);
+    background: rgba(232, 134, 60, 0.12);
+    border: 1px solid rgba(232, 134, 60, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.et-showcase-feature-icon svg {
+    width: 1.4rem;
+    height: 1.4rem;
+}
+.et-showcase-feature-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+.et-showcase-feature-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fbf6ee;
+}
+.et-showcase-feature-desc {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: rgba(245, 240, 232, 0.66);
+    max-width: 34ch;
+}
+
+.et-showcase-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    font-size: 0.8rem;
+    color: rgba(245, 240, 232, 0.5);
+    margin-block-start: 0.5rem;
+}
+
+/* ===================================================================
+   2. FORM SIDE  — push Filament's centered layout into the other half
+   =================================================================== */
+.fi-simple-layout {
+    margin-inline-start: var(--et-showcase-w) !important;
+    min-height: 100vh;
+}
+
+.fi-simple-main-ctn {
+    padding-inline: 1.5rem;
+}
+
+/* The card → clean, borderless light panel (single fixed style) */
+main.fi-simple-main {
+    position: relative;
+    background-color: var(--et-surface) !important;
+    border: 1px solid var(--et-line) !important;
+    box-shadow:
+        0 1px 2px rgba(18, 22, 31, 0.04),
+        0 24px 60px -32px rgba(18, 22, 31, 0.28) !important;
+    border-radius: 1.5rem !important;
+    max-width: 27rem !important;
+    padding-inline: clamp(1.75rem, 4vw, 2.75rem) !important;
+    padding-block: clamp(2rem, 5vh, 3rem) !important;
+    margin-block: 3rem !important;
+    animation: etCardRise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes etCardRise {
+    from { opacity: 0; transform: translateY(22px) scale(0.985); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Hide Filament's default brand/heading block — showcase + formhead own it */
+.fi-simple-header {
+    display: none !important;
+}
+
+/* --- Form-side header (our injected block) ------------------------- */
+.et-login-formhead {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.35rem;
+    margin-block-end: 2rem;
+}
+.et-login-formhead-logo {
+    display: none;               /* only shown on mobile (showcase hidden) */
+    margin-block-end: 0.75rem;
+    padding: 0.35rem;
+    border-radius: 0.9rem;
+    background: #fff;
+    box-shadow: 0 8px 22px -8px rgba(232, 134, 60, 0.5), 0 0 0 1px var(--et-line);
+}
+.et-login-formhead-logo img {
+    height: 3rem;
+    width: 3rem;
+    object-fit: contain;
+    border-radius: 0.6rem;
+    display: block;
+}
+.et-login-formhead-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--et-text) !important;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+.et-login-formhead-subtitle {
+    font-size: 0.9rem;
+    color: var(--et-text-muted) !important;
+    margin: 0;
+}
+
+/* ===================================================================
+   3. FORM CONTROLS  — force the light style over any dark component CSS
+   =================================================================== */
+
+/* Field labels + "Remember me" text.
+   Filament paints these with `text-gray-950 dark:text-white`, so on a
+   dark-preference browser the label text turns white and vanishes against
+   our light card. Force the dark ink on any element carrying that class
+   (precisely the label/checkbox text spans; never the red required mark,
+   which uses text-danger-*). This is what keeps the page a single style. */
+.fi-simple-main .fi-fo-field-wrp-label,
+.fi-simple-main label,
+.fi-simple-main [class*="text-gray-950"],
+.fi-simple-main .fi-fo-field-wrp-hint {
+    color: var(--et-text) !important;
+}
+
+/* Input shells */
+.fi-simple-main .fi-input-wrp {
+    background-color: #fff !important;
+    box-shadow: none !important;
+    border: 1px solid var(--et-line) !important;
+    border-radius: 0.8rem !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease !important;
+}
+.fi-simple-main .fi-input-wrp:hover {
+    border-color: rgba(18, 22, 31, 0.2) !important;
+}
+.fi-simple-main .fi-input-wrp:focus-within {
+    border-color: var(--et-ember) !important;
+    box-shadow:
+        0 0 0 3px rgba(232, 134, 60, 0.16),
+        0 6px 16px -8px rgba(232, 134, 60, 0.35) !important;
+    transform: translateY(-1px);
+}
+
+/* Raw input text + reset any dark-mode field paints */
+.fi-simple-main .fi-input,
+.fi-simple-main input[type="email"],
+.fi-simple-main input[type="password"],
+.fi-simple-main input[type="text"] {
+    background-color: transparent !important;
+    color: var(--et-text) !important;
+    padding-block: 0.7rem !important;
+}
+.fi-simple-main .fi-input::placeholder {
+    color: rgba(95, 107, 122, 0.7) !important;
+}
+
+/* Password reveal / affix icons */
+.fi-simple-main .fi-input-wrp-icon,
+.fi-simple-main .fi-icon-btn {
+    color: var(--et-text-muted) !important;
+}
+
+/* Checkbox "remember me" */
+.fi-simple-main .fi-checkbox-input,
+.fi-simple-main input[type="checkbox"] {
+    border-color: rgba(18, 22, 31, 0.25) !important;
+    background-color: #fff !important;
+}
+.fi-simple-main .fi-checkbox-input:checked,
+.fi-simple-main input[type="checkbox"]:checked {
+    background-color: var(--et-ember) !important;
+    border-color: var(--et-ember) !important;
+}
+
+/* ===================================================================
+   4. PRIMARY CTA  — ember gradient with glow
+   =================================================================== */
+.fi-simple-main .fi-btn.fi-btn-color-primary,
+.fi-simple-main button[type="submit"] {
+    background-image: linear-gradient(180deg, var(--et-ember-3) 0%, var(--et-ember-2) 100%) !important;
+    background-color: var(--et-ember-2) !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em !important;
+    padding-block: 0.85rem !important;
+    border-radius: 0.8rem !important;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.25) inset,
+        0 10px 22px -8px rgba(217, 114, 59, 0.55) !important;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, filter 0.2s ease !important;
+}
+.fi-simple-main .fi-btn.fi-btn-color-primary:hover,
+.fi-simple-main button[type="submit"]:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.04);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.25) inset,
+        0 16px 30px -8px rgba(217, 114, 59, 0.6) !important;
+}
+.fi-simple-main .fi-btn.fi-btn-color-primary:active,
+.fi-simple-main button[type="submit"]:active {
+    transform: translateY(0);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.2) inset,
+        0 6px 14px -6px rgba(217, 114, 59, 0.5) !important;
+}
+
+/* Any secondary text links (e.g. forgot password, if enabled) */
+.fi-simple-main a,
+.fi-simple-main .fi-link {
+    color: var(--et-ember-2) !important;
+}
+
+/* ===================================================================
+   5. RESPONSIVE  — collapse to single centered column
+   =================================================================== */
+@media (max-width: 1024px) {
+    .et-login-showcase {
+        display: none !important;
+    }
+    .fi-simple-layout {
+        margin-inline-start: 0 !important;
+    }
+    .et-login-formhead-logo {
+        display: inline-flex;
+    }
+}
+
+/* ===================================================================
+   6. SCROLLBAR  — single ember-tinted style
    =================================================================== */
 html,
 body,
 .fi-simple-layout,
-.fi-simple-main-ctn,
-.fi-simple-main {
+.fi-simple-main-ctn {
     scrollbar-width: thin;
-    scrollbar-color: rgba(217, 114, 59, 0.35) transparent;
+    scrollbar-color: rgba(217, 114, 59, 0.4) transparent;
 }
-
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,
 .fi-simple-layout::-webkit-scrollbar,
-.fi-simple-main-ctn::-webkit-scrollbar,
-.fi-simple-main::-webkit-scrollbar {
+.fi-simple-main-ctn::-webkit-scrollbar {
     width: 10px;
     height: 10px;
 }
-
 html::-webkit-scrollbar-track,
 body::-webkit-scrollbar-track,
 .fi-simple-layout::-webkit-scrollbar-track,
-.fi-simple-main-ctn::-webkit-scrollbar-track,
-.fi-simple-main::-webkit-scrollbar-track {
+.fi-simple-main-ctn::-webkit-scrollbar-track {
     background: transparent;
 }
-
 html::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb,
 .fi-simple-layout::-webkit-scrollbar-thumb,
-.fi-simple-main-ctn::-webkit-scrollbar-thumb,
-.fi-simple-main::-webkit-scrollbar-thumb {
-    background-color: rgba(217, 114, 59, 0.35);
+.fi-simple-main-ctn::-webkit-scrollbar-thumb {
+    background-color: rgba(217, 114, 59, 0.4);
     border-radius: 9999px;
     border: 2px solid transparent;
     background-clip: padding-box;
-    transition: background-color 0.25s ease;
 }
-
 html::-webkit-scrollbar-thumb:hover,
-body::-webkit-scrollbar-thumb:hover,
-.fi-simple-layout::-webkit-scrollbar-thumb:hover,
-.fi-simple-main-ctn::-webkit-scrollbar-thumb:hover,
-.fi-simple-main::-webkit-scrollbar-thumb:hover {
+body::-webkit-scrollbar-thumb:hover {
     background-color: rgba(217, 114, 59, 0.7);
 }
 
-html::-webkit-scrollbar-corner,
-body::-webkit-scrollbar-corner {
-    background: transparent;
-}
-
-.dark html,
-.dark body,
-.dark .fi-simple-layout,
-.dark .fi-simple-main-ctn,
-.dark .fi-simple-main {
-    scrollbar-color: rgba(228, 135, 69, 0.4) transparent;
-}
-
-.dark html::-webkit-scrollbar-thumb,
-.dark body::-webkit-scrollbar-thumb,
-.dark .fi-simple-layout::-webkit-scrollbar-thumb,
-.dark .fi-simple-main-ctn::-webkit-scrollbar-thumb,
-.dark .fi-simple-main::-webkit-scrollbar-thumb {
-    background-color: rgba(228, 135, 69, 0.4);
-}
-
-.dark html::-webkit-scrollbar-thumb:hover,
-.dark body::-webkit-scrollbar-thumb:hover,
-.dark .fi-simple-layout::-webkit-scrollbar-thumb:hover,
-.dark .fi-simple-main-ctn::-webkit-scrollbar-thumb:hover,
-.dark .fi-simple-main::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(228, 135, 69, 0.75);
+/* Respect reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    .et-login-showcase,
+    .et-showcase-aurora,
+    .et-showcase-orb,
+    main.fi-simple-main {
+        animation: none !important;
+    }
 }

@@ -16,5 +16,11 @@ return [
 
     'user_menu' => [
         'operator_console' => 'وحدة تحكم المُشغّل',
+        'language' => 'اللغة',
+        'appearance' => 'المظهر',
+        'logout_confirm_heading' => 'تسجيل الخروج؟',
+        'logout_confirm_description' => 'هيتم إرجاعك لشاشة تسجيل الدخول، وهتحتاج تسجّل الدخول مرة تانية للمتابعة.',
+        'logout_confirm_button' => 'تسجيل الخروج',
+        'cancel' => 'إلغاء',
     ],
 ];
