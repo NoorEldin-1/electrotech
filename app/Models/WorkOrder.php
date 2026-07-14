@@ -27,6 +27,16 @@ class WorkOrder extends Model
         'wo_number',
         'title',
         'description',
+        // المواصفات الفنية (سلايد 2–3) — يؤلّفها المكتب وتُنسَخ لورقة الجودة.
+        'conductor_type',
+        'cross_section',
+        'cross_section_e',
+        'external_body',
+        'protection_degree',
+        'paint',
+        'model',
+        'ampere',
+        'poles_count',
         'status',
         'priority',
         'planned_quantity',
@@ -46,6 +56,9 @@ class WorkOrder extends Model
         'qa_approved_by',
         'qa_approved_at',
         'qa_notes',
+        // اعتماد مدير مكتب المشروعات (سلايد 5) — the PMO-manager gate.
+        'order_approved_by',
+        'order_approved_at',
     ];
 
     /**
@@ -71,6 +84,8 @@ class WorkOrder extends Model
             'qa_approved_by',
             'qa_approved_at',
             'qa_notes',
+            'order_approved_by',
+            'order_approved_at',
             'client_updated_at',
         ];
     }
@@ -79,6 +94,7 @@ class WorkOrder extends Model
     {
         return [
             'status' => WorkOrderStatus::class,
+            'poles_count' => 'integer',
             'planned_quantity' => 'decimal:4',
             'produced_quantity' => 'decimal:4',
             'waste_quantity' => 'decimal:4',
@@ -91,6 +107,7 @@ class WorkOrder extends Model
             'manufacturing_finished_at' => 'datetime',
             'manufacturing_duration_minutes' => 'integer',
             'qa_approved_at' => 'datetime',
+            'order_approved_at' => 'datetime',
         ];
     }
 
@@ -108,7 +125,7 @@ class WorkOrder extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['wo_number', 'status', 'produced_quantity', 'waste_quantity', 'qa_approved_by', 'manufacturing_finished_at'])
+            ->logOnly(['wo_number', 'status', 'produced_quantity', 'waste_quantity', 'qa_approved_by', 'order_approved_by', 'manufacturing_finished_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "WO #{$this->wo_number} was {$eventName}");
@@ -132,6 +149,16 @@ class WorkOrder extends Model
     public function issueVouchers(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(IssueVoucher::class);
+    }
+
+    /**
+     * Editable per-order material lines (سلايد 6). Seeded from the output
+     * item's standard BOM, then adjustable for this order; the issue voucher
+     * is built from these rather than the raw BOM.
+     */
+    public function materials(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(WorkOrderMaterial::class);
     }
 
     public function productionEntries(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -164,9 +191,26 @@ class WorkOrder extends Model
         return $this->belongsTo(User::class, 'qa_approved_by');
     }
 
+    public function orderApprovedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'order_approved_by');
+    }
+
     public function manufacturingFinishedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'manufacturing_finished_by');
+    }
+
+    /**
+     * Planned material cost = Σ(quantity × unit_cost) of this order's material
+     * lines (المخطط). Basis for the estimate-vs-actual comparison and for the
+     * planned side of the production/loss report (سلايد 9).
+     */
+    public function getPlannedMaterialCostAttribute(): float
+    {
+        return (float) $this->materials->sum(
+            fn (WorkOrderMaterial $line) => (float) $line->quantity * (float) $line->unit_cost
+        );
     }
 
     /**
@@ -222,6 +266,15 @@ class WorkOrder extends Model
     public function isQaApproved(): bool
     {
         return $this->qa_approved_by !== null && $this->qa_approved_at !== null;
+    }
+
+    /**
+     * Whether the PMO manager has approved this order out of Draft (سلايد 5) —
+     * the gate that releases it for manufacturing to start.
+     */
+    public function isOrderApproved(): bool
+    {
+        return $this->order_approved_by !== null && $this->order_approved_at !== null;
     }
 
     /**

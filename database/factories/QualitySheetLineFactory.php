@@ -15,6 +15,10 @@ class QualitySheetLineFactory extends Factory
         return [
             'quality_sheet_id' => QualitySheet::factory(),
             'line_no' => fake()->numberBetween(1, 10),
+            'visual_quality' => fake()->boolean(),
+            'assembly' => fake()->boolean(),
+            'earth_bond_pe_fe' => fake()->boolean(),
+            'required_size' => fake()->randomElement(['16', '25', '35', '50']),
         ];
     }
 }

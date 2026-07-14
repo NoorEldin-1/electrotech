@@ -444,12 +444,15 @@ return [
 
         'sections' => [
             'bom_details' => 'BOM Details',
+            'bom_details_description' => 'Link this BOM to a project, or to a finished good to make it that product\'s standard recipe.',
             'bom_items' => 'BOM Items',
             'bom_items_description' => 'Add items required for this project. Include waste percentage as per technical specifications.',
         ],
 
         'fields' => [
             'project' => 'Project',
+            'output_item' => 'Finished Good (Standard BOM)',
+            'output_item_helper' => 'Set this to make the BOM the standard recipe for a product, fetched automatically into work orders.',
             'version' => 'Version',
             'status' => 'Status',
             'notes' => 'Notes',
@@ -460,6 +463,8 @@ return [
 
         'columns' => [
             'project' => 'Project',
+            'standard_bom' => 'Standard BOM',
+            'output_item' => 'Finished Good',
             'sales_stage' => 'Sales Stage',
             'version' => 'Version',
             'status' => 'Status',
@@ -569,7 +574,7 @@ return [
             'profit_tax' => 'Profit Withholding (:rate%)',
             'total' => 'Total',
             'no_profit_tax_note' => 'This supplier is not subject to the 1% profit-withholding deduction.',
-            'approved_by' => 'Approved by (Technical Office Manager)',
+            'approved_by' => 'Approved by (Project Management Office Manager)',
         ],
     ],
 
@@ -626,7 +631,7 @@ return [
             'ReturnVoucher' => 'Return Voucher',
             'DeliveryVoucher' => 'Delivery Voucher',
             'PurchaseOrder' => 'Purchase Order',
-            'WorkOrder' => 'Work Order',
+            'WorkOrder' => 'Manufacturing Order',
         ],
     ],
 
@@ -770,7 +775,7 @@ return [
 
         'fields' => [
             'voucher_number' => 'Voucher Number',
-            'work_order' => 'Work Order',
+            'work_order' => 'Manufacturing Order',
             'voucher_date' => 'Date',
             'notes' => 'Notes',
             'lines' => 'Items',
@@ -781,7 +786,7 @@ return [
 
         'columns' => [
             'voucher_number' => 'Number',
-            'work_order' => 'Work Order',
+            'work_order' => 'Manufacturing Order',
             'voucher_date' => 'Date',
             'total_value' => 'Total Value',
             'status' => 'Status',
@@ -814,7 +819,7 @@ return [
 
         'fields' => [
             'voucher_number' => 'Voucher Number',
-            'work_order' => 'Work Order',
+            'work_order' => 'Manufacturing Order',
             'voucher_date' => 'Date',
             'notes' => 'Notes',
             'lines' => 'Items',
@@ -825,7 +830,7 @@ return [
 
         'columns' => [
             'voucher_number' => 'Number',
-            'work_order' => 'Work Order',
+            'work_order' => 'Manufacturing Order',
             'voucher_date' => 'Date',
             'total_value' => 'Total Value',
             'status' => 'Status',
@@ -853,7 +858,7 @@ return [
 
         'fields' => [
             'voucher_number' => 'Voucher Number',
-            'work_order' => 'Work Order',
+            'work_order' => 'Manufacturing Order',
             'loss_type' => 'Loss Type',
             'loss_type_hint' => 'Abnormal loss is removed from the operation; natural loss stays loaded on it.',
             'voucher_date' => 'Date',
@@ -866,7 +871,7 @@ return [
 
         'columns' => [
             'voucher_number' => 'Number',
-            'work_order' => 'Work Order',
+            'work_order' => 'Manufacturing Order',
             'loss_type' => 'Loss Type',
             'voucher_date' => 'Date',
             'total_value' => 'Total Value',
@@ -1088,7 +1093,7 @@ return [
             'actual_cost' => 'Actual Cost',
             'usage' => 'Budget Used',
             'boms' => 'BOMs',
-            'work_orders' => 'Work Orders',
+            'work_orders' => 'Manufacturing Orders',
             'purchase_orders' => 'Purchase Orders',
             'deliveries' => 'Deliveries',
             'status' => 'Status',
@@ -1503,7 +1508,7 @@ return [
         'navigation_label' => 'Production & Loss',
 
         'columns' => [
-            'work_order' => 'Work Order',
+            'work_order' => 'Manufacturing Order',
             'output_item' => 'Product',
             'entry_date' => 'Date',
             'planned_quantity' => 'Planned',
@@ -1520,17 +1525,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Work Order Resource
+    | Manufacturing Order Resource
     |--------------------------------------------------------------------------
     */
     'work_orders' => [
-        'label' => 'Work Order',
-        'plural_label' => 'Work Orders',
-        'navigation_label' => 'Work Orders',
+        'label' => 'Manufacturing Order',
+        'plural_label' => 'Manufacturing Orders',
+        'navigation_label' => 'Manufacturing Orders',
 
         'sections' => [
-            'wo_details' => 'Work Order Details',
+            'wo_details' => 'Manufacturing Order Details',
             'quantities_schedule' => 'Quantities & Schedule',
+            'materials' => 'Materials',
+            'materials_description' => 'Auto-filled from the finished good\'s standard BOM (scaled by the planned quantity). Adjust quantities freely for this order — the standard recipe stays unchanged.',
+            'specs' => 'Technical Specifications',
+            'specs_description' => 'Operation specs authored here are copied into the quality sheet\'s operation data when it is created.',
             'qa_gate' => 'QA Gate',
             'qa_gate_description' => 'Quality Assurance approval is mandatory before completion.',
             'description' => 'Description',
@@ -1543,16 +1552,31 @@ return [
             'linked_bom' => 'Linked BOM',
             'output_item' => 'Finished Product',
             'output_item_helper' => 'The item produced into finished goods when this work order completes.',
+            'conductor_type' => 'Conductor Type',
+            'cross_section' => 'Cross Section',
+            'cross_section_e' => 'Cross Section E',
+            'external_body' => 'External Body',
+            'protection_degree' => 'Protection Degree',
+            'paint' => 'Paint',
+            'model' => 'Model',
+            'ampere' => 'Ampere',
+            'poles_count' => 'Poles Count',
             'status' => 'Status',
             'priority' => 'Priority',
             'assigned_to' => 'Assigned To',
             'planned_quantity' => 'Planned Quantity',
             'produced_quantity' => 'Produced Quantity',
             'waste_quantity' => 'Waste Quantity',
+            'materials' => 'Materials',
+            'material_item' => 'Material',
+            'material_quantity' => 'Quantity',
+            'material_unit_cost' => 'Unit Cost',
+            'planned_material_cost' => 'Planned Material Cost',
             'planned_start_date' => 'Planned Start Date',
             'planned_end_date' => 'Planned End Date',
             'qa_status' => 'QA Status',
             'qa_notes' => 'QA Notes',
+            'order_approved_at' => 'PMO Order Approval',
             'manufacturing_finished_at' => 'Manufacturing Finished',
             'manufacturing_duration' => 'Manufacturing Duration',
             'manufacturing_finished_by' => 'Finished By',
@@ -1577,6 +1601,7 @@ return [
         ],
 
         'actions' => [
+            'approve_order' => 'Approve Order',
             'start' => 'Start',
             'issue_materials' => 'Issue Materials',
             'return_scrap' => 'Return Scrap',
@@ -1586,26 +1611,34 @@ return [
             'complete' => 'Complete',
             'finish_manufacturing' => 'Finish Manufacturing',
             'quality_sheet' => 'Quality Sheet',
+            'fetch_standard_materials' => 'Fetch Standard Materials',
         ],
 
         'notifications' => [
-            'started' => 'Work Order started',
+            'order_approved' => 'Order approved — released for manufacturing',
+            'started' => 'Manufacturing Order started',
+            'materials_fetched' => 'Standard materials loaded from the BOM',
             'issue_voucher_created' => 'Draft issue voucher created',
             'return_voucher_created' => 'Draft return voucher created',
             'depreciation_voucher_created' => 'Draft depreciation voucher created',
             'submitted_qa' => 'Submitted for QA',
             'qa_approved' => 'QA Approved',
-            'completed' => 'Work Order completed',
+            'completed' => 'Manufacturing Order completed',
             'manufacturing_finished' => 'Manufacturing finished — departments notified',
             'ready_for_delivery_title' => 'Product ready for delivery',
             'ready_for_delivery_body' => ':product (WO :wo_number) has finished manufacturing and is ready for delivery.',
-            'view_work_order' => 'View Work Order',
+            'view_work_order' => 'View Manufacturing Order',
             'failed' => 'Failed',
         ],
 
         'qa' => [
             'approved_by' => '✅ Approved by :name on :date',
             'pending' => '⏳ Pending QA Review',
+        ],
+
+        'order_approval' => [
+            'approved_by' => '✅ Approved by :name on :date',
+            'pending' => '⏳ Draft — pending PMO manager approval',
         ],
 
         'manufacturing' => [
@@ -1642,19 +1675,27 @@ return [
 
         'fields' => [
             'sheet_number' => 'Sheet Number',
-            'work_order' => 'Work Order',
+            'work_order' => 'Manufacturing Order',
             'test_date' => 'Test Date',
             'operation_name' => 'Operation Name',
             'conductor_type' => 'Conductor Type',
-            'connection_type' => 'Connection Type',
             'cross_section' => 'Cross Section',
+            'cross_section_e' => 'Cross Section E',
+            'external_body' => 'External Body',
+            'protection_degree' => 'Protection Degree',
+            'paint' => 'Paint',
+            'model' => 'Model',
+            'ampere' => 'Ampere',
             'poles_count' => 'Poles Count',
             'notes' => 'Notes',
             'lines' => 'Test Rows',
             'piece_number' => 'Piece No.',
             'assembly' => 'Assembly',
             'visual_quality' => 'Visual Quality',
+            'earth_bond_pe_fe' => 'Earth Bond (PE–FE)',
             'required_size' => 'Required Size',
+            'reading_1' => 'Reading 1',
+            'reading_2' => 'Reading 2',
             'test_pe_l123n' => 'PE-(L1&L2&L3&N)',
             'test_fe_l123n' => 'FE-(L1&L2&L3&N)',
             'test_n_l12l3' => 'N-(L1&L2&L3)',
@@ -1668,7 +1709,7 @@ return [
 
         'columns' => [
             'sheet_number' => 'Number',
-            'work_order' => 'Work Order',
+            'work_order' => 'Manufacturing Order',
             'status' => 'Status',
             'qa_filled_by' => 'Filled By',
             'factory_approved_by' => 'Approved By',
@@ -1704,17 +1745,23 @@ return [
             'title' => 'Manufacturing Test Sheet',
             'sheet_number' => 'Sheet No.',
             'test_date' => 'Date',
-            'work_order' => 'Work Order',
+            'work_order' => 'Manufacturing Order',
             'operation_name' => 'Operation',
             'conductor_type' => 'Conductor Type',
             'poles_count' => 'Poles',
-            'connection_type' => 'Connection Type',
             'cross_section' => 'Cross Section',
+            'cross_section_e' => 'Cross Section E',
+            'external_body' => 'External Body',
+            'protection_degree' => 'Protection Degree',
+            'paint' => 'Paint',
+            'model' => 'Model',
+            'ampere' => 'Ampere',
             'status' => 'Status',
             'line_no' => '#',
             'piece_number' => 'Piece No.',
             'assembly' => 'Assembly',
             'visual_quality' => 'Visual Quality',
+            'earth_bond_pe_fe' => 'Earth Bond (PE–FE)',
             'required_size' => 'Required Size',
             'test_pe_l123n' => 'PE-(L1&L2&L3&N)',
             'test_fe_l123n' => 'FE-(L1&L2&L3&N)',
@@ -1822,7 +1869,7 @@ return [
             'credit_facilities' => 'Credit Facilities',
             'installations' => 'Installations',
             'site_surveys' => 'Site Surveys',
-            'work_orders' => 'Work Orders',
+            'work_orders' => 'Manufacturing Orders',
             'quality_sheets' => 'Quality Sheets',
             'users' => 'Users Management',
             'roles' => 'Roles Management',
@@ -2000,15 +2047,16 @@ return [
                 'manage' => 'Manage Site Surveys',
             ],
             'work_orders' => [
-                'view' => 'View Work Orders',
-                'create' => 'Create Work Order',
-                'edit' => 'Edit Work Orders',
-                'start' => 'Start Work Order',
+                'view' => 'View Manufacturing Orders',
+                'create' => 'Create Manufacturing Order',
+                'edit' => 'Edit Manufacturing Orders',
+                'approve_order' => 'Approve Manufacturing Order',
+                'start' => 'Start Manufacturing Order',
                 'submit_qa' => 'Submit to QA',
                 'approve_qa' => 'Approve QA',
-                'complete' => 'Complete Work Order',
+                'complete' => 'Complete Manufacturing Order',
                 'finish_manufacturing' => 'Finish Manufacturing',
-                'delete' => 'Delete Work Orders',
+                'delete' => 'Delete Manufacturing Orders',
             ],
             'quality_sheets' => [
                 'view' => 'View Quality Sheets',
@@ -2243,6 +2291,7 @@ return [
         ],
 
         'work_order_status' => [
+            'draft' => 'Draft',
             'pending' => 'Pending',
             'in_progress' => 'In Progress',
             'qa_review' => 'QA Review',

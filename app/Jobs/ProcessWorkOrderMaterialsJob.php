@@ -53,8 +53,8 @@ class ProcessWorkOrderMaterialsJob implements ShouldQueue
         Log::info("Starting material issuance for WO #{$this->workOrder->wo_number}");
 
         try {
-            if (! $this->workOrder->bom) {
-                Log::warning("Work Order #{$this->workOrder->wo_number} has no linked BOM. Job aborted.");
+            if (! $this->workOrder->materials()->exists() && ! $this->workOrder->bom) {
+                Log::warning("Work Order #{$this->workOrder->wo_number} has no materials or linked BOM. Job aborted.");
                 return;
             }
 

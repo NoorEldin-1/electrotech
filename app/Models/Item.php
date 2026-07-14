@@ -89,6 +89,28 @@ class Item extends Model
     }
 
     /**
+     * Standard BOMs for which this (finished-good) item is the output — its
+     * تركيبة المنتج القياسية (سلايد 6). Empty for raw materials.
+     */
+    public function standardBoms(): HasMany
+    {
+        return $this->hasMany(Bom::class, 'output_item_id');
+    }
+
+    /**
+     * The current standard recipe to apply when this product is manufactured:
+     * the latest APPROVED standard BOM (highest version). Null if none defined.
+     */
+    public function latestApprovedStandardBom(): ?Bom
+    {
+        return $this->standardBoms()
+            ->where('status', \App\Enums\BomStatus::Approved)
+            ->orderByDesc('version')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    /**
      * The scrap variant of this raw item (إذن ارتداد routes returned scrap
      * here under a different code). Null until the first return is posted.
      */

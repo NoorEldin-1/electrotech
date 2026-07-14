@@ -106,7 +106,7 @@ class StatsOverview extends BaseWidget
                 ->descriptionIcon('heroicon-m-paper-airplane')
                 ->color('warning'),
 
-            Stat::make(__('Active Work Orders'), (string) $activeWos)
+            Stat::make(__('Active Manufacturing Orders'), (string) $activeWos)
                 ->description(__('Currently in production'))
                 ->descriptionIcon('heroicon-m-cog-6-tooth')
                 ->color('info'),

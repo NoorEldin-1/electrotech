@@ -32,7 +32,7 @@ class WorkOrderResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('navigation.groups.manufacturing');
+        return __('navigation.groups.technical_office');
     }
 
     public static function getLabel(): string
@@ -48,6 +48,15 @@ class WorkOrderResource extends Resource
     public static function getNavigationLabel(): string
     {
         return __('resources.work_orders.navigation_label');
+    }
+
+    /**
+     * Whether the current user may see costs/prices. Material unit costs are
+     * hidden from users without this permission (same rule as the vouchers).
+     */
+    public static function canViewPricing(): bool
+    {
+        return (bool) auth()->user()?->can('inventory.view_pricing');
     }
 
     public static function form(Form $form): Form
@@ -99,12 +108,44 @@ class WorkOrderResource extends Resource
                             ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->sku} — {$record->name}")
                             ->searchable()
                             ->preload()
-                            ->helperText(__('resources.work_orders.fields.output_item_helper')),
+                            ->helperText(__('resources.work_orders.fields.output_item_helper'))
+                            // سلايد 6 — قائمة المواد التلقائية: choosing the
+                            // finished good auto-fills the material table from
+                            // its standard BOM, but only when the table is
+                            // still empty so a manual override is never
+                            // clobbered.
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set): void {
+                                if (! $state || filled($get('materials'))) {
+                                    return;
+                                }
+
+                                $item = \App\Models\Item::find($state);
+
+                                if (! $item) {
+                                    return;
+                                }
+
+                                try {
+                                    $lines = app(\App\Services\WorkOrderMaterialService::class)
+                                        ->standardMaterialsFor($item, (float) ($get('planned_quantity') ?? 0));
+                                } catch (\RuntimeException) {
+                                    // No standard BOM yet — leave the table for
+                                    // manual entry; the fetch action surfaces
+                                    // the reason on demand.
+                                    return;
+                                }
+
+                                $set('materials', $lines);
+                            }),
 
                         Forms\Components\Select::make('status')
                             ->label(__('resources.work_orders.fields.status'))
                             ->options(WorkOrderStatus::class)
-                            ->default(WorkOrderStatus::Pending)
+                            // سلايد 5 — the order is authored as a Draft; the PMO
+                            // manager approves it (approve_order) before the floor
+                            // can start manufacturing.
+                            ->default(WorkOrderStatus::Draft)
                             ->required(),
 
                         Forms\Components\Select::make('priority')
@@ -159,11 +200,154 @@ class WorkOrderResource extends Resource
                             ->after('planned_start_date'),
                     ]),
 
+                // المواصفات الفنية — سلايد 2–3: authored here by the PMO, then
+                // snapshot-copied into the quality sheet's operation data
+                // (بيانات العملية تُملأ تلقائياً بناءً على أمر التصنيع).
+                Forms\Components\Section::make(__('resources.work_orders.sections.specs'))
+                    ->icon('heroicon-o-adjustments-horizontal')
+                    ->description(__('resources.work_orders.sections.specs_description'))
+                    ->columns(3)
+                    ->collapsible()
+                    ->schema([
+                        Forms\Components\TextInput::make('conductor_type')
+                            ->label(__('resources.work_orders.fields.conductor_type'))
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('cross_section')
+                            ->label(__('resources.work_orders.fields.cross_section'))
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('cross_section_e')
+                            ->label(__('resources.work_orders.fields.cross_section_e'))
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('external_body')
+                            ->label(__('resources.work_orders.fields.external_body'))
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('protection_degree')
+                            ->label(__('resources.work_orders.fields.protection_degree'))
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('paint')
+                            ->label(__('resources.work_orders.fields.paint'))
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('model')
+                            ->label(__('resources.work_orders.fields.model'))
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('ampere')
+                            ->label(__('resources.work_orders.fields.ampere'))
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('poles_count')
+                            ->label(__('resources.work_orders.fields.poles_count'))
+                            ->numeric()
+                            ->minValue(0),
+                    ]),
+
+                // جدول الخامات — سلايد 6: seeded from the finished good's
+                // standard BOM, then freely editable for this order (المرونة
+                // والتعديل اليدوي). The issue voucher is built from these lines.
+                Forms\Components\Section::make(__('resources.work_orders.sections.materials'))
+                    ->icon('heroicon-o-list-bullet')
+                    ->description(__('resources.work_orders.sections.materials_description'))
+                    ->schema([
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('fetch_standard_materials')
+                                ->label(__('resources.work_orders.actions.fetch_standard_materials'))
+                                ->icon('heroicon-o-arrow-down-tray')
+                                ->color('gray')
+                                ->requiresConfirmation()
+                                ->visible(fn (Forms\Get $get) => filled($get('output_item_id')))
+                                ->action(function (Forms\Get $get, Forms\Set $set): void {
+                                    $item = \App\Models\Item::find($get('output_item_id'));
+
+                                    if (! $item) {
+                                        return;
+                                    }
+
+                                    try {
+                                        $lines = app(\App\Services\WorkOrderMaterialService::class)
+                                            ->standardMaterialsFor($item, (float) ($get('planned_quantity') ?? 0));
+                                    } catch (\RuntimeException $e) {
+                                        Notification::make()->warning()
+                                            ->title(__('resources.work_orders.notifications.failed'))
+                                            ->body($e->getMessage())->send();
+
+                                        return;
+                                    }
+
+                                    $set('materials', $lines);
+
+                                    Notification::make()->success()
+                                        ->title(__('resources.work_orders.notifications.materials_fetched'))
+                                        ->send();
+                                }),
+                        ]),
+
+                        Forms\Components\Repeater::make('materials')
+                            ->label(__('resources.work_orders.fields.materials'))
+                            ->relationship()
+                            ->columns(static::canViewPricing() ? 3 : 2)
+                            ->defaultItems(0)
+                            ->reorderable(false)
+                            ->schema([
+                                Forms\Components\Select::make('item_id')
+                                    ->label(__('resources.work_orders.fields.material_item'))
+                                    ->relationship(
+                                        'item',
+                                        'name',
+                                        fn (Builder $query) => $query->where('is_scrap', false)
+                                            ->whereIn('type', ['raw_material', 'consumable', 'semi_finished']),
+                                    )
+                                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->sku} — {$record->name}")
+                                    ->searchable()
+                                    ->preload()
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set): void {
+                                        // Default the unit cost from the item's
+                                        // card (سلايد 8) when a row is added.
+                                        if ($state && static::canViewPricing()) {
+                                            $set('unit_cost', (float) (\App\Models\Item::find($state)?->unit_cost ?? 0));
+                                        }
+                                    })
+                                    ->suffixAction(ItemResource::quickViewAction())
+                                    ->columnSpan(1),
+
+                                Forms\Components\TextInput::make('quantity')
+                                    ->label(__('resources.work_orders.fields.material_quantity'))
+                                    ->numeric()
+                                    ->minValue(0.0001)
+                                    ->required()
+                                    // Flag hand-edited rows so reports can tell a
+                                    // manual override from the standard recipe.
+                                    ->live(debounce: 500)
+                                    ->afterStateUpdated(fn (Forms\Set $set) => $set('is_manual', true))
+                                    ->columnSpan(1),
+
+                                Forms\Components\TextInput::make('unit_cost')
+                                    ->label(__('resources.work_orders.fields.material_unit_cost'))
+                                    ->numeric()
+                                    ->prefix('EGP')
+                                    ->default(0)
+                                    ->visible(fn () => static::canViewPricing())
+                                    ->columnSpan(1),
+
+                                Forms\Components\Hidden::make('is_manual')
+                                    ->default(false),
+                            ])
+                            ->columnSpanFull(),
+                    ]),
+
                 Forms\Components\Section::make(__('resources.work_orders.sections.qa_gate'))
                     ->icon('heroicon-o-shield-check')
                     ->description(__('resources.work_orders.sections.qa_gate_description'))
                     ->columns(2)
                     ->schema([
+                        Forms\Components\Placeholder::make('order_approval_status')
+                            ->label(__('resources.work_orders.fields.order_approved_at'))
+                            ->content(fn (?WorkOrder $record) => $record?->isOrderApproved()
+                                ? __('resources.work_orders.order_approval.approved_by', [
+                                    'name' => $record->orderApprovedBy?->name,
+                                    'date' => $record->order_approved_at?->format('Y-m-d H:i'),
+                                ])
+                                : __('resources.work_orders.order_approval.pending')),
+
                         Forms\Components\Placeholder::make('qa_status')
                             ->label(__('resources.work_orders.fields.qa_status'))
                             ->content(fn (?WorkOrder $record) => $record?->isQaApproved()
@@ -310,6 +494,31 @@ class WorkOrderResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+
+                // Approve order (اعتماد مدير مكتب المشروعات — سلايد 5): the PMO
+                // manager releases the draft to the floor (Draft → Pending).
+                // Manufacturing cannot start before this gate. Idempotent on
+                // retry, like the QA actions.
+                Tables\Actions\Action::make('approve_order')
+                    ->label(__('resources.work_orders.actions.approve_order'))
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::Draft
+                        && auth()->user()?->can('work_orders.approve_order'))
+                    ->action(function (WorkOrder $record) {
+                        $fresh = $record->fresh();
+                        if ($fresh && $fresh->status !== WorkOrderStatus::Draft) {
+                            Notification::make()->success()->title(__('resources.work_orders.notifications.order_approved'))->send();
+                            return;
+                        }
+                        try {
+                            app(WorkOrderService::class)->approveOrder($record);
+                            Notification::make()->success()->title(__('resources.work_orders.notifications.order_approved'))->send();
+                        } catch (\RuntimeException $e) {
+                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                        }
+                    }),
 
                 // Start WO action
                 //

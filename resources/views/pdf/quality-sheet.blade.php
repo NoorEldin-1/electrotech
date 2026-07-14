@@ -20,6 +20,8 @@
         table.grid th { background: #374151; color: #fff; font-size: 9px; padding: 4px 3px; border: 1px solid #374151; }
         table.grid td { border: 1px solid #9ca3af; padding: 4px 4px; font-size: 9px; }
         .center { text-align: center; }
+        /* علامة صح — مربع مرسوم بالـ CSS (رموز ☑/☐ غير متوفرة في خط الـ PDF). */
+        .chk { display: inline-block; width: 10px; height: 10px; line-height: 10px; border: 1px solid #374151; text-align: center; font-size: 9px; font-weight: bold; }
         .signatures { width: 100%; margin-top: 28px; }
         .signatures td { width: 50%; vertical-align: top; padding: 6px 10px; }
         .sig-line { margin-top: 26px; border-top: 1px solid #6b7280; padding-top: 4px; }
@@ -59,28 +61,52 @@
             <td>{{ $sheet->poles_count ?? '—' }}</td>
         </tr>
         <tr>
-            <td class="k">{{ __('resources.quality_sheets.pdf.connection_type') }}</td>
-            <td>{{ $sheet->connection_type ?: '—' }}</td>
             <td class="k">{{ __('resources.quality_sheets.pdf.cross_section') }}</td>
             <td>{{ $sheet->cross_section ?: '—' }}</td>
+            <td class="k">{{ __('resources.quality_sheets.pdf.cross_section_e') }}</td>
+            <td>{{ $sheet->cross_section_e ?: '—' }}</td>
+            <td class="k">{{ __('resources.quality_sheets.pdf.ampere') }}</td>
+            <td>{{ $sheet->ampere ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="k">{{ __('resources.quality_sheets.pdf.external_body') }}</td>
+            <td>{{ $sheet->external_body ?: '—' }}</td>
+            <td class="k">{{ __('resources.quality_sheets.pdf.protection_degree') }}</td>
+            <td>{{ $sheet->protection_degree ?: '—' }}</td>
+            <td class="k">{{ __('resources.quality_sheets.pdf.paint') }}</td>
+            <td>{{ $sheet->paint ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="k">{{ __('resources.quality_sheets.pdf.model') }}</td>
+            <td>{{ $sheet->model ?: '—' }}</td>
             <td class="k">{{ __('resources.quality_sheets.pdf.status') }}</td>
-            <td>{{ $sheet->status?->getLabel() }}</td>
+            <td colspan="3">{{ $sheet->status?->getLabel() }}</td>
         </tr>
     </table>
+
+    @php
+        // خانات الاختبار — قراءتان لكل خانة تُعرَضان «r1 / r2».
+        $tests = ['test_pe_l123n', 'test_fe_l123n', 'test_n_l12l3', 'test_l1_l2l3', 'test_l2_l3'];
+        $check = fn ($v) => '<span class="chk">' . ($v ? '√' : '') . '</span>';
+        $readings = function ($line, $test) {
+            $r1 = $line->{$test . '_r1'};
+            $r2 = $line->{$test . '_r2'};
+            return trim(($r1 ?? '') . ' / ' . ($r2 ?? ''), ' /') === '' ? '—' : ($r1 ?? '') . ' / ' . ($r2 ?? '');
+        };
+    @endphp
 
     <table class="grid">
         <thead>
             <tr>
-                <th style="width: 5%">{{ __('resources.quality_sheets.pdf.line_no') }}</th>
+                <th style="width: 4%">{{ __('resources.quality_sheets.pdf.line_no') }}</th>
                 <th>{{ __('resources.quality_sheets.pdf.piece_number') }}</th>
-                <th>{{ __('resources.quality_sheets.pdf.assembly') }}</th>
                 <th>{{ __('resources.quality_sheets.pdf.visual_quality') }}</th>
+                <th>{{ __('resources.quality_sheets.pdf.assembly') }}</th>
+                <th>{{ __('resources.quality_sheets.pdf.earth_bond_pe_fe') }}</th>
                 <th>{{ __('resources.quality_sheets.pdf.required_size') }}</th>
-                <th>{{ __('resources.quality_sheets.pdf.test_pe_l123n') }}</th>
-                <th>{{ __('resources.quality_sheets.pdf.test_fe_l123n') }}</th>
-                <th>{{ __('resources.quality_sheets.pdf.test_n_l12l3') }}</th>
-                <th>{{ __('resources.quality_sheets.pdf.test_l1_l2l3') }}</th>
-                <th>{{ __('resources.quality_sheets.pdf.test_l2_l3') }}</th>
+                @foreach ($tests as $test)
+                    <th>{{ __("resources.quality_sheets.pdf.{$test}") }}</th>
+                @endforeach
                 <th>{{ __('resources.quality_sheets.pdf.notes') }}</th>
             </tr>
         </thead>
@@ -89,14 +115,13 @@
                 <tr>
                     <td class="center">{{ $line->line_no ?? $i + 1 }}</td>
                     <td>{{ $line->piece_number }}</td>
-                    <td>{{ $line->assembly }}</td>
-                    <td>{{ $line->visual_quality }}</td>
+                    <td class="center">{!! $check($line->visual_quality) !!}</td>
+                    <td class="center">{!! $check($line->assembly) !!}</td>
+                    <td class="center">{!! $check($line->earth_bond_pe_fe) !!}</td>
                     <td>{{ $line->required_size }}</td>
-                    <td class="center">{{ $line->test_pe_l123n }}</td>
-                    <td class="center">{{ $line->test_fe_l123n }}</td>
-                    <td class="center">{{ $line->test_n_l12l3 }}</td>
-                    <td class="center">{{ $line->test_l1_l2l3 }}</td>
-                    <td class="center">{{ $line->test_l2_l3 }}</td>
+                    @foreach ($tests as $test)
+                        <td class="center">{{ $readings($line, $test) }}</td>
+                    @endforeach
                     <td>{{ $line->notes }}</td>
                 </tr>
             @endforeach

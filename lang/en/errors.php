@@ -30,6 +30,7 @@ return [
 
     'issue' => [
         'no_bom' => 'Work Order :number has no linked BOM, so an issue voucher cannot be created.',
+        'no_materials' => 'Work Order :number has no materials or linked BOM, so an issue voucher cannot be created.',
     ],
 
     'delivery' => [
@@ -40,6 +41,7 @@ return [
     ],
 
     'work_order' => [
+        'cannot_approve_order' => 'Work Order :number cannot be approved. It is not a draft. Current status: :status.',
         'cannot_start' => 'Work Order :number cannot be started. Current status: :status.',
         'no_bom' => 'Work Order :number has no linked BOM. Cannot issue materials.',
         'not_in_progress' => 'Work Order :number must be in progress to submit for QA.',
@@ -47,6 +49,8 @@ return [
         'qa_gate' => 'Work Order :number cannot be completed without QA approval. The QA gate is mandatory.',
         'not_in_qa_review' => 'Work Order :number must be in QA review to complete.',
         'cannot_finish_manufacturing' => 'Manufacturing for Work Order :number cannot be finished. It must be started first. Current status: :status.',
+        'no_output_item' => 'Work Order :number has no finished product selected, so standard materials cannot be fetched.',
+        'no_standard_bom' => 'No approved standard BOM exists for ":item". Define its standard recipe first, or enter the materials manually.',
     ],
 
     'quality_sheet' => [

@@ -47,14 +47,16 @@ class QualitySheetService
 
                 $workOrder->loadMissing(['outputItem', 'project']);
 
-                $sheet = QualitySheet::create([
-                    'sheet_number' => QualitySheet::generateSheetNumber(),
-                    'work_order_id' => $workOrder->id,
-                    'test_date' => now(),
-                    'operation_name' => $workOrder->project?->name ?? $workOrder->title,
-                    'status' => QualitySheetStatus::Draft,
-                    'created_by' => Auth::id(),
-                ]);
+                $sheet = QualitySheet::create(array_merge(
+                    [
+                        'sheet_number' => QualitySheet::generateSheetNumber(),
+                        'work_order_id' => $workOrder->id,
+                        'test_date' => now(),
+                        'status' => QualitySheetStatus::Draft,
+                        'created_by' => Auth::id(),
+                    ],
+                    self::specSnapshotFrom($workOrder),
+                ));
 
                 for ($i = 1; $i <= self::DEFAULT_LINES; $i++) {
                     $sheet->lines()->create(['line_no' => $i]);
@@ -63,6 +65,31 @@ class QualitySheetService
                 return $sheet;
             });
         });
+    }
+
+    /**
+     * Snapshot the operation-data header from the manufacturing order
+     * (سلايد 2: بيانات العملية تُملأ تلقائياً بناءً على أمر التصنيع). Copied
+     * once at sheet creation so it stays stable even if the order is later
+     * edited; the QA department may still adjust it on the sheet. Also used by
+     * QualitySheetResource when a work order is picked in the form.
+     *
+     * @return array<string, mixed>
+     */
+    public static function specSnapshotFrom(WorkOrder $workOrder): array
+    {
+        return [
+            'operation_name' => $workOrder->project?->name ?? $workOrder->title,
+            'conductor_type' => $workOrder->conductor_type,
+            'cross_section' => $workOrder->cross_section,
+            'cross_section_e' => $workOrder->cross_section_e,
+            'external_body' => $workOrder->external_body,
+            'protection_degree' => $workOrder->protection_degree,
+            'paint' => $workOrder->paint,
+            'model' => $workOrder->model,
+            'ampere' => $workOrder->ampere,
+            'poles_count' => $workOrder->poles_count,
+        ];
     }
 
     /**

@@ -66,7 +66,27 @@ class QualitySheetResource extends Resource
                             ->relationship('workOrder', 'wo_number')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            // سلايد 2 — بيانات العملية تُملأ تلقائياً من أمر
+                            // التصنيع عند اختياره (فقط ما لم تُملأ يدوياً بعد).
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set): void {
+                                if (! $state) {
+                                    return;
+                                }
+
+                                $workOrder = \App\Models\WorkOrder::find($state);
+
+                                if (! $workOrder) {
+                                    return;
+                                }
+
+                                foreach (\App\Services\QualitySheetService::specSnapshotFrom($workOrder) as $field => $value) {
+                                    if (blank($get($field))) {
+                                        $set($field, $value);
+                                    }
+                                }
+                            }),
 
                         Forms\Components\DatePicker::make('test_date')
                             ->label(__('resources.quality_sheets.fields.test_date'))
@@ -80,12 +100,32 @@ class QualitySheetResource extends Resource
                             ->label(__('resources.quality_sheets.fields.conductor_type'))
                             ->maxLength(255),
 
-                        Forms\Components\TextInput::make('connection_type')
-                            ->label(__('resources.quality_sheets.fields.connection_type'))
-                            ->maxLength(255),
-
                         Forms\Components\TextInput::make('cross_section')
                             ->label(__('resources.quality_sheets.fields.cross_section'))
+                            ->maxLength(255),
+
+                        Forms\Components\TextInput::make('cross_section_e')
+                            ->label(__('resources.quality_sheets.fields.cross_section_e'))
+                            ->maxLength(255),
+
+                        Forms\Components\TextInput::make('external_body')
+                            ->label(__('resources.quality_sheets.fields.external_body'))
+                            ->maxLength(255),
+
+                        Forms\Components\TextInput::make('protection_degree')
+                            ->label(__('resources.quality_sheets.fields.protection_degree'))
+                            ->maxLength(255),
+
+                        Forms\Components\TextInput::make('paint')
+                            ->label(__('resources.quality_sheets.fields.paint'))
+                            ->maxLength(255),
+
+                        Forms\Components\TextInput::make('model')
+                            ->label(__('resources.quality_sheets.fields.model'))
+                            ->maxLength(255),
+
+                        Forms\Components\TextInput::make('ampere')
+                            ->label(__('resources.quality_sheets.fields.ampere'))
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('poles_count')
@@ -115,27 +155,36 @@ class QualitySheetResource extends Resource
 
                                 Forms\Components\TextInput::make('piece_number')
                                     ->label(__('resources.quality_sheets.fields.piece_number')),
-                                Forms\Components\TextInput::make('assembly')
-                                    ->label(__('resources.quality_sheets.fields.assembly')),
-                                Forms\Components\TextInput::make('visual_quality')
-                                    ->label(__('resources.quality_sheets.fields.visual_quality')),
                                 Forms\Components\TextInput::make('required_size')
                                     ->label(__('resources.quality_sheets.fields.required_size')),
 
-                                Forms\Components\TextInput::make('test_pe_l123n')
-                                    ->label(__('resources.quality_sheets.fields.test_pe_l123n')),
-                                Forms\Components\TextInput::make('test_fe_l123n')
-                                    ->label(__('resources.quality_sheets.fields.test_fe_l123n')),
-                                Forms\Components\TextInput::make('test_n_l12l3')
-                                    ->label(__('resources.quality_sheets.fields.test_n_l12l3')),
-                                Forms\Components\TextInput::make('test_l1_l2l3')
-                                    ->label(__('resources.quality_sheets.fields.test_l1_l2l3')),
-                                Forms\Components\TextInput::make('test_l2_l3')
-                                    ->label(__('resources.quality_sheets.fields.test_l2_l3')),
+                                // علامات صح (سلايد 4).
+                                Forms\Components\Checkbox::make('visual_quality')
+                                    ->label(__('resources.quality_sheets.fields.visual_quality')),
+                                Forms\Components\Checkbox::make('assembly')
+                                    ->label(__('resources.quality_sheets.fields.assembly')),
+                                Forms\Components\Checkbox::make('earth_bond_pe_fe')
+                                    ->label(__('resources.quality_sheets.fields.earth_bond_pe_fe')),
+
+                                // بقية خانات الاختبار — قراءتان لكل خانة (سلايد 4).
+                                ...collect([
+                                    'test_pe_l123n',
+                                    'test_fe_l123n',
+                                    'test_n_l12l3',
+                                    'test_l1_l2l3',
+                                    'test_l2_l3',
+                                ])->map(fn (string $test) => Forms\Components\Fieldset::make(__("resources.quality_sheets.fields.{$test}"))
+                                    ->columns(2)
+                                    ->schema([
+                                        Forms\Components\TextInput::make($test . '_r1')
+                                            ->label(__('resources.quality_sheets.fields.reading_1')),
+                                        Forms\Components\TextInput::make($test . '_r2')
+                                            ->label(__('resources.quality_sheets.fields.reading_2')),
+                                    ]))->all(),
 
                                 Forms\Components\TextInput::make('notes')
                                     ->label(__('resources.quality_sheets.fields.line_notes'))
-                                    ->columnSpan(2),
+                                    ->columnSpanFull(),
                             ])
                             ->disabled(fn (?QualitySheet $record) => $record?->isApproved() ?? false)
                             ->columnSpanFull(),

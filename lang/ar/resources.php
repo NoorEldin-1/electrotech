@@ -444,12 +444,15 @@ return [
 
         'sections' => [
             'bom_details' => 'تفاصيل قائمة المواد',
+            'bom_details_description' => 'اربط القائمة بمشروع، أو بمنتج تام لتصبح التركيبة القياسية لهذا المنتج.',
             'bom_items' => 'أصناف قائمة المواد',
             'bom_items_description' => 'أضف الأصناف المطلوبة لهذا المشروع. أدخل نسبة الهالك وفقاً للمواصفات الفنية.',
         ],
 
         'fields' => [
             'project' => 'المشروع',
+            'output_item' => 'المنتج التام (قائمة قياسية)',
+            'output_item_helper' => 'حدّده لتصبح القائمة هي التركيبة القياسية للمنتج، تُجلب تلقائياً في أوامر التصنيع.',
             'version' => 'الإصدار',
             'status' => 'الحالة',
             'notes' => 'ملاحظات',
@@ -460,6 +463,8 @@ return [
 
         'columns' => [
             'project' => 'المشروع',
+            'standard_bom' => 'قائمة قياسية',
+            'output_item' => 'المنتج التام',
             'sales_stage' => 'مرحلة المبيعات',
             'version' => 'الإصدار',
             'status' => 'الحالة',
@@ -569,7 +574,7 @@ return [
             'profit_tax' => 'خصم ض. الأرباح (:rate%)',
             'total' => 'الإجمالي',
             'no_profit_tax_note' => 'هذا المورد غير خاضع لخصم 1% ضريبة الأرباح التجارية والصناعية.',
-            'approved_by' => 'اعتماد مدير المكتب الفني',
+            'approved_by' => 'اعتماد مدير مكتب ادارة المشروعات',
         ],
     ],
 
@@ -770,7 +775,7 @@ return [
 
         'fields' => [
             'voucher_number' => 'رقم الإذن',
-            'work_order' => 'أمر التشغيل',
+            'work_order' => 'أمر التصنيع',
             'voucher_date' => 'التاريخ',
             'notes' => 'ملاحظات',
             'lines' => 'الأصناف',
@@ -781,7 +786,7 @@ return [
 
         'columns' => [
             'voucher_number' => 'الرقم',
-            'work_order' => 'أمر التشغيل',
+            'work_order' => 'أمر التصنيع',
             'voucher_date' => 'التاريخ',
             'total_value' => 'إجمالي القيمة',
             'status' => 'الحالة',
@@ -814,7 +819,7 @@ return [
 
         'fields' => [
             'voucher_number' => 'رقم الإذن',
-            'work_order' => 'أمر التشغيل',
+            'work_order' => 'أمر التصنيع',
             'voucher_date' => 'التاريخ',
             'notes' => 'ملاحظات',
             'lines' => 'الأصناف',
@@ -825,7 +830,7 @@ return [
 
         'columns' => [
             'voucher_number' => 'الرقم',
-            'work_order' => 'أمر التشغيل',
+            'work_order' => 'أمر التصنيع',
             'voucher_date' => 'التاريخ',
             'total_value' => 'إجمالي القيمة',
             'status' => 'الحالة',
@@ -853,7 +858,7 @@ return [
 
         'fields' => [
             'voucher_number' => 'رقم الإذن',
-            'work_order' => 'أمر التشغيل',
+            'work_order' => 'أمر التصنيع',
             'loss_type' => 'نوع الهالك',
             'loss_type_hint' => 'الهالك الغير طبيعي يُخرَج من العملية، أما الطبيعي فيبقى محمَّلاً عليها.',
             'voucher_date' => 'التاريخ',
@@ -866,7 +871,7 @@ return [
 
         'columns' => [
             'voucher_number' => 'الرقم',
-            'work_order' => 'أمر التشغيل',
+            'work_order' => 'أمر التصنيع',
             'loss_type' => 'نوع الهالك',
             'voucher_date' => 'التاريخ',
             'total_value' => 'إجمالي القيمة',
@@ -1088,7 +1093,7 @@ return [
             'actual_cost' => 'التكلفة الفعلية',
             'usage' => 'استهلاك الميزانية',
             'boms' => 'قوائم المواد',
-            'work_orders' => 'أوامر التشغيل',
+            'work_orders' => 'أوامر التصنيع',
             'purchase_orders' => 'أوامر الشراء',
             'deliveries' => 'التسليمات',
             'status' => 'الحالة',
@@ -1503,7 +1508,7 @@ return [
         'navigation_label' => 'الإنتاج والفاقد',
 
         'columns' => [
-            'work_order' => 'أمر التشغيل',
+            'work_order' => 'أمر التصنيع',
             'output_item' => 'المنتج',
             'entry_date' => 'التاريخ',
             'planned_quantity' => 'المخطط',
@@ -1520,39 +1525,58 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | أوامر التشغيل - Work Order Resource
+    | أوامر التصنيع - Work Order Resource
     |--------------------------------------------------------------------------
     */
     'work_orders' => [
         'label' => 'أمر تشغيل',
-        'plural_label' => 'أوامر التشغيل',
-        'navigation_label' => 'أوامر التشغيل',
+        'plural_label' => 'أوامر التصنيع',
+        'navigation_label' => 'أوامر التصنيع',
 
         'sections' => [
-            'wo_details' => 'تفاصيل أمر التشغيل',
+            'wo_details' => 'تفاصيل أمر التصنيع',
             'quantities_schedule' => 'الكميات والجدول الزمني',
+            'materials' => 'جدول الخامات',
+            'materials_description' => 'تُملأ تلقائياً من التركيبة القياسية للمنتج التام (مُقاسة على الكمية المخططة). عدّل الكميات بحرية لهذا الأمر — دون أن تتغيّر التركيبة القياسية.',
+            'specs' => 'المواصفات الفنية',
+            'specs_description' => 'مواصفات العملية المُدخَلة هنا تُنسَخ إلى بيانات العملية في ورقة الجودة عند إنشائها.',
             'qa_gate' => 'بوابة ضمان الجودة',
             'qa_gate_description' => 'اعتماد ضمان الجودة إلزامي قبل إتمام العملية.',
             'description' => 'الوصف',
         ],
 
         'fields' => [
-            'wo_number' => 'رقم أمر التشغيل',
+            'wo_number' => 'رقم أمر التصنيع',
             'title' => 'العنوان',
             'project' => 'المشروع',
             'linked_bom' => 'قائمة المواد المرتبطة',
             'output_item' => 'المنتج التام',
-            'output_item_helper' => 'الصنف الذي يُنتَج في مخزن التام عند إتمام أمر التشغيل.',
+            'output_item_helper' => 'الصنف الذي يُنتَج في مخزن التام عند إتمام أمر التصنيع.',
+            'conductor_type' => 'نوع الموصل',
+            'cross_section' => 'مساحة المقطع',
+            'cross_section_e' => 'مساحة المقطع E',
+            'external_body' => 'الجسم الخارجى',
+            'protection_degree' => 'درجة الحماية',
+            'paint' => 'الدهان',
+            'model' => 'الطراز',
+            'ampere' => 'الأمبير',
+            'poles_count' => 'عدد الأقطاب',
             'status' => 'الحالة',
             'priority' => 'الأولوية',
             'assigned_to' => 'مسند إلى',
             'planned_quantity' => 'الكمية المخططة',
             'produced_quantity' => 'الكمية المنتجة',
             'waste_quantity' => 'كمية الهالك',
+            'materials' => 'الخامات',
+            'material_item' => 'الخامة',
+            'material_quantity' => 'الكمية',
+            'material_unit_cost' => 'تكلفة الوحدة',
+            'planned_material_cost' => 'تكلفة الخامات المخططة',
             'planned_start_date' => 'تاريخ البداية المخطط',
             'planned_end_date' => 'تاريخ النهاية المخطط',
             'qa_status' => 'حالة ضمان الجودة',
             'qa_notes' => 'ملاحظات ضمان الجودة',
+            'order_approved_at' => 'اعتماد مكتب المشروعات',
             'manufacturing_finished_at' => 'انتهاء التصنيع',
             'manufacturing_duration' => 'مدة التصنيع',
             'manufacturing_finished_by' => 'أنهى التصنيع',
@@ -1577,6 +1601,7 @@ return [
         ],
 
         'actions' => [
+            'approve_order' => 'اعتماد الأمر',
             'start' => 'بدء',
             'issue_materials' => 'صرف الخامات',
             'return_scrap' => 'ارتداد فضلات',
@@ -1586,26 +1611,34 @@ return [
             'complete' => 'إتمام',
             'finish_manufacturing' => 'انتهاء التصنيع',
             'quality_sheet' => 'ورقة الجودة',
+            'fetch_standard_materials' => 'جلب الخامات القياسية',
         ],
 
         'notifications' => [
-            'started' => 'تم بدء أمر التشغيل',
+            'order_approved' => 'تم اعتماد الأمر — أصبح جاهزاً للتصنيع',
+            'started' => 'تم بدء أمر التصنيع',
+            'materials_fetched' => 'تم جلب الخامات القياسية من قائمة المواد',
             'issue_voucher_created' => 'تم إنشاء إذن صرف (مسودة)',
             'return_voucher_created' => 'تم إنشاء إذن ارتداد (مسودة)',
             'depreciation_voucher_created' => 'تم إنشاء إذن إهلاك (مسودة)',
             'submitted_qa' => 'تم الإرسال لضمان الجودة',
             'qa_approved' => 'تم اعتماد الجودة',
-            'completed' => 'تم إتمام أمر التشغيل',
+            'completed' => 'تم إتمام أمر التصنيع',
             'manufacturing_finished' => 'تم إنهاء التصنيع — وتم تنبيه الأقسام',
             'ready_for_delivery_title' => 'المنتج جاهز للتسليم',
-            'ready_for_delivery_body' => 'انتهى تصنيع :product (أمر التشغيل :wo_number) وأصبح جاهزاً للتسليم.',
-            'view_work_order' => 'عرض أمر التشغيل',
+            'ready_for_delivery_body' => 'انتهى تصنيع :product (أمر التصنيع :wo_number) وأصبح جاهزاً للتسليم.',
+            'view_work_order' => 'عرض أمر التصنيع',
             'failed' => 'فشل',
         ],
 
         'qa' => [
             'approved_by' => '✅ اعتُمد بواسطة :name في :date',
             'pending' => '⏳ في انتظار مراجعة الجودة',
+        ],
+
+        'order_approval' => [
+            'approved_by' => '✅ اعتُمد بواسطة :name في :date',
+            'pending' => '⏳ مسودة — في انتظار اعتماد مدير مكتب المشروعات',
         ],
 
         'manufacturing' => [
@@ -1642,19 +1675,27 @@ return [
 
         'fields' => [
             'sheet_number' => 'رقم الورقة',
-            'work_order' => 'أمر التشغيل',
+            'work_order' => 'أمر التصنيع',
             'test_date' => 'تاريخ الاختبار',
             'operation_name' => 'اسم العملية',
             'conductor_type' => 'نوع الموصل',
-            'connection_type' => 'نوع التوصيل',
             'cross_section' => 'مساحة المقطع',
+            'cross_section_e' => 'مساحة المقطع E',
+            'external_body' => 'الجسم الخارجى',
+            'protection_degree' => 'درجة الحماية',
+            'paint' => 'الدهان',
+            'model' => 'الطراز',
+            'ampere' => 'الأمبير',
             'poles_count' => 'عدد الأقطاب',
             'notes' => 'ملاحظات',
             'lines' => 'بنود الاختبار',
             'piece_number' => 'رقم القطعة',
             'assembly' => 'التجميع',
             'visual_quality' => 'الجودة الظاهرية',
+            'earth_bond_pe_fe' => 'تربيط الجانب الأرضى (PE–FE)',
             'required_size' => 'المقاس المطلوب',
+            'reading_1' => 'قراءة 1',
+            'reading_2' => 'قراءة 2',
             'test_pe_l123n' => 'PE-(L1&L2&L3&N)',
             'test_fe_l123n' => 'FE-(L1&L2&L3&N)',
             'test_n_l12l3' => 'N-(L1&L2&L3)',
@@ -1668,7 +1709,7 @@ return [
 
         'columns' => [
             'sheet_number' => 'الرقم',
-            'work_order' => 'أمر التشغيل',
+            'work_order' => 'أمر التصنيع',
             'status' => 'الحالة',
             'qa_filled_by' => 'مَلأها',
             'factory_approved_by' => 'اعتمدها',
@@ -1688,7 +1729,7 @@ return [
             'filled' => 'تم ملء ورقة الجودة وتوقيعها من قسم الجودة.',
             'approved' => 'تم اعتماد ورقة الجودة — تم تنبيه الأقسام.',
             'approved_alert_title' => 'تم الانتهاء من تصنيع العملية',
-            'approved_alert_body' => 'تم اعتماد ورقة الجودة :sheet_number (أمر التشغيل :wo_number) — تم الانتهاء من تصنيع العملية.',
+            'approved_alert_body' => 'تم اعتماد ورقة الجودة :sheet_number (أمر التصنيع :wo_number) — تم الانتهاء من تصنيع العملية.',
             'view_quality_sheet' => 'عرض ورقة الجودة',
         ],
 
@@ -1704,17 +1745,23 @@ return [
             'title' => 'ورقة اختبار التصنيع',
             'sheet_number' => 'رقم الورقة',
             'test_date' => 'التاريخ',
-            'work_order' => 'أمر التشغيل',
+            'work_order' => 'أمر التصنيع',
             'operation_name' => 'العملية',
             'conductor_type' => 'نوع الموصل',
             'poles_count' => 'الأقطاب',
-            'connection_type' => 'نوع التوصيل',
             'cross_section' => 'مساحة المقطع',
+            'cross_section_e' => 'مساحة المقطع E',
+            'external_body' => 'الجسم الخارجى',
+            'protection_degree' => 'درجة الحماية',
+            'paint' => 'الدهان',
+            'model' => 'الطراز',
+            'ampere' => 'الأمبير',
             'status' => 'الحالة',
             'line_no' => 'م',
             'piece_number' => 'رقم القطعة',
             'assembly' => 'التجميع',
             'visual_quality' => 'الجودة الظاهرية',
+            'earth_bond_pe_fe' => 'تربيط الأرضى (PE–FE)',
             'required_size' => 'المقاس المطلوب',
             'test_pe_l123n' => 'PE-(L1&L2&L3&N)',
             'test_fe_l123n' => 'FE-(L1&L2&L3&N)',
@@ -1822,7 +1869,7 @@ return [
             'credit_facilities' => 'التسهيلات الائتمانية',
             'installations' => 'التركيبات',
             'site_surveys' => 'معاينات الموقع',
-            'work_orders' => 'أوامر التشغيل',
+            'work_orders' => 'أوامر التصنيع',
             'quality_sheets' => 'أوراق الجودة',
             'users' => 'إدارة المستخدمين',
             'roles' => 'إدارة الأدوار',
@@ -2000,15 +2047,16 @@ return [
                 'manage' => 'إدارة معاينات الموقع',
             ],
             'work_orders' => [
-                'view' => 'عرض أوامر التشغيل',
+                'view' => 'عرض أوامر التصنيع',
                 'create' => 'إنشاء أمر تشغيل',
-                'edit' => 'تعديل أوامر التشغيل',
-                'start' => 'بدء أمر التشغيل',
+                'edit' => 'تعديل أوامر التصنيع',
+                'approve_order' => 'اعتماد أمر التصنيع',
+                'start' => 'بدء أمر التصنيع',
                 'submit_qa' => 'إرسال لضمان الجودة',
                 'approve_qa' => 'اعتماد ضمان الجودة',
-                'complete' => 'إتمام أمر التشغيل',
+                'complete' => 'إتمام أمر التصنيع',
                 'finish_manufacturing' => 'إنهاء التصنيع',
-                'delete' => 'حذف أوامر التشغيل',
+                'delete' => 'حذف أوامر التصنيع',
             ],
             'quality_sheets' => [
                 'view' => 'عرض أوراق الجودة',
@@ -2132,7 +2180,7 @@ return [
             'qa_approved_at' => 'تاريخ اعتماد الجودة',
             'created_by' => 'أُنشئ بواسطة',
             'po_number' => 'رقم أمر الشراء',
-            'wo_number' => 'رقم أمر التشغيل',
+            'wo_number' => 'رقم أمر التصنيع',
         ],
 
         'filters' => [
@@ -2243,6 +2291,7 @@ return [
         ],
 
         'work_order_status' => [
+            'draft' => 'مسودة',
             'pending' => 'معلّق',
             'in_progress' => 'قيد التنفيذ',
             'qa_review' => 'مراجعة الجودة',

@@ -59,7 +59,7 @@ class AdminPanelProvider extends PanelProvider
             // General Management layer to notify departments when an operation
             // is activated or a delivery minute is distributed.
             ->databaseNotifications()
-            // Logical business-flow order: Sales → Technical Office →
+            // Logical business-flow order: Sales → Project Management Office →
             // Procurement → Warehouse → Manufacturing → Finance → System.
             // (In English this array drives the order; in Arabic the
             // matching resolves via each resource's navigationSort block —

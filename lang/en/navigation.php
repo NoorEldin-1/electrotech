@@ -6,7 +6,7 @@ return [
     'groups' => [
         'general_management' => 'General Management',
         'sales_crm' => 'Sales & CRM',
-        'technical_office' => 'Technical Office',
+        'technical_office' => 'Project Management Office',
         'warehouse' => 'Warehouse',
         'procurement' => 'Procurement',
         'manufacturing' => 'Manufacturing',

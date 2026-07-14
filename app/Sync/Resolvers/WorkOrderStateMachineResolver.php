@@ -14,6 +14,7 @@ use App\Services\WorkOrderService;
  *
  * Forward-only transitions:
  *
+ *   Draft → Pending (approve_order)              [PMO-manager gate, سلايد 5]
  *   Pending → InProgress (start)
  *   InProgress → QaReview (submit_qa)
  *   QaReview → QaReview (approve_qa)             [stays in QaReview but sets approver]
@@ -100,6 +101,7 @@ final class WorkOrderStateMachineResolver extends LastWriterWinsResolver
             }
 
             match ($target) {
+                WorkOrderStatus::Pending    => $service->approveOrder($wo),
                 WorkOrderStatus::InProgress => $service->start($wo),
                 WorkOrderStatus::QaReview   => $service->submitForQa(
                     $wo,
@@ -145,10 +147,11 @@ final class WorkOrderStateMachineResolver extends LastWriterWinsResolver
     private function rankOf(WorkOrderStatus $status): int
     {
         return match ($status) {
-            WorkOrderStatus::Pending    => 0,
-            WorkOrderStatus::InProgress => 1,
-            WorkOrderStatus::QaReview   => 2,
-            WorkOrderStatus::Completed  => 3,
+            WorkOrderStatus::Draft      => 0,
+            WorkOrderStatus::Pending    => 1,
+            WorkOrderStatus::InProgress => 2,
+            WorkOrderStatus::QaReview   => 3,
+            WorkOrderStatus::Completed  => 4,
             WorkOrderStatus::Cancelled  => 99, // Sideways branch
         };
     }

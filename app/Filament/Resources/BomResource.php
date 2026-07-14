@@ -51,14 +51,30 @@ class BomResource extends Resource
             ->schema([
                 Forms\Components\Section::make(__('resources.boms.sections.bom_details'))
                     ->icon('heroicon-o-document-text')
+                    ->description(__('resources.boms.sections.bom_details_description'))
                     ->columns(2)
                     ->schema([
+                        // A BOM is either a project BOM (project set) or a
+                        // standard product recipe (output item set) — سلايد 6.
                         Forms\Components\Select::make('project_id')
                             ->label(__('resources.boms.fields.project'))
                             ->relationship('project', 'name')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->requiredWithout('output_item_id'),
+
+                        Forms\Components\Select::make('output_item_id')
+                            ->label(__('resources.boms.fields.output_item'))
+                            ->relationship(
+                                'outputItem',
+                                'name',
+                                fn (Builder $query) => $query->whereIn('type', ['finished_good', 'semi_finished']),
+                            )
+                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->sku} — {$record->name}")
+                            ->searchable()
+                            ->preload()
+                            ->helperText(__('resources.boms.fields.output_item_helper'))
+                            ->requiredWithout('project_id'),
 
                         Forms\Components\TextInput::make('version')
                             ->label(__('resources.boms.fields.version'))
@@ -138,7 +154,15 @@ class BomResource extends Resource
                     ->label(__('resources.boms.columns.project'))
                     ->searchable()
                     ->sortable()
-                    ->limit(30),
+                    ->limit(30)
+                    ->placeholder(__('resources.boms.columns.standard_bom')),
+
+                Tables\Columns\TextColumn::make('outputItem.name')
+                    ->label(__('resources.boms.columns.output_item'))
+                    ->description(fn (Bom $record) => $record->outputItem?->sku)
+                    ->searchable()
+                    ->toggleable()
+                    ->placeholder(__('resources.common.no_data')),
 
                 Tables\Columns\TextColumn::make('project.status')
                     ->label(__('resources.boms.columns.sales_stage'))
@@ -224,6 +248,7 @@ class BomResource extends Resource
         return parent::getEloquentQuery()
             ->with([
                 'project:id,name',
+                'outputItem:id,sku,name',
                 'preparedBy:id,name',
                 'approvedBy:id,name',
             ])

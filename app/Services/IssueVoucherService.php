@@ -19,21 +19,24 @@ class IssueVoucherService
     ) {}
 
     /**
-     * Build a DRAFT issue voucher for a work order, with one line per BOM
-     * item (quantity = BOM total incl. waste allowance). No stock moves yet —
-     * the warehouse reviews and posts (signs) it.
+     * Build a DRAFT issue voucher for a work order. Lines come from the order's
+     * own material table (سلايد 6 — the manually-adjustable خامات أمر التصنيع)
+     * when present; otherwise it falls back to the linked BOM for backward
+     * compatibility. No stock moves yet — the warehouse reviews and posts it.
      *
-     * @throws \RuntimeException if the work order has no linked BOM
+     * @throws \RuntimeException if the work order has neither materials nor a BOM
      */
     public function createFromWorkOrder(WorkOrder $workOrder): IssueVoucher
     {
-        $workOrder->loadMissing('bom.items.item');
+        $workOrder->loadMissing(['materials.item', 'bom.items.item']);
 
-        if (! $workOrder->bom) {
-            throw new \RuntimeException(__('errors.issue.no_bom', ['number' => $workOrder->wo_number]));
+        $lines = $this->resolveVoucherLines($workOrder);
+
+        if ($lines === []) {
+            throw new \RuntimeException(__('errors.issue.no_materials', ['number' => $workOrder->wo_number]));
         }
 
-        return DB::transaction(function () use ($workOrder) {
+        return DB::transaction(function () use ($workOrder, $lines) {
             $voucher = IssueVoucher::create([
                 'voucher_number' => IssueVoucher::generateVoucherNumber(),
                 'work_order_id' => $workOrder->id,
@@ -42,17 +45,40 @@ class IssueVoucherService
                 'issued_by' => Auth::id(),
             ]);
 
-            foreach ($workOrder->bom->items as $bomItem) {
-                /** @var BomItem $bomItem */
-                $voucher->lines()->create([
-                    'item_id' => $bomItem->item_id,
-                    'quantity' => (float) $bomItem->total_required_quantity,
-                    'unit_cost' => (float) ($bomItem->item->unit_cost ?? 0),
-                ]);
+            foreach ($lines as $line) {
+                $voucher->lines()->create($line);
             }
 
             return $voucher;
         });
+    }
+
+    /**
+     * Resolve the voucher lines: per-order materials first, BOM as fallback.
+     *
+     * @return array<int, array{item_id:int, quantity:float, unit_cost:float}>
+     */
+    private function resolveVoucherLines(WorkOrder $workOrder): array
+    {
+        if ($workOrder->materials->isNotEmpty()) {
+            return $workOrder->materials
+                ->map(fn ($material) => [
+                    'item_id' => $material->item_id,
+                    'quantity' => (float) $material->quantity,
+                    'unit_cost' => (float) $material->unit_cost,
+                ])->all();
+        }
+
+        if ($workOrder->bom) {
+            return $workOrder->bom->items
+                ->map(fn (BomItem $bomItem) => [
+                    'item_id' => $bomItem->item_id,
+                    'quantity' => (float) $bomItem->total_required_quantity,
+                    'unit_cost' => (float) ($bomItem->item->unit_cost ?? 0),
+                ])->all();
+        }
+
+        return [];
     }
 
     /**

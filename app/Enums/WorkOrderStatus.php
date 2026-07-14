@@ -10,6 +10,9 @@ use Filament\Support\Contracts\HasLabel;
 
 enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
 {
+    // مسودة (سلايد 5) — the PMO authors the order here; it cannot start
+    // manufacturing until the PMO manager approves it (Draft → Pending).
+    case Draft = 'draft';
     case Pending = 'pending';
     case InProgress = 'in_progress';
     case QaReview = 'qa_review';
@@ -24,7 +27,8 @@ enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
     public function getColor(): string|array|null
     {
         return match ($this) {
-            self::Pending => 'gray',
+            self::Draft => 'gray',
+            self::Pending => 'warning',
             self::InProgress => 'info',
             self::QaReview => 'warning',
             self::Completed => 'success',
@@ -35,6 +39,7 @@ enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
     public function getIcon(): ?string
     {
         return match ($this) {
+            self::Draft => 'heroicon-o-pencil-square',
             self::Pending => 'heroicon-o-clock',
             self::InProgress => 'heroicon-o-cog-6-tooth',
             self::QaReview => 'heroicon-o-shield-check',

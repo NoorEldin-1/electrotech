@@ -21,7 +21,10 @@ class WorkOrderFactory extends Factory
             'wo_number' => 'WO-' . fake()->numerify('######-####'),
             'title' => fake()->sentence(),
             'description' => fake()->paragraph(),
-            'status' => fake()->randomElement(WorkOrderStatus::cases()),
+            // Default to a manufacturing-ready (approved) state so existing
+            // flows work without threading the new Draft gate. Use draft()
+            // to exercise the PMO approval step (سلايد 5).
+            'status' => WorkOrderStatus::Pending,
             'priority' => fake()->randomElement(['Low', 'Medium', 'High', 'Urgent']),
             'planned_quantity' => fake()->randomFloat(4, 10, 1000),
             'produced_quantity' => 0,
@@ -31,5 +34,17 @@ class WorkOrderFactory extends Factory
             'assigned_to' => User::factory(),
             'created_by' => User::factory(),
         ];
+    }
+
+    /**
+     * A freshly authored order awaiting PMO-manager approval (سلايد 5).
+     */
+    public function draft(): static
+    {
+        return $this->state(fn () => [
+            'status' => WorkOrderStatus::Draft,
+            'order_approved_by' => null,
+            'order_approved_at' => null,
+        ]);
     }
 }

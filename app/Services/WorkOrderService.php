@@ -17,6 +17,36 @@ class WorkOrderService
     ) {}
 
     /**
+     * PMO-manager approval of the manufacturing order (مكتب ادارة المشروعات.pptx
+     * سلايد 5): moves the order out of Draft into Pending, releasing it for
+     * manufacturing to start. Records who approved and when.
+     *
+     * Idempotent: a retry after the order has already left Draft is a silent
+     * success (same forgiving pattern as approveQa/finishManufacturing).
+     *
+     * @throws \RuntimeException if the WO is not currently a Draft
+     */
+    public function approveOrder(WorkOrder $workOrder): void
+    {
+        if ($workOrder->status !== WorkOrderStatus::Draft) {
+            if ($workOrder->isOrderApproved()) {
+                return;
+            }
+
+            throw new \RuntimeException(__('errors.work_order.cannot_approve_order', [
+                'number' => $workOrder->wo_number,
+                'status' => $workOrder->status->getLabel(),
+            ]));
+        }
+
+        $workOrder->update([
+            'status' => WorkOrderStatus::Pending,
+            'order_approved_by' => Auth::id(),
+            'order_approved_at' => now(),
+        ]);
+    }
+
+    /**
      * Start a work order: changes status to InProgress and records actual start time.
      *
      * @throws \RuntimeException if WO is not in Pending state

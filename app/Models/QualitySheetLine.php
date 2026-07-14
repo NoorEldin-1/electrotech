@@ -21,14 +21,22 @@ class QualitySheetLine extends Model
         'line_no',
         'label',
         'piece_number',
-        'assembly',
+        // علامات صح (سلايد 4).
         'visual_quality',
+        'assembly',
+        'earth_bond_pe_fe',
         'required_size',
-        'test_pe_l123n',
-        'test_fe_l123n',
-        'test_n_l12l3',
-        'test_l1_l2l3',
-        'test_l2_l3',
+        // خانات الاختبار الكهربى — قراءتان لكل خانة.
+        'test_pe_l123n_r1',
+        'test_pe_l123n_r2',
+        'test_fe_l123n_r1',
+        'test_fe_l123n_r2',
+        'test_n_l12l3_r1',
+        'test_n_l12l3_r2',
+        'test_l1_l2l3_r1',
+        'test_l1_l2l3_r2',
+        'test_l2_l3_r1',
+        'test_l2_l3_r2',
         'notes',
     ];
 
@@ -36,6 +44,9 @@ class QualitySheetLine extends Model
     {
         return [
             'line_no' => 'integer',
+            'visual_quality' => 'boolean',
+            'assembly' => 'boolean',
+            'earth_bond_pe_fe' => 'boolean',
         ];
     }
 

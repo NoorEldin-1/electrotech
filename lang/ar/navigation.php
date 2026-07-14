@@ -6,7 +6,7 @@ return [
     'groups' => [
         'general_management' => 'الإدارة العامة',
         'sales_crm' => 'المبيعات وإدارة العملاء',
-        'technical_office' => 'المكتب الفني',
+        'technical_office' => 'مكتب ادارة المشروعات',
         'warehouse' => 'المستودع',
         'procurement' => 'المشتريات',
         'manufacturing' => 'التصنيع',

@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\BomStatus;
 use App\Sync\Concerns\Syncable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +32,7 @@ class Bom extends Model
 
     protected $fillable = [
         'project_id',
+        'output_item_id',
         'version',
         'status',
         'notes',
@@ -50,7 +52,7 @@ class Bom extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['version', 'status', 'approved_by', 'approved_at'])
+            ->logOnly(['version', 'status', 'output_item_id', 'approved_by', 'approved_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "BOM v{$this->version} was {$eventName}");
@@ -59,6 +61,23 @@ class Bom extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * The finished-good item this BOM is the standard recipe for (سلايد 6).
+     * Null for project-scoped BOMs.
+     */
+    public function outputItem(): BelongsTo
+    {
+        return $this->belongsTo(Item::class, 'output_item_id');
+    }
+
+    /**
+     * Only standard (product-scoped) BOMs — the fixed تركيبة المنتج القياسية.
+     */
+    public function scopeStandard(Builder $query): Builder
+    {
+        return $query->whereNotNull('output_item_id');
     }
 
     public function preparedBy(): BelongsTo

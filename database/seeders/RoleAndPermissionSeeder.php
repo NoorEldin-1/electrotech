@@ -220,6 +220,7 @@ class RoleAndPermissionSeeder extends Seeder
             'work_orders.view',
             'work_orders.create',
             'work_orders.edit',
+            'work_orders.approve_order',
             'work_orders.start',
             'work_orders.submit_qa',
             'work_orders.approve_qa',
@@ -330,6 +331,9 @@ class RoleAndPermissionSeeder extends Seeder
                 'boms.approve',
                 'work_orders.view',
                 'work_orders.create',
+                // PMO manager approves the manufacturing order out of Draft
+                // (اعتماد مدير مكتب المشروعات — سلايد 5) before the floor starts.
+                'work_orders.approve_order',
                 // Quality sheet: the technical office reviews and prints it.
                 'quality_sheets.view',
                 'quality_sheets.print',
