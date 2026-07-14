@@ -1509,12 +1509,19 @@ return [
 
         'columns' => [
             'work_order' => 'Manufacturing Order',
+            'operation_name' => 'Operation Name',
             'output_item' => 'Product',
             'entry_date' => 'Date',
-            'planned_quantity' => 'Planned',
-            'produced_quantity' => 'Produced',
-            'scrap_quantity' => 'Loss',
-            'scrap_percentage' => 'Loss %',
+            // Value comparison (slide 9).
+            'planned_cost' => 'Planned',
+            'actual_cost' => 'Produced (Actual)',
+            'loss_value' => 'Loss',
+            'loss_percentage' => 'Loss %',
+            // Quantity columns (optional).
+            'planned_quantity' => 'Planned (Qty)',
+            'produced_quantity' => 'Produced (Qty)',
+            'scrap_quantity' => 'Loss (Qty)',
+            'scrap_percentage' => 'Loss % (Qty)',
         ],
 
         'filters' => [

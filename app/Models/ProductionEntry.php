@@ -19,10 +19,13 @@ class ProductionEntry extends Model
     protected $fillable = [
         'work_order_id',
         'output_item_id',
+        'operation_name',
         'entry_date',
         'planned_quantity',
         'produced_quantity',
         'scrap_quantity',
+        'planned_material_cost',
+        'actual_material_cost',
         'performed_by',
     ];
 
@@ -33,6 +36,8 @@ class ProductionEntry extends Model
             'planned_quantity' => 'decimal:4',
             'produced_quantity' => 'decimal:4',
             'scrap_quantity' => 'decimal:4',
+            'planned_material_cost' => 'decimal:2',
+            'actual_material_cost' => 'decimal:2',
         ];
     }
 
@@ -61,5 +66,27 @@ class ProductionEntry extends Model
         }
 
         return ((float) $this->scrap_quantity / (float) $this->planned_quantity) * 100;
+    }
+
+    /**
+     * Material loss value (الفاقد) — the difference between the value actually
+     * issued (أمر الصرف) and the value planned (طلب التصنيع). Positive = more
+     * material was consumed than planned (سلايد 9).
+     */
+    public function getLossValueAttribute(): float
+    {
+        return (float) $this->actual_material_cost - (float) $this->planned_material_cost;
+    }
+
+    /**
+     * Material loss as a percentage of the planned value (نسبة الفاقد قيمياً).
+     */
+    public function getLossValuePercentageAttribute(): float
+    {
+        if ((float) $this->planned_material_cost === 0.0) {
+            return 0;
+        }
+
+        return ($this->loss_value / (float) $this->planned_material_cost) * 100;
     }
 }

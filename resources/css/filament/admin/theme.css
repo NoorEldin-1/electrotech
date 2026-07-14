@@ -37,26 +37,168 @@
     --font-sans: 'Cairo', 'Tajawal', 'Almarai', ui-sans-serif, system-ui, sans-serif;
 }
 
+/* ===================================================================
+   DARK THEME TOKENS — "Charcoal & Ember"
+   A warm-charcoal surface ramp (slight amber undertone) that harmonises
+   with the terracotta brand, plus reusable elevation shadows carrying an
+   inset top-bevel highlight. Surfaces are named by ROLE, not by a raw
+   slate value, so depth stays consistent across every component. Scoped
+   under `.dark` only — light mode keeps its cream values untouched.
+   =================================================================== */
+.dark {
+    --surface-bg: #100e0c;      /* app / main content background      */
+    --surface-sidebar: #141210; /* a hair above bg                    */
+    --surface-1: #1a1714;       /* cards, sections, widgets, topbar    */
+    --surface-2: #221e1a;       /* inputs, hover, raised               */
+    --surface-3: #2a251f;       /* elevated / active row / dropdowns   */
+
+    --border-hairline: rgb(245 235 225 / 0.08);
+    --border-strong: rgb(245 235 225 / 0.12);
+    --bevel-top: rgb(255 240 225 / 0.06);
+
+    --dark-text: #f4efe8;
+    --dark-text-muted: #b8afa4;
+    --dark-text-faint: #8a8178;
+
+    --ember-glow: rgb(228 135 69 / 0.28);
+
+    /* Scrim behind modals & slide-overs. Filament ships a cool `gray-950/75`
+       backdrop; warmed here to a charcoal near-black so the dimmed page keeps
+       the Charcoal & Ember tone instead of flashing the old cool-slate scrim. */
+    --overlay-scrim: rgb(8 6 5 / 0.72);
+
+    /* Elevation: real black depth + a 1px top highlight that reads as a
+       lit bevel — the single biggest cue that a surface floats. */
+    --elev-1: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 14px -4px rgb(0 0 0 / 0.35),
+        inset 0 1px 0 var(--bevel-top);
+    --elev-2: 0 2px 4px rgb(0 0 0 / 0.45), 0 10px 28px -8px rgb(0 0 0 / 0.45),
+        inset 0 1px 0 var(--bevel-top);
+}
+
+/* ===================================================================
+   LIGHT THEME TOKENS — "Warm Porcelain"
+   The light-mode counterpart to Charcoal & Ember. A warm cream page with
+   porcelain-white cards that FLOAT via a WARM (brown-tinted, not black)
+   two-layer shadow carrying a 1px white top-bevel highlight — the same
+   elevation methodology as dark, mirrored for light. Surfaces named by
+   ROLE so depth stays consistent. Lives at `:root` because light is the
+   default; every rule that consumes these tokens is a base (un-`.dark`)
+   rule already shadowed by a matching `.dark` override, so dark mode is
+   untouched.
+   =================================================================== */
+:root {
+    /* CRISP CONSOLE (Linear/Vercel) — depth comes from CRISP HAIRLINES +
+       text contrast + tight spacing, NOT from soft floating shadows. Warm
+       greige canvas kept for identity; surfaces separate via borders that
+       actually READ, plus a whisper of shadow. */
+    --lp-bg: #edeae4;        /* app / main background (warm greige)  */
+    --lp-sidebar: #e6e0d5;   /* sidebar chrome (a tier deeper than bg) */
+    --lp-surface-1: #ffffff; /* cards, sections, widgets, topbar     */
+    --lp-surface-2: #f4f1ea; /* hover, subtle raised                 */
+    --lp-surface-3: #eae5dc; /* active row / pressed / nested        */
+
+    /* Borders that READ — the load-bearing element of a crisp UI. Raised
+       from the old faint 0.12 so a 1px hairline is clearly visible. */
+    --lp-border-hairline: rgb(64 48 34 / 0.15); /* visible 1px borders    */
+    --lp-border-strong: rgb(64 48 34 / 0.24);   /* dividers / focus edges */
+    --lp-input-border: rgb(56 42 28 / 0.28);    /* input outline          */
+
+    /* Higher text contrast — crisp UIs run near-black body text. */
+    --lp-text: #17130f;       /* primary text / values (near-black)     */
+    --lp-text-muted: #5b514a; /* descriptions, labels (more contrast)   */
+    --lp-text-faint: #8a7f75; /* meta, placeholders                     */
+
+    --terra-glow: rgb(217 114 59 / 0.30); /* accent focus ring ONLY   */
+
+    /* Tighter radii — sharper corners read as "tool" not "soft card". */
+    --lp-radius: 0.625rem;    /* 10px — cards, sections, tables          */
+    --lp-radius-sm: 0.5rem;   /* 8px — buttons, inputs, badges           */
+
+    /* Elevation, CRISP: a visible hairline ring does the separation; the
+       shadow is a whisper (no big soft cushion, no inset bevel). elev-2 is
+       for genuinely-floating overlays only. */
+    --lp-elev-1: 0 0 0 1px var(--lp-border-hairline),
+        0 1px 2px rgb(60 45 30 / 0.05);
+    --lp-elev-2: 0 0 0 1px var(--lp-border-strong),
+        0 4px 12px -2px rgb(60 45 30 / 0.12), 0 2px 4px -1px rgb(60 45 30 / 0.07);
+}
+
 @layer base {
     html,
     body {
-        background-color: var(--color-cream-100);
+        background-color: var(--lp-bg);
         font-family: var(--font-sans);
     }
 
     .dark html,
     .dark body {
-        background-color: var(--color-slate-950);
+        background-color: var(--surface-bg);
     }
 }
 
 /* ===================================================================
-   SIDEBAR — navy in light, slate in dark
+   SPA NAVIGATION PROGRESS BAR — Livewire's `wire:navigate` bar (top of
+   the page). Two layers of theming:
+
+   1) The custom property drives the leading-edge glow ("peg") + spinner,
+      which read `var(--livewire-progress-bar-color, #29d)` — a stock blue
+      that clashes with the warm palette. Point it at the primary.
+   2) The BAR itself is restyled directly for a genuinely on-brand look:
+      a terracotta gradient, a hair thicker (3px), and a soft ember glow.
+      `!important` is required because Livewire injects its own
+      `#nprogress .bar { background: … }` into <head> AFTER this file, so
+      at equal specificity its rule would otherwise win by source order.
+   =================================================================== */
+:root {
+    --livewire-progress-bar-color: var(--color-primary-500);
+}
+
+.dark {
+    --livewire-progress-bar-color: var(--color-primary-400);
+}
+
+#nprogress .bar {
+    height: 3px !important;
+    background: linear-gradient(
+        90deg,
+        var(--color-primary-600) 0%,
+        var(--color-primary-400) 100%
+    ) !important;
+    box-shadow: 0 0 8px var(--color-primary-500), 0 1px 5px rgb(217 114 59 / 0.5) !important;
+}
+
+.dark #nprogress .bar {
+    background: linear-gradient(
+        90deg,
+        var(--color-primary-500) 0%,
+        var(--color-primary-300) 100%
+    ) !important;
+    box-shadow: 0 0 10px var(--color-primary-400), 0 1px 6px var(--ember-glow) !important;
+}
+
+/* Brighten the leading-edge glow to match the thicker bar. */
+#nprogress .peg {
+    box-shadow: 0 0 14px var(--color-primary-500), 0 0 8px var(--color-primary-500) !important;
+    opacity: 0.9 !important;
+}
+
+/* The optional corner spinner (if shown) tracks the same accent. */
+#nprogress .spinner-icon {
+    border-top-color: var(--color-primary-500) !important;
+    border-left-color: var(--color-primary-500) !important;
+}
+
+/* ===================================================================
+   SIDEBAR — UNIFIED LIGHT: a warm greige chrome (a tier deeper than the
+   content) with dark text, so the whole app reads as one cohesive light
+   system (Linear/Notion/Vercel). Dark mode keeps the Charcoal & Ember
+   sidebar via the `.dark` overrides further down — so every text colour
+   flipped to dark here is re-lightened in a matching `.dark` rule.
    =================================================================== */
 .fi-sidebar {
-    background-color: var(--color-navy-900);
-    color: var(--color-slate-300);
-    border-color: var(--color-navy-800);
+    background-color: var(--lp-sidebar);
+    color: var(--lp-text-muted);
+    border-color: var(--lp-border-hairline);
 }
 
 .fi-sidebar .fi-sidebar-nav {
@@ -65,14 +207,14 @@
 }
 
 .fi-sidebar-header {
-    background-color: var(--color-navy-900);
-    border-color: var(--color-navy-800);
+    background-color: var(--lp-sidebar);
+    border-color: var(--lp-border-hairline);
 }
 
 .fi-sidebar-header .fi-logo,
 .fi-sidebar-header .fi-sidebar-brand,
 .fi-sidebar-header .fi-sidebar-brand * {
-    color: white;
+    color: var(--lp-text);
 }
 
 .fi-sidebar-header .fi-sidebar-brand {
@@ -108,30 +250,45 @@
 }
 
 .fi-sidebar-group-label {
-    color: var(--color-slate-500);
+    color: var(--lp-text-faint);
     text-transform: uppercase;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     letter-spacing: 0.05em;
-    padding-inline-start: 0.75rem;
+    padding-inline-start: 0.625rem;
 }
 
+/* Slimmer nav links — tighter padding/gap + a smaller label & icon so the
+   narrowed 17rem sidebar (see AdminPanelProvider) stays comfortable and the
+   list reads as a compact rail, freeing width for the main modules. */
 .fi-sidebar-item .fi-sidebar-item-button {
-    border-radius: 0.75rem;
-    gap: 0.75rem;
-    padding-inline: 0.75rem;
-    color: var(--color-slate-300);
+    border-radius: 0.625rem;
+    gap: 0.625rem;
+    padding-inline: 0.625rem;
+    padding-block: 0.4375rem;
+    color: var(--lp-text-muted);
+}
+
+.fi-sidebar-item .fi-sidebar-item-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+}
+
+.fi-sidebar-item .fi-sidebar-item-icon {
+    width: 1.25rem;
+    height: 1.25rem;
 }
 
 .fi-sidebar-item .fi-sidebar-item-button .fi-sidebar-item-icon,
 .fi-sidebar-item .fi-sidebar-item-button .fi-sidebar-item-label {
-    color: var(--color-slate-300);
+    color: var(--lp-text-muted);
 }
 
 .fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button:hover,
 .fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button:hover .fi-sidebar-item-icon,
 .fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button:hover .fi-sidebar-item-label {
-    background-color: var(--color-navy-800);
-    color: white;
+    background-color: rgb(255 255 255 / 0.7);
+    color: var(--lp-text);
 }
 
 .fi-sidebar-item-active .fi-sidebar-item-button,
@@ -140,11 +297,10 @@
 .fi-sidebar-item-active .fi-sidebar-item-button .fi-sidebar-item-label {
     background-color: var(--color-primary-500);
     color: white;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .fi-sidebar-group-collapse-button {
-    color: var(--color-slate-400);
+    color: var(--lp-text-faint);
 }
 
 /* ---------- Scrollbar — thin, navy-tinted, matches the sidebar ---------- */
@@ -152,7 +308,15 @@
 .fi-sidebar-nav,
 .fi-sidebar *::-webkit-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgb(255 255 255 / 0.12) transparent;
+    scrollbar-color: rgb(60 45 30 / 0.18) transparent;
+}
+
+.dark .fi-sidebar,
+.dark .fi-sidebar-nav,
+.dark .fi-sidebar *::-webkit-scrollbar {
+    /* Warm cream to match every other dark scrollbar (Charcoal & Ember),
+       not the old cool pure-white which read as off-system. */
+    scrollbar-color: rgb(245 235 225 / 0.14) transparent;
 }
 
 .fi-sidebar ::-webkit-scrollbar,
@@ -168,10 +332,15 @@
 
 .fi-sidebar ::-webkit-scrollbar-thumb,
 .fi-sidebar-nav::-webkit-scrollbar-thumb {
-    background-color: rgb(255 255 255 / 0.12);
+    background-color: rgb(60 45 30 / 0.18);
     border-radius: 9999px;
     border: 1px solid transparent;
     background-clip: padding-box;
+}
+
+.dark .fi-sidebar ::-webkit-scrollbar-thumb,
+.dark .fi-sidebar-nav::-webkit-scrollbar-thumb {
+    background-color: rgb(245 235 225 / 0.12);
 }
 
 .fi-sidebar ::-webkit-scrollbar-thumb:hover,
@@ -223,31 +392,207 @@
 .dark .fi-main,
 .dark .fi-main-ctn,
 .dark .fi-page {
-    scrollbar-color: rgb(255 255 255 / 0.12) transparent;
+    scrollbar-color: rgb(245 235 225 / 0.14) transparent;
 }
 
 .dark .fi-main::-webkit-scrollbar-thumb,
 .dark .fi-main-ctn::-webkit-scrollbar-thumb,
 .dark .fi-page::-webkit-scrollbar-thumb {
-    background-color: rgb(255 255 255 / 0.12);
+    background-color: rgb(245 235 225 / 0.14);
+}
+
+/* ===================================================================
+   MAIN PAGE SCROLLBAR — ultra-thin & near-invisible.
+   The document (viewport) scrollbar is the wide one that eats page
+   width. Slim it to a faint 6px hairline that only firms up on hover.
+   Firefox honours `scrollbar-width: thin`; WebKit/Blink gets the pseudo
+   elements. Filament toggles `.dark` on <html> (= :root), so the dark
+   overrides target `:root.dark`.
+   =================================================================== */
+:root {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(60 45 30 / 0.20) transparent;
+}
+
+:root::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+:root::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+:root::-webkit-scrollbar-thumb {
+    background-color: rgb(60 45 30 / 0.18);
+    border-radius: 9999px;
+}
+
+:root::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-primary-500);
+}
+
+:root.dark {
+    scrollbar-color: rgb(245 235 225 / 0.14) transparent;
+}
+
+:root.dark::-webkit-scrollbar-thumb {
+    background-color: rgb(245 235 225 / 0.12);
 }
 
 /* Dark mode sidebar */
 .dark .fi-sidebar {
-    background-color: var(--color-slate-900);
-    border-color: var(--color-slate-800);
+    background-color: var(--surface-sidebar);
+    border-color: var(--border-hairline);
 }
 
 .dark .fi-sidebar-header {
-    background-color: var(--color-slate-900);
-    border-color: var(--color-slate-800);
+    background-color: var(--surface-sidebar);
+    border-color: var(--border-hairline);
+}
+
+/* Re-lighten the sidebar text/brand/icons for dark (the light base flipped
+   them to dark greige for the Unified-Light sidebar — on charcoal that would
+   be near-invisible). */
+.dark .fi-sidebar-header .fi-logo,
+.dark .fi-sidebar-header .fi-sidebar-brand,
+.dark .fi-sidebar-header .fi-sidebar-brand * {
+    color: white;
+}
+
+.dark .fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button,
+.dark .fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button .fi-sidebar-item-icon,
+.dark .fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button .fi-sidebar-item-label {
+    color: var(--dark-text-muted);
+}
+
+.dark .fi-sidebar-group-collapse-button {
+    color: var(--dark-text-faint);
+}
+
+.dark .fi-sidebar-group-label {
+    color: var(--dark-text-muted);
 }
 
 .dark .fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button:hover,
 .dark .fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button:hover .fi-sidebar-item-icon,
 .dark .fi-sidebar-item:not(.fi-sidebar-item-active) .fi-sidebar-item-button:hover .fi-sidebar-item-label {
-    background-color: var(--color-slate-800);
+    background-color: var(--surface-2);
     color: white;
+}
+
+/* Active nav item glows ember — the sidebar's focal point */
+.dark .fi-sidebar-item-active .fi-sidebar-item-button {
+    box-shadow: 0 2px 12px -2px var(--ember-glow), inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+
+/* ===================================================================
+   FLOATING SIDEBAR — same design language as the command-pill topbar:
+   a rounded, detached panel that floats with an even margin on every
+   side and its own layered shadow, instead of a full-height slab glued
+   to the screen edge.
+
+   Desktop only (≥1024px). Filament renders the desktop sidebar as
+   `lg:sticky` inside the flex row, so an even margin + a reduced height +
+   a sticky `top` offset lift it off all four edges; `overflow: hidden`
+   clips the header/nav to the rounded corners. Width is left to Filament,
+   so BOTH the expanded panel and the collapsed icon-rail inherit the
+   float and the grow/shrink collapse keeps working untouched.
+
+   On <1024px the sidebar is a `position: fixed` slide-in drawer with a
+   backdrop — left as the standard full-height drawer (these rules simply
+   don't apply there).
+   =================================================================== */
+@media (min-width: 1024px) {
+    .fi-sidebar.fi-main-sidebar {
+        /* Pin to the viewport, independent of page scroll. Two flexbox gotchas
+           break the sticky otherwise:
+             • `inset-y-0` sets BOTH top:0 and bottom:0 — with both offsets on a
+               ~100vh sticky box the stick point is ambiguous and it drifts with
+               the scroll. `bottom: auto` leaves `top` as the sole anchor.
+             • the default `align-items: stretch` on the flex row stretches this
+               item to the full (very tall) content height, leaving no room to
+               stick → it rides up with the page. `align-self: flex-start` keeps
+               it at its own height so the sticky can engage. */
+        position: sticky;
+        top: 0.875rem;
+        bottom: auto;
+        align-self: flex-start;
+        margin-block: 0.875rem;
+        margin-inline: 0.875rem;
+        height: calc(100vh - 1.75rem);
+        border-radius: 1.25rem;
+        /* Clip the header + scrolling nav to the rounded frame. Collapsed-mode
+           tooltips are teleported to <body>, so they're never clipped. */
+        overflow: hidden;
+        border: 1px solid var(--lp-border-hairline);
+        box-shadow:
+            inset 0 1px 0 rgb(255 255 255 / 0.6),
+            0 4px 14px -4px rgb(60 45 30 / 0.14),
+            0 16px 36px -12px rgb(60 45 30 / 0.20);
+    }
+
+    .dark .fi-sidebar.fi-main-sidebar {
+        border-color: var(--border-hairline);
+        box-shadow:
+            inset 0 1px 0 var(--bevel-top),
+            0 4px 14px -4px rgb(0 0 0 / 0.5),
+            0 18px 42px -14px rgb(0 0 0 / 0.55);
+    }
+
+    /* The header sits INSIDE the rounded frame — drop its square ring/shadow
+       (they'd draw a rectangle poking past the radius) and let the sidebar's
+       own surface show through so the top corners round cleanly. */
+    .fi-sidebar.fi-main-sidebar .fi-sidebar-header {
+        background-color: transparent;
+        box-shadow: none;
+        --tw-ring-width: 0px;
+        --tw-ring-color: transparent;
+    }
+}
+
+/* ===================================================================
+   FLOATING NOTIFICATIONS SLIDE-OVER — same language as the floating
+   sidebar so the two read as one system.
+
+   The database-notifications panel is the ONLY modal rendered inside
+   `.fi-topbar` (it lives in the topbar bell's Livewire component and is
+   not teleported), so scoping to `.fi-topbar .fi-modal-slide-over-window`
+   targets it alone — other slide-overs (table filters, record actions)
+   are left as standard edge-to-edge panels.
+
+   Desktop only (≥1024px). The window slides in from the inline-start edge
+   via `ms-auto`; we keep it pinned there but inset it with an even margin
+   on every side, round it, and give it the sidebar's layered float. Trick:
+   `margin-block` + `height: calc(100dvh − 2×margin)` make the window + its
+   margins fill the centring grid row exactly, so the top/bottom gaps stay
+   symmetric regardless of the container's 1fr/3fr rows. On <1024px it
+   stays the standard flush full-height drawer.
+   =================================================================== */
+@media (min-width: 1024px) {
+    .fi-topbar .fi-modal-slide-over-window {
+        height: calc(100dvh - 1.75rem);
+        margin-block: 0.875rem;
+        margin-inline-start: auto;   /* keep it pinned to the edge      */
+        margin-inline-end: 0.875rem; /* even gap from the screen edge    */
+        border-radius: 1.25rem;
+        border: 1px solid var(--lp-border-hairline);
+        /* Drop Filament's shipped square `ring-1`; the pill owns its edge. */
+        --tw-ring-width: 0px;
+        --tw-ring-color: transparent;
+        box-shadow:
+            inset 0 1px 0 rgb(255 255 255 / 0.6),
+            0 4px 14px -4px rgb(60 45 30 / 0.14),
+            0 24px 50px -16px rgb(60 45 30 / 0.28);
+    }
+
+    .dark .fi-topbar .fi-modal-slide-over-window {
+        border-color: var(--border-hairline);
+        box-shadow:
+            inset 0 1px 0 var(--bevel-top),
+            0 4px 14px -4px rgb(0 0 0 / 0.5),
+            0 28px 60px -18px rgb(0 0 0 / 0.65);
+    }
 }
 
 /* ===================================================================
@@ -257,25 +602,310 @@
 .fi-main,
 .fi-layout,
 .fi-body {
-    background-color: var(--color-cream-100);
+    background-color: var(--lp-bg);
 }
 
 .dark .fi-main-ctn,
 .dark .fi-main,
 .dark .fi-layout,
 .dark .fi-body {
-    background-color: var(--color-slate-950);
+    background-color: var(--surface-bg);
 }
 
+/* ===================================================================
+   TOPBAR — "FLOATING COMMAND PILL"
+   ------------------------------------------------------------------
+   The topbar is re-imagined as a centred, fully-rounded glass pill that
+   FLOATS over the content — detached from the sidebar, hugging only its
+   controls (search + notifications + user menu), with a small breathing
+   gap above so it never touches the top edge.
+
+   How it works:
+   • `.fi-topbar` (Filament's `sticky top-0` full-width strip) becomes an
+     INVISIBLE, click-through layer. It keeps the sticky behaviour and just
+     provides the top/side breathing room. `pointer-events: none` lets the
+     transparent gutter around the pill pass clicks straight to the content
+     scrolling underneath — the pill itself re-enables pointer events.
+   • `.fi-topbar > nav` (the bar Filament actually paints — it ships opaque
+     `bg-white … ring-1` in light and `dark:bg-gray-900` in dark) is
+     shrink-wrapped to `fit-content`, centred with `margin-inline: auto`,
+     and given a full pill radius + translucent glass + a warm layered
+     floating shadow with a 1px top bevel (same elevation language as the
+     cards). Unlayered selectors beat Filament's `@layer`-ed utilities, so
+     the shipped bg / padding / height / ring are all overridden here.
+
+   Both themes are styled: light = translucent porcelain glass on a warm
+   floating shadow; dark = translucent charcoal glass on a deep shadow +
+   ember-friendly bevel. Responsive rules at the bottom keep the pill from
+   ever overflowing on narrow viewports.
+   =================================================================== */
 .fi-topbar {
-    background-color: rgb(251 250 245 / 0.85);
-    backdrop-filter: blur(8px);
-    border-color: var(--color-cream-200);
+    background-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border: none;
+    box-shadow: none;
+    /* Breathing room: a small gap above (so the pill floats free of the top
+       edge) and side gutters so the centred pill never kisses the edges. */
+    padding-top: 0.875rem;
+    padding-bottom: 0.25rem;
+    padding-inline: 1.25rem;
+    /* The transparent gutter around the pill is click-through. */
+    pointer-events: none;
+    /* Let the floating shadow bleed out of the strip vertically. */
+    overflow: visible;
 }
 
 .dark .fi-topbar {
-    background-color: rgb(15 23 42 / 0.85);
-    border-color: var(--color-slate-800);
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+/* The floating pill itself — the only interactive, visible part. */
+.fi-topbar > nav {
+    /* `position: relative; z-index: 0` gives the pill its own stacking context
+       so the glass `::before` (z-index: -1) layers correctly BEHIND the
+       content. Crucially, neither property creates a containing block for
+       `position: fixed` descendants — unlike `backdrop-filter`, which is why
+       the blur is NOT applied here (see the `::before` note below). */
+    position: relative;
+    z-index: 0;
+    pointer-events: auto;
+    /* Shrink-wrap to the controls, centre it, but never overflow. */
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+    /* Compact pill height (overrides Filament's `h-16`). */
+    height: 3.5rem;
+    padding-inline: 0.625rem;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    /* Kill Filament's shipped `ring-1` — the pill owns its edge via border. */
+    --tw-ring-width: 0px;
+    --tw-ring-color: transparent;
+    /* The glass fill + blur live on `::before`, NOT here — see below. */
+    background-color: transparent;
+    border: 1px solid var(--lp-border-hairline);
+    /* Warm layered float + a 1px top bevel highlight (Warm Porcelain
+       elevation language). */
+    box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.75),
+        0 4px 14px -4px rgb(60 45 30 / 0.16),
+        0 16px 36px -12px rgb(60 45 30 / 0.22);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+/* GLASS LAYER — the translucent porcelain fill + backdrop blur.
+   ------------------------------------------------------------------
+   This deliberately lives on a pseudo-element instead of on the `<nav>`.
+   `backdrop-filter` turns whatever element carries it into a CONTAINING
+   BLOCK for `position: fixed` descendants. The database-notifications
+   slide-over is rendered by Livewire INSIDE this nav and is `fixed` — with
+   the blur on the nav it got trapped inside the narrow `fit-content` pill
+   (a squashed, letter-per-line panel). Carrying the blur on `::before`
+   (which has no fixed descendants of its own) keeps the exact same glass
+   look while leaving the nav free of the fixed-containing-block side
+   effect, so the slide-over resolves against the viewport again. */
+.fi-topbar > nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background-color: rgb(255 255 255 / 0.82);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
+    pointer-events: none;
+}
+
+/* The VISIBLE bar is this inner <nav>, which Filament ships opaque
+   `dark:bg-gray-900` + white ring that would paint over everything above.
+   Re-skin it to translucent charcoal glass on a deep float with an
+   ember-friendly bevel (Charcoal & Ember elevation language). */
+.dark .fi-topbar > nav {
+    border-color: var(--border-hairline);
+    box-shadow:
+        inset 0 1px 0 var(--bevel-top),
+        0 4px 14px -4px rgb(0 0 0 / 0.5),
+        0 18px 42px -14px rgb(0 0 0 / 0.6);
+}
+
+.dark .fi-topbar > nav::before {
+    background-color: rgb(26 23 20 / 0.72);
+}
+
+/* ===================================================================
+   COLLAPSIBLE "EXPAND-ON-CLICK" GLOBAL SEARCH
+   ------------------------------------------------------------------
+   The search resolves to a bare icon button by default — just the
+   magnifying glass, matching the notification bell beside it. Clicking
+   it opens a full search box and grows the fit-content pill around it.
+
+   Mechanics (pure CSS — Livewire search behaviour is left untouched):
+   • `.fi-global-search-field` collapses to a 2.5rem circle; the real
+     `.fi-input-wrp-input` is clipped to zero width.
+   • Filament's a11y `<label for>` (already bound to the input id) is
+     re-purposed as a transparent, full-cover click target. A native
+     label→control click focuses the (collapsed) input → flips
+     `:focus-within` on the field.
+   • `:focus-within` animates the field open to a real search box; the
+     `width: fit-content` pill and its `margin-inline: auto` make it grow
+     outward from the centre. Losing focus collapses it back.
+   =================================================================== */
+
+/* Collapsed footprint + the open/close width animation. */
+.fi-topbar .fi-global-search-field {
+    position: relative;
+    width: 2.5rem;
+    flex: 0 0 auto;
+    transition: width 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The visible box: collapsed = transparent icon button; the real input
+   surface + focus ring return automatically once `:focus-within` (the base
+   `.fi-input-wrp` focus rule) kicks in. */
+.fi-topbar .fi-global-search-field .fi-input-wrp {
+    border-radius: 9999px;
+    background-color: transparent;
+    box-shadow: none;
+    --tw-ring-width: 0px;
+    --tw-ring-color: transparent;
+    overflow: hidden;
+    transition: background-color 0.2s ease;
+}
+
+/* Centre the magnifying glass inside the collapsed circle. */
+.fi-topbar .fi-global-search-field .fi-input-wrp-prefix {
+    flex: 0 0 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    margin: 0;
+    justify-content: center;
+    color: var(--lp-text-muted);
+}
+
+.dark .fi-topbar .fi-global-search-field .fi-input-wrp-prefix {
+    color: var(--dark-text-muted);
+}
+
+/* Clip the actual input to nothing while collapsed. */
+.fi-topbar .fi-global-search-field .fi-input-wrp-input {
+    width: 0;
+    min-width: 0;
+    flex: 0 1 0;
+    overflow: hidden;
+}
+
+/* Hover affordance on the collapsed circle (warms toward the brand). */
+.fi-topbar .fi-global-search-field:not(:focus-within) .fi-input-wrp:hover {
+    background-color: var(--lp-surface-2);
+}
+
+.dark .fi-topbar .fi-global-search-field:not(:focus-within) .fi-input-wrp:hover {
+    background-color: var(--surface-2);
+}
+
+.fi-topbar .fi-global-search-field:not(:focus-within) .fi-input-wrp:hover .fi-input-wrp-prefix {
+    color: var(--color-primary-500);
+}
+
+/* Re-purpose the sr-only <label> as a transparent, full-cover click target.
+   Invisible (zero font, transparent) but clickable; stepped aside once the
+   field is open so it never blocks typing. */
+.fi-topbar .fi-global-search-field > label {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    clip: auto;
+    clip-path: none;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 0;
+    color: transparent;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* ---- Expanded (input focused) ---- */
+.fi-topbar .fi-global-search-field:focus-within {
+    width: 15rem;
+    max-width: 100%;
+}
+
+/* Real input surface returns (white in light, raised charcoal in dark); the
+   terracotta/ember focus ring comes free from the base `.fi-input-wrp`
+   focus-within rule. Overflow visible so that ring isn't clipped. */
+.fi-topbar .fi-global-search-field:focus-within .fi-input-wrp {
+    background-color: #ffffff;
+    overflow: visible;
+}
+
+.dark .fi-topbar .fi-global-search-field:focus-within .fi-input-wrp {
+    background-color: var(--surface-2);
+}
+
+/* Icon settles at the inline-start; the input fills the rest. */
+.fi-topbar .fi-global-search-field:focus-within .fi-input-wrp-prefix {
+    flex-basis: auto;
+    width: auto;
+    height: auto;
+    justify-content: flex-start;
+    padding-inline: 0.75rem 0.5rem;
+    color: var(--lp-text-faint);
+}
+
+.dark .fi-topbar .fi-global-search-field:focus-within .fi-input-wrp-prefix {
+    color: var(--dark-text-faint);
+}
+
+.fi-topbar .fi-global-search-field:focus-within .fi-input-wrp-input {
+    width: auto;
+    flex: 1 1 auto;
+}
+
+.fi-topbar .fi-global-search-field:focus-within > label {
+    pointer-events: none;
+    inset: auto;
+    width: 1px;
+    height: 1px;
+}
+
+/* ---- Responsive: keep the pill from ever overflowing ---------------- */
+@media (max-width: 1023.98px) {
+    .fi-topbar {
+        padding-top: 0.75rem;
+        padding-inline: 0.75rem;
+    }
+
+    .fi-topbar > nav {
+        gap: 0.375rem;
+        padding-inline: 0.5rem;
+    }
+
+    .fi-topbar .fi-global-search-field:focus-within {
+        width: 13rem;
+    }
+}
+
+@media (max-width: 639.98px) {
+    .fi-topbar {
+        padding-inline: 0.625rem;
+    }
+
+    .fi-topbar > nav {
+        /* On phones the pill spans the available width (still rounded &
+           floating) so the opened search has room instead of overflowing. */
+        width: 100%;
+    }
+
+    .fi-topbar .fi-global-search-field:focus-within {
+        width: 11rem;
+    }
 }
 
 /* ===================================================================
@@ -286,27 +916,55 @@
 .fi-wi-stats-overview-stat,
 .fi-page .fi-section,
 .fi-ta-ctn {
-    background-color: white;
-    border-radius: 1rem;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.03);
-    border: 1px solid rgb(0 0 0 / 0.04);
+    background-color: var(--lp-surface-1);
+    border-radius: var(--lp-radius);
+    /* Crisp: a visible hairline ring + a whisper of shadow. The border does
+       the separation, not a soft cushion. */
+    box-shadow: var(--lp-elev-1);
+    border: 1px solid var(--lp-border-hairline);
 }
 
 .fi-section-header,
 .fi-fo-section-header {
-    border-start-start-radius: 1rem;
-    border-start-end-radius: 1rem;
+    border-start-start-radius: var(--lp-radius);
+    border-start-end-radius: var(--lp-radius);
 }
 
 .fi-section-content,
 .fi-fo-section-content {
-    border-end-start-radius: 1rem;
-    border-end-end-radius: 1rem;
+    border-end-start-radius: var(--lp-radius);
+    border-end-end-radius: var(--lp-radius);
 }
 
 .fi-wi-stats-overview-stat {
     border-width: 1px;
-    border-color: rgb(0 0 0 / 0.04);
+    border-color: var(--lp-border-hairline);
+}
+
+/* ===================================================================
+   STAT CARDS (dashboard hero) — LIGHT: gentle top-lit gradient, hover
+   lift, and a soft glow on the semantic-colored description icon so each
+   metric gets a colored focal dot. Mirrors the dark stat-card treatment.
+   =================================================================== */
+.fi-wi-stats-overview-stat {
+    background: var(--lp-surface-1);
+    transition: box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+/* Quiet hover — the border firms up, no lift, no glow (Crisp Console). */
+.fi-wi-stats-overview-stat:hover {
+    border-color: var(--lp-border-strong);
+}
+
+.fi-wi-stats-overview-stat-description-icon {
+    opacity: 0.9;
+}
+
+/* Big, high-contrast, tabular value — the metric is the hero, not the card. */
+.fi-wi-stats-overview-stat-value {
+    color: var(--lp-text);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
 }
 
 .dark .fi-section,
@@ -314,23 +972,171 @@
 .dark .fi-wi-stats-overview-stat,
 .dark .fi-page .fi-section,
 .dark .fi-ta-ctn {
-    background-color: var(--color-slate-900);
-    border-color: rgb(255 255 255 / 0.05);
+    background-color: var(--surface-1);
+    border-color: var(--border-hairline);
+    /* Real elevation + top bevel — this is what lifts surfaces off the
+       charcoal background so they no longer read as flat. */
+    box-shadow: var(--elev-1);
+}
+
+/* ===================================================================
+   STAT CARDS (dashboard hero) — gentle top-lit gradient, hover lift,
+   and a soft glow on the semantic-colored description icon so each
+   metric gets a colored focal dot.
+   =================================================================== */
+.dark .fi-wi-stats-overview-stat {
+    background: linear-gradient(180deg, #1e1a16 0%, var(--surface-1) 62%);
+    transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.dark .fi-wi-stats-overview-stat:hover {
+    box-shadow: var(--elev-2);
+    transform: translateY(-1px);
+}
+
+.dark .fi-wi-stats-overview-stat-description-icon {
+    filter: drop-shadow(0 0 6px currentColor);
+    opacity: 0.9;
+}
+
+.dark .fi-wi-stats-overview-stat-value {
+    color: var(--dark-text);
+}
+
+/* ===================================================================
+   OVERLAYS — dropdowns, filter panels, action menus, modals, popovers.
+   Filament ships these with a cool `dark:bg-gray-900` that clashes with
+   the warm charcoal surfaces. Re-skin every floating surface to the same
+   ember/charcoal system so overlays match the page instead of standing
+   out as leftover default chrome. Overlays sit ABOVE cards, so they use
+   the stronger elev-2 shadow to read as clearly lifted.
+   =================================================================== */
+/* The dimming SCRIM behind every modal AND slide-over (the notifications bell
+   panel is a slide-over, so this covers both). Filament paints it cool
+   `dark:bg-gray-950/75`, which — now that every surface is warm charcoal — reads
+   as a leftover slice of the old slate theme tinting the topbar/page behind the
+   overlay. Warm it to the charcoal scrim so the dimmed page stays on-system.
+   `.fi-sidebar-close-overlay` is the same backdrop for the mobile sidebar. */
+.dark .fi-modal-close-overlay,
+.dark .fi-sidebar-close-overlay {
+    background-color: var(--overlay-scrim);
+}
+
+.dark .fi-dropdown-panel,
+.dark .fi-modal-window,
+.dark .fi-modal-content,
+.dark .fi-fo-date-time-picker-panel,
+/* Only the FLOATING toast — not the inline notifications that live inside
+   the database-notifications slide-over (those get their own flat, tinted
+   treatment below). */
+.dark .fi-no-notification:not(.fi-inline) {
+    background-color: var(--surface-1);
+    border: 1px solid var(--border-hairline);
+    box-shadow: var(--elev-2);
+}
+
+/* Inline notifications (database bell panel): the root is transparent by
+   design so Filament's per-status colour tint (bg-custom-400/10) shows.
+   Keep it flat — the slide-over's divide-y handles separation — and only
+   add a warm hover. Overriding the root to a solid surface (as the toast
+   rule would) makes each card blend into the panel and kills the tint. */
+.dark .fi-no-notification.fi-inline {
+    background-color: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+.dark .fi-no-notification.fi-inline:hover {
+    background-color: var(--surface-2);
+}
+
+/* Filament draws dividers/rings via utilities; normalise them to warm */
+.dark .fi-dropdown-list,
+.dark .fi-dropdown-header {
+    border-color: var(--border-hairline);
+}
+
+.dark .fi-dropdown-list-item {
+    color: var(--dark-text);
+}
+
+.dark .fi-dropdown-list-item:hover,
+.dark .fi-dropdown-list-item:focus {
+    background-color: var(--surface-2);
+}
+
+/* Choices.js / select menus (used by filter + relationship selects) */
+.dark .fi-fo-select .choices__list--dropdown,
+.dark .fi-dropdown-panel .choices__list--dropdown,
+.dark .choices__list--dropdown {
+    background-color: var(--surface-1);
+    border-color: var(--border-hairline);
+    box-shadow: var(--elev-2);
+}
+
+.dark .choices__list--dropdown .choices__item--selectable.is-highlighted {
+    background-color: var(--surface-2);
+}
+
+/* Modal STICKY header/footer ship an opaque cool `dark:bg-gray-900` — this is
+   the navy strip at the top of the database-notifications slide-over. Match it
+   to the warm window surface and warm its divider border. */
+.dark .fi-modal-header.fi-sticky,
+.dark .fi-modal-footer.fi-sticky {
+    background-color: var(--surface-1);
+    border-color: var(--border-hairline);
+}
+
+/* Warm the modal window's cool white ring so its edge matches the hairline. */
+.dark .fi-modal-window {
+    --tw-ring-color: var(--border-hairline);
+}
+
+/* Dividers stacking the notification cards inside the bell slide-over ship a
+   cool `dark:divide-white/10`; warm them to the hairline. */
+.dark .fi-modal-slide-over-window .divide-y > * {
+    border-color: var(--border-hairline);
+}
+
+/* Topbar GLOBAL-SEARCH results dropdown — same cool `dark:bg-gray-900` as the
+   other overlays; lift it onto the warm charcoal system. */
+.dark .fi-global-search-results-ctn {
+    background-color: var(--surface-1);
+    border-color: var(--border-hairline);
+    --tw-ring-color: var(--border-hairline);
+    box-shadow: var(--elev-2);
 }
 
 /* ===================================================================
    BADGES — full pill
    =================================================================== */
+/* Filament already ships light badges as soft-tint semantic pills (tinted
+   bg + coloured text + a faint ring) — exactly the Crisp Console status
+   language. We only firm them up: full pill, tight padding, medium weight,
+   slightly wider tracking so short status words read as deliberate labels. */
 .fi-badge {
     border-radius: 9999px;
-    padding-inline: 0.75rem;
+    padding-inline: 0.625rem;
 }
+
+html:not(.dark) .fi-badge {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+/* Make the semantic ring actually read (crisp UIs lean on the edge). */
+html:not(.dark) .fi-badge.fi-color-success { --tw-ring-color: rgb(21 128 61 / 0.22); }
+html:not(.dark) .fi-badge.fi-color-warning { --tw-ring-color: rgb(180 83 9 / 0.22); }
+html:not(.dark) .fi-badge.fi-color-danger  { --tw-ring-color: rgb(185 28 28 / 0.22); }
+html:not(.dark) .fi-badge.fi-color-info    { --tw-ring-color: rgb(29 78 216 / 0.22); }
+html:not(.dark) .fi-badge.fi-color-primary { --tw-ring-color: var(--terra-glow); }
+html:not(.dark) .fi-badge.fi-color-gray    { --tw-ring-color: var(--lp-border-strong); }
 
 /* ===================================================================
    BUTTONS & FORM CONTROLS — softer radius
    =================================================================== */
 .fi-btn {
-    border-radius: 0.75rem;
+    border-radius: var(--lp-radius-sm);
 }
 
 .fi-input,
@@ -339,7 +1145,93 @@
 .fi-fo-text-input input,
 .fi-fo-textarea textarea,
 .fi-fo-select select {
-    border-radius: 0.75rem;
+    border-radius: var(--lp-radius-sm);
+}
+
+/* ===================================================================
+   NUMERALS — align every number in the panel (Crisp Console / ERP).
+   Tabular figures keep columns of digits vertically aligned; applied to
+   table cells and stat values where numbers dominate. Base rule (light);
+   dark inherits the same figure metrics harmlessly.
+   =================================================================== */
+.fi-ta-cell,
+.fi-ta-text-item-label,
+.fi-wi-stats-overview-stat-value {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}
+
+/* Light form controls — clean white field with a clearly VISIBLE warm outline
+ * and a terracotta focus glow. Style the WRAPPER (`.fi-input-wrp`), not the
+ * inner input: the wrapper owns the visible chrome (bg/ring/focus ring) while
+ * the inner control is transparent + `focus:ring-0`. Mirrors the dark
+ * treatment; styling the wrapper avoids the spilled double-ring glow. */
+.fi-input-wrp {
+    background-color: #ffffff;
+    --tw-ring-color: var(--lp-input-border);
+}
+
+/* One clean terracotta ring + soft glow on focus, in a single box-shadow so
+   nothing stacks. Mirrors Filament's guard for a focused suffix action. */
+.fi-input-wrp:focus-within:not(:has(.fi-ac-action:focus)) {
+    box-shadow: 0 0 0 1px var(--color-primary-500), 0 0 0 4px var(--terra-glow);
+}
+
+/* Primary button in light: handled in the Crisp Console polish block below
+   (flat fill, no glow). */
+
+/* Dark form controls — raised surface, warm hairline, ember focus glow.
+ *
+ * Filament wraps every text input / select / textarea in a `.fi-input-wrp`
+ * element that OWNS the visible chrome: background (`dark:bg-white/5`), the
+ * `ring-1` border, and the `focus-within:ring-2 ring-primary-500` focus ring.
+ * The inner `.fi-input` is deliberately transparent, `border-none` and
+ * `focus:ring-0`.
+ *
+ * The previous rules styled the INNER input — giving it its own surface, border
+ * and a square `box-shadow` focus ring. That ring stacked on top of the
+ * wrapper's own rounded ring and, because the inner input is a sharp rectangle
+ * inset in the rounded wrapper, spilled past the corners → the "broken / weird"
+ * focus glow seen on every search box. Style the WRAPPER instead. */
+.dark .fi-input-wrp {
+    background-color: var(--surface-2);
+    --tw-ring-color: var(--border-hairline);
+}
+
+/* Keep the inner controls transparent so the wrapper surface shows through and
+   no second ring can form inside the wrapper. */
+.dark .fi-input,
+.dark .fi-select-input,
+.dark .fi-textarea {
+    background-color: transparent;
+}
+
+/* Focus: one clean ember ring + soft glow on the wrapper. Both live in a single
+   `box-shadow` so nothing stacks. Mirrors Filament's own guard that suppresses
+   the ring while a suffix action button is focused. */
+.dark .fi-input-wrp:focus-within:not(:has(.fi-ac-action:focus)) {
+    box-shadow: 0 0 0 1px var(--color-primary-500), 0 0 0 4px var(--ember-glow);
+}
+
+/* Primary button carries the ember glow in dark */
+.dark .fi-btn.fi-color-primary,
+.dark .fi-btn[class*='fi-color-primary'] {
+    box-shadow: 0 2px 12px -2px var(--ember-glow);
+}
+
+/* Native <select> option/optgroup popup ships a cool `dark:bg-gray-900`;
+   warm it so the open list matches the raised input surface. */
+.dark .fi-select-input option,
+.dark .fi-select-input optgroup {
+    background-color: var(--surface-2);
+    color: var(--dark-text);
+}
+
+/* Tabs bar ships a cool `dark:bg-gray-900` pill row; warm it to a raised
+   surface with a hairline ring. */
+.dark .fi-tabs {
+    background-color: var(--surface-1);
+    --tw-ring-color: var(--border-hairline);
 }
 
 /* ===================================================================
@@ -347,12 +1239,20 @@
    =================================================================== */
 .fi-ta-ctn .fi-ta-header,
 .fi-ta-ctn .fi-ta-row {
-    border-color: var(--color-cream-200);
+    border-color: var(--lp-border-hairline);
+}
+
+.fi-ta-ctn .fi-ta-row:hover {
+    background-color: var(--lp-surface-2);
 }
 
 .dark .fi-ta-ctn .fi-ta-header,
 .dark .fi-ta-ctn .fi-ta-row {
-    border-color: var(--color-slate-800);
+    border-color: var(--border-hairline);
+}
+
+.dark .fi-ta-ctn .fi-ta-row:hover {
+    background-color: var(--surface-2);
 }
 
 /* ===================================================================
@@ -367,11 +1267,22 @@
     color: var(--color-gray-950);
 }
 
+/* Crisp headings: near-black, slightly tighter tracking so titles read as
+   confident type rather than default weight. Light-only guard — dark sets
+   its own heading colour just below and shouldn't inherit the greige. */
+html:not(.dark) .fi-header-heading,
+html:not(.dark) .fi-section-header-heading,
+html:not(.dark) .fi-fo-section-header-heading,
+html:not(.dark) .fi-modal-heading {
+    color: var(--lp-text);
+    letter-spacing: -0.011em;
+}
+
 .dark .fi-header-heading,
 .dark .fi-section-header-heading,
 .dark .fi-fo-section-header-heading,
 .dark .fi-modal-heading {
-    color: white;
+    color: var(--dark-text);
 }
 
 .fi-header-subheading,
@@ -383,9 +1294,182 @@
 .dark .fi-header-subheading,
 .dark .fi-section-header-description,
 .dark .fi-fo-section-header-description {
-    color: var(--color-gray-400);
+    color: var(--dark-text-muted);
 }
 
+/* ===================================================================
+   CUSTOM REPORT / DATA PAGES — operations overview, operation cost file,
+   supply orders file, trial balance, stock card, item quick-view.
+
+   Unlike the rest of the panel these render RAW <table>/<input>/<select>/
+   <div> markup styled with plain Tailwind color utilities (bg-white,
+   text-gray-950, border-gray-200 …) plus `dark:` overrides. Those `dark:`
+   overrides compile as ZERO-specificity `:where()` utilities inside
+   `@layer utilities`, so they win over the light base only by source
+   order. Under some build/dev-serve orderings the light utility wins
+   instead — leaving near-black text and white inputs on the charcoal
+   background (invisible values, glaring inputs).
+
+   Fix, definitively: re-map the neutral gray scale to the Charcoal & Ember
+   tokens with real, UNLAYERED selectors (specificity ≥ 0,3,0). Unlayered
+   rules beat every `@layer utilities` rule regardless of order, so dark
+   mode here can never regress from utility ordering again. Scoped to these
+   views only via the `.et-report` / `.et-quickview` marker classes and the
+   existing `.fi-stock-card` root.
+   =================================================================== */
+.dark :is(.et-report, .et-quickview, .fi-stock-card) .text-gray-950,
+.dark :is(.et-report, .et-quickview, .fi-stock-card) .text-gray-700 {
+    color: var(--dark-text);
+}
+
+.dark :is(.et-report, .et-quickview, .fi-stock-card) .text-gray-600,
+.dark :is(.et-report, .et-quickview, .fi-stock-card) .text-gray-500 {
+    color: var(--dark-text-muted);
+}
+
+.dark :is(.et-report, .et-quickview, .fi-stock-card) .text-gray-400 {
+    color: var(--dark-text-faint);
+}
+
+/* Inputs, selects, option lists and neutral tiles → raised charcoal
+   surface with a warm hairline and dark native controls. */
+.dark :is(.et-report, .fi-stock-card) :is(input, select),
+.dark :is(.et-report, .et-quickview, .fi-stock-card) .bg-white,
+.dark :is(.et-report, .et-quickview, .fi-stock-card) .bg-gray-50 {
+    background-color: var(--surface-2);
+    color: var(--dark-text);
+}
+
+.dark :is(.et-report, .fi-stock-card) :is(input, select) {
+    border-color: var(--border-hairline);
+    color-scheme: dark;
+}
+
+.dark :is(.et-report, .fi-stock-card) option {
+    background-color: var(--surface-2);
+    color: var(--dark-text);
+}
+
+/* Neutral borders / dividers / rings → warm hairline. */
+.dark :is(.et-report, .et-quickview, .fi-stock-card) :is(.border-gray-100, .border-gray-200, .border-gray-300) {
+    border-color: var(--border-hairline);
+}
+
+.dark :is(.et-report, .fi-stock-card) [class*='divide-gray-100'] > :not([hidden]) ~ :not([hidden]),
+.dark :is(.et-report, .fi-stock-card) [class*='divide-gray-200'] > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--border-hairline);
+}
+
+.dark .fi-stock-card [class*='ring-gray-950'] {
+    --tw-ring-color: var(--border-hairline);
+}
+
+/* Stock-card row hover. */
+.dark .fi-stock-card tbody tr:hover {
+    background-color: var(--surface-2);
+}
+
+/* ===================================================================
+   LIGHT-MODE PREMIUM POLISH — the touches that give the big-platform feel:
+   floating layered cards (via the token shadows above), a topbar that reads
+   as its own layer, tactile gradient accent buttons with a hover lift, clean
+   white inputs with a crisp ring, and a tinted table header band.
+
+   Every rule here is guarded with `html:not(.dark)` so it CANNOT leak into
+   dark mode — these are box-shadow / background-image properties on elements
+   whose `.dark` rule does NOT reset them, so without the guard they would
+   show in dark too. Filament toggles `.dark` on <html>, so `html:not(.dark)`
+   matches light only; `:not()` keeps specificity low and predictable.
+   =================================================================== */
+
+/* Primary button: a clean, confident flat terracotta fill. Depth comes from
+   a crisp inner top-light + a snappy hover that DARKENS the fill (no lift, no
+   soft glow). This is the app's one loud accent — used sparingly. */
+html:not(.dark) .fi-btn.fi-color-primary,
+html:not(.dark) .fi-btn[class*='fi-color-primary'] {
+    background-color: var(--color-primary-500);
+    background-image: none;
+    border-color: transparent;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16);
+    transition: background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+html:not(.dark) .fi-btn.fi-color-primary:hover,
+html:not(.dark) .fi-btn[class*='fi-color-primary']:hover {
+    background-color: var(--color-primary-600);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16);
+}
+
+/* Active sidebar item: flat terracotta fill (crisp, not a gradient). */
+html:not(.dark) .fi-sidebar-item-active .fi-sidebar-item-button {
+    background-image: none;
+    background-color: var(--color-primary-500);
+}
+
+/* Table header: its own quiet band above the rows, with a firm bottom
+   hairline that anchors the column titles (Crisp Console table). */
+html:not(.dark) .fi-ta-header-cell,
+html:not(.dark) .fi-ta-header {
+    background-color: var(--lp-surface-2);
+    box-shadow: inset 0 -1px 0 var(--lp-border-strong);
+}
+
+/* Column titles read as quiet labels, not body text: smaller, muted,
+   wider tracking, medium weight — the classic crisp data-table header. */
+html:not(.dark) .fi-ta-header-cell-label {
+    color: var(--lp-text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* Row actions ("عرض" / "تغير الحالة"): the biggest "cheap link" tell in the
+   grid. Turn each into a crisp ghost button — quiet by default, a firm
+   hairline + tinted fill on hover. Snappy, no lift. */
+html:not(.dark) .fi-ta-actions .fi-link {
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--lp-radius-sm);
+    border: 1px solid transparent;
+    transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+html:not(.dark) .fi-ta-actions .fi-link:hover {
+    background-color: var(--lp-surface-2);
+    border-color: var(--lp-border-hairline);
+    color: var(--color-primary-600);
+}
+
+/* ===================================================================
+   CUSTOM REPORT / DATA PAGES — LIGHT harmonization.
+   These pages already render correctly in light (they hardcode standard
+   Tailwind light utilities — light IS Filament's default), so nothing is
+   broken here. We only WARM the neutral chrome so they sit on the Warm
+   Porcelain system instead of cold pure-gray. Done as UNLAYERED,
+   high-specificity rules (≥ 0,3,0) scoped to the marker classes — never
+   `light:`-style arbitrary utilities — so utility ordering can never flip
+   them (same lesson as the dark block above). Each is shadowed by its
+   `.dark …` counterpart, so dark mode is untouched.
+   =================================================================== */
+:is(.et-report, .et-quickview, .fi-stock-card) .bg-gray-50 {
+    background-color: var(--lp-surface-2);
+}
+
+:is(.et-report, .et-quickview, .fi-stock-card) :is(.border-gray-100, .border-gray-200, .border-gray-300) {
+    border-color: var(--lp-border-hairline);
+}
+
+:is(.et-report, .fi-stock-card) [class*='divide-gray-100'] > :not([hidden]) ~ :not([hidden]),
+:is(.et-report, .fi-stock-card) [class*='divide-gray-200'] > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--lp-border-hairline);
+}
+
+.fi-stock-card tbody tr:hover {
+    background-color: var(--lp-surface-2);
+}
+
+/* ===================================================================
+   Breadcrumbs
+   =================================================================== */
 .fi-breadcrumbs a,
 .fi-breadcrumbs li,
 .fi-breadcrumbs-item {
@@ -399,9 +1483,354 @@
 .dark .fi-breadcrumbs a,
 .dark .fi-breadcrumbs li,
 .dark .fi-breadcrumbs-item {
-    color: var(--color-gray-400);
+    color: var(--dark-text-muted);
 }
 
 .dark .fi-breadcrumbs a:hover {
-    color: var(--color-gray-200);
+    color: var(--dark-text);
+}
+
+/* ===================================================================
+   USER-MENU (AVATAR) DROPDOWN — modern 2026 preferences panel.
+
+   The avatar dropdown now hosts BOTH the language switcher (moved out of
+   the retired topbar pill) and Filament's theme switcher, grouped into one
+   labelled "Preferences" zone. Everything below is scoped to `.fi-user-menu`
+   so no other dropdown (filters, action menus, selects) is touched. Both
+   themes are styled: base rules use the Warm-Porcelain `--lp-*` tokens
+   (light is Filament's default) and are shadowed by matching `.dark` rules
+   on the Charcoal & Ember `--surface-*` / `--ember` tokens.
+   =================================================================== */
+
+/* Panel: wider than the stock 14rem, softer radius, generous inset padding,
+   and warm layered chrome. The `!important` on width defeats Filament's own
+   `!max-w-[14rem]` utility on the panel. */
+.fi-user-menu .fi-dropdown-panel {
+    min-width: 17rem;
+    max-width: 19rem !important;
+    padding: 0.375rem;
+    border-radius: 1rem;
+    background-color: var(--lp-surface-1);
+    border: 1px solid var(--lp-border-hairline);
+    box-shadow: var(--lp-elev-2);
+}
+
+.dark .fi-user-menu .fi-dropdown-panel {
+    background-color: var(--surface-1);
+    border-color: var(--border-hairline);
+    box-shadow: var(--elev-2);
+}
+
+/* Retire the hard full-bleed divider lines between groups; the header,
+   preferences zone and action list separate through spacing + soft rules. */
+.fi-user-menu .fi-dropdown-panel > :not([hidden]) ~ :not([hidden]) {
+    border-top-color: transparent;
+}
+
+.fi-user-menu .fi-dropdown-list {
+    padding: 0.25rem;
+}
+
+/* Rounded, tactile list items with a warm hover. */
+.fi-user-menu .fi-dropdown-list-item {
+    border-radius: var(--lp-radius-sm);
+    transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.fi-user-menu .fi-dropdown-list-item:hover,
+.fi-user-menu .fi-dropdown-list-item:focus-visible {
+    background-color: var(--lp-surface-2);
+}
+
+.dark .fi-user-menu .fi-dropdown-list-item:hover,
+.dark .fi-user-menu .fi-dropdown-list-item:focus-visible {
+    background-color: var(--surface-2);
+}
+
+/* ---- Identity header ---------------------------------------------- */
+.et-user-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.625rem 0.75rem;
+    margin-bottom: 0.125rem;
+    border-bottom: 1px solid var(--lp-border-hairline);
+}
+
+.dark .et-user-header {
+    border-bottom-color: var(--border-hairline);
+}
+
+.et-user-header-avatar.fi-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px var(--lp-surface-1), 0 0 0 3px var(--lp-border-hairline);
+}
+
+.dark .et-user-header-avatar.fi-avatar {
+    box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 3px var(--border-hairline);
+}
+
+.et-user-header-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.et-user-header-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--lp-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.et-user-header-email {
+    font-size: 0.75rem;
+    color: var(--lp-text-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dark .et-user-header-name {
+    color: var(--dark-text);
+}
+
+.dark .et-user-header-email {
+    color: var(--dark-text-faint);
+}
+
+/* ---- Preferences zone (language + appearance) --------------------- */
+.et-prefs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4375rem;
+    padding: 0.5rem 0.5rem 0.375rem;
+}
+
+/* Small quiet section label above each control row. */
+.et-prefs-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--lp-text-faint);
+    padding-inline: 0.125rem;
+}
+
+.dark .et-prefs-label {
+    color: var(--dark-text-faint);
+}
+
+/* Segmented track shared by the language switch AND the theme switcher, so
+   the two read as one system. The theme switcher is Filament's own markup
+   (`.fi-theme-switcher`) coerced into the same track shape. */
+.et-segment,
+.et-prefs-appearance .fi-theme-switcher {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 0.25rem;
+    width: 100%;
+    padding: 0.25rem;
+    border-radius: 0.75rem;
+    background-color: var(--lp-surface-2);
+    box-shadow: inset 0 0 0 1px var(--lp-border-hairline);
+}
+
+.dark .et-segment,
+.dark .et-prefs-appearance .fi-theme-switcher {
+    background-color: var(--surface-bg);
+    box-shadow: inset 0 0 0 1px var(--border-hairline);
+}
+
+/* Language option button. */
+.et-segment-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.0625rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.5rem;
+    color: var(--lp-text-muted);
+    text-decoration: none;
+    transition: background-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.et-segment-btn:hover {
+    color: var(--lp-text);
+    background-color: rgb(64 48 34 / 0.05);
+}
+
+.dark .et-segment-btn {
+    color: var(--dark-text-muted);
+}
+
+.dark .et-segment-btn:hover {
+    color: var(--dark-text);
+    background-color: rgb(255 255 255 / 0.04);
+}
+
+.et-segment-code {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.et-segment-name {
+    font-size: 0.625rem;
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+/* Active language: raised chip lifted off the track, ember-tinted. */
+.et-segment-btn.et-active {
+    color: var(--color-primary-600);
+    background-color: var(--lp-surface-1);
+    box-shadow: 0 1px 2px rgb(64 48 34 / 0.12), 0 0 0 1px var(--lp-border-hairline);
+}
+
+.dark .et-segment-btn.et-active {
+    color: var(--color-primary-400);
+    background-color: var(--surface-2);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.4), 0 0 0 1px var(--ember-glow);
+}
+
+/* ---- Theme switcher coerced into the segmented look --------------- */
+.et-prefs-appearance {
+    padding-top: 0.125rem;
+}
+
+.et-prefs-appearance .fi-theme-switcher-btn {
+    border-radius: 0.5rem;
+    padding: 0.4375rem;
+    color: var(--lp-text-muted);
+    transition: background-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.et-prefs-appearance .fi-theme-switcher-btn:hover {
+    background-color: rgb(64 48 34 / 0.05);
+    color: var(--lp-text);
+}
+
+.dark .et-prefs-appearance .fi-theme-switcher-btn {
+    color: var(--dark-text-muted);
+}
+
+.dark .et-prefs-appearance .fi-theme-switcher-btn:hover {
+    background-color: rgb(255 255 255 / 0.04);
+    color: var(--dark-text);
+}
+
+/* Active theme chip — same raised, ember-tinted treatment as the active
+   language chip. Higher-specificity unlayered rules override Filament's
+   inline `x-bind:class` utilities (bg-gray-50 / dark:bg-white/5). */
+.et-prefs-appearance .fi-theme-switcher-btn.fi-active {
+    color: var(--color-primary-600);
+    background-color: var(--lp-surface-1);
+    box-shadow: 0 1px 2px rgb(64 48 34 / 0.12), 0 0 0 1px var(--lp-border-hairline);
+}
+
+.dark .et-prefs-appearance .fi-theme-switcher-btn.fi-active {
+    color: var(--color-primary-400);
+    background-color: var(--surface-2);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.4), 0 0 0 1px var(--ember-glow);
+}
+
+/* ---- Trigger: the avatar pill that opens the dropdown ------------- */
+/* A compact rounded pill (avatar + chevron) with a hairline ring that
+   warms to ember on hover / when the menu is open, a soft lift, and a
+   chevron that flips open. Filament's x-float sets `aria-expanded="true"`
+   on the `.fi-dropdown-trigger` reference while the panel is visible — that
+   is the open-state hook used below. */
+.fi-user-menu .fi-dropdown-trigger {
+    border-radius: 9999px;
+}
+
+.et-user-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.1875rem;
+    padding-inline-end: 0.4375rem;
+    border-radius: 9999px;
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1px var(--lp-border-hairline);
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.et-user-trigger:hover {
+    background-color: var(--lp-surface-2);
+    box-shadow: inset 0 0 0 1px var(--color-primary-400), 0 2px 10px -4px var(--ember-glow);
+}
+
+.et-user-trigger:active {
+    transform: scale(0.97);
+}
+
+.fi-user-menu .fi-dropdown-trigger[aria-expanded='true'] .et-user-trigger,
+.et-user-trigger:focus-visible {
+    outline: none;
+    background-color: var(--lp-surface-2);
+    box-shadow: inset 0 0 0 1px var(--color-primary-500), 0 2px 12px -4px var(--ember-glow);
+}
+
+.dark .et-user-trigger {
+    box-shadow: inset 0 0 0 1px var(--border-hairline);
+}
+
+.dark .et-user-trigger:hover {
+    background-color: var(--surface-2);
+    box-shadow: inset 0 0 0 1px var(--color-primary-500), 0 2px 12px -3px var(--ember-glow);
+}
+
+.dark .fi-user-menu .fi-dropdown-trigger[aria-expanded='true'] .et-user-trigger,
+.dark .et-user-trigger:focus-visible {
+    background-color: var(--surface-2);
+    box-shadow: inset 0 0 0 1px var(--color-primary-400), 0 2px 14px -3px var(--ember-glow);
+}
+
+/* The avatar keeps a crisp gap-ring so it reads as a coin inside the pill. */
+.et-user-trigger-avatar.fi-avatar {
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px var(--lp-surface-1);
+    transition: box-shadow 0.15s ease;
+}
+
+.dark .et-user-trigger-avatar.fi-avatar {
+    box-shadow: 0 0 0 2px var(--surface-1);
+}
+
+/* Chevron affordance — muted, small; warms + flips when the menu opens. */
+.et-user-trigger-chevron {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    color: var(--lp-text-faint);
+    transition: transform 0.18s ease, color 0.15s ease;
+}
+
+.et-user-trigger:hover .et-user-trigger-chevron {
+    color: var(--color-primary-500);
+}
+
+.fi-user-menu .fi-dropdown-trigger[aria-expanded='true'] .et-user-trigger-chevron {
+    color: var(--color-primary-500);
+    transform: rotate(180deg);
+}
+
+.dark .et-user-trigger-chevron {
+    color: var(--dark-text-faint);
+}
+
+.dark .et-user-trigger:hover .et-user-trigger-chevron,
+.dark .fi-user-menu .fi-dropdown-trigger[aria-expanded='true'] .et-user-trigger-chevron {
+    color: var(--color-primary-400);
 }

@@ -1,15 +1,15 @@
-<x-filament-panels::page>
+<x-filament-panels::page class="et-report">
     {{-- Filters --}}
     <div class="flex flex-wrap items-end gap-4">
         <div class="w-full max-w-xs">
-            <label for="trial-balance-as-of" class="block text-sm font-medium leading-6 text-gray-950 dark:text-white">
+            <label for="trial-balance-as-of" class="block text-sm font-medium leading-6 text-gray-950 dark:text-[var(--dark-text)]">
                 {{ __('resources.trial_balance.as_of') }}
             </label>
             <input
                 id="trial-balance-as-of"
                 type="date"
                 wire:model.live="asOf"
-                class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-950 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-950 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-[var(--border-hairline)] dark:bg-[var(--surface-2)] dark:text-[var(--dark-text)]"
             />
         </div>
     </div>
@@ -18,7 +18,7 @@
 
     @if ($groups->isEmpty())
         <x-filament::section>
-            <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('resources.trial_balance.empty') }}</p>
+            <p class="text-sm text-gray-500 dark:text-[var(--dark-text-muted)]">{{ __('resources.trial_balance.empty') }}</p>
         </x-filament::section>
     @endif
 
@@ -39,7 +39,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
-                        <tr class="border-b border-gray-200 text-gray-500 dark:border-white/10 dark:text-gray-400">
+                        <tr class="border-b border-gray-200 text-gray-500 dark:border-[var(--border-hairline)] dark:text-[var(--dark-text-muted)]">
                             <th class="px-3 py-2 text-start font-medium">{{ __('resources.trial_balance.columns.row') }}</th>
                             <th class="px-3 py-2 text-start font-medium">{{ __('resources.trial_balance.columns.account') }}</th>
                             <th class="px-3 py-2 text-end font-medium">{{ __('resources.trial_balance.columns.debit') }}</th>
@@ -47,13 +47,13 @@
                             <th class="px-3 py-2 text-end font-medium">{{ __('resources.trial_balance.columns.balance') }}</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                    <tbody class="divide-y divide-gray-100 dark:divide-[var(--border-hairline)]">
                         @foreach ($group['rows'] as $index => $row)
-                            <tr class="text-gray-950 dark:text-white">
-                                <td class="px-3 py-2 text-start tabular-nums text-gray-500 dark:text-gray-400">{{ $index + 1 }}</td>
+                            <tr class="text-gray-950 dark:text-[var(--dark-text)]">
+                                <td class="px-3 py-2 text-start tabular-nums text-gray-500 dark:text-[var(--dark-text-muted)]">{{ $index + 1 }}</td>
                                 <td class="px-3 py-2 text-start">
                                     @if ($row['account']->code)
-                                        <span class="text-gray-400 dark:text-gray-500">{{ $row['account']->code }}</span>
+                                        <span class="text-gray-400 dark:text-[var(--dark-text-faint)]">{{ $row['account']->code }}</span>
                                     @endif
                                     {{ $row['account']->name }}
                                 </td>
@@ -64,7 +64,7 @@
                         @endforeach
                     </tbody>
                     <tfoot>
-                        <tr class="border-t-2 border-gray-300 font-bold text-gray-950 dark:border-white/20 dark:text-white">
+                        <tr class="border-t-2 border-gray-300 font-bold text-gray-950 dark:border-[var(--border-strong)] dark:text-[var(--dark-text)]">
                             <td class="px-3 py-2 text-start" colspan="2">{{ __('resources.trial_balance.totals') }}</td>
                             <td class="px-3 py-2 text-end tabular-nums">{{ number_format($group['total_debit'], 2) }}</td>
                             <td class="px-3 py-2 text-end tabular-nums">{{ number_format($group['total_credit'], 2) }}</td>

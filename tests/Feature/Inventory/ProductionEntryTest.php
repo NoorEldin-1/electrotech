@@ -81,6 +81,15 @@ class ProductionEntryTest extends TestCase
         $this->assertEquals(10, (float) $entry->planned_quantity);
         $this->assertEquals(8, (float) $entry->produced_quantity);
         $this->assertEquals(2, (float) $entry->scrap_quantity);
+
+        // Value snapshot (سلايد 9): operation name + issued value + loss = diff.
+        $this->assertSame($wo->title, $entry->operation_name);
+        // المنتج الفعلي = قيمة أمر الصرف الموقّع (10 × 4 = 40).
+        $this->assertEquals(40, (float) $entry->actual_material_cost);
+        $this->assertEquals(
+            (float) $entry->actual_material_cost - (float) $entry->planned_material_cost,
+            $entry->loss_value,
+        );
     }
 
     public function test_cannot_complete_without_qa_approval(): void

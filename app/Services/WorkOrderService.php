@@ -178,10 +178,21 @@ class WorkOrderService
             throw new \RuntimeException(__('errors.work_order.not_in_qa_review', ['number' => $workOrder->wo_number]));
         }
 
-        $workOrder->loadMissing('outputItem');
+        $workOrder->loadMissing(['outputItem', 'materials']);
 
         DB::transaction(function () use ($workOrder) {
             $produced = (float) $workOrder->produced_quantity;
+
+            // المخطط (سلايد 9) = قيمة طلب التصنيع: خامات الأمر إن وُجدت، وإلا
+            // تقدير الأمر المأخوذ من قائمة المواد وقت الإنشاء (توافقاً مع الأوامر
+            // القديمة التي تعتمد على BOM فقط).
+            $plannedCost = $workOrder->planned_material_cost > 0
+                ? $workOrder->planned_material_cost
+                : (float) $workOrder->estimated_cost;
+
+            // المنتج الفعلي = قيمة أمر الصرف الموقّع. تُقرأ من قاعدة البيانات لأن
+            // الترحيل يزيدها على نسخة أخرى من الأمر (قد تكون النسخة الحالية قديمة).
+            $actualCost = (float) ($workOrder->fresh()?->actual_material_cost ?? $workOrder->actual_material_cost);
 
             // 1) Move the finished product into finished goods.
             if ($workOrder->output_item_id && $produced > 0) {
@@ -198,13 +209,18 @@ class WorkOrderService
             //    only what was actually issued and is still on hand in WIP).
             $this->consumeWorkInProgress($workOrder);
 
-            // 3) Record the production entry + extracted loss.
+            // 3) Record the production entry + extracted loss. Snapshots both
+            //    the quantities and the planned-vs-actual material VALUES so the
+            //    الإنتاج والفاقد report reads the loss in money (سلايد 9).
             $workOrder->productionEntries()->create([
                 'output_item_id' => $workOrder->output_item_id,
+                'operation_name' => $workOrder->title,
                 'entry_date' => now(),
                 'planned_quantity' => (float) $workOrder->planned_quantity,
                 'produced_quantity' => $produced,
                 'scrap_quantity' => (float) $workOrder->waste_quantity,
+                'planned_material_cost' => $plannedCost,
+                'actual_material_cost' => $actualCost,
                 'performed_by' => Auth::id(),
             ]);
 

@@ -55,6 +55,11 @@ class AdminPanelProvider extends PanelProvider
             // a 200–500ms saving per click on cold caches.
             ->spa()
             ->sidebarCollapsibleOnDesktop()
+            // Slimmer sidebar (default is 20rem). Narrowing it — together with
+            // the smaller nav links styled in theme.css — hands the reclaimed
+            // width back to the main module area. The floating/rounded sidebar
+            // frame itself is pure CSS (see theme.css "FLOATING SIDEBAR").
+            ->sidebarWidth('17rem')
             // Database notifications power the topbar bell — used by the
             // General Management layer to notify departments when an operation
             // is activated or a delivery minute is distributed.
@@ -115,11 +120,38 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::STYLES_AFTER,
                 fn (): string => Blade::render('@vite(\'resources/css/filament/admin/theme.css\')')
             )
+            // Logout confirmation modal. Rendered at <body> level (not inside
+            // the user-menu) so its fixed positioning escapes the topbar's
+            // backdrop-filter containing block. Opened by the user-menu logout
+            // button via the global `open-modal` event. Only emitted for an
+            // authenticated user, so it never appears on the login screen.
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): string => filament()->auth()->check()
+                    ? view('filament.user-menu.logout-modal')->render()
+                    : ''
+            )
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn (): string => request()->routeIs('filament.admin.auth.login')
                     ? Blade::render('<link rel="stylesheet" href="{{ asset(\'css/custom-login.css\') }}">')
                     : ''
+            )
+            // Premium split-screen login: the cinematic brand showcase panel
+            // is injected as the first element in <body> (a sibling of the
+            // Filament simple layout) so custom-login.css can pin it to one
+            // half of the viewport. Login route only.
+            ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn (): string => request()->routeIs('filament.admin.auth.login')
+                    ? view('filament.auth.login-showcase')->render()
+                    : ''
+            )
+            // Form-side header (welcome heading + compact logo on mobile),
+            // rendered above the login form in place of the default brand block.
+            ->renderHook(
+                PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,
+                fn (): string => view('filament.auth.login-header')->render()
             )
             // Network-resilience client. Loads on every admin page when
             // enabled in config — see config/resilience.php. When
@@ -160,6 +192,30 @@ class AdminPanelProvider extends PanelProvider
                         })();
                         </script>'
                     )
+            )
+            // SPA fix: on `wire:navigate` the sidebar re-renders and resets its
+            // scroll to the top, hiding a deep active link (the user has to hard
+            // reload to see it). Filament's own "scroll the active item into
+            // view" script only runs on a full `DOMContentLoaded`, so re-run the
+            // same logic on every SPA navigation. `data-navigate-once` registers
+            // the persistent document listener a single time (Livewire keeps it
+            // across navigations) so no duplicate handlers stack up.
+            ->renderHook(
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): string => '<script data-navigate-once>
+                    document.addEventListener("livewire:navigated", () => {
+                        setTimeout(() => {
+                            var nav = document.querySelector(".fi-main-sidebar .fi-sidebar-nav");
+                            if (! nav) return;
+                            var active = document.querySelector(".fi-main-sidebar .fi-sidebar-item.fi-active");
+                            if (! active || active.offsetParent === null) {
+                                active = document.querySelector(".fi-main-sidebar .fi-sidebar-group.fi-active");
+                            }
+                            if (! active || active.offsetParent === null) return;
+                            nav.scrollTo(0, active.offsetTop - window.innerHeight / 2);
+                        }, 10);
+                    });
+                </script>'
             );
     }
 }

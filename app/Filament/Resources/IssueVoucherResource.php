@@ -101,8 +101,16 @@ class IssueVoucherResource extends Resource
                                     ->required()
                                     // ->live() so the quick-view suffix action
                                     // re-renders (becomes visible) once an item
-                                    // is picked.
+                                    // is picked, and so the unit cost can be
+                                    // defaulted from the item card below.
                                     ->live()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set): void {
+                                        // تكلفة الوحدة تُكتب تلقائياً من كرت الصنف
+                                        // بناءً على آخر تسعير له (سلايد 8).
+                                        if ($state && static::canViewPricing()) {
+                                            $set('unit_cost', (float) (\App\Models\Item::find($state)?->unit_cost ?? 0));
+                                        }
+                                    })
                                     ->suffixAction(ItemResource::quickViewAction())
                                     ->columnSpan(static::canViewPricing() ? 1 : 2),
 
