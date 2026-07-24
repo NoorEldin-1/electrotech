@@ -91,20 +91,23 @@ class AllocationsRelationManager extends RelationManager
                     }),
             ])
             ->actions([
-                Tables\Actions\Action::make('release')
-                    ->label(__('resources.facility_allocations.actions.release'))
-                    ->icon('heroicon-o-arrow-uturn-left')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->isActive()
-                        && (auth()->user()?->can('credit_facilities.manage') ?? false))
-                    ->action(function ($record): void {
-                        app(CreditFacilityService::class)->release($record);
-                        Notification::make()
-                            ->title(__('resources.facility_allocations.notifications.released'))
-                            ->success()
-                            ->send();
-                    }),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('release')
+                        ->label(__('resources.facility_allocations.actions.release'))
+                        ->icon('heroicon-o-arrow-uturn-left')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->visible(fn ($record) => $record->isActive()
+                            && (auth()->user()?->can('credit_facilities.manage') ?? false))
+                        ->action(function ($record): void {
+                            app(CreditFacilityService::class)->release($record);
+                            Notification::make()
+                                ->title(__('resources.facility_allocations.notifications.released'))
+                                ->success()
+                                ->send();
+                        }),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 }

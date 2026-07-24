@@ -255,29 +255,37 @@ class OffersRelationManager extends RelationManager
                     ->after(fn (ProjectOffer $record) => app(OfferTotalsService::class)->recalculate($record)),
             ])
             ->actions([
-                // Slide 9: print in English (2026 default) or Arabic.
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('print_en')
-                        ->label(__('resources.project_offers.actions.print_en'))
-                        ->icon('heroicon-o-printer')
-                        ->url(fn (ProjectOffer $record): string => route('offers.pdf', ['offer' => $record, 'lang' => 'en']))
-                        ->openUrlInNewTab(),
+                    // Slide 9: print in English (2026 default) or Arabic.
+                    Tables\Actions\ActionGroup::make([
+                        Tables\Actions\Action::make('print_en')
+                            ->label(__('resources.project_offers.actions.print_en'))
+                            ->icon('heroicon-o-printer')
+                            ->url(fn (ProjectOffer $record): string => route('offers.pdf', ['offer' => $record, 'lang' => 'en']))
+                            ->openUrlInNewTab(),
 
-                    Tables\Actions\Action::make('print_ar')
-                        ->label(__('resources.project_offers.actions.print_ar'))
+                        Tables\Actions\Action::make('print_ar')
+                            ->label(__('resources.project_offers.actions.print_ar'))
+                            ->icon('heroicon-o-printer')
+                            ->url(fn (ProjectOffer $record): string => route('offers.pdf', ['offer' => $record, 'lang' => 'ar']))
+                            ->openUrlInNewTab(),
+                    ])
+                        ->label(__('resources.project_offers.actions.print'))
                         ->icon('heroicon-o-printer')
-                        ->url(fn (ProjectOffer $record): string => route('offers.pdf', ['offer' => $record, 'lang' => 'ar']))
-                        ->openUrlInNewTab(),
+                        ->color('gray')
+                        // ->grouped() renders the nested group as a LABELLED
+                        // in-menu row that opens a side fly-out — not the
+                        // ActionGroup default (icon-only trigger, no label). It
+                        // stays consistent with its siblings and inherits the
+                        // nested-submenu chevron cue (theme.css §4).
+                        ->grouped()
+                        ->visible(fn (ProjectOffer $record): bool => auth()->user()?->can('print', $record) ?? false),
+
+                    Tables\Actions\EditAction::make()
+                        ->after(fn (ProjectOffer $record) => app(OfferTotalsService::class)->recalculate($record)),
+                    Tables\Actions\DeleteAction::make(),
                 ])
-                    ->label(__('resources.project_offers.actions.print'))
-                    ->icon('heroicon-o-printer')
-                    ->color('gray')
-                    ->button()
-                    ->visible(fn (ProjectOffer $record): bool => auth()->user()?->can('print', $record) ?? false),
-
-                Tables\Actions\EditAction::make()
-                    ->after(fn (ProjectOffer $record) => app(OfferTotalsService::class)->recalculate($record)),
-                Tables\Actions\DeleteAction::make(),
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 }

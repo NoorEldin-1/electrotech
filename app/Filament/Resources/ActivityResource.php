@@ -261,7 +261,10 @@ class ActivityResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ])
             ->bulkActions([])
             ->persistFiltersInSession()

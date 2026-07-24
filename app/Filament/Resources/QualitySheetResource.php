@@ -265,72 +265,80 @@ class QualitySheetResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                // QA department signs off the filled sheet.
-                Tables\Actions\Action::make('fill')
-                    ->label(__('resources.quality_sheets.actions.fill'))
-                    ->icon('heroicon-o-clipboard-document-check')
-                    ->color('warning')
-                    ->visible(fn (QualitySheet $record) => auth()->user()?->can('fill', $record))
-                    ->form([
-                        Forms\Components\Textarea::make('qa_inspector_notes')
-                            ->label(__('resources.quality_sheets.fields.qa_inspector_notes'))
-                            ->default(fn (QualitySheet $record) => $record->qa_inspector_notes)
-                            ->rows(3),
-                    ])
-                    ->action(function (QualitySheet $record, array $data) {
-                        try {
-                            app(QualitySheetService::class)->fill($record, $data['qa_inspector_notes'] ?? null);
-                            Notification::make()->success()->title(__('resources.quality_sheets.notifications.filled'))->send();
-                        } catch (\Throwable $e) {
-                            Notification::make()->danger()->title(__('resources.common.action_failed'))->body($e->getMessage())->send();
-                        }
-                    }),
-
-                // Factory manager final approval — idempotent on retry.
-                Tables\Actions\Action::make('approve')
-                    ->label(__('resources.quality_sheets.actions.approve'))
-                    ->icon('heroicon-o-check-badge')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->modalDescription(__('resources.quality_sheets.actions.approve_confirm'))
-                    ->visible(fn (QualitySheet $record) => $record->status === QualitySheetStatus::QaFilled
-                        && auth()->user()?->can('approve', $record))
-                    ->action(function (QualitySheet $record) {
-                        $fresh = $record->fresh();
-                        if ($fresh && $fresh->isApproved()) {
-                            Notification::make()->success()->title(__('resources.quality_sheets.notifications.approved'))->send();
-                            return;
-                        }
-                        try {
-                            app(QualitySheetService::class)->approve($record);
-                            Notification::make()->success()->title(__('resources.quality_sheets.notifications.approved'))->send();
-                        } catch (\Throwable $e) {
-                            Notification::make()->danger()->title(__('resources.common.action_failed'))->body($e->getMessage())->send();
-                        }
-                    }),
-
-                // Print the sheet as the paper form (Arabic / English).
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('print_ar')
-                        ->label(__('resources.quality_sheets.actions.print_ar'))
-                        ->icon('heroicon-o-printer')
-                        ->url(fn (QualitySheet $record): string => route('quality_sheets.pdf', ['qualitySheet' => $record, 'lang' => 'ar']))
-                        ->openUrlInNewTab(),
-                    Tables\Actions\Action::make('print_en')
-                        ->label(__('resources.quality_sheets.actions.print_en'))
-                        ->icon('heroicon-o-printer')
-                        ->url(fn (QualitySheet $record): string => route('quality_sheets.pdf', ['qualitySheet' => $record, 'lang' => 'en']))
-                        ->openUrlInNewTab(),
-                ])
-                    ->label(__('resources.quality_sheets.actions.print'))
-                    ->icon('heroicon-o-printer')
-                    ->color('gray')
-                    ->button()
-                    ->visible(fn (QualitySheet $record): bool => auth()->user()?->can('print', $record) ?? false),
+                    // QA department signs off the filled sheet.
+                    Tables\Actions\Action::make('fill')
+                        ->label(__('resources.quality_sheets.actions.fill'))
+                        ->icon('heroicon-o-clipboard-document-check')
+                        ->color('warning')
+                        ->visible(fn (QualitySheet $record) => auth()->user()?->can('fill', $record))
+                        ->form([
+                            Forms\Components\Textarea::make('qa_inspector_notes')
+                                ->label(__('resources.quality_sheets.fields.qa_inspector_notes'))
+                                ->default(fn (QualitySheet $record) => $record->qa_inspector_notes)
+                                ->rows(3),
+                        ])
+                        ->action(function (QualitySheet $record, array $data) {
+                            try {
+                                app(QualitySheetService::class)->fill($record, $data['qa_inspector_notes'] ?? null);
+                                Notification::make()->success()->title(__('resources.quality_sheets.notifications.filled'))->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()->danger()->title(__('resources.common.action_failed'))->body($e->getMessage())->send();
+                            }
+                        }),
 
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (QualitySheet $record) => ! $record->isApproved()),
+                    // Factory manager final approval — idempotent on retry.
+                    Tables\Actions\Action::make('approve')
+                        ->label(__('resources.quality_sheets.actions.approve'))
+                        ->icon('heroicon-o-check-badge')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalDescription(__('resources.quality_sheets.actions.approve_confirm'))
+                        ->visible(fn (QualitySheet $record) => $record->status === QualitySheetStatus::QaFilled
+                            && auth()->user()?->can('approve', $record))
+                        ->action(function (QualitySheet $record) {
+                            $fresh = $record->fresh();
+                            if ($fresh && $fresh->isApproved()) {
+                                Notification::make()->success()->title(__('resources.quality_sheets.notifications.approved'))->send();
+                                return;
+                            }
+                            try {
+                                app(QualitySheetService::class)->approve($record);
+                                Notification::make()->success()->title(__('resources.quality_sheets.notifications.approved'))->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()->danger()->title(__('resources.common.action_failed'))->body($e->getMessage())->send();
+                            }
+                        }),
+
+                    // Print the sheet as the paper form (Arabic / English).
+                    Tables\Actions\ActionGroup::make([
+                        Tables\Actions\Action::make('print_ar')
+                            ->label(__('resources.quality_sheets.actions.print_ar'))
+                            ->icon('heroicon-o-printer')
+                            ->url(fn (QualitySheet $record): string => route('quality_sheets.pdf', ['qualitySheet' => $record, 'lang' => 'ar']))
+                            ->openUrlInNewTab(),
+                        Tables\Actions\Action::make('print_en')
+                            ->label(__('resources.quality_sheets.actions.print_en'))
+                            ->icon('heroicon-o-printer')
+                            ->url(fn (QualitySheet $record): string => route('quality_sheets.pdf', ['qualitySheet' => $record, 'lang' => 'en']))
+                            ->openUrlInNewTab(),
+                    ])
+                        ->label(__('resources.quality_sheets.actions.print'))
+                        ->icon('heroicon-o-printer')
+                        ->color('gray')
+                        // ->grouped() renders the nested group as a LABELLED
+                        // in-menu row that opens a side fly-out — not the
+                        // ActionGroup default (icon-only trigger, no label). It
+                        // stays consistent with its siblings and inherits the
+                        // nested-submenu chevron cue (theme.css §4).
+                        ->grouped()
+                        ->visible(fn (QualitySheet $record): bool => auth()->user()?->can('print', $record) ?? false),
+
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (QualitySheet $record) => ! $record->isApproved()),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

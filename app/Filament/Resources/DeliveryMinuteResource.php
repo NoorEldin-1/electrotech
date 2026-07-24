@@ -120,22 +120,25 @@ class DeliveryMinuteResource extends Resource
             ])
             ->defaultSort('minute_date', 'desc')
             ->actions([
-                Tables\Actions\Action::make('distribute')
-                    ->label(__('resources.delivery_minutes.actions.distribute'))
-                    ->icon('heroicon-o-paper-airplane')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(fn (DeliveryMinute $record) => ! $record->isDistributed()
-                        && auth()->user()?->can('distribute', $record))
-                    ->action(function (DeliveryMinute $record): void {
-                        app(DeliveryMinuteService::class)->distribute($record);
-                        Notification::make()
-                            ->title(__('resources.delivery_minutes.notifications.distributed'))
-                            ->success()
-                            ->send();
-                    }),
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (DeliveryMinute $record) => ! $record->isDistributed()),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('distribute')
+                        ->label(__('resources.delivery_minutes.actions.distribute'))
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->visible(fn (DeliveryMinute $record) => ! $record->isDistributed()
+                            && auth()->user()?->can('distribute', $record))
+                        ->action(function (DeliveryMinute $record): void {
+                            app(DeliveryMinuteService::class)->distribute($record);
+                            Notification::make()
+                                ->title(__('resources.delivery_minutes.notifications.distributed'))
+                                ->success()
+                                ->send();
+                        }),
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (DeliveryMinute $record) => ! $record->isDistributed()),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 

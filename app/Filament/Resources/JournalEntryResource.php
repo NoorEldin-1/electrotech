@@ -260,10 +260,13 @@ class JournalEntryResource extends Resource
                         ->when($data['until'] ?? null, fn (Builder $q, $d) => $q->whereDate('entry_date', '<=', $d))),
             ])
             ->actions([
-                static::postAction(),
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (JournalEntry $record) => $record->isDraft()),
+                Tables\Actions\ActionGroup::make([
+                    static::postAction(),
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (JournalEntry $record) => $record->isDraft()),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 

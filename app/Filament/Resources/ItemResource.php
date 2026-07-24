@@ -188,17 +188,20 @@ class ItemResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                // Open the item card in a modal (same quick view used elsewhere)
-                // instead of navigating to a standalone page.
-                Tables\Actions\ViewAction::make()
-                    ->modalHeading(fn (Item $record): string => $record->name)
-                    ->modalContent(fn (Item $record) => view('filament.items.quick-view', [
-                        'item' => $record->loadMissing('inventories'),
-                    ]))
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel(__('resources.items.actions.close'))
-                    ->modalWidth(MaxWidth::TwoExtraLarge),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    // Open the item card in a modal (same quick view used elsewhere)
+                    // instead of navigating to a standalone page.
+                    Tables\Actions\ViewAction::make()
+                        ->modalHeading(fn (Item $record): string => $record->name)
+                        ->modalContent(fn (Item $record) => view('filament.items.quick-view', [
+                            'item' => $record->loadMissing('inventories'),
+                        ]))
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel(__('resources.items.actions.close'))
+                        ->modalWidth(MaxWidth::TwoExtraLarge),
+                    Tables\Actions\EditAction::make(),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

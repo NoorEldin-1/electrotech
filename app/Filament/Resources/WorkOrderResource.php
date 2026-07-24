@@ -492,273 +492,276 @@ class WorkOrderResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
 
-                // Approve order (اعتماد مدير مكتب المشروعات — سلايد 5): the PMO
-                // manager releases the draft to the floor (Draft → Pending).
-                // Manufacturing cannot start before this gate. Idempotent on
-                // retry, like the QA actions.
-                Tables\Actions\Action::make('approve_order')
-                    ->label(__('resources.work_orders.actions.approve_order'))
-                    ->icon('heroicon-o-check-badge')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::Draft
-                        && auth()->user()?->can('work_orders.approve_order'))
-                    ->action(function (WorkOrder $record) {
-                        $fresh = $record->fresh();
-                        if ($fresh && $fresh->status !== WorkOrderStatus::Draft) {
-                            Notification::make()->success()->title(__('resources.work_orders.notifications.order_approved'))->send();
-                            return;
-                        }
-                        try {
-                            app(WorkOrderService::class)->approveOrder($record);
-                            Notification::make()->success()->title(__('resources.work_orders.notifications.order_approved'))->send();
-                        } catch (\RuntimeException $e) {
-                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
-                        }
-                    }),
+                    // Approve order (اعتماد مدير مكتب المشروعات — سلايد 5): the PMO
+                    // manager releases the draft to the floor (Draft → Pending).
+                    // Manufacturing cannot start before this gate. Idempotent on
+                    // retry, like the QA actions.
+                    Tables\Actions\Action::make('approve_order')
+                        ->label(__('resources.work_orders.actions.approve_order'))
+                        ->icon('heroicon-o-check-badge')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::Draft
+                            && auth()->user()?->can('work_orders.approve_order'))
+                        ->action(function (WorkOrder $record) {
+                            $fresh = $record->fresh();
+                            if ($fresh && $fresh->status !== WorkOrderStatus::Draft) {
+                                Notification::make()->success()->title(__('resources.work_orders.notifications.order_approved'))->send();
+                                return;
+                            }
+                            try {
+                                app(WorkOrderService::class)->approveOrder($record);
+                                Notification::make()->success()->title(__('resources.work_orders.notifications.order_approved'))->send();
+                            } catch (\RuntimeException $e) {
+                                Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                            }
+                        }),
 
-                // Start WO action
-                //
-                // The action is idempotent under a flaky connection: if a
-                // second submission arrives because the user's browser
-                // didn't see the first response and retried, we re-read
-                // the record from the DB and silently succeed if the WO
-                // has already advanced past the target state. Combined
-                // with HTTP-level Idempotency-Key middleware, this means
-                // a double-click on a 2 s RTT link can never start the
-                // WO twice or surface a confusing "wrong state" toast.
-                Tables\Actions\Action::make('start')
-                    ->label(__('resources.work_orders.actions.start'))
-                    ->icon('heroicon-o-play')
-                    ->color('info')
-                    ->requiresConfirmation()
-                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::Pending
-                        && auth()->user()?->can('work_orders.start'))
-                    ->action(function (WorkOrder $record) {
-                        $fresh = $record->fresh();
-                        if ($fresh && $fresh->status !== WorkOrderStatus::Pending) {
-                            Notification::make()->success()->title(__('resources.work_orders.notifications.started'))->send();
-                            return;
-                        }
-                        try {
-                            app(WorkOrderService::class)->start($record);
-                            Notification::make()->success()->title(__('resources.work_orders.notifications.started'))->send();
-                        } catch (\RuntimeException $e) {
-                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
-                        }
-                    }),
+                    // Start WO action
+                    //
+                    // The action is idempotent under a flaky connection: if a
+                    // second submission arrives because the user's browser
+                    // didn't see the first response and retried, we re-read
+                    // the record from the DB and silently succeed if the WO
+                    // has already advanced past the target state. Combined
+                    // with HTTP-level Idempotency-Key middleware, this means
+                    // a double-click on a 2 s RTT link can never start the
+                    // WO twice or surface a confusing "wrong state" toast.
+                    Tables\Actions\Action::make('start')
+                        ->label(__('resources.work_orders.actions.start'))
+                        ->icon('heroicon-o-play')
+                        ->color('info')
+                        ->requiresConfirmation()
+                        ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::Pending
+                            && auth()->user()?->can('work_orders.start'))
+                        ->action(function (WorkOrder $record) {
+                            $fresh = $record->fresh();
+                            if ($fresh && $fresh->status !== WorkOrderStatus::Pending) {
+                                Notification::make()->success()->title(__('resources.work_orders.notifications.started'))->send();
+                                return;
+                            }
+                            try {
+                                app(WorkOrderService::class)->start($record);
+                                Notification::make()->success()->title(__('resources.work_orders.notifications.started'))->send();
+                            } catch (\RuntimeException $e) {
+                                Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                            }
+                        }),
 
-                // Issue materials — creates a DRAFT issue voucher (إذن صرف)
-                // from the BOM. The warehouse then posts it, moving the raw
-                // materials into work-in-progress.
-                Tables\Actions\Action::make('issue_materials')
-                    ->label(__('resources.work_orders.actions.issue_materials'))
-                    ->icon('heroicon-o-arrow-up-on-square-stack')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->visible(fn (WorkOrder $record) => $record->bom_id !== null
-                        && in_array($record->status, [WorkOrderStatus::Pending, WorkOrderStatus::InProgress], true)
-                        && auth()->user()?->can('issue_vouchers.create'))
-                    ->action(function (WorkOrder $record) {
-                        try {
-                            $voucher = app(WorkOrderService::class)->issueMaterials($record);
-                            Notification::make()
-                                ->success()
-                                ->title(__('resources.work_orders.notifications.issue_voucher_created'))
-                                ->body($voucher->voucher_number)
-                                ->send();
-                        } catch (\RuntimeException $e) {
-                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
-                        }
-                    }),
+                    // Issue materials — creates a DRAFT issue voucher (إذن صرف)
+                    // from the BOM. The warehouse then posts it, moving the raw
+                    // materials into work-in-progress.
+                    Tables\Actions\Action::make('issue_materials')
+                        ->label(__('resources.work_orders.actions.issue_materials'))
+                        ->icon('heroicon-o-arrow-up-on-square-stack')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->visible(fn (WorkOrder $record) => $record->bom_id !== null
+                            && in_array($record->status, [WorkOrderStatus::Pending, WorkOrderStatus::InProgress], true)
+                            && auth()->user()?->can('issue_vouchers.create'))
+                        ->action(function (WorkOrder $record) {
+                            try {
+                                $voucher = app(WorkOrderService::class)->issueMaterials($record);
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('resources.work_orders.notifications.issue_voucher_created'))
+                                    ->body($voucher->voucher_number)
+                                    ->send();
+                            } catch (\RuntimeException $e) {
+                                Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                            }
+                        }),
 
-                // Return scrap — creates a DRAFT return voucher (إذن ارتداد)
-                // pre-filled with the issued materials. The warehouse sets the
-                // scrap quantities and posts it, sending the scrap back to raw
-                // stock under a different code and reversing its cost.
-                Tables\Actions\Action::make('return_scrap')
-                    ->label(__('resources.work_orders.actions.return_scrap'))
-                    ->icon('heroicon-o-arrow-uturn-left')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::InProgress
-                        && auth()->user()?->can('return_vouchers.create'))
-                    ->action(function (WorkOrder $record) {
-                        try {
-                            $voucher = app(ReturnVoucherService::class)->createFromWorkOrder($record);
-                            Notification::make()
-                                ->success()
-                                ->title(__('resources.work_orders.notifications.return_voucher_created'))
-                                ->body($voucher->voucher_number)
-                                ->send();
-                        } catch (\RuntimeException $e) {
-                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
-                        }
-                    }),
+                    // Return scrap — creates a DRAFT return voucher (إذن ارتداد)
+                    // pre-filled with the issued materials. The warehouse sets the
+                    // scrap quantities and posts it, sending the scrap back to raw
+                    // stock under a different code and reversing its cost.
+                    Tables\Actions\Action::make('return_scrap')
+                        ->label(__('resources.work_orders.actions.return_scrap'))
+                        ->icon('heroicon-o-arrow-uturn-left')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::InProgress
+                            && auth()->user()?->can('return_vouchers.create'))
+                        ->action(function (WorkOrder $record) {
+                            try {
+                                $voucher = app(ReturnVoucherService::class)->createFromWorkOrder($record);
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('resources.work_orders.notifications.return_voucher_created'))
+                                    ->body($voucher->voucher_number)
+                                    ->send();
+                            } catch (\RuntimeException $e) {
+                                Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                            }
+                        }),
 
-                // Write off loss — creates a DRAFT depreciation voucher (إذن
-                // إهلاك) pre-filled with the issued materials. The user picks the
-                // loss type and quantities and posts it, taking the loss out of
-                // WIP and carrying its value to the loss account.
-                Tables\Actions\Action::make('write_off_loss')
-                    ->label(__('resources.work_orders.actions.write_off_loss'))
-                    ->icon('heroicon-o-fire')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::InProgress
-                        && auth()->user()?->can('depreciation_vouchers.create'))
-                    ->action(function (WorkOrder $record) {
-                        try {
-                            $voucher = app(DepreciationVoucherService::class)->createFromWorkOrder($record);
-                            Notification::make()
-                                ->success()
-                                ->title(__('resources.work_orders.notifications.depreciation_voucher_created'))
-                                ->body($voucher->voucher_number)
-                                ->send();
-                        } catch (\RuntimeException $e) {
-                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
-                        }
-                    }),
+                    // Write off loss — creates a DRAFT depreciation voucher (إذن
+                    // إهلاك) pre-filled with the issued materials. The user picks the
+                    // loss type and quantities and posts it, taking the loss out of
+                    // WIP and carrying its value to the loss account.
+                    Tables\Actions\Action::make('write_off_loss')
+                        ->label(__('resources.work_orders.actions.write_off_loss'))
+                        ->icon('heroicon-o-fire')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::InProgress
+                            && auth()->user()?->can('depreciation_vouchers.create'))
+                        ->action(function (WorkOrder $record) {
+                            try {
+                                $voucher = app(DepreciationVoucherService::class)->createFromWorkOrder($record);
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('resources.work_orders.notifications.depreciation_voucher_created'))
+                                    ->body($voucher->voucher_number)
+                                    ->send();
+                            } catch (\RuntimeException $e) {
+                                Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                            }
+                        }),
 
-                // Submit for QA — same idempotency story as `start`.
-                Tables\Actions\Action::make('submit_qa')
-                    ->label(__('resources.work_orders.actions.submit_qa'))
-                    ->icon('heroicon-o-shield-check')
-                    ->color('warning')
-                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::InProgress
-                        && auth()->user()?->can('work_orders.submit_qa'))
-                    ->form([
-                        Forms\Components\TextInput::make('produced_quantity')
-                            ->label(__('resources.work_orders.fields.produced_quantity'))
-                            ->numeric()
-                            ->required(),
-                        Forms\Components\TextInput::make('waste_quantity')
-                            ->label(__('resources.work_orders.fields.waste_quantity'))
-                            ->numeric()
-                            ->required()
-                            ->default(0),
-                    ])
-                    ->action(function (WorkOrder $record, array $data) {
-                        $fresh = $record->fresh();
-                        if ($fresh && $fresh->status !== WorkOrderStatus::InProgress) {
-                            Notification::make()->success()->title(__('resources.work_orders.notifications.submitted_qa'))->send();
-                            return;
-                        }
-                        try {
-                            app(WorkOrderService::class)->submitForQa(
-                                $record,
-                                (float) $data['produced_quantity'],
-                                (float) $data['waste_quantity'],
-                            );
-                            Notification::make()->success()->title(__('resources.work_orders.notifications.submitted_qa'))->send();
-                        } catch (\RuntimeException $e) {
-                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
-                        }
-                    }),
+                    // Submit for QA — same idempotency story as `start`.
+                    Tables\Actions\Action::make('submit_qa')
+                        ->label(__('resources.work_orders.actions.submit_qa'))
+                        ->icon('heroicon-o-shield-check')
+                        ->color('warning')
+                        ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::InProgress
+                            && auth()->user()?->can('work_orders.submit_qa'))
+                        ->form([
+                            Forms\Components\TextInput::make('produced_quantity')
+                                ->label(__('resources.work_orders.fields.produced_quantity'))
+                                ->numeric()
+                                ->required(),
+                            Forms\Components\TextInput::make('waste_quantity')
+                                ->label(__('resources.work_orders.fields.waste_quantity'))
+                                ->numeric()
+                                ->required()
+                                ->default(0),
+                        ])
+                        ->action(function (WorkOrder $record, array $data) {
+                            $fresh = $record->fresh();
+                            if ($fresh && $fresh->status !== WorkOrderStatus::InProgress) {
+                                Notification::make()->success()->title(__('resources.work_orders.notifications.submitted_qa'))->send();
+                                return;
+                            }
+                            try {
+                                app(WorkOrderService::class)->submitForQa(
+                                    $record,
+                                    (float) $data['produced_quantity'],
+                                    (float) $data['waste_quantity'],
+                                );
+                                Notification::make()->success()->title(__('resources.work_orders.notifications.submitted_qa'))->send();
+                            } catch (\RuntimeException $e) {
+                                Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                            }
+                        }),
 
-                // Approve QA — idempotent: a retry that lands after the
-                // first approval finds qa_approved_by already set and
-                // returns success without touching the row again.
-                Tables\Actions\Action::make('approve_qa')
-                    ->label(__('resources.work_orders.actions.approve_qa'))
-                    ->icon('heroicon-o-check-badge')
-                    ->color('success')
-                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::QaReview
-                        && ! $record->isQaApproved()
-                        && auth()->user()?->can('work_orders.approve_qa'))
-                    ->form([
-                        Forms\Components\Textarea::make('qa_notes')
-                            ->label(__('resources.work_orders.fields.qa_notes'))
-                            ->rows(3),
-                    ])
-                    ->action(function (WorkOrder $record, array $data) {
-                        $fresh = $record->fresh();
-                        if ($fresh && $fresh->isQaApproved()) {
-                            Notification::make()->success()->title(__('resources.work_orders.notifications.qa_approved'))->send();
-                            return;
-                        }
-                        try {
-                            app(WorkOrderService::class)->approveQa($record, $data['qa_notes'] ?? null);
-                            Notification::make()->success()->title(__('resources.work_orders.notifications.qa_approved'))->send();
-                        } catch (\RuntimeException $e) {
-                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
-                        }
-                    }),
+                    // Approve QA — idempotent: a retry that lands after the
+                    // first approval finds qa_approved_by already set and
+                    // returns success without touching the row again.
+                    Tables\Actions\Action::make('approve_qa')
+                        ->label(__('resources.work_orders.actions.approve_qa'))
+                        ->icon('heroicon-o-check-badge')
+                        ->color('success')
+                        ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::QaReview
+                            && ! $record->isQaApproved()
+                            && auth()->user()?->can('work_orders.approve_qa'))
+                        ->form([
+                            Forms\Components\Textarea::make('qa_notes')
+                                ->label(__('resources.work_orders.fields.qa_notes'))
+                                ->rows(3),
+                        ])
+                        ->action(function (WorkOrder $record, array $data) {
+                            $fresh = $record->fresh();
+                            if ($fresh && $fresh->isQaApproved()) {
+                                Notification::make()->success()->title(__('resources.work_orders.notifications.qa_approved'))->send();
+                                return;
+                            }
+                            try {
+                                app(WorkOrderService::class)->approveQa($record, $data['qa_notes'] ?? null);
+                                Notification::make()->success()->title(__('resources.work_orders.notifications.qa_approved'))->send();
+                            } catch (\RuntimeException $e) {
+                                Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                            }
+                        }),
 
-                // Complete WO — idempotent on retry.
-                Tables\Actions\Action::make('complete')
-                    ->label(__('resources.work_orders.actions.complete'))
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::QaReview
-                        && $record->isQaApproved()
-                        && auth()->user()?->can('work_orders.complete'))
-                    ->action(function (WorkOrder $record) {
-                        $fresh = $record->fresh();
-                        if ($fresh && $fresh->status === WorkOrderStatus::Completed) {
-                            Notification::make()->success()->title(__('resources.work_orders.notifications.completed'))->send();
-                            return;
-                        }
-                        try {
-                            app(WorkOrderService::class)->complete($record);
-                            Notification::make()->success()->title(__('resources.work_orders.notifications.completed'))->send();
-                        } catch (\RuntimeException $e) {
-                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
-                        }
-                    }),
+                    // Complete WO — idempotent on retry.
+                    Tables\Actions\Action::make('complete')
+                        ->label(__('resources.work_orders.actions.complete'))
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::QaReview
+                            && $record->isQaApproved()
+                            && auth()->user()?->can('work_orders.complete'))
+                        ->action(function (WorkOrder $record) {
+                            $fresh = $record->fresh();
+                            if ($fresh && $fresh->status === WorkOrderStatus::Completed) {
+                                Notification::make()->success()->title(__('resources.work_orders.notifications.completed'))->send();
+                                return;
+                            }
+                            try {
+                                app(WorkOrderService::class)->complete($record);
+                                Notification::make()->success()->title(__('resources.work_orders.notifications.completed'))->send();
+                            } catch (\RuntimeException $e) {
+                                Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                            }
+                        }),
 
-                // Finish Manufacturing (انتهاء التصنيع) — a stage-independent
-                // signal that records the manufacturing time and tells every
-                // department the product is ready for delivery (التصنيع سلايد 2).
-                // Orthogonal to the QA gate / complete() flow: it works
-                // "regardless of the stages" and never touches stock or cost.
-                // Idempotent on retry (re-reads fresh and succeeds silently).
-                Tables\Actions\Action::make('finish_manufacturing')
-                    ->label(__('resources.work_orders.actions.finish_manufacturing'))
-                    ->icon('heroicon-o-flag')
-                    ->color('primary')
-                    ->requiresConfirmation()
-                    ->visible(fn (WorkOrder $record) => $record->actual_start_date !== null
-                        && $record->manufacturing_finished_at === null
-                        && in_array($record->status, [WorkOrderStatus::InProgress, WorkOrderStatus::QaReview], true)
-                        && auth()->user()?->can('work_orders.finish_manufacturing'))
-                    ->action(function (WorkOrder $record) {
-                        $fresh = $record->fresh();
-                        if ($fresh && $fresh->isManufacturingFinished()) {
-                            Notification::make()->success()->title(__('resources.work_orders.notifications.manufacturing_finished'))->send();
-                            return;
-                        }
-                        try {
-                            app(WorkOrderService::class)->finishManufacturing($record);
-                            Notification::make()->success()->title(__('resources.work_orders.notifications.manufacturing_finished'))->send();
-                        } catch (\RuntimeException $e) {
-                            Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
-                        }
-                    }),
+                    // Finish Manufacturing (انتهاء التصنيع) — a stage-independent
+                    // signal that records the manufacturing time and tells every
+                    // department the product is ready for delivery (التصنيع سلايد 2).
+                    // Orthogonal to the QA gate / complete() flow: it works
+                    // "regardless of the stages" and never touches stock or cost.
+                    // Idempotent on retry (re-reads fresh and succeeds silently).
+                    Tables\Actions\Action::make('finish_manufacturing')
+                        ->label(__('resources.work_orders.actions.finish_manufacturing'))
+                        ->icon('heroicon-o-flag')
+                        ->color('primary')
+                        ->requiresConfirmation()
+                        ->visible(fn (WorkOrder $record) => $record->actual_start_date !== null
+                            && $record->manufacturing_finished_at === null
+                            && in_array($record->status, [WorkOrderStatus::InProgress, WorkOrderStatus::QaReview], true)
+                            && auth()->user()?->can('work_orders.finish_manufacturing'))
+                        ->action(function (WorkOrder $record) {
+                            $fresh = $record->fresh();
+                            if ($fresh && $fresh->isManufacturingFinished()) {
+                                Notification::make()->success()->title(__('resources.work_orders.notifications.manufacturing_finished'))->send();
+                                return;
+                            }
+                            try {
+                                app(WorkOrderService::class)->finishManufacturing($record);
+                                Notification::make()->success()->title(__('resources.work_orders.notifications.manufacturing_finished'))->send();
+                            } catch (\RuntimeException $e) {
+                                Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
+                            }
+                        }),
 
-                // Quality Sheet (ورقة الجودة) — opens (or creates) the work
-                // order's quality sheet for the QA department to fill and the
-                // factory manager to approve (التصنيع سلايد 2 سفلي + 3).
-                // Available once manufacturing has finished.
-                Tables\Actions\Action::make('quality_sheet')
-                    ->label(__('resources.work_orders.actions.quality_sheet'))
-                    ->icon('heroicon-o-clipboard-document-check')
-                    ->color('primary')
-                    ->visible(fn (WorkOrder $record) => $record->manufacturing_finished_at !== null
-                        && auth()->user()?->can('quality_sheets.create'))
-                    ->action(function (WorkOrder $record) {
-                        $sheet = app(QualitySheetService::class)->ensureForWorkOrder($record);
+                    // Quality Sheet (ورقة الجودة) — opens (or creates) the work
+                    // order's quality sheet for the QA department to fill and the
+                    // factory manager to approve (التصنيع سلايد 2 سفلي + 3).
+                    // Available once manufacturing has finished.
+                    Tables\Actions\Action::make('quality_sheet')
+                        ->label(__('resources.work_orders.actions.quality_sheet'))
+                        ->icon('heroicon-o-clipboard-document-check')
+                        ->color('primary')
+                        ->visible(fn (WorkOrder $record) => $record->manufacturing_finished_at !== null
+                            && auth()->user()?->can('quality_sheets.create'))
+                        ->action(function (WorkOrder $record) {
+                            $sheet = app(QualitySheetService::class)->ensureForWorkOrder($record);
 
-                        // An approved sheet is final and can't be edited (the edit
-                        // policy blocks it → 403), so send it to the read-only view.
-                        $page = $sheet->isApproved() ? 'view' : 'edit';
+                            // An approved sheet is final and can't be edited (the edit
+                            // policy blocks it → 403), so send it to the read-only view.
+                            $page = $sheet->isApproved() ? 'view' : 'edit';
 
-                        return redirect(QualitySheetResource::getUrl($page, ['record' => $sheet->getKey()]));
-                    }),
+                            return redirect(QualitySheetResource::getUrl($page, ['record' => $sheet->getKey()]));
+                        }),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

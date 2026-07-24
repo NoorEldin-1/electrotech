@@ -180,10 +180,13 @@ class DepreciationVoucherResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                static::postAction(),
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (DepreciationVoucher $record) => ! $record->isPosted()),
+                Tables\Actions\ActionGroup::make([
+                    static::postAction(),
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (DepreciationVoucher $record) => ! $record->isPosted()),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 

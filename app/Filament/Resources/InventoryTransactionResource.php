@@ -108,7 +108,10 @@ class InventoryTransactionResource extends Resource
                     ->multiple(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 

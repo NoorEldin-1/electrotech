@@ -86,30 +86,33 @@ class ActiveProjectResource extends Resource
             ])
             ->defaultSort('start_date', 'desc')
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->url(fn (Project $r) => ProjectResource::getUrl('edit', ['record' => $r])),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->url(fn (Project $r) => ProjectResource::getUrl('edit', ['record' => $r])),
 
-                Tables\Actions\Action::make('hold')
-                    ->label(__('resources.operations.actions.hold'))
-                    ->icon('heroicon-o-pause')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->visible(fn () => auth()->user()?->can('operations.hold') ?? false)
-                    ->action(fn (Project $record) => static::runLifecycle(
-                        fn () => app(OperationLifecycleService::class)->putOnHold($record),
-                        __('resources.operations.notifications.held'),
-                    )),
+                    Tables\Actions\Action::make('hold')
+                        ->label(__('resources.operations.actions.hold'))
+                        ->icon('heroicon-o-pause')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->visible(fn () => auth()->user()?->can('operations.hold') ?? false)
+                        ->action(fn (Project $record) => static::runLifecycle(
+                            fn () => app(OperationLifecycleService::class)->putOnHold($record),
+                            __('resources.operations.notifications.held'),
+                        )),
 
-                Tables\Actions\Action::make('complete')
-                    ->label(__('resources.operations.actions.complete'))
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(fn () => auth()->user()?->can('operations.complete') ?? false)
-                    ->action(fn (Project $record) => static::runLifecycle(
-                        fn () => app(OperationLifecycleService::class)->markCompleted($record),
-                        __('resources.operations.notifications.completed'),
-                    )),
+                    Tables\Actions\Action::make('complete')
+                        ->label(__('resources.operations.actions.complete'))
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->visible(fn () => auth()->user()?->can('operations.complete') ?? false)
+                        ->action(fn (Project $record) => static::runLifecycle(
+                            fn () => app(OperationLifecycleService::class)->markCompleted($record),
+                            __('resources.operations.notifications.completed'),
+                        )),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 

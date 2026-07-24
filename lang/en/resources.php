@@ -2461,5 +2461,8 @@ return [
         'auto_generated' => 'Auto-generated',
         'action_failed' => 'Action failed',
         'currency' => 'EGP',
+        // Tooltip for the collapsed row-actions (⋮) dropdown trigger shared
+        // by every table.
+        'actions' => 'Actions',
     ],
 ];

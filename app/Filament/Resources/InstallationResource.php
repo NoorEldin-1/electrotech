@@ -99,31 +99,34 @@ class InstallationResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([
-                Tables\Actions\Action::make('start')
-                    ->label(__('resources.installations.actions.start'))
-                    ->icon('heroicon-o-play')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->visible(fn (Installation $record) => $record->isPending()
-                        && (auth()->user()?->can('installations.manage') ?? false))
-                    ->action(fn (Installation $record) => static::runStage(
-                        fn () => app(InstallationService::class)->start($record),
-                        __('resources.installations.notifications.started'),
-                    )),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('start')
+                        ->label(__('resources.installations.actions.start'))
+                        ->icon('heroicon-o-play')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->visible(fn (Installation $record) => $record->isPending()
+                            && (auth()->user()?->can('installations.manage') ?? false))
+                        ->action(fn (Installation $record) => static::runStage(
+                            fn () => app(InstallationService::class)->start($record),
+                            __('resources.installations.notifications.started'),
+                        )),
 
-                Tables\Actions\Action::make('complete')
-                    ->label(__('resources.installations.actions.complete'))
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(fn (Installation $record) => $record->isInProgress()
-                        && (auth()->user()?->can('installations.manage') ?? false))
-                    ->action(fn (Installation $record) => static::runStage(
-                        fn () => app(InstallationService::class)->complete($record),
-                        __('resources.installations.notifications.completed'),
-                    )),
+                    Tables\Actions\Action::make('complete')
+                        ->label(__('resources.installations.actions.complete'))
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->visible(fn (Installation $record) => $record->isInProgress()
+                            && (auth()->user()?->can('installations.manage') ?? false))
+                        ->action(fn (Installation $record) => static::runStage(
+                            fn () => app(InstallationService::class)->complete($record),
+                            __('resources.installations.notifications.completed'),
+                        )),
 
-                Tables\Actions\EditAction::make(),
+                    Tables\Actions\EditAction::make(),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 

@@ -253,109 +253,117 @@ class PurchaseOrderResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                // Slide 1 & 5: the technical-office manager approves the draft;
-                // it then becomes "sent" (مرسل).
-                Tables\Actions\Action::make('approve')
-                    ->label(__('resources.purchase_orders.actions.approve'))
-                    ->icon('heroicon-o-check-badge')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->modalHeading(__('resources.purchase_orders.actions.approve'))
-                    ->modalDescription(__('resources.purchase_orders.actions.approve_confirm'))
-                    ->visible(fn (PurchaseOrder $record) => $record->status === PurchaseOrderStatus::Draft
-                        && (auth()->user()?->can('approve', $record) ?? false))
-                    ->action(function (PurchaseOrder $record) {
-                        $record->update([
-                            'status' => PurchaseOrderStatus::Submitted,
-                            'approved_by' => auth()->id(),
-                            'approved_at' => now(),
-                        ]);
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    // Slide 1 & 5: the technical-office manager approves the draft;
+                    // it then becomes "sent" (مرسل).
+                    Tables\Actions\Action::make('approve')
+                        ->label(__('resources.purchase_orders.actions.approve'))
+                        ->icon('heroicon-o-check-badge')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalHeading(__('resources.purchase_orders.actions.approve'))
+                        ->modalDescription(__('resources.purchase_orders.actions.approve_confirm'))
+                        ->visible(fn (PurchaseOrder $record) => $record->status === PurchaseOrderStatus::Draft
+                            && (auth()->user()?->can('approve', $record) ?? false))
+                        ->action(function (PurchaseOrder $record) {
+                            $record->update([
+                                'status' => PurchaseOrderStatus::Submitted,
+                                'approved_by' => auth()->id(),
+                                'approved_at' => now(),
+                            ]);
 
-                        Notification::make()
-                            ->success()
-                            ->title(__('resources.purchase_orders.notifications.approved'))
-                            ->send();
-                    }),
-                Tables\Actions\Action::make('receive')
-                    ->label(__('resources.purchase_orders.actions.receive'))
-                    ->icon('heroicon-o-truck')
-                    ->color('success')
-                    ->visible(fn (PurchaseOrder $record) => in_array($record->status, [
-                        PurchaseOrderStatus::Submitted,
-                        PurchaseOrderStatus::PartiallyReceived,
-                    ]) && auth()->user()?->can('purchase_orders.receive'))
-                    ->modalDescription(__('resources.purchase_orders.actions.receive_hint'))
-                    ->form(fn (PurchaseOrder $record) => array_merge(
-                        $record->items()
-                            ->with('item:id,name')
-                            ->get()
-                            ->map(
-                                fn (PurchaseOrderItem $poItem) => Forms\Components\TextInput::make("items.{$poItem->id}")
-                                    ->label("{$poItem->item->name} (Ordered: {$poItem->quantity}, Received: {$poItem->received_quantity})")
-                                    ->numeric()
-                                    ->default(0)
-                                    ->minValue(0)
-                                    ->maxValue($poItem->remaining_quantity)
-                            )->toArray(),
-                        [
-                            Forms\Components\TextInput::make('invoice_number')
-                                ->label(__('resources.addition_vouchers.fields.invoice_number'))
-                                ->maxLength(100),
-                        ],
-                    ))
-                    ->action(function (PurchaseOrder $record, array $data) {
-                        $receivedQuantities = [];
-                        foreach ($data['items'] ?? [] as $poItemId => $qty) {
-                            if ((float) $qty > 0) {
-                                $receivedQuantities[(int) $poItemId] = (float) $qty;
-                            }
-                        }
-
-                        if (empty($receivedQuantities)) {
-                            Notification::make()
-                                ->warning()
-                                ->title(__('resources.purchase_orders.notifications.no_quantities'))
-                                ->send();
-
-                            return;
-                        }
-
-                        try {
-                            $voucher = app(PurchaseOrderService::class)
-                                ->receiveItems($record, $receivedQuantities, $data['invoice_number'] ?? null);
                             Notification::make()
                                 ->success()
-                                ->title(__('resources.purchase_orders.notifications.received'))
-                                ->body(__('resources.purchase_orders.notifications.voucher_created', ['number' => $voucher->voucher_number]))
+                                ->title(__('resources.purchase_orders.notifications.approved'))
                                 ->send();
-                        } catch (\RuntimeException $e) {
-                            Notification::make()
-                                ->danger()
-                                ->title(__('resources.purchase_orders.notifications.receive_failed'))
-                                ->body($e->getMessage())
-                                ->send();
-                        }
-                    }),
-                // Slide 8: print the PO as an internal document (Arabic / English).
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('print_ar')
-                        ->label(__('resources.purchase_orders.actions.print_ar'))
+                        }),
+                    Tables\Actions\Action::make('receive')
+                        ->label(__('resources.purchase_orders.actions.receive'))
+                        ->icon('heroicon-o-truck')
+                        ->color('success')
+                        ->visible(fn (PurchaseOrder $record) => in_array($record->status, [
+                            PurchaseOrderStatus::Submitted,
+                            PurchaseOrderStatus::PartiallyReceived,
+                        ]) && auth()->user()?->can('purchase_orders.receive'))
+                        ->modalDescription(__('resources.purchase_orders.actions.receive_hint'))
+                        ->form(fn (PurchaseOrder $record) => array_merge(
+                            $record->items()
+                                ->with('item:id,name')
+                                ->get()
+                                ->map(
+                                    fn (PurchaseOrderItem $poItem) => Forms\Components\TextInput::make("items.{$poItem->id}")
+                                        ->label("{$poItem->item->name} (Ordered: {$poItem->quantity}, Received: {$poItem->received_quantity})")
+                                        ->numeric()
+                                        ->default(0)
+                                        ->minValue(0)
+                                        ->maxValue($poItem->remaining_quantity)
+                                )->toArray(),
+                            [
+                                Forms\Components\TextInput::make('invoice_number')
+                                    ->label(__('resources.addition_vouchers.fields.invoice_number'))
+                                    ->maxLength(100),
+                            ],
+                        ))
+                        ->action(function (PurchaseOrder $record, array $data) {
+                            $receivedQuantities = [];
+                            foreach ($data['items'] ?? [] as $poItemId => $qty) {
+                                if ((float) $qty > 0) {
+                                    $receivedQuantities[(int) $poItemId] = (float) $qty;
+                                }
+                            }
+
+                            if (empty($receivedQuantities)) {
+                                Notification::make()
+                                    ->warning()
+                                    ->title(__('resources.purchase_orders.notifications.no_quantities'))
+                                    ->send();
+
+                                return;
+                            }
+
+                            try {
+                                $voucher = app(PurchaseOrderService::class)
+                                    ->receiveItems($record, $receivedQuantities, $data['invoice_number'] ?? null);
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('resources.purchase_orders.notifications.received'))
+                                    ->body(__('resources.purchase_orders.notifications.voucher_created', ['number' => $voucher->voucher_number]))
+                                    ->send();
+                            } catch (\RuntimeException $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title(__('resources.purchase_orders.notifications.receive_failed'))
+                                    ->body($e->getMessage())
+                                    ->send();
+                            }
+                        }),
+                    // Slide 8: print the PO as an internal document (Arabic / English).
+                    Tables\Actions\ActionGroup::make([
+                        Tables\Actions\Action::make('print_ar')
+                            ->label(__('resources.purchase_orders.actions.print_ar'))
+                            ->icon('heroicon-o-printer')
+                            ->url(fn (PurchaseOrder $record): string => route('purchase_orders.pdf', ['purchaseOrder' => $record, 'lang' => 'ar']))
+                            ->openUrlInNewTab(),
+                        Tables\Actions\Action::make('print_en')
+                            ->label(__('resources.purchase_orders.actions.print_en'))
+                            ->icon('heroicon-o-printer')
+                            ->url(fn (PurchaseOrder $record): string => route('purchase_orders.pdf', ['purchaseOrder' => $record, 'lang' => 'en']))
+                            ->openUrlInNewTab(),
+                    ])
+                        ->label(__('resources.purchase_orders.actions.print'))
                         ->icon('heroicon-o-printer')
-                        ->url(fn (PurchaseOrder $record): string => route('purchase_orders.pdf', ['purchaseOrder' => $record, 'lang' => 'ar']))
-                        ->openUrlInNewTab(),
-                    Tables\Actions\Action::make('print_en')
-                        ->label(__('resources.purchase_orders.actions.print_en'))
-                        ->icon('heroicon-o-printer')
-                        ->url(fn (PurchaseOrder $record): string => route('purchase_orders.pdf', ['purchaseOrder' => $record, 'lang' => 'en']))
-                        ->openUrlInNewTab(),
+                        ->color('gray')
+                        // ->grouped() renders the nested group as a LABELLED
+                        // in-menu row that opens a side fly-out — not the
+                        // ActionGroup default (icon-only trigger, no label). It
+                        // stays consistent with its siblings and inherits the
+                        // nested-submenu chevron cue (theme.css §4).
+                        ->grouped()
+                        ->visible(fn (PurchaseOrder $record): bool => auth()->user()?->can('print', $record) ?? false),
                 ])
-                    ->label(__('resources.purchase_orders.actions.print'))
-                    ->icon('heroicon-o-printer')
-                    ->color('gray')
-                    ->button()
-                    ->visible(fn (PurchaseOrder $record): bool => auth()->user()?->can('print', $record) ?? false),
+                    ->tooltip(__('resources.common.actions')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

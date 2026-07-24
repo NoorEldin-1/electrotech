@@ -140,8 +140,11 @@ class CustomerResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

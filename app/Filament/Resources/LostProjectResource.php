@@ -85,8 +85,11 @@ class LostProjectResource extends Resource
                     ->multiple(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->url(fn (Project $r) => ProjectResource::getUrl('edit', ['record' => $r])),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->url(fn (Project $r) => ProjectResource::getUrl('edit', ['record' => $r])),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 

@@ -196,9 +196,12 @@ class OperationPaymentResource extends Resource
                         ->when($data['until'] ?? null, fn (Builder $q, $d) => $q->whereDate('payment_date', '<=', $d))),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (OperationPayment $record) => $record->journal_entry_id === null),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (OperationPayment $record) => $record->journal_entry_id === null),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 

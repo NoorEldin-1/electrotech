@@ -128,30 +128,33 @@ class FinancialClaimResource extends Resource
                     ->options(ClaimStatus::class),
             ])
             ->actions([
-                Tables\Actions\Action::make('submit')
-                    ->label(__('resources.financial_claims.actions.submit'))
-                    ->icon('heroicon-o-paper-airplane')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->visible(fn (FinancialClaim $record) => auth()->user()?->can('submit', $record) ?? false)
-                    ->action(fn (FinancialClaim $record) => static::runClaimAction(
-                        fn () => app(FinancialClaimService::class)->submit($record),
-                        __('resources.financial_claims.notifications.submitted'),
-                    )),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('submit')
+                        ->label(__('resources.financial_claims.actions.submit'))
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->visible(fn (FinancialClaim $record) => auth()->user()?->can('submit', $record) ?? false)
+                        ->action(fn (FinancialClaim $record) => static::runClaimAction(
+                            fn () => app(FinancialClaimService::class)->submit($record),
+                            __('resources.financial_claims.notifications.submitted'),
+                        )),
 
-                Tables\Actions\Action::make('collect')
-                    ->label(__('resources.financial_claims.actions.collect'))
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(fn (FinancialClaim $record) => auth()->user()?->can('collect', $record) ?? false)
-                    ->action(fn (FinancialClaim $record) => static::runClaimAction(
-                        fn () => app(FinancialClaimService::class)->collect($record),
-                        __('resources.financial_claims.notifications.collected'),
-                    )),
+                    Tables\Actions\Action::make('collect')
+                        ->label(__('resources.financial_claims.actions.collect'))
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->visible(fn (FinancialClaim $record) => auth()->user()?->can('collect', $record) ?? false)
+                        ->action(fn (FinancialClaim $record) => static::runClaimAction(
+                            fn () => app(FinancialClaimService::class)->collect($record),
+                            __('resources.financial_claims.notifications.collected'),
+                        )),
 
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (FinancialClaim $record) => $record->isDraft()),
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (FinancialClaim $record) => $record->isDraft()),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 

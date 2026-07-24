@@ -104,122 +104,125 @@ class TenderProjectResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->url(fn (Project $r) => ProjectResource::getUrl('edit', ['record' => $r])),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->url(fn (Project $r) => ProjectResource::getUrl('edit', ['record' => $r])),
 
-                Tables\Actions\Action::make('action')
-                    ->label(__('resources.tender_projects.actions.action'))
-                    ->icon('heroicon-o-arrow-right-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->modalHeading(__('resources.tender_projects.actions.action_modal_heading'))
-                    ->modalDescription(__('resources.tender_projects.actions.action_modal_description'))
-                    ->form([
-                        // SMB is a file, not a note (شريحة 11): it is the same
-                        // artifact as the project's Submittal, so the upload lands
-                        // in the Submittal category and shows up in both places.
-                        Forms\Components\FileUpload::make('smb_file')
-                            ->label(__('resources.tender_projects.fields.smb_file'))
-                            ->helperText(__('resources.tender_projects.fields.smb_file_helper'))
-                            ->disk('public')
-                            ->directory(fn (Project $r) => 'attachments/' . $r->id . '/' . AttachmentCategory::Submittal->value)
-                            ->downloadable()
-                            ->openable()
-                            ->previewable(false)
-                            ->maxSize(40960),
-                    ])
-                    ->visible(fn (Project $r) => auth()->user()?->can('moveToInHand', $r) ?? false)
-                    ->action(function (Project $r, array $data) {
-                        try {
-                            // Store the SMB / Submittal file first so moveToInHand
-                            // can mark smb_status as 'submitted' when it is present.
-                            self::storeSubmittalFile($r, $data['smb_file'] ?? null);
+                    Tables\Actions\Action::make('action')
+                        ->label(__('resources.tender_projects.actions.action'))
+                        ->icon('heroicon-o-arrow-right-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalHeading(__('resources.tender_projects.actions.action_modal_heading'))
+                        ->modalDescription(__('resources.tender_projects.actions.action_modal_description'))
+                        ->form([
+                            // SMB is a file, not a note (شريحة 11): it is the same
+                            // artifact as the project's Submittal, so the upload lands
+                            // in the Submittal category and shows up in both places.
+                            Forms\Components\FileUpload::make('smb_file')
+                                ->label(__('resources.tender_projects.fields.smb_file'))
+                                ->helperText(__('resources.tender_projects.fields.smb_file_helper'))
+                                ->disk('public')
+                                ->directory(fn (Project $r) => 'attachments/' . $r->id . '/' . AttachmentCategory::Submittal->value)
+                                ->downloadable()
+                                ->openable()
+                                ->previewable(false)
+                                ->maxSize(40960),
+                        ])
+                        ->visible(fn (Project $r) => auth()->user()?->can('moveToInHand', $r) ?? false)
+                        ->action(function (Project $r, array $data) {
+                            try {
+                                // Store the SMB / Submittal file first so moveToInHand
+                                // can mark smb_status as 'submitted' when it is present.
+                                self::storeSubmittalFile($r, $data['smb_file'] ?? null);
 
-                            app(SalesPipelineService::class)->moveToInHand($r->fresh());
-                            Notification::make()
-                                ->success()
-                                ->title(__('resources.tender_projects.notifications.moved_to_inhand'))
-                                ->send();
-                        } catch (DomainException $e) {
-                            Notification::make()->danger()->title($e->getMessage())->send();
-                        }
-                    }),
+                                app(SalesPipelineService::class)->moveToInHand($r->fresh());
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('resources.tender_projects.notifications.moved_to_inhand'))
+                                    ->send();
+                            } catch (DomainException $e) {
+                                Notification::make()->danger()->title($e->getMessage())->send();
+                            }
+                        }),
 
-                Tables\Actions\Action::make('cancel')
-                    ->label(__('resources.tender_projects.actions.cancel'))
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->modalHeading(__('resources.tender_projects.actions.cancel_modal_heading'))
-                    ->form([
-                        Forms\Components\Select::make('reason')
-                            ->label(__('resources.tender_projects.fields.lost_reason'))
-                            ->options(LostReason::class)
-                            ->required(),
-                        Forms\Components\Textarea::make('note')
-                            ->label(__('resources.tender_projects.fields.lost_reason_note'))
-                            ->rows(3),
-                        Forms\Components\TextInput::make('winning_competitor')
-                            ->label(__('resources.tender_projects.fields.winning_competitor'))
-                            ->maxLength(255),
-                    ])
-                    ->visible(fn (Project $r) => auth()->user()?->can('cancelToLost', $r) ?? false)
-                    ->action(function (Project $r, array $data) {
-                        try {
-                            app(SalesPipelineService::class)->cancelToLost(
+                    Tables\Actions\Action::make('cancel')
+                        ->label(__('resources.tender_projects.actions.cancel'))
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading(__('resources.tender_projects.actions.cancel_modal_heading'))
+                        ->form([
+                            Forms\Components\Select::make('reason')
+                                ->label(__('resources.tender_projects.fields.lost_reason'))
+                                ->options(LostReason::class)
+                                ->required(),
+                            Forms\Components\Textarea::make('note')
+                                ->label(__('resources.tender_projects.fields.lost_reason_note'))
+                                ->rows(3),
+                            Forms\Components\TextInput::make('winning_competitor')
+                                ->label(__('resources.tender_projects.fields.winning_competitor'))
+                                ->maxLength(255),
+                        ])
+                        ->visible(fn (Project $r) => auth()->user()?->can('cancelToLost', $r) ?? false)
+                        ->action(function (Project $r, array $data) {
+                            try {
+                                app(SalesPipelineService::class)->cancelToLost(
+                                    $r,
+                                    LostReason::from($data['reason']),
+                                    $data['note'] ?? null,
+                                    $data['winning_competitor'] ?? null,
+                                );
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('resources.tender_projects.notifications.moved_to_lost'))
+                                    ->send();
+                            } catch (DomainException $e) {
+                                Notification::make()->danger()->title($e->getMessage())->send();
+                            }
+                        }),
+
+                    Tables\Actions\Action::make('alarm')
+                        ->label(__('resources.tender_projects.actions.set_alarm'))
+                        ->icon('heroicon-o-bell-alert')
+                        ->color('warning')
+                        ->form([
+                            Forms\Components\DateTimePicker::make('alarm_at')
+                                ->label(__('resources.tender_projects.fields.alarm_at'))
+                                ->required(),
+                            Forms\Components\TextInput::make('alarm_note')
+                                ->label(__('resources.tender_projects.fields.alarm_note'))
+                                ->maxLength(255),
+                        ])
+                        ->visible(fn (Project $r) => auth()->user()?->can('setAlarm', $r) ?? false)
+                        ->action(function (Project $r, array $data) {
+                            app(SalesPipelineService::class)->setAlarm(
                                 $r,
-                                LostReason::from($data['reason']),
-                                $data['note'] ?? null,
-                                $data['winning_competitor'] ?? null,
+                                Carbon::parse($data['alarm_at']),
+                                $data['alarm_note'] ?? null,
                             );
                             Notification::make()
                                 ->success()
-                                ->title(__('resources.tender_projects.notifications.moved_to_lost'))
+                                ->title(__('resources.tender_projects.notifications.alarm_set'))
                                 ->send();
-                        } catch (DomainException $e) {
-                            Notification::make()->danger()->title($e->getMessage())->send();
-                        }
-                    }),
+                        }),
 
-                Tables\Actions\Action::make('alarm')
-                    ->label(__('resources.tender_projects.actions.set_alarm'))
-                    ->icon('heroicon-o-bell-alert')
-                    ->color('warning')
-                    ->form([
-                        Forms\Components\DateTimePicker::make('alarm_at')
-                            ->label(__('resources.tender_projects.fields.alarm_at'))
-                            ->required(),
-                        Forms\Components\TextInput::make('alarm_note')
-                            ->label(__('resources.tender_projects.fields.alarm_note'))
-                            ->maxLength(255),
-                    ])
-                    ->visible(fn (Project $r) => auth()->user()?->can('setAlarm', $r) ?? false)
-                    ->action(function (Project $r, array $data) {
-                        app(SalesPipelineService::class)->setAlarm(
-                            $r,
-                            Carbon::parse($data['alarm_at']),
-                            $data['alarm_note'] ?? null,
-                        );
-                        Notification::make()
-                            ->success()
-                            ->title(__('resources.tender_projects.notifications.alarm_set'))
-                            ->send();
-                    }),
-
-                Tables\Actions\Action::make('clear_alarm')
-                    ->label(__('resources.tender_projects.actions.clear_alarm'))
-                    ->icon('heroicon-o-bell-slash')
-                    ->color('gray')
-                    ->requiresConfirmation()
-                    ->visible(fn (Project $r) => $r->alarm_at !== null
-                        && (auth()->user()?->can('setAlarm', $r) ?? false))
-                    ->action(function (Project $r) {
-                        app(SalesPipelineService::class)->clearAlarm($r);
-                        Notification::make()
-                            ->success()
-                            ->title(__('resources.tender_projects.notifications.alarm_cleared'))
-                            ->send();
-                    }),
+                    Tables\Actions\Action::make('clear_alarm')
+                        ->label(__('resources.tender_projects.actions.clear_alarm'))
+                        ->icon('heroicon-o-bell-slash')
+                        ->color('gray')
+                        ->requiresConfirmation()
+                        ->visible(fn (Project $r) => $r->alarm_at !== null
+                            && (auth()->user()?->can('setAlarm', $r) ?? false))
+                        ->action(function (Project $r) {
+                            app(SalesPipelineService::class)->clearAlarm($r);
+                            Notification::make()
+                                ->success()
+                                ->title(__('resources.tender_projects.notifications.alarm_cleared'))
+                                ->send();
+                        }),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 

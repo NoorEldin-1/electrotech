@@ -176,28 +176,31 @@ class StockReservationResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\Action::make('release')
-                    ->label(__('resources.stock_reservations.actions.release'))
-                    ->icon('heroicon-o-lock-open')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->visible(fn (StockReservation $record) => $record->isActive()
-                        && (auth()->user()?->can('operations.reserve') ?? false))
-                    ->action(function (StockReservation $record): void {
-                        try {
-                            app(ReservationService::class)->release($record);
-                            Notification::make()
-                                ->title(__('resources.stock_reservations.notifications.released'))
-                                ->success()
-                                ->send();
-                        } catch (\Throwable $e) {
-                            Notification::make()
-                                ->title(__('resources.common.action_failed'))
-                                ->body($e->getMessage())
-                                ->danger()
-                                ->send();
-                        }
-                    }),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('release')
+                        ->label(__('resources.stock_reservations.actions.release'))
+                        ->icon('heroicon-o-lock-open')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->visible(fn (StockReservation $record) => $record->isActive()
+                            && (auth()->user()?->can('operations.reserve') ?? false))
+                        ->action(function (StockReservation $record): void {
+                            try {
+                                app(ReservationService::class)->release($record);
+                                Notification::make()
+                                    ->title(__('resources.stock_reservations.notifications.released'))
+                                    ->success()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title(__('resources.common.action_failed'))
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 

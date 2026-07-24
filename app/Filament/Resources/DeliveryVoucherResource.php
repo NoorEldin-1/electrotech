@@ -200,11 +200,14 @@ class DeliveryVoucherResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                static::approveTechnicalAction(),
-                static::approveFinancialAction(),
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (DeliveryVoucher $record) => ! $record->isActive()),
+                Tables\Actions\ActionGroup::make([
+                    static::approveTechnicalAction(),
+                    static::approveFinancialAction(),
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (DeliveryVoucher $record) => ! $record->isActive()),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ]);
     }
 

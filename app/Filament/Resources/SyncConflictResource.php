@@ -175,20 +175,23 @@ class SyncConflictResource extends Resource
                     ),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\Action::make('resolve')
-                    ->label(__('resources.sync_conflicts.actions.resolve'))
-                    ->icon('heroicon-o-check')
-                    ->visible(fn ($record) => $record->resolved_at === null)
-                    ->requiresConfirmation()
-                    ->modalDescription(__('resources.sync_conflicts.actions.resolve_confirmation'))
-                    ->action(function ($record): void {
-                        $record->update([
-                            'resolved_at' => now(),
-                            'resolved_by' => auth()->id(),
-                            'resolution'  => 'accepted_server',
-                        ]);
-                    }),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\Action::make('resolve')
+                        ->label(__('resources.sync_conflicts.actions.resolve'))
+                        ->icon('heroicon-o-check')
+                        ->visible(fn ($record) => $record->resolved_at === null)
+                        ->requiresConfirmation()
+                        ->modalDescription(__('resources.sync_conflicts.actions.resolve_confirmation'))
+                        ->action(function ($record): void {
+                            $record->update([
+                                'resolved_at' => now(),
+                                'resolved_by' => auth()->id(),
+                                'resolution'  => 'accepted_server',
+                            ]);
+                        }),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ])
             ->bulkActions([]);
     }

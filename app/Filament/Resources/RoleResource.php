@@ -144,20 +144,23 @@ class RoleResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
-                    ->action(function (Role $record) {
-                        if ($record->name === 'Admin') {
-                            Notification::make()
-                                ->danger()
-                                ->title(__('resources.roles.notifications.admin_protected'))
-                                ->send();
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make()
+                        ->action(function (Role $record) {
+                            if ($record->name === 'Admin') {
+                                Notification::make()
+                                    ->danger()
+                                    ->title(__('resources.roles.notifications.admin_protected'))
+                                    ->send();
 
-                            return;
-                        }
-                        $record->delete();
-                    })
-                    ->hidden(fn (Role $record): bool => $record->name === 'Admin'),
+                                return;
+                            }
+                            $record->delete();
+                        })
+                        ->hidden(fn (Role $record): bool => $record->name === 'Admin'),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

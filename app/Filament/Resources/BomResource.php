@@ -208,24 +208,27 @@ class BomResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
 
-                Tables\Actions\Action::make('approve')
-                    ->label(__('resources.boms.actions.approve'))
-                    ->icon('heroicon-o-check-badge')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(fn (Bom $record) => $record->status === BomStatus::PendingApproval
-                        && auth()->user()?->can('boms.approve'))
-                    ->action(function (Bom $record) {
-                        $record->update([
-                            'status' => BomStatus::Approved,
-                            'approved_by' => Auth::id(),
-                            'approved_at' => now(),
-                        ]);
-                        Notification::make()->success()->title(__('resources.boms.notifications.approved'))->send();
-                    }),
+                    Tables\Actions\Action::make('approve')
+                        ->label(__('resources.boms.actions.approve'))
+                        ->icon('heroicon-o-check-badge')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->visible(fn (Bom $record) => $record->status === BomStatus::PendingApproval
+                            && auth()->user()?->can('boms.approve'))
+                        ->action(function (Bom $record) {
+                            $record->update([
+                                'status' => BomStatus::Approved,
+                                'approved_by' => Auth::id(),
+                                'approved_at' => now(),
+                            ]);
+                            Notification::make()->success()->title(__('resources.boms.notifications.approved'))->send();
+                        }),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

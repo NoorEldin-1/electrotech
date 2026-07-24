@@ -334,37 +334,40 @@ class ProjectResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                // Single status-change action. Bypasses the SalesPipelineService
-                // state machine — gated by the `projects.change_status`
-                // permission and recorded in the activity log via the
-                // Project model's LogsActivity trait.
-                Tables\Actions\Action::make('change_status')
-                    ->label(__('resources.projects.actions.change_status'))
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('warning')
-                    ->modalHeading(__('resources.projects.actions.change_status_modal_heading'))
-                    ->modalDescription(__('resources.projects.actions.change_status_modal_description'))
-                    ->form(fn (Project $r) => [
-                        Forms\Components\Select::make('status')
-                            ->label(__('resources.projects.fields.status'))
-                            ->options(ProjectStatus::class)
-                            ->default($r->status?->value)
-                            ->required(),
-                    ])
-                    ->visible(fn () => auth()->user()?->can('projects.change_status') ?? false)
-                    ->action(function (Project $r, array $data) {
-                        $r->status = ProjectStatus::from($data['status']);
-                        $r->save();
+                Tables\Actions\ActionGroup::make([
+                    // Single status-change action. Bypasses the SalesPipelineService
+                    // state machine — gated by the `projects.change_status`
+                    // permission and recorded in the activity log via the
+                    // Project model's LogsActivity trait.
+                    Tables\Actions\Action::make('change_status')
+                        ->label(__('resources.projects.actions.change_status'))
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->modalHeading(__('resources.projects.actions.change_status_modal_heading'))
+                        ->modalDescription(__('resources.projects.actions.change_status_modal_description'))
+                        ->form(fn (Project $r) => [
+                            Forms\Components\Select::make('status')
+                                ->label(__('resources.projects.fields.status'))
+                                ->options(ProjectStatus::class)
+                                ->default($r->status?->value)
+                                ->required(),
+                        ])
+                        ->visible(fn () => auth()->user()?->can('projects.change_status') ?? false)
+                        ->action(function (Project $r, array $data) {
+                            $r->status = ProjectStatus::from($data['status']);
+                            $r->save();
 
-                        Notification::make()
-                            ->success()
-                            ->title(__('resources.projects.notifications.status_changed'))
-                            ->send();
-                    }),
+                            Notification::make()
+                                ->success()
+                                ->title(__('resources.projects.notifications.status_changed'))
+                                ->send();
+                        }),
 
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ])
+                    ->tooltip(__('resources.common.actions')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

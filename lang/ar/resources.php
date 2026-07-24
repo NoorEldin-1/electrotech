@@ -2461,5 +2461,8 @@ return [
         'auto_generated' => 'تلقائي',
         'action_failed' => 'فشل تنفيذ الإجراء',
         'currency' => 'ج.م',
+        // Tooltip for the collapsed row-actions (⋮) dropdown trigger shared
+        // by every table.
+        'actions' => 'الإجراءات',
     ],
 ];
