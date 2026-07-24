@@ -1,10 +1,13 @@
 <?php
 
+use App\Http\Controllers\GeneralLedgerPdfController;
+use App\Http\Controllers\JournalDaybookPdfController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\OfferPdfController;
 use App\Http\Controllers\PingController;
 use App\Http\Controllers\PurchaseOrderPdfController;
 use App\Http\Controllers\QualitySheetPdfController;
+use App\Http\Controllers\WorkOrderMaterialVariancePdfController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Routing\Middleware\SubstituteBindings;
@@ -58,3 +61,21 @@ Route::middleware('auth')
 Route::middleware('auth')
     ->get('quality-sheets/{qualitySheet}/pdf', [QualitySheetPdfController::class, 'show'])
     ->name('quality_sheets.pdf');
+
+// Printable analytical daybook (قائمة المواد سلايد 2). Gated by
+// journal_daybook.view inside the controller.
+Route::middleware('auth')
+    ->get('finance/daybook/pdf', JournalDaybookPdfController::class)
+    ->name('finance.daybook.pdf');
+
+// Printable account statement / general ledger (قائمة المواد سلايد 3). Gated
+// by general_ledger.view inside the controller.
+Route::middleware('auth')
+    ->get('finance/general-ledger/pdf', GeneralLedgerPdfController::class)
+    ->name('finance.general_ledger.pdf');
+
+// Printable planned-vs-issued material comparison for a work order
+// (قائمة المواد سلايد 1). Gated by WorkOrderPolicy::view.
+Route::middleware('auth')
+    ->get('work-orders/{workOrder}/material-variance/pdf', WorkOrderMaterialVariancePdfController::class)
+    ->name('work_orders.material_variance.pdf');

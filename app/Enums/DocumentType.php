@@ -37,6 +37,20 @@ enum DocumentType: string implements HasLabel, HasColor
     }
 
     /**
+     * CSS colour of the document number as it is printed in the daybook:
+     * black for a payment order, red for a supply receipt, green for a
+     * settlement (قائمة المواد.pptx سلايد 2).
+     */
+    public function documentNumberHexColor(): string
+    {
+        return match ($this) {
+            self::PaymentOrder => '#111827',
+            self::SupplyReceipt => '#dc2626',
+            self::Settlement => '#16a34a',
+        };
+    }
+
+    /**
      * Document-number prefix used when generating the entry number.
      */
     public function prefix(): string

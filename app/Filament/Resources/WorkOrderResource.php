@@ -10,6 +10,7 @@ use App\Models\WorkOrder;
 use App\Services\DepreciationVoucherService;
 use App\Services\QualitySheetService;
 use App\Services\ReturnVoucherService;
+use App\Services\WorkOrderMaterialVarianceService;
 use App\Services\WorkOrderService;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -760,6 +761,24 @@ class WorkOrderResource extends Resource
 
                             return redirect(QualitySheetResource::getUrl($page, ['record' => $sheet->getKey()]));
                         }),
+
+                    // مقارنة الخامات — planned (BOM × quantity) against what the
+                    // issue vouchers actually pulled, net of returns
+                    // (قائمة المواد سلايد 1). Read-only; the difference is the
+                    // material loss of the order.
+                    Tables\Actions\Action::make('material_variance')
+                        ->label(__('resources.work_orders.actions.material_variance'))
+                        ->icon('heroicon-o-scale')
+                        ->color('gray')
+                        ->modalHeading(fn (WorkOrder $record) => __('resources.material_variance.heading', ['order' => $record->wo_number]))
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel(__('resources.common.close'))
+                        ->modalWidth('5xl')
+                        ->modalContent(fn (WorkOrder $record) => view('filament.work-orders.material-variance', [
+                            'workOrder' => $record,
+                            'variance' => app(WorkOrderMaterialVarianceService::class)->for($record),
+                        ]))
+                        ->visible(fn (WorkOrder $record) => auth()->user()?->can('view', $record) ?? false),
                 ])
                     ->tooltip(__('resources.common.actions')),
             ])

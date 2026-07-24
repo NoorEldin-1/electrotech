@@ -974,7 +974,8 @@ return [
         ],
 
         'fields' => [
-            'entry_number' => 'Entry No.',
+            'entry_serial' => 'Entry Serial',
+            'entry_number' => 'Entry Ref.',
             'document_type' => 'Document Type',
             'document_number' => 'Document No.',
             'entry_date' => 'Date',
@@ -991,7 +992,8 @@ return [
         ],
 
         'columns' => [
-            'entry_number' => 'Entry No.',
+            'entry_serial' => 'Entry Serial',
+            'entry_number' => 'Entry Ref.',
             'document_type' => 'Document',
             'document_number' => 'Document No.',
             'entry_date' => 'Date',
@@ -1004,6 +1006,10 @@ return [
         'filters' => [
             'from' => 'From',
             'until' => 'Until',
+        ],
+
+        'helpers' => [
+            'document_number' => 'Leave empty to take the next number in this document type sequence.',
         ],
 
         'actions' => [
@@ -1051,6 +1057,97 @@ return [
     | Trial Balance (ميزان المراجعة)
     |--------------------------------------------------------------------------
     */
+    /*
+    |--------------------------------------------------------------------------
+    | Analytical Daybook — BOM deck slide 2
+    |--------------------------------------------------------------------------
+    */
+    'journal_daybook' => [
+        'label' => 'Analytical Daybook',
+        'navigation_label' => 'Analytical Daybook',
+        'title' => 'Analytical Daybook',
+        'period' => 'From :from to :to',
+        'totals' => 'Totals',
+        'empty' => 'No posted entries in this period.',
+
+        'filters' => [
+            'from' => 'From date',
+            'to' => 'To date',
+            'currency' => 'Currency',
+            'accounts' => 'Account columns',
+            'accounts_hint' => 'up to :max accounts — leave empty for the busiest ones',
+            'clear_accounts' => 'Reset',
+        ],
+
+        'columns' => [
+            'date' => 'Date',
+            'entry_serial' => 'Entry No.',
+            'document_number' => 'Document No.',
+            'description' => 'Description',
+            'debit' => 'Debit',
+            'credit' => 'Credit',
+            'entry_totals' => 'Entry Totals',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Account Statement / General Ledger — BOM deck slide 3
+    |--------------------------------------------------------------------------
+    */
+    'general_ledger_report' => [
+        'label' => 'Account Statement',
+        'navigation_label' => 'Account Statement (Ledger)',
+        'title' => 'Account Statement',
+        'heading' => ':account Account',
+        'period' => 'From :from to :to',
+        'opening_balance' => 'Opening Balance',
+        'closing_balance' => 'Closing Balance',
+        'totals' => 'Total',
+        'empty' => 'No posted movements in this period.',
+        'no_account' => 'Pick an account to see its statement.',
+
+        'filters' => [
+            'account' => 'Account',
+            'from' => 'From date',
+            'to' => 'To date',
+        ],
+
+        'columns' => [
+            'date' => 'Date',
+            'entry_serial' => 'Entry No.',
+            'document_number' => 'Document No.',
+            'description' => 'Description',
+            'debit' => 'Debit',
+            'credit' => 'Credit',
+            'balance' => 'Balance',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Material Comparison (order vs issue vouchers) — BOM deck slide 1
+    |--------------------------------------------------------------------------
+    */
+    'material_variance' => [
+        'heading' => 'Material Comparison — Order :order',
+        'planned_value' => 'Planned value',
+        'issued_value' => 'Issued value',
+        'loss_value' => 'Difference (loss)',
+        'empty' => 'No planned or issued materials for this order.',
+
+        'columns' => [
+            'item' => 'Material',
+            'planned' => 'Planned (BOM)',
+            'issued' => 'Issued',
+            'returned' => 'Returned',
+            'net_issued' => 'Net issued',
+            'variance' => 'Difference',
+            'variance_percentage' => 'Difference %',
+            'variance_value' => 'Difference value',
+        ],
+    ],
+
     'trial_balance' => [
         'label' => 'Trial Balance',
         'navigation_label' => 'Trial Balance',
@@ -1619,6 +1716,7 @@ return [
             'finish_manufacturing' => 'Finish Manufacturing',
             'quality_sheet' => 'Quality Sheet',
             'fetch_standard_materials' => 'Fetch Standard Materials',
+            'material_variance' => 'Material Comparison',
         ],
 
         'notifications' => [
@@ -1866,6 +1964,7 @@ return [
             'customer_statements' => 'Customer Statements',
             'accounts' => 'Chart of Accounts',
             'journal_entries' => 'Journal Entries',
+            'journal_daybook' => 'Analytical Daybook',
             'general_ledger' => 'General Ledger',
             'trial_balance' => 'Trial Balance',
             'operations' => 'Operations (General Management)',
@@ -2008,6 +2107,9 @@ return [
                 'edit' => 'Edit Journal Entries',
                 'post' => 'Post Journal Entries',
                 'delete' => 'Delete Journal Entries',
+            ],
+            'journal_daybook' => [
+                'view' => 'View analytical daybook',
             ],
             'general_ledger' => [
                 'view' => 'View General Ledger',
@@ -2461,6 +2563,8 @@ return [
         'auto_generated' => 'Auto-generated',
         'action_failed' => 'Action failed',
         'currency' => 'EGP',
+        'print' => 'Print',
+        'close' => 'Close',
         // Tooltip for the collapsed row-actions (⋮) dropdown trigger shared
         // by every table.
         'actions' => 'Actions',

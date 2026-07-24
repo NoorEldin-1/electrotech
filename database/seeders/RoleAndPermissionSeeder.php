@@ -186,6 +186,7 @@ class RoleAndPermissionSeeder extends Seeder
             'journal_entries.edit',
             'journal_entries.post',
             'journal_entries.delete',
+            'journal_daybook.view',
             'general_ledger.view',
             'trial_balance.view',
 
@@ -479,6 +480,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'journal_entries.create',
                 'journal_entries.edit',
                 'journal_entries.post',
+                'journal_daybook.view',
                 'general_ledger.view',
                 'trial_balance.view',
                 // General management: the operation cost center and the
@@ -523,6 +525,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'customer_statements.view',
                 'accounts.view',
                 'journal_entries.view',
+                'journal_daybook.view',
                 'general_ledger.view',
                 'trial_balance.view',
                 'transactions.view',

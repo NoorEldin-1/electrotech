@@ -22,7 +22,7 @@ use Illuminate\Support\Collection;
 class GeneralLedgerService
 {
     /**
-     * @return Collection<int, array{date: Carbon, entry_number: string, document_number: ?string, document_type: \App\Enums\DocumentType, description: ?string, debit: float, credit: float, balance: float}>
+     * @return Collection<int, array{date: Carbon, entry_serial: ?int, entry_number: string, document_number: ?string, document_type: \App\Enums\DocumentType, description: ?string, debit: float, credit: float, balance: float}>
      */
     public function for(Account $account, ?Carbon $from = null, ?Carbon $to = null): Collection
     {
@@ -48,6 +48,7 @@ class GeneralLedgerService
 
             $rows->push([
                 'date' => $date,
+                'entry_serial' => $line->journalEntry->entry_serial,
                 'entry_number' => $line->journalEntry->entry_number,
                 'document_number' => $line->journalEntry->document_number,
                 'document_type' => $line->journalEntry->document_type,

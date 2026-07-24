@@ -27,6 +27,7 @@ class JournalEntry extends Model
 
     protected $fillable = [
         'entry_number',
+        'entry_serial',
         'document_number',
         'document_type',
         'entry_date',
@@ -44,6 +45,7 @@ class JournalEntry extends Model
     protected function casts(): array
     {
         return [
+            'entry_serial' => 'integer',
             'document_type' => DocumentType::class,
             'status' => JournalStatus::class,
             'entry_date' => 'date',
@@ -56,10 +58,30 @@ class JournalEntry extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['entry_number', 'document_number', 'document_type', 'entry_date', 'status', 'total_debit', 'total_credit', 'posted_at'])
+            ->logOnly(['entry_number', 'entry_serial', 'document_number', 'document_type', 'entry_date', 'status', 'total_debit', 'total_credit', 'posted_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "Journal entry {$this->entry_number} was {$eventName}");
+    }
+
+    /**
+     * Every entry reaches the books already carrying the two numbers the
+     * accountant reads: the running serial (رقم القيد) and the paper document
+     * number (رقم المستند). Assigned here rather than in the Filament page so
+     * entries created programmatically (imports, tests, future automatic
+     * postings) are numbered identically.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $entry): void {
+            if ($entry->entry_serial === null) {
+                $entry->entry_serial = static::generateEntrySerial();
+            }
+
+            if (blank($entry->document_number) && $entry->document_type instanceof DocumentType) {
+                $entry->document_number = static::generateDocumentNumber($entry->document_type);
+            }
+        });
     }
 
     public function lines(): HasMany
@@ -141,6 +163,43 @@ class JournalEntry extends Model
             $seq = $latest ? (int) substr($latest, strlen($prefix)) : 0;
 
             return $prefix . str_pad((string) ($seq + 1), 4, '0', STR_PAD_LEFT);
+        });
+    }
+
+    /**
+     * رقم القيد — the next plain running serial. Global and never reset, so
+     * the daybook reads 64, 65, 66… straight through the month regardless of
+     * document type (قائمة المواد.pptx سلايد 2).
+     */
+    public static function generateEntrySerial(): int
+    {
+        return Cache::lock('journal_entry_serial', 5)->block(3, function (): int {
+            return ((int) static::query()->max('entry_serial')) + 1;
+        });
+    }
+
+    /**
+     * رقم المستند — the next paper document number for a type. Each document
+     * type keeps its own sequence (the sample shows 3140–3143 for payment
+     * orders while settlements sit at 160), and the number stays editable so
+     * it can be aligned with the physical book.
+     */
+    public static function generateDocumentNumber(DocumentType $type): string
+    {
+        return Cache::lock('journal_document_number:' . $type->value, 5)->block(3, function () use ($type): string {
+            $numbers = static::query()
+                ->where('document_type', $type->value)
+                ->whereNotNull('document_number')
+                ->pluck('document_number');
+
+            // Only purely numeric document numbers take part in the sequence:
+            // a hand-typed reference like "TRF/12" must not shift the counter.
+            $highest = $numbers
+                ->filter(fn ($number) => ctype_digit((string) $number))
+                ->map(fn ($number) => (int) $number)
+                ->max() ?? 0;
+
+            return (string) ($highest + 1);
         });
     }
 }

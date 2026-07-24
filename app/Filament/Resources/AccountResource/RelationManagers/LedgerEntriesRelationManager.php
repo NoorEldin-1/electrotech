@@ -68,6 +68,7 @@ class LedgerEntriesRelationManager extends RelationManager
                 ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
                 ->where('journal_entries.status', JournalStatus::Posted->value)
                 ->selectRaw('journal_entries.entry_date as je_entry_date')
+                ->selectRaw('journal_entries.entry_serial as je_entry_serial')
                 ->selectRaw('journal_entries.entry_number as je_entry_number')
                 ->selectRaw('journal_entries.document_number as je_document_number')
                 ->selectRaw('journal_entries.document_type as je_document_type')
@@ -82,6 +83,10 @@ class LedgerEntriesRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('je_entry_date')
                     ->label(__('resources.general_ledger.columns.date'))
                     ->date(),
+
+                Tables\Columns\TextColumn::make('je_entry_serial')
+                    ->label(__('resources.general_ledger_report.columns.entry_serial'))
+                    ->placeholder('—'),
 
                 Tables\Columns\TextColumn::make('je_document_number')
                     ->label(__('resources.general_ledger.columns.document_number'))

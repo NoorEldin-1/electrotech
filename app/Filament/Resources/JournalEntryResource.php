@@ -63,6 +63,12 @@ class JournalEntryResource extends Resource
                     ->icon('heroicon-o-book-open')
                     ->columns(2)
                     ->schema([
+                        Forms\Components\TextInput::make('entry_serial')
+                            ->label(__('resources.journal_entries.fields.entry_serial'))
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->placeholder(__('resources.common.auto_generated')),
+
                         Forms\Components\TextInput::make('entry_number')
                             ->label(__('resources.journal_entries.fields.entry_number'))
                             ->disabled()
@@ -74,8 +80,13 @@ class JournalEntryResource extends Resource
                             ->options(DocumentType::class)
                             ->required(),
 
+                        // Left blank, the model assigns the next number in this
+                        // document type's own sequence; typed over, it matches
+                        // the physical voucher.
                         Forms\Components\TextInput::make('document_number')
                             ->label(__('resources.journal_entries.fields.document_number'))
+                            ->helperText(__('resources.journal_entries.helpers.document_number'))
+                            ->placeholder(__('resources.common.auto_generated'))
                             ->maxLength(100),
 
                         Forms\Components\DatePicker::make('entry_date')
@@ -203,20 +214,33 @@ class JournalEntryResource extends Resource
                     ->date()
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('entry_serial')
+                    ->label(__('resources.journal_entries.columns.entry_serial'))
+                    ->numeric()
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold'),
+
                 Tables\Columns\TextColumn::make('entry_number')
                     ->label(__('resources.journal_entries.columns.entry_number'))
                     ->searchable()
                     ->sortable()
-                    ->weight('bold'),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('document_type')
                     ->label(__('resources.journal_entries.columns.document_type'))
                     ->badge()
                     ->sortable(),
 
+                // The document number is printed in its type's colour, the way
+                // the client's daybook reads it: black = payment order,
+                // red = supply receipt, green = settlement.
                 Tables\Columns\TextColumn::make('document_number')
                     ->label(__('resources.journal_entries.columns.document_number'))
-                    ->toggleable(),
+                    ->weight('bold')
+                    ->color(fn (JournalEntry $record) => $record->document_type->getColor())
+                    ->searchable()
+                    ->placeholder('—'),
 
                 Tables\Columns\TextColumn::make('description')
                     ->label(__('resources.journal_entries.columns.description'))
