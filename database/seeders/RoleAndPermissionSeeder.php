@@ -176,6 +176,12 @@ class RoleAndPermissionSeeder extends Seeder
             'supplier_statements.view',
             'customer_statements.view',
 
+            // Sales invoices matched against delivery vouchers (سلايد 10)
+            'sales_invoices.view',
+            'sales_invoices.create',
+            'sales_invoices.edit',
+            'sales_invoices.delete',
+
             // Finance — General Ledger (الإدارة المالية)
             'accounts.view',
             'accounts.create',
@@ -275,6 +281,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'customers.create',
                 'customers.edit',
                 'customer_statements.view',
+                'sales_invoices.view',
                 'attachments.upload',
                 'attachments.download',
                 'dashboard.view',
@@ -304,6 +311,9 @@ class RoleAndPermissionSeeder extends Seeder
                 'customers.edit',
                 'customers.delete',
                 'customer_statements.view',
+                'sales_invoices.view',
+                'sales_invoices.create',
+                'sales_invoices.edit',
                 'attachments.upload',
                 'attachments.download',
                 'attachments.delete',
@@ -471,6 +481,12 @@ class RoleAndPermissionSeeder extends Seeder
                 'delivery_vouchers.approve_financial',
                 'supplier_statements.view',
                 'customer_statements.view',
+                // Sales invoicing (سلايد 10): finance owns the matching of
+                // invoices against delivery vouchers.
+                'sales_invoices.view',
+                'sales_invoices.create',
+                'sales_invoices.edit',
+                'sales_invoices.delete',
                 // General ledger (الإدارة المالية): chart of accounts, journal
                 // entries, ledger and trial balance.
                 'accounts.view',
@@ -523,6 +539,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'customers.view',
                 'supplier_statements.view',
                 'customer_statements.view',
+                'sales_invoices.view',
                 'accounts.view',
                 'journal_entries.view',
                 'journal_daybook.view',

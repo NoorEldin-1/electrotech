@@ -26,15 +26,21 @@ class DeliveryVoucherService
     {
         $this->guardApprovable($voucher);
 
-        if (! $voucher->isTechnicalApproved()) {
-            $voucher->update([
-                'technical_approved_by' => $approver->id,
-                'technical_approved_at' => now(),
-                'status' => DeliveryVoucherStatus::PendingApproval,
-            ]);
-        }
+        // Signature + activation are ONE unit of work: if activation fails
+        // (e.g. insufficient finished-goods stock) the signature must not
+        // survive, otherwise the voucher shows an approval that never took
+        // effect and the user is told it failed while the tick stays on.
+        DB::transaction(function () use ($voucher, $approver) {
+            if (! $voucher->isTechnicalApproved()) {
+                $voucher->update([
+                    'technical_approved_by' => $approver->id,
+                    'technical_approved_at' => now(),
+                    'status' => DeliveryVoucherStatus::PendingApproval,
+                ]);
+            }
 
-        $this->activateIfFullyApproved($voucher->refresh());
+            $this->activateIfFullyApproved($voucher->refresh());
+        });
     }
 
     /**
@@ -45,15 +51,18 @@ class DeliveryVoucherService
     {
         $this->guardApprovable($voucher);
 
-        if (! $voucher->isFinancialApproved()) {
-            $voucher->update([
-                'financial_approved_by' => $approver->id,
-                'financial_approved_at' => now(),
-                'status' => DeliveryVoucherStatus::PendingApproval,
-            ]);
-        }
+        // Atomic for the same reason as approveTechnical().
+        DB::transaction(function () use ($voucher, $approver) {
+            if (! $voucher->isFinancialApproved()) {
+                $voucher->update([
+                    'financial_approved_by' => $approver->id,
+                    'financial_approved_at' => now(),
+                    'status' => DeliveryVoucherStatus::PendingApproval,
+                ]);
+            }
 
-        $this->activateIfFullyApproved($voucher->refresh());
+            $this->activateIfFullyApproved($voucher->refresh());
+        });
     }
 
     public function cancel(DeliveryVoucher $voucher): void

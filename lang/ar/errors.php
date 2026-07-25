@@ -35,6 +35,11 @@ return [
         'cannot_cancel_active' => 'إذن التسليم :number نشط ولا يمكن إلغاؤه.',
     ],
 
+    'sales_invoice' => [
+        'voucher_not_active' => 'إذن التسليم :number لم يُسلَّم بعد. الفوترة متاحة للأذون المفعَّلة فقط.',
+        'exceeds_voucher_value' => 'قيمة الفاتورة تتجاوز قيمة إذن التسليم :number. المتبقي للفوترة: :remaining جنيه.',
+    ],
+
     'work_order' => [
         'cannot_approve_order' => 'لا يمكن اعتماد أمر التصنيع :number. الأمر ليس مسودة. الحالة الحالية: :status.',
         'cannot_start' => 'لا يمكن بدء أمر التشغيل :number. الحالة الحالية: :status.',

@@ -1571,6 +1571,8 @@ return [
             'item' => 'الصنف',
             'quantity' => 'الكمية',
             'unit_cost' => 'تكلفة الوحدة',
+            'non_invoice_reason' => 'سبب عدم الفوترة',
+            'non_invoice_reason_hint' => 'مثل: عينات أو سحب شخصي.',
         ],
 
         'columns' => [
@@ -1580,17 +1582,66 @@ return [
             'technical' => 'فني',
             'financial' => 'مالي',
             'total_value' => 'إجمالي القيمة',
+            'invoiced_value' => 'القيمة المفوترة',
+            'invoicing_status' => 'حالة الفوترة',
+            'total_delivered' => 'إجمالي المُسلَّم',
+            'total_invoiced' => 'إجمالي المفوتر',
             'status' => 'الحالة',
         ],
 
         'actions' => [
             'approve_technical' => 'اعتماد فني',
             'approve_financial' => 'اعتماد مالي',
+            'record_invoice' => 'تسجيل فاتورة مبيعات',
+            'set_non_invoice_reason' => 'سبب عدم الفوترة',
             'cancel' => 'إلغاء',
         ],
 
         'notifications' => [
             'approved' => 'تم تسجيل التوقيع. يُفعَّل الإذن عند اكتمال الاعتمادين.',
+            'activated' => 'تم اكتمال الاعتمادين وتفعيل الإذن وخصم الأصناف من المخزون.',
+            'invoice_recorded' => 'تم تسجيل الفاتورة وتحديث حالة فوترة الإذن.',
+            'reason_saved' => 'تم حفظ السبب.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | فواتير المبيعات - Sales Invoice Resource (سلايد 10)
+    |--------------------------------------------------------------------------
+    */
+    'sales_invoices' => [
+        'label' => 'فاتورة مبيعات',
+        'plural_label' => 'فواتير المبيعات',
+        'navigation_label' => 'فواتير المبيعات',
+
+        'sections' => [
+            'details' => 'بيانات الفاتورة',
+        ],
+
+        'fields' => [
+            'delivery_voucher' => 'إذن التسليم',
+            'invoice_number' => 'رقم الفاتورة',
+            'invoice_date' => 'تاريخ الفاتورة',
+            'amount' => 'القيمة',
+            'remaining' => 'المتبقي للفوترة',
+            'notes' => 'ملاحظات',
+        ],
+
+        'columns' => [
+            'invoice_number' => 'رقم الفاتورة',
+            'invoice_date' => 'التاريخ',
+            'delivery_voucher' => 'إذن التسليم',
+            'customer' => 'العميل',
+            'voucher_invoicing_status' => 'حالة الإذن',
+            'amount' => 'القيمة',
+            'total_invoiced' => 'الإجمالي',
+        ],
+
+        'filters' => [
+            'customer' => 'العميل',
+            'from' => 'من تاريخ',
+            'until' => 'إلى تاريخ',
         ],
     ],
 
@@ -1962,6 +2013,7 @@ return [
             'customers' => 'العملاء',
             'supplier_statements' => 'كشوف حساب الموردين',
             'customer_statements' => 'كشوف حساب العملاء',
+            'sales_invoices' => 'فواتير المبيعات',
             'accounts' => 'شجرة الحسابات',
             'journal_entries' => 'قيود اليومية',
             'journal_daybook' => 'اليومية التحليلية',
@@ -2061,6 +2113,12 @@ return [
                 'approve_technical' => 'الاعتماد الفني',
                 'approve_financial' => 'الاعتماد المالي',
                 'cancel' => 'إلغاء إذن التسليم',
+            ],
+            'sales_invoices' => [
+                'view' => 'عرض فواتير المبيعات',
+                'create' => 'تسجيل فاتورة مبيعات',
+                'edit' => 'تعديل فواتير المبيعات',
+                'delete' => 'حذف فواتير المبيعات',
             ],
             'production_entries' => [
                 'view' => 'عرض الإنتاج والفاقد',
@@ -2450,6 +2508,12 @@ return [
         'loss_type' => [
             'natural' => 'هالك طبيعي',
             'abnormal' => 'هالك غير طبيعي',
+        ],
+
+        'invoicing_status' => [
+            'not_invoiced' => 'غير مفوتر',
+            'partially_invoiced' => 'مفوتر جزئياً',
+            'fully_invoiced' => 'مفوتر بالكامل',
         ],
 
         'account_direction' => [

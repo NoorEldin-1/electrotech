@@ -103,6 +103,30 @@ class DeliveryVoucherApprovalTest extends TestCase
         $service->approveFinancial($voucher->fresh(), User::factory()->create());
     }
 
+    public function test_a_failed_activation_rolls_the_signature_back(): void
+    {
+        // Signature + activation are one unit of work: a voucher that cannot
+        // be delivered must not keep a financial approval it never earned.
+        [$voucher, $finished] = $this->makeVoucherWithStock(2); // need 5
+        $service = app(DeliveryVoucherService::class);
+        $service->approveTechnical($voucher, User::factory()->create());
+
+        try {
+            $service->approveFinancial($voucher->fresh(), User::factory()->create());
+            $this->fail('Activation should have failed on insufficient stock.');
+        } catch (\RuntimeException) {
+            // expected
+        }
+
+        $voucher->refresh();
+        $this->assertNull($voucher->financial_approved_by, 'The signature must not survive a failed activation.');
+        $this->assertNull($voucher->financial_approved_at);
+        $this->assertSame(DeliveryVoucherStatus::PendingApproval, $voucher->status);
+        $this->assertNull($voucher->activated_at);
+        $this->assertEquals(2, $finished->fresh()->quantityIn(WarehouseType::FinishedGoods));
+        $this->assertSame(0, AccountEntry::count());
+    }
+
     public function test_rbac_separates_technical_and_financial_approval(): void
     {
         $factory = User::factory()->create();

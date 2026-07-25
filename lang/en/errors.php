@@ -40,6 +40,11 @@ return [
         'cannot_cancel_active' => 'Delivery voucher :number is active and cannot be cancelled.',
     ],
 
+    'sales_invoice' => [
+        'voucher_not_active' => 'Delivery voucher :number is not delivered yet. Only activated vouchers can be invoiced.',
+        'exceeds_voucher_value' => 'The invoice exceeds the delivered value of voucher :number. Remaining to invoice: :remaining EGP.',
+    ],
+
     'work_order' => [
         'cannot_approve_order' => 'Work Order :number cannot be approved. It is not a draft. Current status: :status.',
         'cannot_start' => 'Work Order :number cannot be started. Current status: :status.',

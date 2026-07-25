@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\DeliveryVoucherStatus;
+use App\Enums\InvoicingStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +32,9 @@ class DeliveryVoucher extends Model
         'insulation_voltage',
         'status',
         'total_value',
+        'invoiced_value',
+        'invoicing_status',
+        'non_invoice_reason',
         'technical_approved_by',
         'technical_approved_at',
         'financial_approved_by',
@@ -40,6 +44,15 @@ class DeliveryVoucher extends Model
         'activated_at',
     ];
 
+    /**
+     * Mirror the table defaults so a voucher reports its invoicing state even
+     * before it is reloaded from the database.
+     */
+    protected $attributes = [
+        'invoiced_value' => 0,
+        'invoicing_status' => InvoicingStatus::NotInvoiced->value,
+    ];
+
     protected function casts(): array
     {
         return [
@@ -47,6 +60,8 @@ class DeliveryVoucher extends Model
             'voucher_date' => 'date',
             'plates_count' => 'integer',
             'total_value' => 'decimal:2',
+            'invoiced_value' => 'decimal:2',
+            'invoicing_status' => InvoicingStatus::class,
             'technical_approved_at' => 'datetime',
             'financial_approved_at' => 'datetime',
             'activated_at' => 'datetime',
@@ -77,6 +92,15 @@ class DeliveryVoucher extends Model
         return $this->hasMany(DeliveryVoucherLine::class);
     }
 
+    /**
+     * فواتير المبيعات الصادرة على هذا الإذن (سلايد 10) — a voucher may be
+     * invoiced in parts, so it carries many invoices.
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(SalesInvoice::class);
+    }
+
     public function technicalApprovedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'technical_approved_by');
@@ -105,6 +129,11 @@ class DeliveryVoucher extends Model
     public function isFullyApproved(): bool
     {
         return $this->isTechnicalApproved() && $this->isFinancialApproved();
+    }
+
+    public function isFullyInvoiced(): bool
+    {
+        return $this->invoicing_status === InvoicingStatus::FullyInvoiced;
     }
 
     public function getLinesValueAttribute(): float

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Filament\Resources;
 
 use App\Enums\DeliveryVoucherStatus;
+use App\Enums\InvoicingStatus;
 use App\Filament\Resources\DeliveryVoucherResource\Pages;
 use App\Models\DeliveryVoucher;
 use App\Services\DeliveryVoucherService;
+use App\Services\SalesInvoicingService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -185,7 +187,27 @@ class DeliveryVoucherResource extends Resource
                     ->label(__('resources.delivery_vouchers.columns.total_value'))
                     ->money('EGP')
                     ->sortable()
-                    ->visible(fn () => static::canViewPricing()),
+                    ->visible(fn () => static::canViewPricing())
+                    // The file's reconciliation rule: total invoices must equal
+                    // total delivery vouchers — both sums sit under the table.
+                    ->summarize(Tables\Columns\Summarizers\Sum::make()
+                        ->label(__('resources.delivery_vouchers.columns.total_delivered'))
+                        ->money('EGP')),
+
+                Tables\Columns\TextColumn::make('invoiced_value')
+                    ->label(__('resources.delivery_vouchers.columns.invoiced_value'))
+                    ->money('EGP')
+                    ->sortable()
+                    ->visible(fn () => static::canViewPricing())
+                    ->summarize(Tables\Columns\Summarizers\Sum::make()
+                        ->label(__('resources.delivery_vouchers.columns.total_invoiced'))
+                        ->money('EGP')),
+
+                Tables\Columns\TextColumn::make('invoicing_status')
+                    ->label(__('resources.delivery_vouchers.columns.invoicing_status'))
+                    ->badge()
+                    ->sortable()
+                    ->description(fn (DeliveryVoucher $record) => $record->non_invoice_reason),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label(__('resources.delivery_vouchers.columns.status'))
@@ -197,12 +219,17 @@ class DeliveryVoucherResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->label(__('resources.delivery_vouchers.columns.status'))
                     ->options(DeliveryVoucherStatus::class),
+                Tables\Filters\SelectFilter::make('invoicing_status')
+                    ->label(__('resources.delivery_vouchers.columns.invoicing_status'))
+                    ->options(InvoicingStatus::class),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     static::approveTechnicalAction(),
                     static::approveFinancialAction(),
+                    static::recordInvoiceAction(),
+                    static::setNonInvoiceReasonAction(),
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make()
                         ->visible(fn (DeliveryVoucher $record) => ! $record->isActive()),
@@ -220,7 +247,7 @@ class DeliveryVoucherResource extends Resource
             ->requiresConfirmation()
             ->visible(fn (DeliveryVoucher $record) => auth()->user()?->can('approveTechnical', $record))
             ->action(function (DeliveryVoucher $record) {
-                static::runApproval(fn () => app(DeliveryVoucherService::class)->approveTechnical($record, auth()->user()));
+                static::runApproval($record, fn () => app(DeliveryVoucherService::class)->approveTechnical($record, auth()->user()));
             });
     }
 
@@ -233,19 +260,119 @@ class DeliveryVoucherResource extends Resource
             ->requiresConfirmation()
             ->visible(fn (DeliveryVoucher $record) => auth()->user()?->can('approveFinancial', $record))
             ->action(function (DeliveryVoucher $record) {
-                static::runApproval(fn () => app(DeliveryVoucherService::class)->approveFinancial($record, auth()->user()));
+                static::runApproval($record, fn () => app(DeliveryVoucherService::class)->approveFinancial($record, auth()->user()));
             });
     }
 
-    private static function runApproval(callable $callback): void
+    /**
+     * تسجيل فاتورة مبيعات على الإذن (سلايد 10) — quick capture of the tax
+     * invoice issued for a delivered voucher, without leaving the list.
+     */
+    public static function recordInvoiceAction(): Tables\Actions\Action
+    {
+        return Tables\Actions\Action::make('record_invoice')
+            ->label(__('resources.delivery_vouchers.actions.record_invoice'))
+            ->icon('heroicon-o-document-currency-dollar')
+            ->color('primary')
+            ->modalHeading(__('resources.delivery_vouchers.actions.record_invoice'))
+            ->visible(fn (DeliveryVoucher $record) => $record->isActive()
+                && ! $record->isFullyInvoiced()
+                && auth()->user()?->can('sales_invoices.create'))
+            ->form(fn (DeliveryVoucher $record) => [
+                Forms\Components\Placeholder::make('remaining')
+                    ->label(__('resources.sales_invoices.fields.remaining'))
+                    ->content(number_format(app(SalesInvoicingService::class)->remainingFor($record), 2) . ' EGP'),
+
+                Forms\Components\TextInput::make('invoice_number')
+                    ->label(__('resources.sales_invoices.fields.invoice_number'))
+                    ->required()
+                    ->maxLength(100)
+                    ->unique(table: 'sales_invoices', column: 'invoice_number'),
+
+                Forms\Components\DatePicker::make('invoice_date')
+                    ->label(__('resources.sales_invoices.fields.invoice_date'))
+                    ->default(now())
+                    ->required(),
+
+                Forms\Components\TextInput::make('amount')
+                    ->label(__('resources.sales_invoices.fields.amount'))
+                    ->numeric()
+                    ->minValue(0.01)
+                    ->prefix('EGP')
+                    ->default(app(SalesInvoicingService::class)->remainingFor($record))
+                    ->required(),
+
+                Forms\Components\Textarea::make('notes')
+                    ->label(__('resources.sales_invoices.fields.notes'))
+                    ->rows(2),
+            ])
+            ->action(function (DeliveryVoucher $record, array $data) {
+                try {
+                    app(SalesInvoicingService::class)->record($record, $data, auth()->user());
+                    Notification::make()
+                        ->title(__('resources.delivery_vouchers.notifications.invoice_recorded'))
+                        ->success()
+                        ->send();
+                } catch (\Throwable $e) {
+                    Notification::make()
+                        ->title(__('resources.common.action_failed'))
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
+    }
+
+    /**
+     * سبب عدم الفوترة — samples or a personal withdrawal are legitimately
+     * un-invoiced, but the reason must be documented on the voucher.
+     */
+    public static function setNonInvoiceReasonAction(): Tables\Actions\Action
+    {
+        return Tables\Actions\Action::make('set_non_invoice_reason')
+            ->label(__('resources.delivery_vouchers.actions.set_non_invoice_reason'))
+            ->icon('heroicon-o-chat-bubble-bottom-center-text')
+            ->color('warning')
+            // Only a delivered voucher can be "un-invoiced" — nothing left the
+            // warehouse before activation.
+            ->visible(fn (DeliveryVoucher $record) => $record->isActive()
+                && ! $record->isFullyInvoiced()
+                && auth()->user()?->can('sales_invoices.create'))
+            ->fillForm(fn (DeliveryVoucher $record) => ['non_invoice_reason' => $record->non_invoice_reason])
+            ->form([
+                Forms\Components\TextInput::make('non_invoice_reason')
+                    ->label(__('resources.delivery_vouchers.fields.non_invoice_reason'))
+                    ->helperText(__('resources.delivery_vouchers.fields.non_invoice_reason_hint'))
+                    ->maxLength(255),
+            ])
+            ->action(function (DeliveryVoucher $record, array $data) {
+                $record->update(['non_invoice_reason' => $data['non_invoice_reason'] ?: null]);
+
+                Notification::make()
+                    ->title(__('resources.delivery_vouchers.notifications.reason_saved'))
+                    ->success()
+                    ->send();
+            });
+    }
+
+    private static function runApproval(DeliveryVoucher $record, callable $callback): void
     {
         try {
             $callback();
+
+            // Report what actually happened: a lone signature leaves the
+            // voucher pending, the second one activates it.
             Notification::make()
-                ->title(__('resources.delivery_vouchers.notifications.approved'))
+                ->title($record->refresh()->isActive()
+                    ? __('resources.delivery_vouchers.notifications.activated')
+                    : __('resources.delivery_vouchers.notifications.approved'))
                 ->success()
                 ->send();
         } catch (\Throwable $e) {
+            // The service is transactional, so nothing was persisted — reload
+            // the record so the table shows the unchanged, true state.
+            $record->refresh();
+
             Notification::make()
                 ->title(__('resources.common.action_failed'))
                 ->body($e->getMessage())

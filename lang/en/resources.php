@@ -1571,6 +1571,8 @@ return [
             'item' => 'Item',
             'quantity' => 'Quantity',
             'unit_cost' => 'Unit Cost',
+            'non_invoice_reason' => 'Reason for Not Invoicing',
+            'non_invoice_reason_hint' => 'e.g. samples or a personal withdrawal.',
         ],
 
         'columns' => [
@@ -1580,17 +1582,66 @@ return [
             'technical' => 'Technical',
             'financial' => 'Financial',
             'total_value' => 'Total Value',
+            'invoiced_value' => 'Invoiced Value',
+            'invoicing_status' => 'Invoicing Status',
+            'total_delivered' => 'Total Delivered',
+            'total_invoiced' => 'Total Invoiced',
             'status' => 'Status',
         ],
 
         'actions' => [
             'approve_technical' => 'Technical Approval',
             'approve_financial' => 'Financial Approval',
+            'record_invoice' => 'Record Sales Invoice',
+            'set_non_invoice_reason' => 'Reason for Not Invoicing',
             'cancel' => 'Cancel',
         ],
 
         'notifications' => [
             'approved' => 'Signature recorded. The voucher activates once both approvals are in.',
+            'activated' => 'Both approvals are in: the voucher is active and the items were deducted from stock.',
+            'invoice_recorded' => 'Sales invoice recorded and the voucher invoicing status updated.',
+            'reason_saved' => 'Reason saved.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sales Invoice Resource (فواتير المبيعات — سلايد 10)
+    |--------------------------------------------------------------------------
+    */
+    'sales_invoices' => [
+        'label' => 'Sales Invoice',
+        'plural_label' => 'Sales Invoices',
+        'navigation_label' => 'Sales Invoices',
+
+        'sections' => [
+            'details' => 'Invoice Details',
+        ],
+
+        'fields' => [
+            'delivery_voucher' => 'Delivery Voucher',
+            'invoice_number' => 'Invoice Number',
+            'invoice_date' => 'Invoice Date',
+            'amount' => 'Amount',
+            'remaining' => 'Remaining to Invoice',
+            'notes' => 'Notes',
+        ],
+
+        'columns' => [
+            'invoice_number' => 'Invoice No.',
+            'invoice_date' => 'Date',
+            'delivery_voucher' => 'Delivery Voucher',
+            'customer' => 'Customer',
+            'voucher_invoicing_status' => 'Voucher Status',
+            'amount' => 'Amount',
+            'total_invoiced' => 'Total',
+        ],
+
+        'filters' => [
+            'customer' => 'Customer',
+            'from' => 'From Date',
+            'until' => 'Until Date',
         ],
     ],
 
@@ -1962,6 +2013,7 @@ return [
             'customers' => 'Customers',
             'supplier_statements' => 'Supplier Statements',
             'customer_statements' => 'Customer Statements',
+            'sales_invoices' => 'Sales Invoices',
             'accounts' => 'Chart of Accounts',
             'journal_entries' => 'Journal Entries',
             'journal_daybook' => 'Analytical Daybook',
@@ -2061,6 +2113,12 @@ return [
                 'approve_technical' => 'Technical Approval',
                 'approve_financial' => 'Financial Approval',
                 'cancel' => 'Cancel Delivery Voucher',
+            ],
+            'sales_invoices' => [
+                'view' => 'View Sales Invoices',
+                'create' => 'Record Sales Invoice',
+                'edit' => 'Edit Sales Invoices',
+                'delete' => 'Delete Sales Invoices',
             ],
             'production_entries' => [
                 'view' => 'View Production & Loss',
@@ -2450,6 +2508,12 @@ return [
         'loss_type' => [
             'natural' => 'Natural Loss',
             'abnormal' => 'Abnormal Loss',
+        ],
+
+        'invoicing_status' => [
+            'not_invoiced' => 'Not Invoiced',
+            'partially_invoiced' => 'Partially Invoiced',
+            'fully_invoiced' => 'Fully Invoiced',
         ],
 
         'account_direction' => [
