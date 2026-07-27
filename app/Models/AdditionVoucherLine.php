@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Services\PurchaseInvoicingService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +26,23 @@ class AdditionVoucherLine extends Model
             'quantity' => 'decimal:4',
             'unit_cost' => 'decimal:2',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Slide 11: received_value on the voucher is the value that physically
+        // entered the store — keep it true whichever path touched the lines
+        // (repeater save, service, delete).
+        $sync = function (AdditionVoucherLine $line): void {
+            $voucher = $line->additionVoucher()->first();
+
+            if ($voucher instanceof AdditionVoucher) {
+                app(PurchaseInvoicingService::class)->recalculateReceivedValue($voucher);
+            }
+        };
+
+        static::saved($sync);
+        static::deleted($sync);
     }
 
     public function additionVoucher(): BelongsTo

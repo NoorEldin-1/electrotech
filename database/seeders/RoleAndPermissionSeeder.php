@@ -140,6 +140,9 @@ class RoleAndPermissionSeeder extends Seeder
             'addition_vouchers.view',
             'addition_vouchers.create',
             'addition_vouchers.post',
+            // Purchase invoicing (سلايد 11): record the supplier invoice on a
+            // receipt, or close the receipt without one.
+            'addition_vouchers.invoice',
             'issue_vouchers.view',
             'issue_vouchers.create',
             'issue_vouchers.post',
@@ -382,6 +385,9 @@ class RoleAndPermissionSeeder extends Seeder
                 'suppliers.edit',
                 'addition_vouchers.view',
                 'addition_vouchers.post',
+                // Procurement chases the supplier invoice for every receipt
+                // it raised (سلايد 11).
+                'addition_vouchers.invoice',
                 'supplier_statements.view',
                 'transactions.view',
                 'dashboard.view',
@@ -475,6 +481,9 @@ class RoleAndPermissionSeeder extends Seeder
                 'purchase_orders.view',
                 'addition_vouchers.view',
                 'addition_vouchers.post',
+                // Purchase invoicing (سلايد 11): finance owns the matching of
+                // supplier invoices against goods receipts.
+                'addition_vouchers.invoice',
                 'issue_vouchers.view',
                 'depreciation_vouchers.view',
                 'delivery_vouchers.view',

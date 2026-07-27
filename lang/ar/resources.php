@@ -731,7 +731,12 @@ return [
             'purchase_order' => 'طلب الشراء',
             'voucher_date' => 'التاريخ',
             'invoice_number' => 'رقم الفاتورة',
+            'invoice_number_hint' => 'يُترك فارغاً حتى تصل فاتورة المورد.',
+            'invoice_date' => 'تاريخ الفاتورة',
             'invoice_value' => 'قيمة الفاتورة',
+            'invoice_value_posted_hint' => 'الإذن مُرحَّل — تعديل القيمة يصحّح قيد المورد المرحَّل.',
+            'closure_reason' => 'سبب الإقفال',
+            'closure_reason_hint' => 'لماذا لن تصل فاتورة لهذا الإذن؟ (مثل: بديل مجاني، عينة، مرتجع ضمان)',
             'notes' => 'ملاحظات',
             'lines' => 'الأصناف',
             'item' => 'الصنف',
@@ -745,16 +750,32 @@ return [
             'voucher_date' => 'التاريخ',
             'invoice_number' => 'الفاتورة',
             'invoice_value' => 'قيمة الفاتورة',
+            'received_value' => 'قيمة الوارد',
+            'invoicing_status' => 'حالة الفوترة',
+            'total_received' => 'إجمالي الوارد',
+            'total_invoiced' => 'إجمالي المفوتر',
+            'value_mismatch' => 'فرق عن الوارد: :difference جنيه',
             'status' => 'الحالة',
+        ],
+
+        'filters' => [
+            'value_mismatch' => 'الفاتورة ≠ قيمة الوارد',
         ],
 
         'actions' => [
             'post' => 'ترحيل',
             'post_confirm' => 'الترحيل يضيف الأصناف للمخزون ويُرحّل القيمة لحساب المورد. لا يمكن التراجع.',
+            'record_invoice' => 'تسجيل فاتورة المورد',
+            'close_without_invoice' => 'إقفال بدون فاتورة',
+            'reopen_invoicing' => 'إعادة الفتح للفوترة',
+            'reopen_invoicing_confirm' => 'يعود الإذن لحالة انتظار فاتورة المورد ويُمسح سبب الإقفال.',
         ],
 
         'notifications' => [
             'posted' => 'تم ترحيل إذن الإضافة — تم تحديث المخزون وحساب المورد.',
+            'invoice_recorded' => 'تم تسجيل فاتورة المورد على الإذن.',
+            'closed_uninvoiced' => 'تم إقفال الإذن بدون فاتورة — وحُفظ السبب.',
+            'invoicing_reopened' => 'تمت إعادة فتح الإذن — في انتظار فاتورة المورد من جديد.',
         ],
     ],
 
@@ -2091,6 +2112,7 @@ return [
                 'view' => 'عرض أذون الإضافة',
                 'create' => 'إنشاء إذن إضافة',
                 'post' => 'ترحيل إذن الإضافة',
+                'invoice' => 'تسجيل/إقفال فاتورة المشتريات',
             ],
             'issue_vouchers' => [
                 'view' => 'عرض أذون الصرف',
@@ -2514,6 +2536,12 @@ return [
             'not_invoiced' => 'غير مفوتر',
             'partially_invoiced' => 'مفوتر جزئياً',
             'fully_invoiced' => 'مفوتر بالكامل',
+        ],
+
+        'purchase_invoicing_status' => [
+            'not_invoiced' => 'غير مفوتر (منتظر الفاتورة)',
+            'invoiced' => 'مفوتر',
+            'closed_uninvoiced' => 'مُقفل بدون فاتورة',
         ],
 
         'account_direction' => [

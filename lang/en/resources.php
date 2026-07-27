@@ -731,7 +731,12 @@ return [
             'purchase_order' => 'Purchase Order',
             'voucher_date' => 'Date',
             'invoice_number' => 'Invoice Number',
+            'invoice_number_hint' => 'Leave empty until the supplier invoice arrives.',
+            'invoice_date' => 'Invoice Date',
             'invoice_value' => 'Invoice Value',
+            'invoice_value_posted_hint' => 'This voucher is posted — changing the value corrects the supplier ledger entry.',
+            'closure_reason' => 'Closure Reason',
+            'closure_reason_hint' => 'Why will this receipt never be invoiced? (e.g. free replacement, sample, warranty return)',
             'notes' => 'Notes',
             'lines' => 'Items',
             'item' => 'Item',
@@ -745,16 +750,32 @@ return [
             'voucher_date' => 'Date',
             'invoice_number' => 'Invoice',
             'invoice_value' => 'Invoice Value',
+            'received_value' => 'Received Value',
+            'invoicing_status' => 'Invoicing Status',
+            'total_received' => 'Total Received',
+            'total_invoiced' => 'Total Invoiced',
+            'value_mismatch' => 'Difference vs received: :difference EGP',
             'status' => 'Status',
+        ],
+
+        'filters' => [
+            'value_mismatch' => 'Invoice ≠ received value',
         ],
 
         'actions' => [
             'post' => 'Post',
             'post_confirm' => 'Posting adds the items to stock and credits the supplier account. This cannot be undone.',
+            'record_invoice' => 'Record Supplier Invoice',
+            'close_without_invoice' => 'Close Without Invoice',
+            'reopen_invoicing' => 'Reopen for Invoicing',
+            'reopen_invoicing_confirm' => 'The voucher goes back to awaiting its supplier invoice and the closure reason is cleared.',
         ],
 
         'notifications' => [
             'posted' => 'Addition voucher posted — stock and supplier account updated.',
+            'invoice_recorded' => 'Supplier invoice recorded on the voucher.',
+            'closed_uninvoiced' => 'Voucher closed without an invoice — the reason was saved.',
+            'invoicing_reopened' => 'Voucher reopened — it is awaiting a supplier invoice again.',
         ],
     ],
 
@@ -2091,6 +2112,7 @@ return [
                 'view' => 'View Addition Vouchers',
                 'create' => 'Create Addition Voucher',
                 'post' => 'Post Addition Voucher',
+                'invoice' => 'Record / Close Purchase Invoice',
             ],
             'issue_vouchers' => [
                 'view' => 'View Issue Vouchers',
@@ -2514,6 +2536,12 @@ return [
             'not_invoiced' => 'Not Invoiced',
             'partially_invoiced' => 'Partially Invoiced',
             'fully_invoiced' => 'Fully Invoiced',
+        ],
+
+        'purchase_invoicing_status' => [
+            'not_invoiced' => 'Awaiting Invoice',
+            'invoiced' => 'Invoiced',
+            'closed_uninvoiced' => 'Closed Without Invoice',
         ],
 
         'account_direction' => [

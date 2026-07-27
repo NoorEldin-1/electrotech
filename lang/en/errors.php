@@ -45,6 +45,13 @@ return [
         'exceeds_voucher_value' => 'The invoice exceeds the delivered value of voucher :number. Remaining to invoice: :remaining EGP.',
     ],
 
+    'purchase_invoice' => [
+        'invalid_value' => 'The invoice value cannot be negative.',
+        'not_posted' => 'Addition voucher :number is not posted yet. Only posted receipts can be closed without an invoice.',
+        'already_invoiced' => 'Addition voucher :number already carries invoice :invoice. Remove the invoice number before closing it.',
+        'reason_required' => 'A closure reason is required — the file must say why this receipt will never be invoiced.',
+    ],
+
     'work_order' => [
         'cannot_approve_order' => 'Work Order :number cannot be approved. It is not a draft. Current status: :status.',
         'cannot_start' => 'Work Order :number cannot be started. Current status: :status.',

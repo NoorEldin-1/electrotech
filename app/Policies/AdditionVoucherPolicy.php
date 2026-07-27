@@ -43,6 +43,16 @@ class AdditionVoucherPolicy
         return $user->can('addition_vouchers.post') && ! $voucher->isPosted();
     }
 
+    /**
+     * Slide 11: recording the supplier invoice — or closing the receipt
+     * without one — is a financial decision, not a warehouse one. The
+     * storekeeper receives the goods; finance decides the invoicing state.
+     */
+    public function invoice(User $user, AdditionVoucher $voucher): bool
+    {
+        return $user->can('addition_vouchers.invoice');
+    }
+
     public function restore(User $user, AdditionVoucher $voucher): bool
     {
         return $user->can('addition_vouchers.create');

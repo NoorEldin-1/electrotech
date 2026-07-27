@@ -27,4 +27,17 @@ class AdditionVoucherFactory extends Factory
     {
         return $this->state(fn () => ['status' => VoucherStatus::Posted, 'posted_at' => now()]);
     }
+
+    /**
+     * A receipt whose supplier invoice has not arrived yet (سلايد 11) — the
+     * state finance chases.
+     */
+    public function uninvoiced(): static
+    {
+        return $this->state(fn () => [
+            'invoice_number' => null,
+            'invoice_date' => null,
+            'invoice_value' => 0,
+        ]);
+    }
 }
