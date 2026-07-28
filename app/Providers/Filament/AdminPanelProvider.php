@@ -16,7 +16,6 @@ use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Support\Facades\Blade;
-use Filament\Navigation\MenuItem;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -87,19 +86,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-            ])
-            // Operator Console entry point in the user menu. Lives in
-            // the topbar dropdown rather than the sidebar because it
-            // takes the user *out* of the admin panel into a different
-            // application surface — the standalone offline-first PWA
-            // at /console/. The link is always visible; the console
-            // itself handles the enrolment flow.
-            ->userMenuItems([
-                MenuItem::make()
-                    ->label(fn (): string => __('navigation.user_menu.operator_console'))
-                    ->url('/console/')
-                    ->icon('heroicon-o-device-tablet')
-                    ->openUrlInNewTab(false),
             ])
             ->middleware([
                 EncryptCookies::class,

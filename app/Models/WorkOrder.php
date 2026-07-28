@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\WorkOrderStatus;
-use App\Sync\Concerns\Syncable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +17,6 @@ class WorkOrder extends Model
     use HasFactory;
     use LogsActivity;
     use SoftDeletes;
-    use Syncable;
 
     protected $fillable = [
         'project_id',
@@ -60,35 +58,6 @@ class WorkOrder extends Model
         'order_approved_by',
         'order_approved_at',
     ];
-
-    /**
-     * Sync clients (operators on the factory floor) have a narrower
-     * write surface than admin form submissions. They can advance state
-     * and record the actuals; they cannot rewrite plans or reassign.
-     *
-     * Anything outside this list submitted via the sync push is silently
-     * dropped (with a debug-level log line). Server-side authoring
-     * through Filament / services is unaffected.
-     */
-    public function syncWritableFields(): array
-    {
-        return [
-            'status',
-            'produced_quantity',
-            'waste_quantity',
-            'actual_start_date',
-            'actual_end_date',
-            'manufacturing_finished_at',
-            'manufacturing_duration_minutes',
-            'manufacturing_finished_by',
-            'qa_approved_by',
-            'qa_approved_at',
-            'qa_notes',
-            'order_approved_by',
-            'order_approved_at',
-            'client_updated_at',
-        ];
-    }
 
     protected function casts(): array
     {

@@ -7,7 +7,6 @@ namespace App\Models;
 use App\Enums\ItemType;
 use App\Enums\UnitOfMeasure;
 use App\Enums\WarehouseType;
-use App\Sync\Concerns\Syncable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,15 +22,6 @@ class Item extends Model
     use HasFactory;
     use LogsActivity;
     use SoftDeletes;
-    use Syncable;
-
-    /**
-     * Catalog data; operators view but never edit.
-     */
-    public function syncWritableFields(): array
-    {
-        return [];
-    }
 
     protected $fillable = [
         'name',

@@ -15,7 +15,6 @@ return [
     ],
 
     'user_menu' => [
-        'operator_console' => 'Operator Console',
         'language' => 'Language',
         'appearance' => 'Appearance',
         'logout_confirm_heading' => 'Sign out?',

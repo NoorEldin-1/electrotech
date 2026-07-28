@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\BomStatus;
-use App\Sync\Concerns\Syncable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,15 +19,6 @@ class Bom extends Model
     use HasFactory;
     use LogsActivity;
     use SoftDeletes;
-    use Syncable;
-
-    /**
-     * BOM authoring is an office workflow. Read-only on the floor.
-     */
-    public function syncWritableFields(): array
-    {
-        return [];
-    }
 
     protected $fillable = [
         'project_id',

@@ -8,7 +8,6 @@ use App\Enums\ArrivalMethod;
 use App\Enums\AttachmentCategory;
 use App\Enums\LostReason;
 use App\Enums\ProjectStatus;
-use App\Sync\Concerns\Syncable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,17 +24,6 @@ class Project extends Model
     use HasFactory;
     use LogsActivity;
     use SoftDeletes;
-    use Syncable;
-
-    /**
-     * Projects are read-only on the factory floor; operators must not
-     * mutate budgets, dates, or status from offline. Empty array =
-     * sync push for this model is rejected entirely.
-     */
-    public function syncWritableFields(): array
-    {
-        return [];
-    }
 
     protected $fillable = [
         'name',

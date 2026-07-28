@@ -12,14 +12,6 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
-        then: function (): void {
-            // Offline-first sync API. Loaded as plain Route::middleware()
-            // groups inside the file rather than via Laravel's `api`
-            // shorthand because the auth surface is custom (bearer-token
-            // device auth, no Sanctum) and the routes are CSRF-exempt
-            // anyway.
-            \Illuminate\Support\Facades\Route::group([], __DIR__ . '/../routes/sync.php');
-        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Network-resilience stack.
@@ -69,11 +61,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // through cross-context messaging.
         $middleware->validateCsrfTokens(except: [
             'admin/ping',
-            // Sync API. Stateless bearer-token auth, no cookies, so the
-            // CSRF protection layer would have nothing to protect — and
-            // the client (a Service Worker draining an offline outbox)
-            // does not have a session-bound CSRF token to send.
-            'sync/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
