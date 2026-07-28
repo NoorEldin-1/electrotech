@@ -17,6 +17,9 @@ return [
     'user_menu' => [
         'language' => 'اللغة',
         'appearance' => 'المظهر',
+        'documentation' => 'دليل المنصة',
+        'documentation_hint' => 'شرح كل شاشة وكل زر خطوة بخطوة',
+        'documentation_badge' => 'جديد',
         'logout_confirm_heading' => 'تسجيل الخروج؟',
         'logout_confirm_description' => 'هيتم إرجاعك لشاشة تسجيل الدخول، وهتحتاج تسجّل الدخول مرة تانية للمتابعة.',
         'logout_confirm_button' => 'تسجيل الخروج',

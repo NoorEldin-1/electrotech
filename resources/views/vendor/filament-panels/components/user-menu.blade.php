@@ -101,6 +101,34 @@
         </div>
     @endif
 
+    {{-- Platform guide: a full-width, gradient "feature" tile rather than a
+         plain list row. It is the one link in this menu that leaves the panel
+         (a public page, no auth), so it deliberately reads as a destination
+         rather than a setting. Styled in theme.css under "USER MENU — GUIDE". --}}
+    <a
+        href="{{ url('/documentation') }}"
+        target="_blank"
+        rel="noopener"
+        class="et-guide-link"
+    >
+        <span class="et-guide-icon">
+            <x-filament::icon icon="heroicon-o-book-open" />
+        </span>
+
+        <span class="et-guide-text">
+            <span class="et-guide-title">
+                {{ __('navigation.user_menu.documentation') }}
+                <span class="et-guide-badge">{{ __('navigation.user_menu.documentation_badge') }}</span>
+            </span>
+            <span class="et-guide-hint">{{ __('navigation.user_menu.documentation_hint') }}</span>
+        </span>
+
+        <x-filament::icon
+            icon="heroicon-m-arrow-top-right-on-square"
+            class="et-guide-arrow"
+        />
+    </a>
+
     {{-- Menu items + logout --}}
     <x-filament::dropdown.list>
         @foreach ($items as $key => $item)

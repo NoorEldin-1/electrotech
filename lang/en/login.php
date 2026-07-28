@@ -26,4 +26,13 @@ return [
     // Form-side header (right half)
     'welcome' => 'Welcome back',
     'subtitle' => 'Sign in to your account to continue',
+
+    // Guide link under the form — a public page that needs no sign-in.
+    // The guide itself is Arabic-only by design; only the trigger is bilingual.
+    'guide' => [
+        'divider' => 'First time here?',
+        'title' => 'Platform Guide',
+        'badge' => 'New',
+        'hint' => 'Every screen and every button, explained — no sign-in needed',
+    ],
 ];

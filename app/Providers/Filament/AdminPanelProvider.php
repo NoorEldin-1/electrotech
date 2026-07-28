@@ -139,6 +139,13 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,
                 fn (): string => view('filament.auth.login-header')->render()
             )
+            // Link to the public documentation page, under the sign-in button.
+            // /documentation needs no authentication, so it is the one useful
+            // destination we can offer someone who is stuck on this screen.
+            ->renderHook(
+                PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
+                fn (): string => view('filament.auth.login-guide')->render()
+            )
             // Network-resilience client. Loads on every admin page when
             // enabled in config — see config/resilience.php. When
             // disabled (default for `APP_ENV=local`) we emit a tiny

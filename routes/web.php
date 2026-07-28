@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\GeneralLedgerPdfController;
 use App\Http\Controllers\JournalDaybookPdfController;
 use App\Http\Controllers\LocaleController;
@@ -17,6 +18,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('/admin');
 });
+
+// Public system documentation (دليل المنصة). Intentionally NOT behind auth:
+// the link is shared with people who have no account, and the page renders
+// hand-written explanatory content only — it reads no business data.
+Route::get('/documentation', DocumentationController::class)->name('documentation');
+
+// Short, memorable alias so `/docs` also works when the link is typed by hand.
+Route::redirect('/docs', '/documentation', 301);
 
 // Network-resilience ping. Lightweight — extends session TTL, lets the
 // browser measure RTT and decide whether to surface a "weak link" banner.

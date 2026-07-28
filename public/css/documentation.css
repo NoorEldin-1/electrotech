@@ -1,0 +1,1806 @@
+/* =====================================================================
+   ElectroTech Orwa — دليل المنصة (Public Documentation)
+   ---------------------------------------------------------------------
+   Self-contained stylesheet. Deliberately NOT part of the Vite bundle
+   (same pattern as custom-login.css) so the public documentation page
+   renders identically whether or not the admin theme was rebuilt.
+
+   Structure
+     1.  Tokens (light "Warm Porcelain" + dark "Charcoal & Ember")
+     2.  Reset & base
+     3.  Layout shell (topbar / sidebar / main)
+     4.  Sidebar navigation
+     5.  Hero
+     6.  Section & prose primitives
+     7.  Doc components (callout, flow, states, fields, buttons, relations)
+     8.  Utilities, responsive, print
+   ===================================================================== */
+
+/* =====================================================================
+   1. TOKENS
+   ===================================================================== */
+
+:root {
+    /* Brand ramp — ember / terracotta, mirrored from the admin theme. */
+    --brand-50: #fdf4ee;
+    --brand-100: #fae5d3;
+    --brand-200: #f4c9a4;
+    --brand-300: #eda66e;
+    --brand-400: #e48745;
+    --brand-500: #d9723b;
+    --brand-600: #c45c2a;
+    --brand-700: #a34823;
+    --brand-800: #803820;
+    --brand-900: #602b1a;
+
+    /* Department accents — every module inherits its group's hue so the
+       reader can tell "which department am I in" at a glance. */
+    --dept-general: #7c6cf0;
+    --dept-sales: #2f9bd6;
+    --dept-pmo: #9b6ce0;
+    --dept-procurement: #d99b1f;
+    --dept-warehouse: #16a394;
+    --dept-manufacturing: #d9723b;
+    --dept-finance: #2fa46b;
+    --dept-system: #6b7686;
+
+    /* Light surface stack — "Warm Porcelain". */
+    --bg: #f2efe9;
+    --bg-deep: #e9e5dd;
+    --surface-1: #ffffff;
+    --surface-2: #f7f4ee;
+    --surface-3: #efeae1;
+    --surface-sunken: #e8e3d9;
+
+    --text: #16120f;
+    --text-muted: #574d45;
+    --text-faint: #8a7f74;
+
+    --line: rgb(64 48 34 / 0.14);
+    --line-strong: rgb(64 48 34 / 0.24);
+
+    --shadow-sm: 0 1px 2px rgb(48 32 18 / 0.06), 0 1px 3px rgb(48 32 18 / 0.05);
+    --shadow-md: 0 2px 6px rgb(48 32 18 / 0.07), 0 12px 28px -12px rgb(48 32 18 / 0.18);
+    --shadow-lg: 0 4px 12px rgb(48 32 18 / 0.09), 0 28px 60px -24px rgb(48 32 18 / 0.28);
+
+    --radius-xs: 6px;
+    --radius-sm: 9px;
+    --radius: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+
+    /* Semantic tints used by callouts / badges. */
+    --ok: #17864f;
+    --ok-bg: #e6f6ec;
+    --warn: #a76a06;
+    --warn-bg: #fdf3e0;
+    --danger: #bb3140;
+    --danger-bg: #fdecee;
+    --info: #1f6fa8;
+    --info-bg: #e7f2fb;
+    --tip: #7548c9;
+    --tip-bg: #f1ebfd;
+
+    --sidebar-w: 19.5rem;
+    --topbar-h: 4rem;
+
+    --font: 'Cairo', 'Tajawal', 'Almarai', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --mono: 'Cascadia Code', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+    color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+    --bg: #100e0c;
+    --bg-deep: #0a0908;
+    --surface-1: #1a1714;
+    --surface-2: #221e1a;
+    --surface-3: #2a251f;
+    --surface-sunken: #151310;
+
+    --text: #f4efe8;
+    --text-muted: #b8afa4;
+    --text-faint: #8a8178;
+
+    --line: rgb(245 235 225 / 0.09);
+    --line-strong: rgb(245 235 225 / 0.16);
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 2px 6px rgb(0 0 0 / 0.45), 0 14px 32px -14px rgb(0 0 0 / 0.55);
+    --shadow-lg: 0 4px 14px rgb(0 0 0 / 0.5), 0 32px 70px -28px rgb(0 0 0 / 0.7);
+
+    --ok: #4ecf8f;
+    --ok-bg: rgb(45 190 120 / 0.14);
+    --warn: #f0b661;
+    --warn-bg: rgb(240 182 97 / 0.14);
+    --danger: #f4788a;
+    --danger-bg: rgb(244 120 138 / 0.14);
+    --info: #66bdf0;
+    --info-bg: rgb(102 189 240 / 0.13);
+    --tip: #b79bf5;
+    --tip-bg: rgb(183 155 245 / 0.14);
+
+    --dept-general: #9d90ff;
+    --dept-sales: #5cbcf0;
+    --dept-pmo: #bb96f5;
+    --dept-procurement: #f0bd53;
+    --dept-warehouse: #38c8b7;
+    --dept-manufacturing: #ec8b4e;
+    --dept-finance: #56c98d;
+    --dept-system: #9aa5b4;
+
+    color-scheme: dark;
+}
+
+/* =====================================================================
+   2. RESET & BASE
+   ===================================================================== */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    /* Anchors must clear the sticky topbar. */
+    scroll-padding-top: calc(var(--topbar-h) + 1.25rem);
+    -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+img,
+svg {
+    max-width: 100%;
+    display: block;
+}
+
+a {
+    color: var(--brand-600);
+    text-decoration: none;
+}
+
+:root[data-theme='dark'] a {
+    color: var(--brand-300);
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    margin: 0;
+    line-height: 1.45;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+p {
+    margin: 0 0 0.85rem;
+}
+
+p:last-child {
+    margin-bottom: 0;
+}
+
+ul,
+ol {
+    margin: 0 0 0.9rem;
+    padding-inline-start: 1.4rem;
+}
+
+li {
+    margin-bottom: 0.35rem;
+}
+
+li:last-child {
+    margin-bottom: 0;
+}
+
+code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--surface-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-xs);
+    padding: 0.1em 0.4em;
+    direction: ltr;
+    display: inline-block;
+}
+
+:focus-visible {
+    outline: 2px solid var(--brand-500);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
+::selection {
+    background: var(--brand-200);
+    color: #241009;
+}
+
+:root[data-theme='dark'] ::selection {
+    background: var(--brand-700);
+    color: #fff;
+}
+
+/* Slim, themed scrollbars for the sidebar / long tables. */
+.doc-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+}
+
+.doc-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.doc-scroll::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border-radius: 99px;
+}
+
+.doc-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Skip link for keyboard users. */
+.doc-skip {
+    position: fixed;
+    inset-inline-start: 50%;
+    top: 0.5rem;
+    transform: translate(50%, -160%);
+    z-index: 200;
+    background: var(--brand-500);
+    color: #fff;
+    padding: 0.55rem 1.1rem;
+    border-radius: 99px;
+    font-weight: 700;
+    transition: transform 0.18s ease;
+}
+
+.doc-skip:focus {
+    transform: translate(50%, 0);
+    text-decoration: none;
+}
+
+/* =====================================================================
+   3. LAYOUT SHELL
+   ===================================================================== */
+
+/* Reading-progress bar pinned above the topbar. */
+.doc-progress {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    height: 3px;
+    z-index: 120;
+    background: transparent;
+    pointer-events: none;
+}
+
+.doc-progress__bar {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--brand-600), var(--brand-400), #f0b661);
+    box-shadow: 0 0 12px rgb(217 114 59 / 0.55);
+    transition: width 0.08s linear;
+}
+
+.doc-topbar {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 110;
+    height: var(--topbar-h);
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding-inline: clamp(0.9rem, 2.5vw, 1.75rem);
+    /* Plain surface first so a browser without color-mix() still gets an
+       opaque bar instead of transparent chrome over scrolling text. */
+    background: var(--surface-1);
+    background: color-mix(in srgb, var(--surface-1) 82%, transparent);
+    backdrop-filter: blur(16px) saturate(1.5);
+    -webkit-backdrop-filter: blur(16px) saturate(1.5);
+    border-block-end: 1px solid var(--line);
+}
+
+.doc-topbar__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: inherit;
+    flex-shrink: 0;
+}
+
+.doc-topbar__brand:hover {
+    text-decoration: none;
+}
+
+.doc-topbar__logo {
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 10px;
+    object-fit: cover;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--line);
+}
+
+.doc-topbar__titles {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.doc-topbar__name {
+    font-weight: 800;
+    font-size: 0.98rem;
+}
+
+.doc-topbar__kicker {
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    font-weight: 600;
+}
+
+.doc-topbar__spacer {
+    flex: 1;
+}
+
+/* Search box */
+.doc-search {
+    position: relative;
+    flex: 0 1 22rem;
+    min-width: 0;
+}
+
+.doc-search__icon {
+    position: absolute;
+    inset-inline-start: 0.7rem;
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+    width: 1.05rem;
+    height: 1.05rem;
+    color: var(--text-faint);
+    pointer-events: none;
+}
+
+.doc-search__input {
+    width: 100%;
+    font: inherit;
+    font-size: 0.9rem;
+    padding: 0.55rem 2.4rem 0.55rem 2.4rem;
+    border-radius: 99px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface-2);
+    color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.doc-search__input::placeholder {
+    color: var(--text-faint);
+}
+
+.doc-search__input:focus {
+    outline: none;
+    background: var(--surface-1);
+    border-color: var(--brand-400);
+    box-shadow: 0 0 0 3px rgb(217 114 59 / 0.18);
+}
+
+.doc-search__hint {
+    position: absolute;
+    inset-inline-end: 0.55rem;
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-faint);
+    background: var(--surface-3);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.05rem 0.4rem;
+    pointer-events: none;
+}
+
+/* Icon buttons in the topbar */
+.doc-iconbtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 2.4rem;
+    height: 2.4rem;
+    flex-shrink: 0;
+    border-radius: 10px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, transform 0.12s;
+}
+
+.doc-iconbtn:hover {
+    background: var(--surface-3);
+    color: var(--text);
+}
+
+.doc-iconbtn:active {
+    transform: scale(0.94);
+}
+
+.doc-iconbtn svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.doc-iconbtn--menu {
+    display: none;
+}
+
+/* "Back to the system" pill */
+.doc-backlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    height: 2.4rem;
+    padding-inline: 0.95rem;
+    border-radius: 99px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, var(--brand-500), var(--brand-700));
+    box-shadow: 0 6px 16px -8px rgb(196 92 42 / 0.8);
+    flex-shrink: 0;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.doc-backlink:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px -8px rgb(196 92 42 / 0.9);
+}
+
+.doc-backlink svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Shell grid: sidebar + main */
+.doc-shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+    align-items: start;
+}
+
+/* =====================================================================
+   4. SIDEBAR
+   ===================================================================== */
+
+.doc-sidebar {
+    position: sticky;
+    inset-block-start: var(--topbar-h);
+    height: calc(100vh - var(--topbar-h));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1.25rem 0.85rem 3rem;
+    /* The sidebar is grid column 1, which in RTL sits on the right. Its
+       divider must therefore be on the inline-END edge — the one facing
+       the main content — not the outer page edge. */
+    border-inline-end: 1px solid var(--line);
+    background: var(--surface-2);
+    background: color-mix(in srgb, var(--surface-1) 55%, var(--bg));
+}
+
+.doc-sidebar__group {
+    margin-bottom: 0.35rem;
+}
+
+.doc-sidebar__grouphead {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+    padding: 0.55rem 0.6rem;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 800;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    text-align: start;
+    transition: background 0.15s;
+}
+
+.doc-sidebar__grouphead:hover {
+    background: var(--surface-2);
+}
+
+.doc-sidebar__dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 99px;
+    flex-shrink: 0;
+    background: var(--dept, var(--brand-500));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--dept, var(--brand-500)) 20%, transparent);
+}
+
+.doc-sidebar__grouptitle {
+    flex: 1;
+}
+
+.doc-sidebar__count {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-faint);
+    background: var(--surface-3);
+    border-radius: 99px;
+    padding: 0.05rem 0.45rem;
+}
+
+.doc-sidebar__chev {
+    width: 0.95rem;
+    height: 0.95rem;
+    color: var(--text-faint);
+    transition: transform 0.2s ease;
+}
+
+.doc-sidebar__group[data-open='false'] .doc-sidebar__chev {
+    transform: rotate(-90deg);
+}
+
+.doc-sidebar__links {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding-inline-start: 0.85rem;
+    margin-inline-start: 0.55rem;
+    border-inline-start: 1px solid var(--line);
+    overflow: hidden;
+}
+
+.doc-sidebar__group[data-open='false'] .doc-sidebar__links {
+    display: none;
+}
+
+.doc-sidebar__link {
+    display: block;
+    padding: 0.36rem 0.6rem;
+    border-radius: var(--radius-xs);
+    font-size: 0.845rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: background 0.13s, color 0.13s;
+    position: relative;
+}
+
+.doc-sidebar__link:hover {
+    background: var(--surface-2);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.doc-sidebar__link.is-active {
+    background: color-mix(in srgb, var(--dept, var(--brand-500)) 13%, transparent);
+    color: var(--text);
+    font-weight: 800;
+}
+
+.doc-sidebar__link.is-active::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: calc(-0.85rem - 1px);
+    inset-block: 0.25rem;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--dept, var(--brand-500));
+}
+
+/* `[hidden]` is a UA `display: none`, which the `display: block` above would
+   otherwise win against — the search would filter nothing. Restate it. */
+.doc-sidebar__link[hidden],
+.doc-sidebar__group[hidden] {
+    display: none;
+}
+
+.doc-sidebar__empty {
+    display: none;
+    padding: 1.2rem 0.7rem;
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.doc-sidebar.is-filtered .doc-sidebar__group[hidden] {
+    display: none;
+}
+
+.doc-sidebar.is-empty .doc-sidebar__empty {
+    display: block;
+}
+
+/* Mobile drawer behaviour */
+.doc-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 105;
+    background: rgb(10 8 6 / 0.5);
+    backdrop-filter: blur(2px);
+}
+
+/* =====================================================================
+   5. MAIN + HERO
+   ===================================================================== */
+
+.doc-main {
+    min-width: 0;
+    padding: 0 clamp(1rem, 3.2vw, 3rem) 6rem;
+}
+
+.doc-container {
+    max-width: 62rem;
+    margin-inline: auto;
+}
+
+.doc-hero {
+    position: relative;
+    overflow: hidden;
+    margin-block: 1.75rem 2.5rem;
+    padding: clamp(1.75rem, 4vw, 3.25rem);
+    border-radius: var(--radius-xl);
+    background:
+        radial-gradient(120% 150% at 92% 8%, rgb(217 114 59 / 0.28) 0%, transparent 55%),
+        radial-gradient(90% 120% at 8% 100%, rgb(124 108 240 / 0.18) 0%, transparent 60%),
+        linear-gradient(140deg, #1b1712 0%, #221b15 45%, #17130f 100%);
+    color: #f6f1ea;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgb(255 235 210 / 0.09);
+}
+
+/* Faint blueprint grid — reads as "engineering documentation". */
+.doc-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgb(255 235 210 / 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(255 235 210 / 0.05) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: radial-gradient(70% 90% at 70% 10%, #000 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(70% 90% at 70% 10%, #000 0%, transparent 75%);
+    pointer-events: none;
+}
+
+.doc-hero > * {
+    position: relative;
+}
+
+.doc-hero__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 0.3rem 0.8rem;
+    border-radius: 99px;
+    background: rgb(255 235 210 / 0.1);
+    border: 1px solid rgb(255 235 210 / 0.16);
+    color: #f6d9bf;
+    margin-bottom: 1.1rem;
+}
+
+.doc-hero__badge svg {
+    width: 0.95rem;
+    height: 0.95rem;
+}
+
+.doc-hero__title {
+    font-size: clamp(1.85rem, 4.6vw, 3rem);
+    line-height: 1.28;
+    margin-bottom: 0.85rem;
+    letter-spacing: -0.02em;
+}
+
+.doc-hero__title em {
+    font-style: normal;
+    background: linear-gradient(100deg, #f0b661, var(--brand-400), #f2a97a);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.doc-hero__lede {
+    font-size: clamp(0.98rem, 1.6vw, 1.12rem);
+    color: #d6cabd;
+    max-width: 46rem;
+    margin-bottom: 1.6rem;
+}
+
+.doc-hero__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.6rem;
+}
+
+.doc-hero__stat {
+    background: rgb(255 235 210 / 0.06);
+    border: 1px solid rgb(255 235 210 / 0.1);
+    border-radius: var(--radius);
+    padding: 0.8rem 0.95rem;
+}
+
+.doc-hero__statnum {
+    display: block;
+    font-size: 1.55rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #f0b661;
+}
+
+.doc-hero__statlbl {
+    font-size: 0.76rem;
+    color: #bdb1a4;
+    font-weight: 600;
+}
+
+.doc-hero__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.doc-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 1.15rem;
+    border-radius: 99px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.doc-btn svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.doc-btn--primary {
+    background: linear-gradient(135deg, var(--brand-400), var(--brand-600));
+    color: #fff;
+    box-shadow: 0 10px 24px -10px rgb(217 114 59 / 0.9);
+}
+
+.doc-btn--primary:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.doc-btn--ghost {
+    background: rgb(255 235 210 / 0.08);
+    border-color: rgb(255 235 210 / 0.18);
+    color: #f0e6da;
+}
+
+.doc-btn--ghost:hover {
+    text-decoration: none;
+    background: rgb(255 235 210 / 0.14);
+}
+
+/* =====================================================================
+   6. SECTIONS & PROSE
+   ===================================================================== */
+
+.doc-section {
+    scroll-margin-top: calc(var(--topbar-h) + 1.25rem);
+    margin-bottom: 3.25rem;
+}
+
+.doc-section__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding-block-end: 0.9rem;
+    margin-block-end: 1.35rem;
+    border-block-end: 2px solid var(--line-strong);
+    border-block-end-color: color-mix(in srgb, var(--dept, var(--brand-500)) 30%, transparent);
+}
+
+.doc-section__icon {
+    flex-shrink: 0;
+    width: 2.85rem;
+    height: 2.85rem;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    background: color-mix(in srgb, var(--dept, var(--brand-500)) 15%, var(--surface-1));
+    color: var(--dept, var(--brand-500));
+    border: 1px solid var(--line);
+    border-color: color-mix(in srgb, var(--dept, var(--brand-500)) 30%, transparent);
+}
+
+.doc-section__icon svg {
+    width: 1.45rem;
+    height: 1.45rem;
+}
+
+.doc-section__titles {
+    flex: 1;
+    min-width: 0;
+}
+
+.doc-section__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: var(--dept, var(--brand-500));
+    margin-bottom: 0.15rem;
+}
+
+.doc-section__title {
+    font-size: clamp(1.3rem, 2.6vw, 1.75rem);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.doc-section__anchor {
+    opacity: 0;
+    color: var(--text-faint);
+    font-size: 1rem;
+    transition: opacity 0.15s;
+}
+
+.doc-section__head:hover .doc-section__anchor {
+    opacity: 1;
+}
+
+.doc-section__sub {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    margin-top: 0.2rem;
+}
+
+/* Big group divider between departments */
+.doc-chapter {
+    position: relative;
+    margin: 4rem 0 2.5rem;
+    padding: 1.5rem 1.6rem;
+    border-radius: var(--radius-lg);
+    background: var(--surface-1);
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--dept, var(--brand-500)) 16%, var(--surface-1)),
+        var(--surface-1)
+    );
+    border: 1px solid var(--line-strong);
+    border-color: color-mix(in srgb, var(--dept, var(--brand-500)) 26%, transparent);
+    box-shadow: var(--shadow-sm);
+    scroll-margin-top: calc(var(--topbar-h) + 1.25rem);
+}
+
+.doc-chapter__no {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--dept, var(--brand-500));
+}
+
+.doc-chapter__title {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    margin: 0.15rem 0 0.4rem;
+}
+
+.doc-chapter__sub {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    max-width: 48rem;
+}
+
+.doc-chapter__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.95rem;
+}
+
+.doc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 0.22rem 0.65rem;
+    border-radius: 99px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--text-muted);
+}
+
+.doc-chip:hover {
+    text-decoration: none;
+    background: var(--surface-3);
+    color: var(--text);
+}
+
+/* Generic card */
+.doc-card {
+    background: var(--surface-1);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.15rem 1.25rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.15rem;
+}
+
+.doc-card__title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    margin-bottom: 0.7rem;
+    color: var(--text);
+}
+
+.doc-card__title svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    color: var(--dept, var(--brand-500));
+    flex-shrink: 0;
+}
+
+.doc-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.15rem;
+}
+
+.doc-grid-2 > .doc-card {
+    margin-bottom: 0;
+}
+
+/* Lead paragraph under a section head */
+.doc-lead {
+    font-size: 1.02rem;
+    color: var(--text-muted);
+    margin-bottom: 1.15rem;
+}
+
+.doc-lead strong {
+    color: var(--text);
+}
+
+/* =====================================================================
+   7. DOC COMPONENTS
+   ===================================================================== */
+
+/* ---- 7.1 Callout --------------------------------------------------- */
+
+.doc-callout {
+    display: flex;
+    gap: 0.85rem;
+    padding: 0.95rem 1.1rem;
+    border-radius: var(--radius);
+    /* Concrete fallback colour: the type modifiers below override it with a
+       color-mix() tint, and if that is unsupported the box still has a
+       sensible hairline instead of inheriting currentColor. */
+    border: 1px solid var(--line);
+    margin-bottom: 1.15rem;
+    font-size: 0.93rem;
+}
+
+.doc-callout__icon {
+    flex-shrink: 0;
+    width: 1.6rem;
+    height: 1.6rem;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+}
+
+.doc-callout__icon svg {
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+.doc-callout__body {
+    min-width: 0;
+    flex: 1;
+}
+
+.doc-callout__title {
+    font-weight: 800;
+    margin-bottom: 0.2rem;
+}
+
+.doc-callout--info {
+    background: var(--info-bg);
+    border-color: color-mix(in srgb, var(--info) 32%, transparent);
+}
+.doc-callout--info .doc-callout__icon { background: color-mix(in srgb, var(--info) 20%, transparent); color: var(--info); }
+.doc-callout--info .doc-callout__title { color: var(--info); }
+
+.doc-callout--tip {
+    background: var(--tip-bg);
+    border-color: color-mix(in srgb, var(--tip) 32%, transparent);
+}
+.doc-callout--tip .doc-callout__icon { background: color-mix(in srgb, var(--tip) 20%, transparent); color: var(--tip); }
+.doc-callout--tip .doc-callout__title { color: var(--tip); }
+
+.doc-callout--warn {
+    background: var(--warn-bg);
+    border-color: color-mix(in srgb, var(--warn) 34%, transparent);
+}
+.doc-callout--warn .doc-callout__icon { background: color-mix(in srgb, var(--warn) 20%, transparent); color: var(--warn); }
+.doc-callout--warn .doc-callout__title { color: var(--warn); }
+
+.doc-callout--danger {
+    background: var(--danger-bg);
+    border-color: color-mix(in srgb, var(--danger) 34%, transparent);
+}
+.doc-callout--danger .doc-callout__icon { background: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger); }
+.doc-callout--danger .doc-callout__title { color: var(--danger); }
+
+.doc-callout--ok {
+    background: var(--ok-bg);
+    border-color: color-mix(in srgb, var(--ok) 34%, transparent);
+}
+.doc-callout--ok .doc-callout__icon { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok); }
+.doc-callout--ok .doc-callout__title { color: var(--ok); }
+
+/* ---- 7.2 Flow (steps with arrows) ---------------------------------- */
+
+.doc-flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 1.15rem;
+    background: var(--surface-sunken);
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius);
+    margin-bottom: 1.15rem;
+}
+
+.doc-flow__step {
+    flex: 1 1 8.5rem;
+    min-width: 8.5rem;
+    background: var(--surface-1);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 0.7rem 0.8rem;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    border-top: 3px solid var(--step-color, var(--brand-500));
+}
+
+.doc-flow__no {
+    display: inline-grid;
+    place-items: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 99px;
+    background: var(--step-color, var(--brand-500));
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    margin-bottom: 0.35rem;
+}
+
+.doc-flow__title {
+    font-weight: 800;
+    font-size: 0.86rem;
+    line-height: 1.4;
+    margin-bottom: 0.15rem;
+}
+
+.doc-flow__desc {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.doc-flow__arrow {
+    display: grid;
+    place-items: center;
+    color: var(--text-faint);
+    flex: 0 0 1.35rem;
+    align-self: center;
+}
+
+.doc-flow__arrow svg {
+    width: 1.35rem;
+    height: 1.35rem;
+    /* RTL: the arrow must point right-to-left. */
+    transform: scaleX(-1);
+}
+
+/* Vertical variant for long chains */
+.doc-flow--stack {
+    flex-direction: column;
+}
+
+/* In column direction flex-basis becomes HEIGHT — the horizontal 8.5rem
+   basis would stretch every step into a tall empty box. */
+.doc-flow--stack .doc-flow__step {
+    flex: 0 0 auto;
+    width: 100%;
+}
+
+.doc-flow--stack .doc-flow__arrow {
+    align-self: center;
+}
+
+/* The base icon points right; a clockwise quarter-turn points it down,
+   which is the reading direction of a stacked chain. */
+.doc-flow--stack .doc-flow__arrow svg {
+    transform: rotate(90deg);
+}
+
+/* ---- 7.3 State machine --------------------------------------------- */
+
+.doc-states {
+    margin-bottom: 1.15rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface-1);
+}
+
+.doc-states__head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1rem;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+    font-weight: 800;
+    font-size: 0.88rem;
+}
+
+.doc-states__head svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    color: var(--dept, var(--brand-500));
+}
+
+.doc-states__track {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 1rem;
+}
+
+.doc-state {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 99px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    border: 1.5px solid;
+    background: var(--surface-2);
+    white-space: nowrap;
+}
+
+.doc-state small {
+    font-size: 0.68rem;
+    font-weight: 600;
+    opacity: 0.85;
+    direction: ltr;
+    text-align: start;
+}
+
+.doc-state--neutral { color: var(--text-muted); border-color: var(--line-strong); }
+.doc-state--info { color: var(--info); border-color: color-mix(in srgb, var(--info) 45%, transparent); background: var(--info-bg); }
+.doc-state--warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: var(--warn-bg); }
+.doc-state--ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); background: var(--ok-bg); }
+.doc-state--danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, transparent); background: var(--danger-bg); }
+.doc-state--tip { color: var(--tip); border-color: color-mix(in srgb, var(--tip) 45%, transparent); background: var(--tip-bg); }
+
+.doc-states__arrow {
+    display: inline-grid;
+    place-items: center;
+    color: var(--text-faint);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding-inline: 0.15rem;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.doc-states__arrow svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    transform: scaleX(-1);
+}
+
+.doc-states__arrow span {
+    display: block;
+    max-width: 7rem;
+    color: var(--text-faint);
+    font-size: 0.68rem;
+}
+
+.doc-states__legend {
+    padding: 0.7rem 1rem;
+    border-top: 1px dashed var(--line);
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    background: var(--surface-2);
+}
+
+/* ---- 7.4 Tables (fields / buttons / generic) ----------------------- */
+
+.doc-tablewrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: 1.15rem;
+    background: var(--surface-1);
+    box-shadow: var(--shadow-sm);
+}
+
+.doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    min-width: 34rem;
+}
+
+.doc-table caption {
+    caption-side: top;
+    text-align: start;
+    padding: 0.75rem 1rem;
+    font-weight: 800;
+    font-size: 0.9rem;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+    color: var(--text);
+}
+
+.doc-table th,
+.doc-table td {
+    padding: 0.62rem 0.9rem;
+    text-align: start;
+    vertical-align: top;
+    border-bottom: 1px solid var(--line);
+    line-height: 1.7;
+}
+
+.doc-table thead th {
+    background: var(--surface-2);
+    font-weight: 800;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.doc-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.doc-table tbody tr:hover {
+    background: var(--surface-2);
+}
+
+.doc-table td strong {
+    color: var(--text);
+}
+
+.doc-table .doc-t-name {
+    font-weight: 800;
+    white-space: nowrap;
+    color: var(--text);
+}
+
+.doc-table .doc-t-req {
+    color: var(--danger);
+    font-weight: 800;
+}
+
+/* ---- 7.5 Button reference cards ------------------------------------ */
+
+.doc-btns {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1.15rem;
+}
+
+.doc-btnref {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.85rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-1);
+    box-shadow: var(--shadow-sm);
+    border-inline-start: 3px solid var(--btn-color, var(--brand-500));
+}
+
+.doc-btnref__icon {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--btn-color, var(--brand-500)) 16%, transparent);
+    color: var(--btn-color, var(--brand-500));
+    flex-shrink: 0;
+}
+
+.doc-btnref__icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.doc-btnref__name {
+    font-weight: 800;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 0.3rem;
+}
+
+.doc-btnref__pill {
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 0.1rem 0.5rem;
+    border-radius: 99px;
+    background: color-mix(in srgb, var(--btn-color, var(--brand-500)) 16%, transparent);
+    color: var(--btn-color, var(--brand-500));
+    border: 1px solid color-mix(in srgb, var(--btn-color, var(--brand-500)) 30%, transparent);
+}
+
+.doc-btnref__rows {
+    display: grid;
+    gap: 0.3rem;
+    font-size: 0.86rem;
+}
+
+.doc-btnref__row {
+    display: grid;
+    grid-template-columns: 6.2rem minmax(0, 1fr);
+    gap: 0.5rem;
+    align-items: start;
+}
+
+.doc-btnref__key {
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: var(--text-faint);
+    padding-top: 0.15rem;
+}
+
+.doc-btnref__val {
+    color: var(--text-muted);
+    line-height: 1.7;
+}
+
+.doc-btnref__val strong {
+    color: var(--text);
+}
+
+/* ---- 7.6 Relations map --------------------------------------------- */
+
+.doc-rel {
+    padding: 1.1rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: var(--surface-1);
+    background:
+        radial-gradient(70% 100% at 50% 0%, color-mix(in srgb, var(--dept, var(--brand-500)) 9%, transparent), transparent 70%),
+        var(--surface-1);
+    margin-bottom: 1.15rem;
+}
+
+.doc-rel__head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 800;
+    font-size: 0.9rem;
+    margin-bottom: 0.85rem;
+}
+
+.doc-rel__head svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    color: var(--dept, var(--brand-500));
+}
+
+.doc-rel__list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.doc-rel__item {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    font-size: 0.86rem;
+}
+
+.doc-rel__target {
+    font-weight: 800;
+    white-space: nowrap;
+    color: var(--text);
+}
+
+.doc-rel__target:hover {
+    text-decoration: none;
+    color: var(--brand-600);
+}
+
+.doc-rel__arrow {
+    color: var(--text-faint);
+    font-weight: 800;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    direction: ltr;
+}
+
+.doc-rel__why {
+    color: var(--text-muted);
+    line-height: 1.65;
+}
+
+/* ---- 7.7 Worked example -------------------------------------------- */
+
+.doc-example {
+    border: 1px solid color-mix(in srgb, var(--tip) 30%, transparent);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1.15rem;
+    background: var(--surface-1);
+}
+
+.doc-example__head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    background: var(--tip-bg);
+    color: var(--tip);
+    font-weight: 800;
+    font-size: 0.88rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--tip) 25%, transparent);
+}
+
+.doc-example__head svg {
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+.doc-example__body {
+    padding: 0.95rem 1.1rem;
+    font-size: 0.92rem;
+}
+
+.doc-example__body ol {
+    margin-bottom: 0;
+}
+
+/* ---- 7.8 Where-is-it locator --------------------------------------- */
+
+.doc-where {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    font-size: 0.83rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    padding: 0.35rem 0.9rem;
+    margin-bottom: 1.1rem;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.doc-where svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    color: var(--dept, var(--brand-500));
+    flex-shrink: 0;
+}
+
+.doc-where__sep {
+    color: var(--text-faint);
+    transform: scaleX(-1);
+    display: inline-block;
+}
+
+.doc-where__last {
+    color: var(--text);
+    font-weight: 800;
+}
+
+/* ---- 7.9 Key/Value facts strip ------------------------------------- */
+
+.doc-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 1.15rem;
+}
+
+.doc-fact {
+    padding: 0.7rem 0.85rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+}
+
+.doc-fact__k {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--text-faint);
+    margin-bottom: 0.1rem;
+}
+
+.doc-fact__v {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.55;
+}
+
+/* ---- 7.10 Glossary grid -------------------------------------------- */
+
+.doc-glossary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 0.7rem;
+    margin-bottom: 1.15rem;
+}
+
+.doc-gloss {
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface-1);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
+}
+
+.doc-gloss__term {
+    font-weight: 800;
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+    color: var(--text);
+}
+
+.doc-gloss__def {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+}
+
+/* ---- 7.11 Footer ---------------------------------------------------- */
+
+.doc-footer {
+    margin-top: 4rem;
+    padding: 2rem 1.5rem;
+    border-radius: var(--radius-lg);
+    background: var(--surface-1);
+    border: 1px solid var(--line);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.doc-footer__logo {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 12px;
+    margin-inline: auto;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--line);
+}
+
+.doc-footer strong {
+    color: var(--text);
+}
+
+/* Back-to-top */
+.doc-top {
+    position: fixed;
+    inset-block-end: 1.25rem;
+    inset-inline-start: 1.25rem;
+    z-index: 100;
+    width: 2.85rem;
+    height: 2.85rem;
+    border-radius: 99px;
+    display: grid;
+    place-items: center;
+    background: var(--surface-1);
+    color: var(--text-muted);
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(0.6rem);
+    transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+}
+
+.doc-top.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.doc-top svg {
+    width: 1.2rem;
+    height: 1.2rem;
+}
+
+/* =====================================================================
+   8. RESPONSIVE & PRINT
+   ===================================================================== */
+
+@media (max-width: 1080px) {
+    :root {
+        --sidebar-w: 17rem;
+    }
+}
+
+@media (max-width: 900px) {
+    .doc-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .doc-iconbtn--menu {
+        display: inline-grid;
+        place-items: center;
+    }
+
+    .doc-sidebar {
+        position: fixed;
+        z-index: 106;
+        inset-block: var(--topbar-h) 0;
+        inset-inline-end: 0;
+        width: min(21rem, 86vw);
+        height: auto;
+        background: var(--surface-1);
+        box-shadow: var(--shadow-lg);
+        transform: translateX(100%);
+        transition: transform 0.25s ease;
+    }
+
+    /* LTR fallback should the page ever be rendered ltr. */
+    html[dir='ltr'] .doc-sidebar {
+        transform: translateX(-100%);
+    }
+
+    body.doc-nav-open .doc-sidebar {
+        transform: translateX(0);
+    }
+
+    body.doc-nav-open .doc-backdrop {
+        display: block;
+    }
+
+    body.doc-nav-open {
+        overflow: hidden;
+    }
+
+    .doc-search {
+        flex: 1 1 auto;
+    }
+
+    .doc-topbar__titles,
+    .doc-backlink span {
+        display: none;
+    }
+
+    .doc-backlink {
+        padding-inline: 0.8rem;
+    }
+
+    .doc-btnref__row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.05rem;
+    }
+}
+
+@media (max-width: 560px) {
+    body {
+        font-size: 15px;
+    }
+
+    .doc-search__hint {
+        display: none;
+    }
+
+    .doc-rel__item {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.2rem;
+    }
+
+    .doc-hero {
+        border-radius: var(--radius-lg);
+    }
+}
+
+@media print {
+    .doc-topbar,
+    .doc-sidebar,
+    .doc-progress,
+    .doc-top,
+    .doc-backdrop {
+        display: none !important;
+    }
+
+    .doc-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .doc-main {
+        padding: 0;
+    }
+
+    .doc-section {
+        break-inside: avoid;
+    }
+
+    body {
+        background: #fff;
+        color: #000;
+    }
+}
