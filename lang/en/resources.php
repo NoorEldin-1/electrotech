@@ -992,6 +992,8 @@ return [
         'sections' => [
             'details' => 'Entry Details',
             'lines' => 'Entry Lines',
+            'debit_lines' => 'Debit',
+            'credit_lines' => 'Credit',
         ],
 
         'fields' => [
@@ -1010,6 +1012,7 @@ return [
             'amount' => 'Amount',
             'line_notes' => 'Notes',
             'totals' => 'Totals',
+            'show_line_details' => 'Show cost center and line notes',
         ],
 
         'columns' => [
@@ -1031,17 +1034,23 @@ return [
 
         'helpers' => [
             'document_number' => 'Leave empty to take the next number in this document type sequence.',
+            'show_line_details' => 'Keep it off for fast entry — account and amount only.',
         ],
 
         'actions' => [
+            'create' => 'Add Journal Entry',
             'post' => 'Post',
             'post_confirm' => 'Posting reflects this entry in the ledgers and trial balance. It can no longer be edited.',
+            'add_debit_line' => 'Add debit line',
+            'add_credit_line' => 'Add credit line',
+            'fill_remaining' => 'Fill the remaining difference',
         ],
 
         'placeholders' => [
             'total_debit' => 'Total Debit',
             'total_credit' => 'Total Credit',
             'difference' => 'Difference (must be zero)',
+            'balanced' => 'Entry is balanced',
         ],
 
         'notifications' => [

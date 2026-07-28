@@ -992,6 +992,8 @@ return [
         'sections' => [
             'details' => 'بيانات القيد',
             'lines' => 'سطور القيد',
+            'debit_lines' => 'مدين',
+            'credit_lines' => 'دائن',
         ],
 
         'fields' => [
@@ -1010,6 +1012,7 @@ return [
             'amount' => 'القيمة',
             'line_notes' => 'ملاحظات',
             'totals' => 'الإجماليات',
+            'show_line_details' => 'إظهار مركز التكلفة وملاحظات السطر',
         ],
 
         'columns' => [
@@ -1031,17 +1034,23 @@ return [
 
         'helpers' => [
             'document_number' => 'اتركه فارغاً ليأخذ الرقم التالي في تسلسل نوع المستند.',
+            'show_line_details' => 'اتركه مقفولاً للإدخال السريع — الحساب والقيمة فقط.',
         ],
 
         'actions' => [
+            'create' => 'إضافة قيد يومية',
             'post' => 'ترحيل',
             'post_confirm' => 'الترحيل يعكس القيد في دفاتر الأستاذ وميزان المراجعة، ولا يمكن تعديله بعدها.',
+            'add_debit_line' => 'إضافة سطر مدين',
+            'add_credit_line' => 'إضافة سطر دائن',
+            'fill_remaining' => 'املأ الفرق المتبقي',
         ],
 
         'placeholders' => [
             'total_debit' => 'إجمالي المدين',
             'total_credit' => 'إجمالي الدائن',
             'difference' => 'الفرق (يجب أن يكون صفراً)',
+            'balanced' => 'القيد متوازن',
         ],
 
         'notifications' => [

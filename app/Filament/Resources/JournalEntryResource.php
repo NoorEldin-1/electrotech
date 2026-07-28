@@ -10,6 +10,7 @@ use App\Enums\JournalStatus;
 use App\Filament\Resources\JournalEntryResource\Pages;
 use App\Models\Account;
 use App\Models\JournalEntry;
+use App\Models\Project;
 use App\Services\JournalEntryService;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -17,8 +18,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\HtmlString;
 
 /**
  * قيود اليومية — manual double-entry journal (سلايد 2). Each entry carries a
@@ -34,6 +35,12 @@ class JournalEntryResource extends Resource
     protected static ?int $navigationSort = 58;
 
     protected static ?string $recordTitleAttribute = 'entry_number';
+
+    /** @var array<int, string>|null */
+    protected static ?array $accountOptions = null;
+
+    /** @var array<int, string>|null */
+    protected static ?array $projectOptions = null;
 
     public static function getNavigationGroup(): ?string
     {
@@ -63,21 +70,35 @@ class JournalEntryResource extends Resource
                     ->icon('heroicon-o-book-open')
                     ->columns(2)
                     ->schema([
+                        // Both numbers are assigned on save, so on the create
+                        // form they are two empty rows in the way of the lines.
                         Forms\Components\TextInput::make('entry_serial')
                             ->label(__('resources.journal_entries.fields.entry_serial'))
                             ->disabled()
                             ->dehydrated(false)
+                            ->hiddenOn('create')
                             ->placeholder(__('resources.common.auto_generated')),
 
                         Forms\Components\TextInput::make('entry_number')
                             ->label(__('resources.journal_entries.fields.entry_number'))
                             ->disabled()
                             ->dehydrated(false)
+                            ->hiddenOn('create')
                             ->placeholder(__('resources.common.auto_generated')),
 
+                        // Preselected from the document-type dropdown on the
+                        // list page (?document_type=…); changing it here moves
+                        // the treasury account to the matching side.
                         Forms\Components\Select::make('document_type')
                             ->label(__('resources.journal_entries.fields.document_type'))
                             ->options(DocumentType::class)
+                            ->default(fn (): ?string => DocumentType::tryFrom((string) request()->query('document_type'))?->value)
+                            ->live()
+                            ->afterStateUpdated(fn ($old, Forms\Get $get, Forms\Set $set) => static::applyTreasuryDefault(
+                                $get,
+                                $set,
+                                previous: JournalEntryService::treasuryAccountFor($old, $get('currency')),
+                            ))
                             ->required(),
 
                         // Left blank, the model assigns the next number in this
@@ -107,6 +128,12 @@ class JournalEntryResource extends Resource
                                 'EUR' => 'EUR',
                             ])
                             ->default('EGP')
+                            ->live()
+                            ->afterStateUpdated(fn ($old, Forms\Get $get, Forms\Set $set) => static::applyTreasuryDefault(
+                                $get,
+                                $set,
+                                previous: JournalEntryService::treasuryAccountFor($get('document_type'), $old),
+                            ))
                             ->required(),
 
                         Forms\Components\Textarea::make('notes')
@@ -115,94 +142,257 @@ class JournalEntryResource extends Resource
                             ->columnSpanFull(),
                     ]),
 
+                // The debit and credit sides are written in their own columns,
+                // the way the entry reads on paper: no direction to pick on
+                // every line, one visual row per line, and an add button per
+                // side for multi-party entries.
                 Forms\Components\Section::make(__('resources.journal_entries.sections.lines'))
                     ->icon('heroicon-o-list-bullet')
                     ->schema([
-                        Forms\Components\Repeater::make('lines')
-                            ->label(__('resources.journal_entries.fields.lines'))
-                            ->relationship()
-                            ->columns(3)
-                            ->defaultItems(2)
-                            ->minItems(2)
-                            ->schema([
-                                Forms\Components\Select::make('account_id')
-                                    ->label(__('resources.journal_entries.fields.account'))
-                                    ->relationship(
-                                        name: 'account',
-                                        titleAttribute: 'name',
-                                        modifyQueryUsing: fn (Builder $query) => $query->where('is_active', true)->orderBy('code'),
-                                    )
-                                    ->getOptionLabelFromRecordUsing(fn (Account $record): string => $record->display_name)
-                                    ->searchable(['code', 'name'])
-                                    ->preload()
-                                    ->required(),
-
-                                // Optional cost-center tag (الإدارة العامة):
-                                // attach this line's expense to an operation so
-                                // the Operation Cost Center can aggregate it.
-                                Forms\Components\Select::make('project_id')
-                                    ->label(__('resources.journal_entries.fields.project'))
-                                    ->relationship(name: 'project', titleAttribute: 'name')
-                                    ->searchable(['name', 'code'])
-                                    ->preload()
-                                    ->nullable(),
-
-                                Forms\Components\Select::make('direction')
-                                    ->label(__('resources.journal_entries.fields.direction'))
-                                    ->options(AccountDirection::class)
-                                    ->required()
-                                    ->live(),
-
-                                Forms\Components\TextInput::make('amount')
-                                    ->label(__('resources.journal_entries.fields.amount'))
-                                    ->numeric()
-                                    ->minValue(0.01)
-                                    ->required()
-                                    ->live(onBlur: true),
-
-                                Forms\Components\TextInput::make('line_notes')
-                                    ->label(__('resources.journal_entries.fields.line_notes'))
-                                    ->maxLength(255)
-                                    ->columnSpanFull(),
-                            ])
-                            ->disabled(fn (?JournalEntry $record) => $record?->isPosted() ?? false)
+                        Forms\Components\Placeholder::make('balance')
+                            ->hiddenLabel()
+                            ->content(fn (Forms\Get $get): View => static::renderBalanceBar($get))
                             ->columnSpanFull(),
 
-                        Forms\Components\Placeholder::make('totals')
-                            ->label(__('resources.journal_entries.fields.totals'))
-                            ->content(fn (Forms\Get $get): HtmlString => static::renderTotals($get('lines') ?? [])),
+                        // Cost centre and line notes are the exception, not the
+                        // rule, so they stay folded away until they are needed.
+                        Forms\Components\Toggle::make('show_line_details')
+                            ->label(__('resources.journal_entries.fields.show_line_details'))
+                            ->helperText(__('resources.journal_entries.helpers.show_line_details'))
+                            ->inline(false)
+                            ->live()
+                            ->dehydrated(false)
+                            ->columnSpanFull(),
+
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                static::lineRepeater('debit_lines', AccountDirection::Debit),
+                                static::lineRepeater('credit_lines', AccountDirection::Credit),
+                            ])
+                            ->columnSpanFull(),
                     ]),
             ]);
     }
 
     /**
-     * Live debit/credit totals + difference, shown under the lines repeater so
-     * the user can see the entry balance before posting.
+     * One side of the entry (مدين or دائن). Each row is a single line: the
+     * account and its amount, with the cost centre and notes revealed only by
+     * the details toggle — or on their own if the line already carries one.
      */
-    protected static function renderTotals(array $lines): HtmlString
+    protected static function lineRepeater(string $name, AccountDirection $direction): Forms\Components\Repeater
     {
-        $debit = 0.0;
-        $credit = 0.0;
+        $side = $direction === AccountDirection::Debit ? 'debit' : 'credit';
 
-        foreach ($lines as $line) {
-            $amount = (float) ($line['amount'] ?? 0);
-            if (($line['direction'] ?? null) === AccountDirection::Debit->value) {
-                $debit += $amount;
-            } elseif (($line['direction'] ?? null) === AccountDirection::Credit->value) {
-                $credit += $amount;
+        $showDetails = fn (Forms\Get $get, $state): bool => (bool) $get('../../show_line_details') || filled($state);
+
+        return Forms\Components\Repeater::make($name)
+            ->label(__("resources.journal_entries.sections.{$side}_lines"))
+            ->addActionLabel(__("resources.journal_entries.actions.add_{$side}_line"))
+            ->defaultItems(1)
+            ->minItems(1)
+            ->reorderable(false)
+            ->cloneable()
+            // Tightens the per-item chrome (see `.et-journal-lines` in the
+            // panel theme) so a line reads as one row, not a card.
+            ->extraAttributes(['class' => 'et-journal-lines'])
+            ->columns(12)
+            ->schema([
+                Forms\Components\Hidden::make('id'),
+
+                Forms\Components\Select::make('account_id')
+                    ->label(__('resources.journal_entries.fields.account'))
+                    ->options(fn (): array => static::accountOptions())
+                    ->searchable()
+                    ->required()
+                    ->columnSpan(7),
+
+                Forms\Components\TextInput::make('amount')
+                    ->label(__('resources.journal_entries.fields.amount'))
+                    ->numeric()
+                    ->minValue(0.01)
+                    ->required()
+                    ->live(onBlur: true)
+                    // A new line opens with whatever is still missing to make
+                    // the entry balance, so the ordinary two-sided entry is a
+                    // single click and a single number.
+                    ->default(fn (Forms\Get $get): ?string => static::remainingAmount($direction, $get))
+                    ->suffix(fn (Forms\Get $get): ?string => $get('../../currency'))
+                    ->extraInputAttributes(['class' => 'text-start', 'inputmode' => 'decimal'])
+                    ->suffixAction(
+                        Forms\Components\Actions\Action::make('fillRemaining')
+                            ->icon('heroicon-m-calculator')
+                            ->tooltip(__('resources.journal_entries.actions.fill_remaining'))
+                            ->action(function (Forms\Get $get, Forms\Set $set) use ($direction): void {
+                                $set('amount', static::remainingAmount($direction, $get, ignoreCurrentLine: true));
+                            }),
+                    )
+                    ->columnSpan(5),
+
+                // Optional cost-center tag (الإدارة العامة): attach this line's
+                // expense to an operation so the Operation Cost Center can
+                // aggregate it.
+                Forms\Components\Select::make('project_id')
+                    ->label(__('resources.journal_entries.fields.project'))
+                    ->options(fn (): array => static::projectOptions())
+                    ->searchable()
+                    ->nullable()
+                    ->visible($showDetails)
+                    ->dehydratedWhenHidden()
+                    ->columnSpan(7),
+
+                Forms\Components\TextInput::make('line_notes')
+                    ->label(__('resources.journal_entries.fields.line_notes'))
+                    ->maxLength(255)
+                    ->visible($showDetails)
+                    ->dehydratedWhenHidden()
+                    ->columnSpan(5),
+            ])
+            ->disabled(fn (?JournalEntry $record) => $record?->isPosted() ?? false);
+    }
+
+    /**
+     * What is still missing on this side for the entry to balance, or null when
+     * this side is already the heavier one. `$ignoreCurrentLine` excludes the
+     * line being edited so the calculator button recomputes it from scratch
+     * instead of counting the value it is about to replace.
+     */
+    protected static function remainingAmount(AccountDirection $direction, Forms\Get $get, bool $ignoreCurrentLine = false): ?string
+    {
+        $debit = static::sumSide($get('../../debit_lines') ?? []);
+        $credit = static::sumSide($get('../../credit_lines') ?? []);
+
+        if ($ignoreCurrentLine) {
+            $own = (float) ($get('amount') ?? 0);
+            $direction === AccountDirection::Debit ? $debit -= $own : $credit -= $own;
+        }
+
+        $remaining = round($direction === AccountDirection::Debit ? $credit - $debit : $debit - $credit, 2);
+
+        return $remaining > 0 ? (string) $remaining : null;
+    }
+
+    /**
+     * @param  array<int|string, array<string, mixed>>  $lines
+     */
+    protected static function sumSide(array $lines): float
+    {
+        return array_sum(array_map(fn (array $line): float => (float) ($line['amount'] ?? 0), $lines));
+    }
+
+    /**
+     * Live debit/credit totals + balance state, shown above the lines so the
+     * accountant reads it while typing instead of scrolling to the bottom.
+     */
+    protected static function renderBalanceBar(Forms\Get $get): View
+    {
+        $debit = static::sumSide($get('debit_lines') ?? []);
+        $credit = static::sumSide($get('credit_lines') ?? []);
+        $difference = round($debit - $credit, 2);
+
+        return view('filament.forms.components.journal-balance-bar', [
+            'debit' => $debit,
+            'credit' => $credit,
+            'difference' => $difference,
+            'balanced' => abs($difference) < 0.001 && ($debit > 0 || $credit > 0),
+        ]);
+    }
+
+    /**
+     * Account and operation option lists, resolved once per request: both
+     * repeaters render one select per line, and each would otherwise query.
+     *
+     * @return array<int, string>
+     */
+    protected static function accountOptions(): array
+    {
+        return static::$accountOptions ??= Account::query()
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get()
+            ->mapWithKeys(fn (Account $account): array => [$account->getKey() => $account->display_name])
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected static function projectOptions(): array
+    {
+        return static::$projectOptions ??= Project::query()
+            ->orderByDesc('id')
+            ->get()
+            ->mapWithKeys(fn (Project $project): array => [
+                $project->getKey() => $project->code ? "{$project->code} — {$project->name}" : (string) $project->name,
+            ])
+            ->all();
+    }
+
+    /**
+     * Put the treasury on the side the document type implies — أمر صرف pays
+     * out of it (credit), إيصال توريد pays into it (debit) — filling only an
+     * empty line, so an account the user picked is never overwritten. When the
+     * type or currency changes, `$previous` is the treasury line the old value
+     * had filled in; it is cleared first so the entry is not left with the
+     * treasury sitting on both sides.
+     *
+     * @param  array{direction: AccountDirection, side: string, account_id: int}|null  $previous
+     */
+    public static function applyTreasuryDefault(Forms\Get $get, Forms\Set $set, ?array $previous = null): void
+    {
+        $changes = static::treasuryStateChanges([
+            'document_type' => $get('document_type'),
+            'currency' => $get('currency'),
+            'debit_lines' => $get('debit_lines') ?? [],
+            'credit_lines' => $get('credit_lines') ?? [],
+        ], $previous);
+
+        foreach ($changes as $path => $value) {
+            $set($path, $value);
+        }
+    }
+
+    /**
+     * The state changes the treasury default implies, as a map of state path to
+     * value. Kept free of Get/Set so the create page can apply the same rule to
+     * its form data on first load, before any field has been touched.
+     *
+     * @param  array<string, mixed>  $state
+     * @param  array{direction: AccountDirection, side: string, account_id: int}|null  $previous
+     * @return array<string, int|null>
+     */
+    public static function treasuryStateChanges(array $state, ?array $previous = null): array
+    {
+        $treasury = JournalEntryService::treasuryAccountFor($state['document_type'] ?? null, $state['currency'] ?? null);
+        $changes = [];
+
+        if ($previous !== null && $previous != $treasury) {
+            foreach ($state[$previous['side']] ?? [] as $key => $line) {
+                if (($line['account_id'] ?? null) == $previous['account_id']) {
+                    $changes["{$previous['side']}.{$key}.account_id"] = null;
+
+                    break;
+                }
             }
         }
 
-        $diff = round($debit - $credit, 2);
-        $diffColor = abs($diff) < 0.001 ? 'color:#059669;' : 'color:#e11d48;';
+        if ($treasury === null) {
+            return $changes;
+        }
 
-        return new HtmlString(
-            '<div class="text-sm">'
-            . '<div>' . e(__('resources.journal_entries.placeholders.total_debit')) . ': <strong>' . number_format($debit, 2) . '</strong></div>'
-            . '<div>' . e(__('resources.journal_entries.placeholders.total_credit')) . ': <strong>' . number_format($credit, 2) . '</strong></div>'
-            . '<div style="' . $diffColor . '">' . e(__('resources.journal_entries.placeholders.difference')) . ': <strong>' . number_format($diff, 2) . '</strong></div>'
-            . '</div>'
-        );
+        foreach ($state[$treasury['side']] ?? [] as $key => $line) {
+            $path = "{$treasury['side']}.{$key}.account_id";
+
+            // A line the previous type had filled in counts as empty again.
+            $accountId = array_key_exists($path, $changes) ? null : ($line['account_id'] ?? null);
+
+            if (blank($accountId)) {
+                $changes[$path] = $treasury['account_id'];
+
+                break;
+            }
+        }
+
+        return $changes;
     }
 
     public static function table(Table $table): Table
@@ -286,7 +476,13 @@ class JournalEntryResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     static::postAction(),
-                    Tables\Actions\ViewAction::make(),
+                    // The form edits the two sides separately, so the view
+                    // modal has to be handed the same split.
+                    Tables\Actions\ViewAction::make()
+                        ->mutateRecordDataUsing(fn (array $data, JournalEntry $record): array => [
+                            ...$data,
+                            ...JournalEntryService::splitLines($record),
+                        ]),
                     Tables\Actions\EditAction::make()
                         ->visible(fn (JournalEntry $record) => $record->isDraft()),
                 ])

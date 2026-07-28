@@ -15,6 +15,32 @@ class EditJournalEntry extends EditRecord
 {
     protected static string $resource = JournalEntryResource::class;
 
+    /** @var array<int, array<string, mixed>> */
+    protected array $debitLines = [];
+
+    /** @var array<int, array<string, mixed>> */
+    protected array $creditLines = [];
+
+    /**
+     * The form edits مدين and دائن as two separate columns; the record keeps
+     * them in one table, so they are split on the way in and written back on
+     * the way out.
+     */
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        return [...$data, ...JournalEntryService::splitLines($this->record)];
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $this->debitLines = $data['debit_lines'] ?? [];
+        $this->creditLines = $data['credit_lines'] ?? [];
+
+        unset($data['debit_lines'], $data['credit_lines'], $data['show_line_details']);
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -49,6 +75,6 @@ class EditJournalEntry extends EditRecord
 
     protected function afterSave(): void
     {
-        $this->record->recalculateTotals();
+        app(JournalEntryService::class)->syncLines($this->record, $this->debitLines, $this->creditLines);
     }
 }

@@ -2346,3 +2346,28 @@ html:not(.dark) .fi-dropdown-list-item.fi-color-danger:focus-visible {
         animation: none;
     }
 }
+
+/* ===================================================================
+   قيود اليومية — سطور مضغوطة (الإدخال اليومي السريع)
+   ===================================================================
+   The debit/credit repeaters are the most-typed surface in the system:
+   an accountant writes dozens of lines a day. Filament's default item
+   chrome (a full-height header strip plus 1rem of padding around a
+   single row of fields) doubles the height of every line, so the two
+   columns are tightened here — and only here, via the class the two
+   repeaters carry. Nothing outside `.et-journal-lines` is affected. */
+.et-journal-lines .fi-fo-repeater-item-header {
+    padding-block: 0.25rem;
+    padding-inline: 0.75rem;
+}
+
+.et-journal-lines .fi-fo-repeater-item-content {
+    padding: 0.75rem;
+}
+
+/* The header holds only the clone/delete icons, so it reads as a thin
+   gutter above the row rather than a second band of surface colour. */
+.et-journal-lines .fi-fo-repeater-item-header .fi-icon-btn {
+    height: 1.75rem;
+    width: 1.75rem;
+}

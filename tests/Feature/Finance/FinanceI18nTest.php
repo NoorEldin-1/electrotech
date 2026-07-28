@@ -18,6 +18,17 @@ class FinanceI18nTest extends TestCase
             'resources.journal_entries.plural_label',
             'resources.general_ledger.title',
             'resources.trial_balance.title',
+
+            // الإدخال السريع لسطور القيد
+            'resources.journal_entries.sections.debit_lines',
+            'resources.journal_entries.sections.credit_lines',
+            'resources.journal_entries.fields.show_line_details',
+            'resources.journal_entries.helpers.show_line_details',
+            'resources.journal_entries.actions.create',
+            'resources.journal_entries.actions.add_debit_line',
+            'resources.journal_entries.actions.add_credit_line',
+            'resources.journal_entries.actions.fill_remaining',
+            'resources.journal_entries.placeholders.balanced',
         ];
 
         foreach (['en', 'ar'] as $locale) {
