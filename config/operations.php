@@ -137,4 +137,22 @@ return [
     'abnormal_loss_account_code' => '5060',
     'natural_loss_account_code' => '5010',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cost centre closing (Financial Department سلايد 12)
+    |--------------------------------------------------------------------------
+    |
+    | "وعند تسليم العميل بإذن تسليم يتم اقفال مركز التكلفة فى حساب تكلفة
+    | البضاعة المباعة". When a delivery voucher is activated and the operation
+    | has no work orders still open, the cost still sitting in inventory for
+    | that operation is carried to the cost-of-goods-sold account by a balanced
+    | journal entry (Dr COGS / Cr inventory). Set the flag to false to keep the
+    | closing a purely manual finance decision. The account is resolved by
+    | code; if it is missing from the chart the automatic closing is skipped
+    | silently — a delivery must never fail over bookkeeping.
+    |
+    */
+    'cogs_account_code' => '5070',
+    'auto_close_cost_center' => env('OPERATIONS_AUTO_CLOSE_COST_CENTER', true),
+
 ];

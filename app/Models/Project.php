@@ -160,6 +160,15 @@ class Project extends Model
     }
 
     /**
+     * إقفالات مركز التكلفة (سلايد 12) — every closing of this operation's cost
+     * centre into cost of goods sold, plus the reversals that undid any of them.
+     */
+    public function costCenterClosings(): HasMany
+    {
+        return $this->hasMany(CostCenterClosing::class);
+    }
+
+    /**
      * Cash payments / receipts recorded against this operation (الدفعات).
      */
     public function operationPayments(): HasMany

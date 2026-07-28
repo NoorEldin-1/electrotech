@@ -203,6 +203,9 @@ class RoleAndPermissionSeeder extends Seeder
             // center, delivery minutes and financial claims.
             'operations.overview',
             'operations.view_cost',
+            // سلايد 12: closing the operation's cost centre into cost of goods
+            // sold posts a journal entry — heavier than merely reading the file.
+            'operations.close_cost_center',
             'operations.activate',
             'operations.complete',
             'operations.hold',
@@ -511,6 +514,9 @@ class RoleAndPermissionSeeder extends Seeder
                 // General management: the operation cost center and the
                 // financial-claim workflow live with finance.
                 'operations.view_cost',
+                // سلايد 12: finance closes the operation's cost centre into
+                // cost of goods sold once the customer has been delivered.
+                'operations.close_cost_center',
                 'financial_claims.view',
                 'financial_claims.create',
                 'financial_claims.submit',
@@ -558,6 +564,7 @@ class RoleAndPermissionSeeder extends Seeder
                 // General management permissions (the owning role).
                 'operations.overview',
                 'operations.view_cost',
+                'operations.close_cost_center',
                 'operations.activate',
                 'operations.complete',
                 'operations.hold',

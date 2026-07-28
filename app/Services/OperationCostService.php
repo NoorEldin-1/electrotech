@@ -8,6 +8,7 @@ use App\Enums\AccountDirection;
 use App\Enums\AccountType;
 use App\Enums\DeliveryVoucherStatus;
 use App\Enums\JournalStatus;
+use App\Enums\PaymentDirection;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\VoucherStatus;
 use App\Models\IssueVoucher;
@@ -43,7 +44,10 @@ class OperationCostService
      *     total_cost: float,
      *     revenue: float,
      *     profit: float,
-     *     margin_percent: float|null
+     *     margin_percent: float|null,
+     *     inventory_consumed: float,
+     *     closed_to_cogs: float,
+     *     unclosed_cost: float
      * }
      */
     public function breakdown(Project $project): array
@@ -52,6 +56,7 @@ class OperationCostService
         $ledgerExpenses = $this->ledgerExpenses($project);
         $purchases = $this->purchasesReference($project);
         $revenue = $this->revenue($project);
+        $closings = app(CostCenterClosingService::class);
 
         $totalCost = $materials + $ledgerExpenses;
         $profit = $revenue - $totalCost;
@@ -67,6 +72,13 @@ class OperationCostService
             'received' => $this->received($project),
             'profit' => $profit,
             'margin_percent' => $revenue > 0.0 ? ($profit / $revenue) * 100 : null,
+            // سلايد 12 — the closing state of the cost centre. `inventory_consumed`
+            // is the accounting base (issued − returned − written off), which is
+            // deliberately not `materials_cost`: natural loss stays loaded on the
+            // operation while its value has already left the inventory account.
+            'inventory_consumed' => $closings->inventoryConsumed($project),
+            'closed_to_cogs' => $closings->closedValue($project),
+            'unclosed_cost' => $closings->unclosedBalance($project),
         ];
     }
 
@@ -92,7 +104,13 @@ class OperationCostService
             ->where('project_id', $project->id)
             ->where('direction', AccountDirection::Debit->value)
             ->whereHas('journalEntry', fn ($q) => $q->where('status', JournalStatus::Posted->value))
-            ->whereHas('account', fn ($q) => $q->where('type', AccountType::Expense->value))
+            ->whereHas('account', fn ($q) => $q
+                ->where('type', AccountType::Expense->value)
+                // Cost of goods sold is the RESULT of closing this cost centre
+                // (سلايد 12), not an input to it: its value is the material
+                // already counted in materialsCost(). Counting the closing
+                // entry here as well would double the operation's total cost.
+                ->where('code', '!=', config('operations.cogs_account_code', '5070')))
             ->sum('amount');
     }
 
@@ -125,7 +143,7 @@ class OperationCostService
     public function received(Project $project): float
     {
         return (float) $project->operationPayments()
-            ->where('direction', \App\Enums\PaymentDirection::Incoming->value)
+            ->where('direction', PaymentDirection::Incoming->value)
             ->sum('amount');
     }
 

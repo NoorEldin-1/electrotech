@@ -1241,6 +1241,45 @@ return [
             'received' => 'Received (cash)',
             'profit' => 'Profit',
             'margin' => 'Margin',
+            'inventory_consumed' => 'Consumed from Inventory',
+            'closed_to_cogs' => 'Closed to COGS',
+            'unclosed_cost' => 'Unclosed Balance',
+        ],
+        'closing' => [
+            'heading' => 'Cost Center Closing',
+            'description' => 'On delivery to the customer the cost the operation still carries in inventory is closed into the cost of goods sold account.',
+            'status' => 'Closing Status',
+            'empty' => 'This cost center has not been closed yet.',
+            'automatic' => 'System (on delivery)',
+            'journal_description' => 'Closing the cost center of operation :operation into cost of goods sold',
+            'reversal_journal_description' => 'Reversing the cost center closing of operation :operation',
+            'states' => [
+                'open' => 'Open',
+                'partially_closed' => 'Partially closed',
+                'closed' => 'Closed',
+            ],
+            'columns' => [
+                'date' => 'Date',
+                'amount' => 'Amount',
+                'entry' => 'Journal Entry',
+                'delivery' => 'Delivery Voucher',
+                'by' => 'Closed By',
+                'notes' => 'Notes',
+            ],
+            'fields' => [
+                'closing' => 'Closing to reverse',
+                'reason' => 'Reversal reason',
+            ],
+            'actions' => [
+                'close' => 'Close Cost Center',
+                'close_description' => 'Posts a journal entry: debit cost of goods sold, credit inventory, for the balance below.',
+                'reverse' => 'Reverse Closing',
+            ],
+            'notifications' => [
+                'closed' => 'Cost center closed into cost of goods sold.',
+                'closed_body' => 'Amount: :amount — journal entry :entry.',
+                'reversed' => 'The closing has been reversed with an opposite entry.',
+            ],
         ],
     ],
 
@@ -2200,6 +2239,7 @@ return [
             'operations' => [
                 'overview' => 'View Operations Overview',
                 'view_cost' => 'View Operation Cost Center',
+                'close_cost_center' => 'Close Operation Cost Center',
                 'activate' => 'Activate Operation',
                 'complete' => 'Complete Operation',
                 'hold' => 'Put Operation On Hold',

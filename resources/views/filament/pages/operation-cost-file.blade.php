@@ -65,5 +65,74 @@
                 </div>
             </x-filament::section>
         </div>
+
+        {{-- سلايد 12: إقفال مركز التكلفة في ح/تكلفة البضاعة المباعة --}}
+        @php($closingState = $this->getClosingState())
+        @php($closings = $this->getClosings())
+
+        <x-filament::section>
+            <x-slot name="heading">{{ __('resources.operations_cost.closing.heading') }}</x-slot>
+            <x-slot name="description">{{ __('resources.operations_cost.closing.description') }}</x-slot>
+
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+                @foreach ([
+                    'inventory_consumed',
+                    'closed_to_cogs',
+                    'unclosed_cost',
+                ] as $key)
+                    <div>
+                        <div class="text-sm text-gray-500 dark:text-[var(--dark-text-muted)]">{{ __('resources.operations_cost.cards.' . $key) }}</div>
+                        <div class="mt-1 text-lg font-bold tabular-nums text-gray-950 dark:text-[var(--dark-text)]">
+                            {{ number_format((float) $breakdown[$key], 2) }}
+                        </div>
+                    </div>
+                @endforeach
+
+                <div>
+                    <div class="text-sm text-gray-500 dark:text-[var(--dark-text-muted)]">{{ __('resources.operations_cost.closing.status') }}</div>
+                    <div class="mt-1">
+                        <x-filament::badge :color="$closingState['color']">
+                            {{ __('resources.operations_cost.closing.states.' . $closingState['key']) }}
+                        </x-filament::badge>
+                    </div>
+                </div>
+            </div>
+
+            @if ($closings->isEmpty())
+                <p class="mt-4 text-sm text-gray-500 dark:text-[var(--dark-text-muted)]">
+                    {{ __('resources.operations_cost.closing.empty') }}
+                </p>
+            @else
+                <div class="mt-4 overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 text-start text-gray-500 dark:border-[var(--border-hairline)] dark:text-[var(--dark-text-muted)]">
+                                @foreach (['date', 'amount', 'entry', 'delivery', 'by', 'notes'] as $column)
+                                    <th class="py-2 text-start font-medium">{{ __('resources.operations_cost.closing.columns.' . $column) }}</th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($closings as $closing)
+                                <tr class="border-b border-gray-100 text-gray-950 last:border-0 dark:border-[var(--border-hairline)] dark:text-[var(--dark-text)]">
+                                    <td class="py-2 tabular-nums">{{ $closing->closed_at?->format('Y-m-d') }}</td>
+                                    <td class="py-2 tabular-nums">
+                                        <x-filament::badge :color="$closing->isReversal() ? 'danger' : 'success'">
+                                            {{ number_format((float) $closing->amount, 2) }}
+                                        </x-filament::badge>
+                                    </td>
+                                    <td class="py-2">{{ $closing->journalEntry?->entry_number ?? '—' }}</td>
+                                    <td class="py-2">{{ $closing->deliveryVoucher?->voucher_number ?? '—' }}</td>
+                                    <td class="py-2">
+                                        {{ $closing->closedBy?->name ?? __('resources.operations_cost.closing.automatic') }}
+                                    </td>
+                                    <td class="py-2 text-gray-500 dark:text-[var(--dark-text-muted)]">{{ $closing->notes ?? '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </x-filament::section>
     @endif
 </x-filament-panels::page>

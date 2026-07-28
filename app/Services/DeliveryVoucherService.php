@@ -16,6 +16,7 @@ class DeliveryVoucherService
 {
     public function __construct(
         private readonly InventoryService $inventoryService,
+        private readonly CostCenterClosingService $costCenterClosings,
     ) {}
 
     /**
@@ -127,6 +128,13 @@ class DeliveryVoucherService
                 'total_value' => $total,
                 'activated_at' => now(),
             ]);
+
+            // سلايد 12: the goods have reached the customer, so the cost the
+            // operation is still carrying in inventory becomes cost of goods
+            // sold. Deliberately last and deliberately silent — it only fires
+            // when nothing more can be issued to the operation, and it never
+            // fails a delivery that physically happened.
+            $this->costCenterClosings->closeOnDelivery($voucher);
         });
     }
 

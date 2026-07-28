@@ -75,6 +75,14 @@ return [
         'exceeds_ordered' => "Cannot receive :quantity of ':item'. It would exceed the ordered quantity of :ordered (already received: :received).",
     ],
 
+    'cost_center' => [
+        'no_delivery' => 'The cost center of operation ":operation" cannot be closed before an active delivery voucher exists. Material consumed by an undelivered operation is not cost of goods sold — use a depreciation voucher.',
+        'nothing_to_close' => 'The cost center of operation ":operation" has no unclosed balance.',
+        'accounts_missing' => 'Closing failed: the cost of goods sold account (:cogs) or the inventory account (:inventory) is not in the chart of accounts.',
+        'is_reversal' => 'This row is already a reversing entry and cannot be reversed.',
+        'already_reversed' => 'This closing has already been reversed.',
+    ],
+
     'operations' => [
         'illegal_transition' => "Illegal operation transition: the operation is ':current', expected one of [:allowed].",
         'claim_before_completion' => 'A financial claim can only be raised after supply and installation are complete.',
