@@ -8,6 +8,40 @@ declare(strict_types=1);
  * English exception strings.
  */
 return [
+    /*
+     * HTTP error pages (E2E report §4.3) — see resources/views/errors/.
+     */
+    'pages' => [
+        'back_to_panel' => 'Back to the admin panel',
+        'open_guide' => 'Open the platform guide',
+        'reference' => 'Error code: :code',
+
+        403 => [
+            'title' => 'You do not have access',
+            'message' => 'This page is not available to your current role. Contact your system administrator if you need additional permissions.',
+        ],
+        404 => [
+            'title' => 'Page not found',
+            'message' => 'The link you opened is not valid, or the record it pointed to has been deleted or moved.',
+        ],
+        419 => [
+            'title' => 'Your session expired',
+            'message' => 'Too much time passed since your last activity. Sign in again and retry.',
+        ],
+        429 => [
+            'title' => 'Too many attempts',
+            'message' => 'You have reached the request limit. Wait a moment and try again.',
+        ],
+        500 => [
+            'title' => 'Unexpected system error',
+            'message' => 'Something went wrong while handling your request; it has been logged for review. Retry, and report it to support if it keeps happening.',
+        ],
+        503 => [
+            'title' => 'Under maintenance',
+            'message' => 'The platform is briefly offline for an update. Please try again in a few minutes.',
+        ],
+    ],
+
     'inventory' => [
         'insufficient_stock' => "Insufficient stock for ':item' in :warehouse. Available: :available, Requested: :requested.",
         'insufficient_transfer' => "Insufficient stock for ':item' to transfer from :warehouse. Available: :available, Requested: :requested.",
@@ -55,6 +89,7 @@ return [
     'work_order' => [
         'cannot_approve_order' => 'Work Order :number cannot be approved. It is not a draft. Current status: :status.',
         'cannot_start' => 'Work Order :number cannot be started. Current status: :status.',
+        'incomplete_plan' => 'The manufacturing plan for Work Order :number is incomplete. Fill in the following first: :fields.',
         'no_bom' => 'Work Order :number has no linked BOM. Cannot issue materials.',
         'not_in_progress' => 'Work Order :number must be in progress to submit for QA.',
         'not_pending_qa' => 'Work Order :number is not pending QA review.',

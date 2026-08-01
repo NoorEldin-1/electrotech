@@ -188,6 +188,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Client-side (inline) validation messages
+    |--------------------------------------------------------------------------
+    |
+    | Rendered by public/js/inline-validation.js the moment a native HTML
+    | constraint fails, in place of the browser's own English bubble. Kept
+    | short and generic because the field's label sits directly above the
+    | message — repeating it would only add noise.
+    |
+    */
+
+    'client' => [
+        'required' => 'هذا الحقل مطلوب.',
+        'email' => 'أدخل بريداً إلكترونياً صحيحاً.',
+        'url' => 'أدخل رابطاً صحيحاً.',
+        'pattern' => 'الصيغة المدخلة غير صحيحة.',
+        'min_length' => 'أدخل :min حرفاً على الأقل.',
+        'max_length' => 'لا تتجاوز :max حرفاً.',
+        'min' => 'يجب ألا تقل القيمة عن :min.',
+        'max' => 'يجب ألا تزيد القيمة عن :max.',
+        'step' => 'هذه القيمة ليست من الزيادات المسموح بها.',
+        'invalid' => 'هذه القيمة غير صحيحة.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Custom Validation Attributes
     |--------------------------------------------------------------------------
     |

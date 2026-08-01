@@ -11,6 +11,7 @@ use App\Enums\ProjectStatus;
 use App\Filament\Resources\ProjectResource\Pages;
 use App\Filament\Support\MoneyInput;
 use App\Filament\Support\PhoneInput;
+use App\Models\Customer;
 use App\Models\Project;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -20,6 +21,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Validation\Rules\Unique;
 
 class ProjectResource extends Resource
 {
@@ -77,11 +79,22 @@ class ProjectResource extends Resource
                         // free-text name. The legacy `client_name` column is kept
                         // in sync server-side (see CreateProject/EditProject) so
                         // existing lists, PDFs and reports keep working.
+                        // E2E report §5.4 — typing here used to return the whole
+                        // customer list. `preload()` loads every option up front
+                        // and hands filtering to the browser's fuzzy matcher,
+                        // which barely narrows anything on Arabic names. Dropping
+                        // it makes this a real server-side search, and the search
+                        // now covers the columns a salesperson actually remembers
+                        // a client by — not just the exact name.
                         Forms\Components\Select::make('customer_id')
                             ->label(__('resources.projects.fields.customer'))
                             ->relationship('customer', 'name')
-                            ->searchable()
-                            ->preload()
+                            ->searchable(['name', 'contact_person', 'phone', 'email', 'tax_number'])
+                            ->getOptionLabelFromRecordUsing(
+                                fn ($record) => filled($record->phone)
+                                    ? "{$record->name} — {$record->phone}"
+                                    : $record->name,
+                            )
                             ->required()
                             ->createOptionForm([
                                 Forms\Components\TextInput::make('name')
@@ -91,11 +104,15 @@ class ProjectResource extends Resource
                                 Forms\Components\TextInput::make('contact_person')
                                     ->label(__('resources.customers.fields.contact_person'))
                                     ->maxLength(255),
-                                PhoneInput::make('phone')
+                                // Same duplicate guard as the Customers module —
+                                // this shortcut must not become the back door
+                                // that reintroduces duplicate client files.
+                                PhoneInput::unique(Customer::class)
                                     ->label(__('resources.customers.fields.phone')),
                                 Forms\Components\TextInput::make('email')
                                     ->label(__('resources.customers.fields.email'))
                                     ->email()
+                                    ->unique(table: Customer::class, ignoreRecord: true, modifyRuleUsing: fn (Unique $rule) => $rule->whereNull('deleted_at'))
                                     ->maxLength(255),
                             ]),
 

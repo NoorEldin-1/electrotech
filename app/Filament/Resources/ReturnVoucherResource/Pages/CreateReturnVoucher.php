@@ -19,4 +19,14 @@ class CreateReturnVoucher extends CreateRecord
 
         return $data;
     }
+
+    /**
+     * Back to the list after saving — the platform-wide rule (E2E report
+     * §5.3): Filament's default lands a create on the record's Edit page,
+     * which made "what happens after save" differ from module to module.
+     */
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

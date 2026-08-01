@@ -2371,3 +2371,141 @@ html:not(.dark) .fi-dropdown-list-item.fi-color-danger:focus-visible {
     height: 1.75rem;
     width: 1.75rem;
 }
+
+/* ===================================================================
+   E2E REPORT FIXES — تقرير الاختبار الشامل (1 أغسطس 2026)
+   ------------------------------------------------------------------
+   Four presentation defects the end-to-end pass surfaced. Grouped here
+   with their report reference so each rule stays traceable to the
+   symptom that justified it.
+   =================================================================== */
+
+/* §4.1 — GLOBAL-SEARCH RESULTS OVERLAY
+   ------------------------------------------------------------------
+   Filament ships this panel as `bg-white shadow-lg ring-1
+   ring-gray-950/5`. On our warm greige canvas that reads as a white
+   sheet with a 5%-opacity edge — over the (also white) dashboard cards
+   it has effectively no boundary at all, which is what the report saw
+   as "low contrast, overlaps content". Only the dark variant had ever
+   been re-skinned.
+
+   Give it a real edge and the floating elevation in both themes, and
+   cap its height against the viewport (Filament's fixed `max-h-96`
+   ignores short windows) so a broad query can never run off-screen.
+
+   The "lingers after navigation" half of §4.1 is behavioural, not
+   visual — handled by the livewire:navigated listener in
+   AdminPanelProvider. */
+.fi-global-search-results-ctn {
+    max-height: min(24rem, calc(100vh - 9rem));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background-color: var(--lp-surface-1);
+    border: 1px solid var(--lp-border-strong);
+    border-radius: var(--lp-radius);
+    box-shadow: var(--lp-elev-2);
+}
+
+.dark .fi-global-search-results-ctn {
+    border-color: var(--border-strong);
+}
+
+/* §4.2 — ROW-ACTION MENU ITEM CONTRAST
+   ------------------------------------------------------------------
+   The existing rule coloured `.fi-dropdown-list-item` — the <button>.
+   The visible words live in the nested `.fi-dropdown-list-item-label`,
+   which keeps Filament's shipped `text-gray-700 dark:text-gray-200` and
+   therefore stayed washed out against both of our surfaces. Colour the
+   label itself, in both themes, from the full-strength text token. The
+   :not() guards leave semantic items (danger deletes, etc.) alone —
+   those carry their own meaningful colour. */
+.fi-dropdown-list-item:not(.fi-color-danger):not(.fi-color-warning):not(.fi-color-success)
+    .fi-dropdown-list-item-label {
+    color: var(--lp-text);
+}
+
+.dark .fi-dropdown-list-item:not(.fi-color-danger):not(.fi-color-warning):not(.fi-color-success)
+    .fi-dropdown-list-item-label {
+    color: var(--dark-text);
+}
+
+/* Leading icons follow the label one step down, so the row reads as a
+   pair rather than an icon floating beside brighter text. */
+.fi-dropdown-list-item:not(.fi-color-danger):not(.fi-color-warning):not(.fi-color-success)
+    .fi-dropdown-list-item-icon {
+    color: var(--lp-text-muted);
+}
+
+.dark .fi-dropdown-list-item:not(.fi-color-danger):not(.fi-color-warning):not(.fi-color-success)
+    .fi-dropdown-list-item-icon {
+    color: var(--dark-text-muted);
+}
+
+.fi-dropdown-list-item:hover .fi-dropdown-list-item-icon,
+.fi-dropdown-list-item:focus .fi-dropdown-list-item-icon {
+    color: var(--color-primary-500);
+}
+
+/* §4.4 — TOAST vs. THE FLOATING COMMAND PILL
+   ------------------------------------------------------------------
+   Filament's notification stack is `fixed inset-4`, i.e. it starts at
+   `top: 1rem`. Our topbar pill starts at 0.875rem and is 3.5rem tall,
+   so a success toast landed straight on top of the search / bell / user
+   menu. Push the stack clear of the pill; the value tracks the pill's
+   own geometry (0.875 + 3.5 + a 0.75rem breathing gap). */
+.fi-no {
+    top: 5.125rem;
+}
+
+@media (max-width: 1023.98px) {
+    .fi-no {
+        top: 5rem;
+    }
+}
+
+/* On phones the pill spans the full width, so a toast under it would be
+   cramped against the edges; keep the same clearance but let the toast
+   use the whole width. */
+@media (max-width: 639.98px) {
+    .fi-no {
+        top: 4.875rem;
+    }
+}
+
+/* §5.1 — LOADING SKELETON for the lazy dashboard KPI row
+   ------------------------------------------------------------------
+   Consumed by resources/views/filament/widgets/stats-overview-placeholder
+   .blade.php. A shimmering bar rather than a flat grey block, because a
+   static grey box is indistinguishable from "the data really is empty" —
+   which is precisely how the report read it. */
+.et-skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--lp-surface-2) 25%,
+        var(--lp-surface-3) 37%,
+        var(--lp-surface-2) 63%
+    );
+    background-size: 400% 100%;
+    animation: etSkeletonSheen 1.4s ease-in-out infinite;
+}
+
+.dark .et-skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--surface-2) 25%,
+        var(--surface-3) 37%,
+        var(--surface-2) 63%
+    );
+    background-size: 400% 100%;
+}
+
+@keyframes etSkeletonSheen {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .et-skeleton {
+        animation: none;
+    }
+}

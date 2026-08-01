@@ -16,6 +16,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Validation\Rules\Unique;
 
 class SupplierResource extends Resource
 {
@@ -64,21 +65,35 @@ class SupplierResource extends Resource
                             ->label(__('resources.suppliers.fields.contact_person'))
                             ->maxLength(255),
 
-                        PhoneInput::make('phone')
+                        // E2E report §8 — same duplicate-contact problem as the
+                        // customer file. A duplicated supplier splits its purchase
+                        // orders, invoices and 1%-exemption paperwork in two.
+                        // Both rules ignore soft-deleted rows: an archived
+                        // supplier must not hold their phone/email hostage.
+                        PhoneInput::unique(Supplier::class)
                             ->label(__('resources.suppliers.fields.phone')),
 
                         Forms\Components\TextInput::make('email')
                             ->label(__('resources.suppliers.fields.email'))
                             ->email()
+                            ->unique(ignoreRecord: true, modifyRuleUsing: fn (Unique $rule) => $rule->whereNull('deleted_at'))
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('tax_number')
                             ->label(__('resources.suppliers.fields.tax_number'))
                             ->maxLength(100),
 
+                        // E2E report §8 asked whether this defaults to ON — it
+                        // does not (the column defaults to false, see migration
+                        // 2026_06_17_000002). Stated explicitly so the safe
+                        // default can never drift: exemption is the exception and
+                        // must be a deliberate act, since switching it on
+                        // suppresses the 1% withholding on every PO for this
+                        // supplier.
                         Forms\Components\Toggle::make('profit_tax_exempt')
                             ->label(__('resources.suppliers.fields.profit_tax_exempt'))
                             ->helperText(__('resources.suppliers.fields.profit_tax_exempt_helper'))
+                            ->default(false)
                             ->columnSpanFull(),
 
                         Forms\Components\Textarea::make('address')

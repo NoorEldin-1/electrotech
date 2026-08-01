@@ -16,6 +16,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Validation\Rules\Unique;
 
 class CustomerResource extends Resource
 {
@@ -64,12 +65,21 @@ class CustomerResource extends Resource
                             ->label(__('resources.customers.fields.contact_person'))
                             ->maxLength(255),
 
-                        PhoneInput::make('phone')
+                        // E2E report §8 — the customer list had several records
+                        // sharing one email and one phone number, because neither
+                        // was ever checked. Both identify a party in an ERP: two
+                        // "different" customers on the same contact details are a
+                        // duplicate, and duplicates split a client's project and
+                        // invoice history across two files.
+                        // Both rules ignore soft-deleted rows: an archived
+                        // customer must not hold their phone/email hostage.
+                        PhoneInput::unique(Customer::class)
                             ->label(__('resources.customers.fields.phone')),
 
                         Forms\Components\TextInput::make('email')
                             ->label(__('resources.customers.fields.email'))
                             ->email()
+                            ->unique(ignoreRecord: true, modifyRuleUsing: fn (Unique $rule) => $rule->whereNull('deleted_at'))
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('tax_number')

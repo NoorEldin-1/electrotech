@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\DefaultsToPeriodWithLedgerData;
 use App\Models\Account;
 use App\Services\JournalDaybookService;
 use Filament\Pages\Page;
@@ -17,16 +18,18 @@ use Illuminate\Support\Collection;
  */
 class JournalDaybook extends Page
 {
+    use DefaultsToPeriodWithLedgerData;
+
     protected static ?string $navigationIcon = 'heroicon-o-table-cells';
 
     protected static string $view = 'filament.pages.journal-daybook';
 
     protected static ?int $navigationSort = 59;
 
-    /** Period start — defaults to the first day of the current month. */
+    /** Period start — see defaultLedgerPeriod(). */
     public ?string $from = null;
 
-    /** Period end — defaults to the last day of the current month. */
+    /** Period end — see defaultLedgerPeriod(). */
     public ?string $to = null;
 
     /** Accounts rendered as columns; empty = the period's busiest accounts. */
@@ -36,8 +39,10 @@ class JournalDaybook extends Page
 
     public function mount(): void
     {
-        $this->from ??= now()->startOfMonth()->toDateString();
-        $this->to ??= now()->endOfMonth()->toDateString();
+        [$from, $to] = $this->defaultLedgerPeriod();
+
+        $this->from ??= $from;
+        $this->to ??= $to;
     }
 
     /**

@@ -18,4 +18,14 @@ class EditUser extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    /**
+     * Back to the list after saving — the platform-wide rule (E2E report
+     * §5.3), matching what the Create page does, so "what happens after
+     * save" no longer differs from module to module.
+     */
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

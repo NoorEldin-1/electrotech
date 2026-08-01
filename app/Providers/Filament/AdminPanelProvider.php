@@ -186,6 +186,22 @@ class AdminPanelProvider extends PanelProvider
                         </script>'
                     )
             )
+            // Inline validation messages (E2E report §3.2 + §5.2). Filament
+            // stamps native `required` on its inputs, so the browser blocks the
+            // submit before Livewire runs and the server-side error text is
+            // never rendered — leaving a colour-only signal. The script below
+            // replaces the native bubble with a localized message in Filament's
+            // own error markup, and re-validates as the user types.
+            // `data-navigate-once` keeps the document listeners from stacking
+            // up across SPA navigations.
+            ->renderHook(
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): string => Blade::render(
+                    '<script data-navigate-once>window.__etValidationMessages = @json($messages);</script>'
+                    . '<script data-navigate-once src="{{ asset(\'js/inline-validation.js\') }}"></script>',
+                    ['messages' => __('validation.client')],
+                )
+            )
             // SPA fix: on `wire:navigate` the sidebar re-renders and resets its
             // scroll to the top, hiding a deep active link (the user has to hard
             // reload to see it). Filament's own "scroll the active item into
@@ -193,10 +209,23 @@ class AdminPanelProvider extends PanelProvider
             // same logic on every SPA navigation. `data-navigate-once` registers
             // the persistent document listener a single time (Livewire keeps it
             // across navigations) so no duplicate handlers stack up.
+            //
+            // The same listener also dismisses the global-search overlay
+            // (§4.1): its Livewire component keeps `$search` across a
+            // `wire:navigate`, so the results panel stayed open on top of the
+            // page the user had just navigated to.
             ->renderHook(
                 PanelsRenderHook::SCRIPTS_AFTER,
                 fn (): string => '<script data-navigate-once>
                     document.addEventListener("livewire:navigated", () => {
+                        var search = document.querySelector(".fi-global-search-field input");
+                        if (search) {
+                            if (search.value !== "") {
+                                search.value = "";
+                                search.dispatchEvent(new Event("input", { bubbles: true }));
+                            }
+                            search.blur();
+                        }
                         setTimeout(() => {
                             var nav = document.querySelector(".fi-main-sidebar .fi-sidebar-nav");
                             if (! nav) return;

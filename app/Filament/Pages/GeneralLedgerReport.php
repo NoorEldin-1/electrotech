@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\DefaultsToPeriodWithLedgerData;
 use App\Models\Account;
 use App\Services\GeneralLedgerService;
 use Filament\Pages\Page;
@@ -18,6 +19,8 @@ use Illuminate\Support\Collection;
  */
 class GeneralLedgerReport extends Page
 {
+    use DefaultsToPeriodWithLedgerData;
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.pages.general-ledger-report';
@@ -33,8 +36,10 @@ class GeneralLedgerReport extends Page
 
     public function mount(): void
     {
-        $this->from ??= now()->startOfMonth()->toDateString();
-        $this->to ??= now()->endOfMonth()->toDateString();
+        [$from, $to] = $this->defaultLedgerPeriod();
+
+        $this->from ??= $from;
+        $this->to ??= $to;
         $this->accountId ??= $this->getAccounts()->first()?->id;
     }
 

@@ -39,11 +39,55 @@ class WorkOrderService
             ]));
         }
 
+        $this->assertPlanIsComplete($workOrder);
+
         $workOrder->update([
             'status' => WorkOrderStatus::Pending,
             'order_approved_by' => Auth::id(),
             'order_approved_at' => now(),
         ]);
+    }
+
+    /**
+     * The manufacturing plan a work order must carry before the floor is
+     * allowed to touch it: a real quantity to produce and a start/end window
+     * to produce it in.
+     *
+     * Enforced at the two gates that lead into manufacturing (approveOrder and
+     * start) rather than at completion, because by the time an order reaches
+     * QA the materials have already been issued and the plan is what the
+     * variance, efficiency and loss figures are measured against — a zero
+     * plan silently zeroes all three (see WorkOrder::getEfficiencyAttribute).
+     * Guarding the entrance means a Completed order can no longer exist
+     * without a plan, which is exactly the state the E2E report found on
+     * WO-202607-0002 (produced 12, planned 0, no dates).
+     *
+     * @throws \RuntimeException if the plan is missing or non-positive
+     */
+    private function assertPlanIsComplete(WorkOrder $workOrder): void
+    {
+        $missing = [];
+
+        if ((float) $workOrder->planned_quantity <= 0.0) {
+            $missing[] = __('resources.work_orders.fields.planned_quantity');
+        }
+
+        if ($workOrder->planned_start_date === null) {
+            $missing[] = __('resources.work_orders.fields.planned_start_date');
+        }
+
+        if ($workOrder->planned_end_date === null) {
+            $missing[] = __('resources.work_orders.fields.planned_end_date');
+        }
+
+        if ($missing === []) {
+            return;
+        }
+
+        throw new \RuntimeException(__('errors.work_order.incomplete_plan', [
+            'number' => $workOrder->wo_number,
+            'fields' => implode('، ', $missing),
+        ]));
     }
 
     /**
@@ -59,6 +103,10 @@ class WorkOrderService
                 'status' => $workOrder->status->getLabel(),
             ]));
         }
+
+        // Second gate: catches orders that reached Pending without passing
+        // through approveOrder (legacy rows, direct status edits).
+        $this->assertPlanIsComplete($workOrder);
 
         $workOrder->update([
             'status' => WorkOrderStatus::InProgress,

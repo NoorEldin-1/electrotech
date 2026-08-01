@@ -175,10 +175,16 @@ class WorkOrderResource extends Resource
                     ->icon('heroicon-o-calculator')
                     ->columns(3)
                     ->schema([
+                        // الكمية المخططة هي مقام كل نِسَب الأمر (الكفاءة، الفاقد،
+                        // انحراف التكلفة). صفر يُسكِت الثلاثة بصمت، لذا فهي
+                        // إلزامية وأكبر من صفر — ونفس الشرط يُفرَض مرة ثانية في
+                        // WorkOrderService قبل الإفراج للتصنيع.
                         Forms\Components\TextInput::make('planned_quantity')
                             ->label(__('resources.work_orders.fields.planned_quantity'))
                             ->numeric()
-                            ->default(0),
+                            ->required()
+                            ->minValue(0.0001)
+                            ->rule('gt:0'),
 
                         Forms\Components\TextInput::make('produced_quantity')
                             ->label(__('resources.work_orders.fields.produced_quantity'))
@@ -195,10 +201,13 @@ class WorkOrderResource extends Resource
                             ->dehydrated(),
 
                         Forms\Components\DatePicker::make('planned_start_date')
-                            ->label(__('resources.work_orders.fields.planned_start_date')),
+                            ->label(__('resources.work_orders.fields.planned_start_date'))
+                            ->required()
+                            ->default(fn () => now()->toDateString()),
                         Forms\Components\DatePicker::make('planned_end_date')
                             ->label(__('resources.work_orders.fields.planned_end_date'))
-                            ->after('planned_start_date'),
+                            ->required()
+                            ->afterOrEqual('planned_start_date'),
                     ]),
 
                 // المواصفات الفنية — سلايد 2–3: authored here by the PMO, then

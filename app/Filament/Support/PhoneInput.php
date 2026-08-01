@@ -54,6 +54,47 @@ final class PhoneInput
     }
 
     /**
+     * The same input plus a uniqueness check against `$model`'s phone column
+     * (E2E report §8: several customers and suppliers shared one number, so
+     * one party's history was split across two files).
+     *
+     * Deliberately NOT Filament's `->unique()`: that compares the raw typed
+     * string, while what we store is the normalised one (see normalize()). A
+     * number typed in Arabic-Indic numerals, or with a stray leading space,
+     * would therefore never match its own stored duplicate — the exact class
+     * of user this input exists for. Normalising first makes the check mean
+     * what it says.
+     *
+     * Soft-deleted rows are excluded by the model's global scope, so an
+     * archived party never holds its number hostage.
+     *
+     * @param  class-string<\Illuminate\Database\Eloquent\Model>  $model
+     */
+    public static function unique(string $model, string $name = 'phone'): TextInput
+    {
+        return self::make($name)->rule(
+            static fn (mixed $record): Closure => static function (string $attribute, mixed $value, Closure $fail) use ($model, $record): void {
+                if (blank($value)) {
+                    return;
+                }
+
+                $query = $model::query()->where('phone', self::normalize((string) $value));
+
+                // Only skip the record being edited — inside an inline
+                // "create customer" form on another resource, $record is that
+                // other resource's model and must not be matched by id.
+                if ($record instanceof $model && $record->exists) {
+                    $query->whereKeyNot($record->getKey());
+                }
+
+                if ($query->exists()) {
+                    $fail(__('validation.unique', ['attribute' => __('validation.attributes.phone')]));
+                }
+            }
+        );
+    }
+
+    /**
      * Convert Arabic-Indic (٠-٩) and Persian (۰-۹) numerals to ASCII digits and
      * trim surrounding whitespace. A null value passes through untouched.
      */

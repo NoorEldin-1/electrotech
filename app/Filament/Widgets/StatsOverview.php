@@ -33,6 +33,21 @@ class StatsOverview extends BaseWidget
     protected static bool $isLazy = true;
 
     /**
+     * What Livewire renders while the lazy round-trip is in flight.
+     *
+     * Without this it renders its default empty `<div>`, which is what the
+     * E2E report saw as "empty grey placeholders for 1–1.5s with no loading
+     * indicator" (§5.1). The skeleton matches the real cards' geometry, so
+     * the swap is a fill, not a reflow.
+     */
+    public function placeholder(): \Illuminate\Contracts\View\View
+    {
+        return view('filament.widgets.stats-overview-placeholder', [
+            'count' => 5,
+        ]);
+    }
+
+    /**
      * One in-process memoization key. Cache::remember already handles the
      * Redis hit, but on a single request multiple sub-widgets shouldn't
      * each round-trip to Redis when one fetch would do.
