@@ -42,6 +42,18 @@ class IssueVoucherPolicy
         return $user->can('issue_vouchers.post') && ! $voucher->isPosted();
     }
 
+    /**
+     * اعتماد صرف كمية زائدة — may this user carry a voucher through the
+     * over-issue gate (with a written reason), rather than being sent back to
+     * correct the quantities? A separate permission from posting on purpose:
+     * exceeding the manufacturing order's material plan is a cost decision,
+     * not a stock movement.
+     */
+    public function approveExcess(User $user, IssueVoucher $voucher): bool
+    {
+        return $user->can('issue_vouchers.approve_excess') && ! $voucher->isPosted();
+    }
+
     public function restore(User $user, IssueVoucher $voucher): bool
     {
         return $user->can('issue_vouchers.create');

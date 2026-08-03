@@ -60,6 +60,77 @@ class WorkOrderResource extends Resource
         return (bool) auth()->user()?->can('inventory.view_pricing');
     }
 
+    /**
+     * Re-derive everything that hangs off the finished-product lines whenever
+     * one of them changes — the order's total planned quantity, and the
+     * material table that the issue vouchers are cut from.
+     *
+     * Called from inside the outputs repeater, hence the `../../` paths that
+     * climb out of the repeater item back to the form.
+     */
+    protected static function syncPlanFromOutputs(Forms\Get $get, Forms\Set $set): void
+    {
+        $outputs = collect($get('../../outputs') ?? []);
+
+        $set('../../planned_quantity', round(
+            (float) $outputs->sum(fn ($row) => (float) ($row['planned_quantity'] ?? 0)),
+            4,
+        ));
+
+        static::refreshStandardMaterials($outputs->all(), $get('../../materials') ?? [], function ($lines) use ($set) {
+            $set('../../materials', $lines);
+        });
+    }
+
+    /**
+     * Rebuild the material table from the products' standard recipes — but only
+     * while the table is still the machine's. The moment a line has been
+     * hand-edited (`is_manual`), the office owns that table and an automatic
+     * refill would silently throw its work away; the user is told instead, and
+     * the explicit "جلب الخامات القياسية" button remains the way to overwrite.
+     *
+     * @param  array<int, mixed>  $outputs   current state of the products repeater
+     * @param  array<int, mixed>  $materials current state of the materials repeater
+     * @param  callable(array<int, mixed>): void  $apply
+     */
+    protected static function refreshStandardMaterials(array $outputs, array $materials, callable $apply): void
+    {
+        $hasManualEdits = collect($materials)->contains(fn ($row) => (bool) ($row['is_manual'] ?? false));
+
+        if ($hasManualEdits) {
+            Notification::make()
+                ->warning()
+                ->title(__('resources.work_orders.notifications.materials_not_refreshed'))
+                ->body(__('resources.work_orders.notifications.materials_not_refreshed_body'))
+                ->send();
+
+            return;
+        }
+
+        $result = app(\App\Services\WorkOrderMaterialService::class)->standardMaterialsForOutputs(
+            collect($outputs)->map(fn ($row) => [
+                'item_id' => $row['item_id'] ?? null,
+                'planned_quantity' => $row['planned_quantity'] ?? 0,
+            ])->all()
+        );
+
+        // Products without an approved standard recipe are named rather than
+        // silently dropped — the rest of the order still gets its materials.
+        if ($result['missing'] !== []) {
+            Notification::make()
+                ->warning()
+                ->title(__('resources.work_orders.notifications.no_standard_bom_for'))
+                ->body(implode('، ', $result['missing']))
+                ->send();
+        }
+
+        if ($result['lines'] === [] && $materials === []) {
+            return;
+        }
+
+        $apply($result['lines']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -87,58 +158,6 @@ class WorkOrderResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required(),
-
-                        Forms\Components\Select::make('bom_id')
-                            ->label(__('resources.work_orders.fields.linked_bom'))
-                            ->relationship(
-                                'bom',
-                                'version',
-                                fn (Builder $query) => $query->where('status', 'approved')->with('project:id,name'),
-                            )
-                            ->getOptionLabelFromRecordUsing(fn ($record) => "v{$record->version} — {$record->project?->name}")
-                            ->searchable()
-                            ->preload(),
-
-                        Forms\Components\Select::make('output_item_id')
-                            ->label(__('resources.work_orders.fields.output_item'))
-                            ->relationship(
-                                'outputItem',
-                                'name',
-                                fn (Builder $query) => $query->whereIn('type', ['finished_good', 'semi_finished']),
-                            )
-                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->sku} — {$record->name}")
-                            ->searchable()
-                            ->preload()
-                            ->helperText(__('resources.work_orders.fields.output_item_helper'))
-                            // سلايد 6 — قائمة المواد التلقائية: choosing the
-                            // finished good auto-fills the material table from
-                            // its standard BOM, but only when the table is
-                            // still empty so a manual override is never
-                            // clobbered.
-                            ->live()
-                            ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set): void {
-                                if (! $state || filled($get('materials'))) {
-                                    return;
-                                }
-
-                                $item = \App\Models\Item::find($state);
-
-                                if (! $item) {
-                                    return;
-                                }
-
-                                try {
-                                    $lines = app(\App\Services\WorkOrderMaterialService::class)
-                                        ->standardMaterialsFor($item, (float) ($get('planned_quantity') ?? 0));
-                                } catch (\RuntimeException) {
-                                    // No standard BOM yet — leave the table for
-                                    // manual entry; the fetch action surfaces
-                                    // the reason on demand.
-                                    return;
-                                }
-
-                                $set('materials', $lines);
-                            }),
 
                         Forms\Components\Select::make('status')
                             ->label(__('resources.work_orders.fields.status'))
@@ -171,34 +190,82 @@ class WorkOrderResource extends Resource
                             ->default(fn () => auth()->id()),
                     ]),
 
+                // المنتجات التامة — an order produces MORE THAN ONE finished
+                // product, each with its own planned quantity. Those quantities
+                // are what scales the material table (and therefore the issue
+                // vouchers), and their sum is the order's planned quantity.
+                Forms\Components\Section::make(__('resources.work_orders.sections.outputs'))
+                    ->icon('heroicon-o-cube')
+                    ->description(__('resources.work_orders.sections.outputs_description'))
+                    ->schema([
+                        Forms\Components\Repeater::make('outputs')
+                            ->label(__('resources.work_orders.fields.outputs'))
+                            ->relationship()
+                            ->columns(2)
+                            ->minItems(1)
+                            ->defaultItems(1)
+                            ->required()
+                            ->reorderable(false)
+                            ->addActionLabel(__('resources.work_orders.actions.add_output'))
+                            ->itemLabel(fn (array $state): ?string => filled($state['item_id'] ?? null)
+                                ? \App\Models\Item::find($state['item_id'])?->name
+                                : null)
+                            ->schema([
+                                Forms\Components\Select::make('item_id')
+                                    ->label(__('resources.work_orders.fields.output_item'))
+                                    ->relationship(
+                                        'item',
+                                        'name',
+                                        fn (Builder $query) => $query->whereIn('type', ['finished_good', 'semi_finished']),
+                                    )
+                                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->sku} — {$record->name}")
+                                    ->searchable()
+                                    ->preload()
+                                    ->required()
+                                    // The same product twice would double-count
+                                    // the plan and the recipe.
+                                    ->distinct()
+                                    ->disableOptionsWhenSelectedInSiblingRepeaterItems()
+                                    ->live()
+                                    ->afterStateUpdated(fn (Forms\Get $get, Forms\Set $set) => static::syncPlanFromOutputs($get, $set))
+                                    ->columnSpan(1),
+
+                                // الكمية المخططة لكل منتج — the denominator of
+                                // that product's efficiency and the multiplier
+                                // of its standard recipe.
+                                Forms\Components\TextInput::make('planned_quantity')
+                                    ->label(__('resources.work_orders.fields.output_planned_quantity'))
+                                    ->numeric()
+                                    ->required()
+                                    ->minValue(0.0001)
+                                    ->rule('gt:0')
+                                    ->live(debounce: 600)
+                                    ->afterStateUpdated(fn (Forms\Get $get, Forms\Set $set) => static::syncPlanFromOutputs($get, $set))
+                                    ->columnSpan(1),
+
+                                // Filled at the QA-submission stage only —
+                                // never authored on this form.
+                                Forms\Components\Hidden::make('produced_quantity')->default(0),
+                                Forms\Components\Hidden::make('waste_quantity')->default(0),
+                            ])
+                            ->columnSpanFull(),
+                    ]),
+
                 Forms\Components\Section::make(__('resources.work_orders.sections.quantities_schedule'))
                     ->icon('heroicon-o-calculator')
                     ->columns(3)
                     ->schema([
                         // الكمية المخططة هي مقام كل نِسَب الأمر (الكفاءة، الفاقد،
-                        // انحراف التكلفة). صفر يُسكِت الثلاثة بصمت، لذا فهي
-                        // إلزامية وأكبر من صفر — ونفس الشرط يُفرَض مرة ثانية في
-                        // WorkOrderService قبل الإفراج للتصنيع.
+                        // انحراف التكلفة)، وهي الآن مشتقّة: مجموع كميات المنتجات
+                        // التامة. تُعاد الاشتقاق على الخادم بعد كل حفظ، ويُفرَض
+                        // كونها > 0 في WorkOrderService قبل الإفراج للتصنيع.
                         Forms\Components\TextInput::make('planned_quantity')
                             ->label(__('resources.work_orders.fields.planned_quantity'))
+                            ->helperText(__('resources.work_orders.fields.planned_quantity_helper'))
                             ->numeric()
-                            ->required()
-                            ->minValue(0.0001)
-                            ->rule('gt:0'),
-
-                        Forms\Components\TextInput::make('produced_quantity')
-                            ->label(__('resources.work_orders.fields.produced_quantity'))
-                            ->numeric()
-                            ->default(0)
                             ->disabled()
-                            ->dehydrated(),
-
-                        Forms\Components\TextInput::make('waste_quantity')
-                            ->label(__('resources.work_orders.fields.waste_quantity'))
-                            ->numeric()
-                            ->default(0)
-                            ->disabled()
-                            ->dehydrated(),
+                            ->dehydrated()
+                            ->default(0),
 
                         Forms\Components\DatePicker::make('planned_start_date')
                             ->label(__('resources.work_orders.fields.planned_start_date'))
@@ -257,31 +324,38 @@ class WorkOrderResource extends Resource
                     ->description(__('resources.work_orders.sections.materials_description'))
                     ->schema([
                         Forms\Components\Actions::make([
+                            // Explicit, confirmed overwrite: merges the standard
+                            // recipes of ALL the order's finished products,
+                            // each scaled by its own planned quantity, and
+                            // replaces the table — manual edits included.
                             Forms\Components\Actions\Action::make('fetch_standard_materials')
                                 ->label(__('resources.work_orders.actions.fetch_standard_materials'))
                                 ->icon('heroicon-o-arrow-down-tray')
                                 ->color('gray')
                                 ->requiresConfirmation()
-                                ->visible(fn (Forms\Get $get) => filled($get('output_item_id')))
+                                ->modalDescription(__('resources.work_orders.actions.fetch_standard_materials_confirm'))
+                                ->visible(fn (Forms\Get $get) => filled($get('outputs')))
                                 ->action(function (Forms\Get $get, Forms\Set $set): void {
-                                    $item = \App\Models\Item::find($get('output_item_id'));
+                                    $result = app(\App\Services\WorkOrderMaterialService::class)
+                                        ->standardMaterialsForOutputs(
+                                            collect($get('outputs') ?? [])->map(fn ($row) => [
+                                                'item_id' => $row['item_id'] ?? null,
+                                                'planned_quantity' => $row['planned_quantity'] ?? 0,
+                                            ])->all()
+                                        );
 
-                                    if (! $item) {
-                                        return;
-                                    }
-
-                                    try {
-                                        $lines = app(\App\Services\WorkOrderMaterialService::class)
-                                            ->standardMaterialsFor($item, (float) ($get('planned_quantity') ?? 0));
-                                    } catch (\RuntimeException $e) {
+                                    if ($result['missing'] !== []) {
                                         Notification::make()->warning()
-                                            ->title(__('resources.work_orders.notifications.failed'))
-                                            ->body($e->getMessage())->send();
+                                            ->title(__('resources.work_orders.notifications.no_standard_bom_for'))
+                                            ->body(implode('، ', $result['missing']))
+                                            ->send();
+                                    }
 
+                                    if ($result['lines'] === []) {
                                         return;
                                     }
 
-                                    $set('materials', $lines);
+                                    $set('materials', $result['lines']);
 
                                     Notification::make()->success()
                                         ->title(__('resources.work_orders.notifications.materials_fetched'))
@@ -383,6 +457,16 @@ class WorkOrderResource extends Resource
                             ->disabled()
                             ->dehydrated()
                             ->columnSpanFull(),
+
+                        // The finish gate stated on the record itself, so the
+                        // office can see WHY the button is not there yet.
+                        Forms\Components\Placeholder::make('finish_gate')
+                            ->label(__('resources.work_orders.fields.finish_gate'))
+                            ->visible(fn (?WorkOrder $record) => $record !== null && ! $record->isManufacturingFinished())
+                            ->content(fn (?WorkOrder $record) => $record?->isOrderApproved() && $record?->isQaApproved()
+                                ? __('resources.work_orders.manufacturing.finish_allowed')
+                                : __('resources.work_orders.manufacturing.finish_blocked'))
+                            ->columnSpanFull(),
                     ]),
 
                 Forms\Components\Section::make(__('resources.work_orders.sections.description'))
@@ -416,6 +500,17 @@ class WorkOrderResource extends Resource
                     ->label(__('resources.work_orders.columns.project'))
                     ->searchable()
                     ->limit(25),
+
+                // المنتجات التامة — an order carries several now, so the list
+                // shows them all rather than a single product name.
+                Tables\Columns\TextColumn::make('outputs.item.name')
+                    ->label(__('resources.work_orders.columns.outputs'))
+                    ->badge()
+                    ->color('gray')
+                    ->limitList(2)
+                    ->expandableLimitedList()
+                    ->placeholder('—')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label(__('resources.work_orders.columns.status'))
@@ -570,7 +665,10 @@ class WorkOrderResource extends Resource
                         ->icon('heroicon-o-arrow-up-on-square-stack')
                         ->color('warning')
                         ->requiresConfirmation()
-                        ->visible(fn (WorkOrder $record) => $record->bom_id !== null
+                        // Materials can be issued from the order's own material
+                        // table (the normal case now that the linked-BOM field
+                        // is gone) or, for legacy orders, from the BOM.
+                        ->visible(fn (WorkOrder $record) => ($record->bom_id !== null || $record->materials()->exists())
                             && in_array($record->status, [WorkOrderStatus::Pending, WorkOrderStatus::InProgress], true)
                             && auth()->user()?->can('issue_vouchers.create'))
                         ->action(function (WorkOrder $record) {
@@ -641,16 +739,63 @@ class WorkOrderResource extends Resource
                         ->color('warning')
                         ->visible(fn (WorkOrder $record) => $record->status === WorkOrderStatus::InProgress
                             && auth()->user()?->can('work_orders.submit_qa'))
-                        ->form([
+                        // هنا — وهنا فقط — تُدخَل الكمية المنتجة وكمية الهالك:
+                        // مرحلة من مراحل الأمر، لا حقل في شاشة الإنشاء/التعديل.
+                        // A multi-product order reports product by product.
+                        ->modalDescription(__('resources.work_orders.actions.submit_qa_description'))
+                        ->fillForm(fn (WorkOrder $record) => [
+                            'results' => $record->outputs()->with('item')->get()
+                                ->map(fn ($output) => [
+                                    'output_id' => $output->id,
+                                    'product' => $output->item?->name ?? '—',
+                                    'planned_quantity' => (float) $output->planned_quantity,
+                                    'produced_quantity' => (float) $output->produced_quantity,
+                                    'waste_quantity' => (float) $output->waste_quantity,
+                                ])->all(),
+                        ])
+                        ->form(fn (WorkOrder $record) => [
+                            Forms\Components\Repeater::make('results')
+                                ->label(__('resources.work_orders.fields.outputs'))
+                                ->columns(3)
+                                ->addable(false)
+                                ->deletable(false)
+                                ->reorderable(false)
+                                ->itemLabel(fn (array $state): ?string => $state['product'] ?? null)
+                                ->schema([
+                                    Forms\Components\Hidden::make('output_id'),
+                                    Forms\Components\Hidden::make('product'),
+                                    Forms\Components\TextInput::make('planned_quantity')
+                                        ->label(__('resources.work_orders.fields.planned_quantity'))
+                                        ->numeric()
+                                        ->disabled(),
+                                    Forms\Components\TextInput::make('produced_quantity')
+                                        ->label(__('resources.work_orders.fields.produced_quantity'))
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->required(),
+                                    Forms\Components\TextInput::make('waste_quantity')
+                                        ->label(__('resources.work_orders.fields.waste_quantity'))
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->required()
+                                        ->default(0),
+                                ])
+                                // Legacy orders with no product lines still
+                                // report a single order-level pair.
+                                ->visible(fn () => $record->outputs()->exists())
+                                ->columnSpanFull(),
+
                             Forms\Components\TextInput::make('produced_quantity')
                                 ->label(__('resources.work_orders.fields.produced_quantity'))
                                 ->numeric()
-                                ->required(),
+                                ->required()
+                                ->visible(fn () => ! $record->outputs()->exists()),
                             Forms\Components\TextInput::make('waste_quantity')
                                 ->label(__('resources.work_orders.fields.waste_quantity'))
                                 ->numeric()
                                 ->required()
-                                ->default(0),
+                                ->default(0)
+                                ->visible(fn () => ! $record->outputs()->exists()),
                         ])
                         ->action(function (WorkOrder $record, array $data) {
                             $fresh = $record->fresh();
@@ -658,12 +803,15 @@ class WorkOrderResource extends Resource
                                 Notification::make()->success()->title(__('resources.work_orders.notifications.submitted_qa'))->send();
                                 return;
                             }
+
+                            $results = $data['results'] ?? [[
+                                'output_id' => null,
+                                'produced_quantity' => $data['produced_quantity'] ?? 0,
+                                'waste_quantity' => $data['waste_quantity'] ?? 0,
+                            ]];
+
                             try {
-                                app(WorkOrderService::class)->submitForQa(
-                                    $record,
-                                    (float) $data['produced_quantity'],
-                                    (float) $data['waste_quantity'],
-                                );
+                                app(WorkOrderService::class)->submitForQa($record, array_values($results));
                                 Notification::make()->success()->title(__('resources.work_orders.notifications.submitted_qa'))->send();
                             } catch (\RuntimeException $e) {
                                 Notification::make()->danger()->title(__('resources.work_orders.notifications.failed'))->body($e->getMessage())->send();
@@ -722,20 +870,23 @@ class WorkOrderResource extends Resource
                             }
                         }),
 
-                    // Finish Manufacturing (انتهاء التصنيع) — a stage-independent
-                    // signal that records the manufacturing time and tells every
-                    // department the product is ready for delivery (التصنيع سلايد 2).
-                    // Orthogonal to the QA gate / complete() flow: it works
-                    // "regardless of the stages" and never touches stock or cost.
+                    // Finish Manufacturing (انتهاء التصنيع) — records the
+                    // manufacturing time and tells every department the product
+                    // is ready for delivery (التصنيع سلايد 2). Never touches
+                    // stock or cost; that stays with complete().
+                    //
+                    // STRICTEST GATE ON THE ORDER: both the PMO approval and the
+                    // QA sign-off must already be on the record. The rule lives
+                    // in WorkOrderService::canFinishManufacturing() so the button
+                    // and the service can never drift apart.
                     // Idempotent on retry (re-reads fresh and succeeds silently).
                     Tables\Actions\Action::make('finish_manufacturing')
                         ->label(__('resources.work_orders.actions.finish_manufacturing'))
                         ->icon('heroicon-o-flag')
                         ->color('primary')
                         ->requiresConfirmation()
-                        ->visible(fn (WorkOrder $record) => $record->actual_start_date !== null
-                            && $record->manufacturing_finished_at === null
-                            && in_array($record->status, [WorkOrderStatus::InProgress, WorkOrderStatus::QaReview], true)
+                        ->modalDescription(__('resources.work_orders.actions.finish_manufacturing_confirm'))
+                        ->visible(fn (WorkOrder $record) => app(WorkOrderService::class)->canFinishManufacturing($record)
                             && auth()->user()?->can('work_orders.finish_manufacturing'))
                         ->action(function (WorkOrder $record) {
                             $fresh = $record->fresh();
@@ -814,6 +965,7 @@ class WorkOrderResource extends Resource
                 'project:id,name',
                 'assignedTo:id,name',
                 'qaApprovedBy:id,name',
+                'outputs.item:id,name,sku',
             ])
             ->withoutGlobalScopes([SoftDeletingScope::class]);
     }

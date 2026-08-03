@@ -11,6 +11,17 @@ class EditWorkOrder extends EditRecord
     {
         return [Actions\DeleteAction::make()];
     }
+
+    /**
+     * Same as on create: planned quantity, primary product and the estimate are
+     * re-derived from the saved product and material lines (see
+     * WorkOrder::syncDerivedPlan).
+     */
+    protected function afterSave(): void
+    {
+        $this->record->syncDerivedPlan();
+    }
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');

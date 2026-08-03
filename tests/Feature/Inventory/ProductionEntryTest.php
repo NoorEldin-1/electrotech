@@ -61,7 +61,9 @@ class ProductionEntryTest extends TestCase
         app(IssueVoucherService::class)->post($voucher);
         $this->assertEquals(10, $raw->fresh()->quantityIn(WarehouseType::WorkInProgress));
 
-        $wos->submitForQa($wo, 8, 2);
+        // Legacy single-product order: no product lines, so the results are
+        // reported at order level.
+        $wos->submitForQa($wo, [['produced_quantity' => 8, 'waste_quantity' => 2]]);
         $wos->approveQa($wo);
         $wos->complete($wo);
 

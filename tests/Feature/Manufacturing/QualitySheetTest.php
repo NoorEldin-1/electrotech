@@ -136,7 +136,9 @@ class QualitySheetTest extends TestCase
 
     public function test_finishing_manufacturing_opens_a_quality_sheet_without_touching_inventory(): void
     {
-        $wo = WorkOrder::factory()->create([
+        // approved(): "انتهاء التصنيع" now requires both the PMO release and
+        // the QA sign-off before it will fire.
+        $wo = WorkOrder::factory()->approved()->create([
             'status' => WorkOrderStatus::InProgress,
             'actual_start_date' => now()->subHours(2),
             'manufacturing_finished_at' => null,

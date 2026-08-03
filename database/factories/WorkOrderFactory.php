@@ -47,4 +47,18 @@ class WorkOrderFactory extends Factory
             'order_approved_at' => null,
         ]);
     }
+
+    /**
+     * An order carrying BOTH approvals — the PMO release and the QA sign-off —
+     * which is what "انتهاء التصنيع" now requires before it will fire.
+     */
+    public function approved(): static
+    {
+        return $this->state(fn () => [
+            'order_approved_by' => User::factory(),
+            'order_approved_at' => now(),
+            'qa_approved_by' => User::factory(),
+            'qa_approved_at' => now(),
+        ]);
+    }
 }

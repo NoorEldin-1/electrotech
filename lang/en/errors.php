@@ -65,6 +65,8 @@ return [
     'issue' => [
         'no_bom' => 'Work Order :number has no linked BOM, so an issue voucher cannot be created.',
         'no_materials' => 'Work Order :number has no materials or linked BOM, so an issue voucher cannot be created.',
+        'nothing_remaining' => 'Every material on Work Order :number has already been issued — there is nothing left for a new issue voucher.',
+        'excess_quantity' => 'Issue voucher :number carries more than the manufacturing order needs. Review the lines and correct the quantities, or approve the excess with a written reason if you are allowed to.',
     ],
 
     'delivery' => [
@@ -96,6 +98,7 @@ return [
         'qa_gate' => 'Work Order :number cannot be completed without QA approval. The QA gate is mandatory.',
         'not_in_qa_review' => 'Work Order :number must be in QA review to complete.',
         'cannot_finish_manufacturing' => 'Manufacturing for Work Order :number cannot be finished. It must be started first. Current status: :status.',
+        'finish_requires_approvals' => 'Manufacturing for Work Order :number cannot be declared finished before these approvals are in: :approvals.',
         'no_output_item' => 'Work Order :number has no finished product selected, so standard materials cannot be fetched.',
         'no_standard_bom' => 'No approved standard BOM exists for ":item". Define its standard recipe first, or enter the materials manually.',
     ],

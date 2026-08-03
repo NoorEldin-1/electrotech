@@ -31,13 +31,94 @@ class WorkOrderMaterialService
      */
     public function fetchStandardMaterials(WorkOrder $workOrder): array
     {
-        $workOrder->loadMissing('outputItem');
+        $workOrder->loadMissing(['outputs.item', 'outputItem']);
+
+        // Multi-product order (المنتجات التامة): merge every product's recipe.
+        if ($workOrder->outputs->isNotEmpty()) {
+            $result = $this->standardMaterialsForOutputs(
+                $workOrder->outputs
+                    ->map(fn ($output) => [
+                        'item_id' => $output->item_id,
+                        'planned_quantity' => (float) $output->planned_quantity,
+                    ])
+                    ->all()
+            );
+
+            if ($result['lines'] === []) {
+                throw new \RuntimeException(__('errors.work_order.no_standard_bom', [
+                    'item' => implode('، ', $result['missing']),
+                ]));
+            }
+
+            return $result['lines'];
+        }
 
         if (! $workOrder->outputItem) {
             throw new \RuntimeException(__('errors.work_order.no_output_item', ['number' => $workOrder->wo_number]));
         }
 
         return $this->standardMaterialsFor($workOrder->outputItem, (float) $workOrder->planned_quantity);
+    }
+
+    /**
+     * Expand and MERGE the standard recipes of several finished products, each
+     * scaled by its own planned quantity — the material plan of a mixed order
+     * (three panels of model A + two of model B pull one combined list, with
+     * shared raw materials summed into a single line so the store issues them
+     * once).
+     *
+     * A product with no approved standard BOM does not sink the whole fetch:
+     * its name comes back under `missing` so the form can name it, while the
+     * rest of the order still gets its materials.
+     *
+     * @param  array<int, array{item_id: int|string|null, planned_quantity: float|int|string|null}>  $outputs
+     * @return array{lines: array<int, array{item_id:int, quantity:float, unit_cost:float, is_manual:bool}>, missing: array<int, string>}
+     */
+    public function standardMaterialsForOutputs(array $outputs): array
+    {
+        /** @var array<int, array{item_id:int, quantity:float, unit_cost:float, is_manual:bool}> $merged */
+        $merged = [];
+        $missing = [];
+
+        // One query for every product, instead of one per repeater row.
+        $itemIds = collect($outputs)->pluck('item_id')->filter()->unique()->all();
+        $items = Item::query()->whereIn('id', $itemIds)->get()->keyBy('id');
+
+        foreach ($outputs as $output) {
+            $item = $items[$output['item_id'] ?? null] ?? null;
+            $quantity = (float) ($output['planned_quantity'] ?? 0);
+
+            // A row still being authored (product picked, quantity not typed
+            // yet) contributes nothing rather than a phantom single unit.
+            if (! $item || $quantity <= 0) {
+                continue;
+            }
+
+            try {
+                $lines = $this->standardMaterialsFor($item, $quantity);
+            } catch (\RuntimeException) {
+                $missing[] = $item->name;
+
+                continue;
+            }
+
+            foreach ($lines as $line) {
+                $key = $line['item_id'];
+
+                if (isset($merged[$key])) {
+                    $merged[$key]['quantity'] += $line['quantity'];
+
+                    continue;
+                }
+
+                $merged[$key] = $line;
+            }
+        }
+
+        return [
+            'lines' => array_values($merged),
+            'missing' => array_values(array_unique($missing)),
+        ];
     }
 
     /**

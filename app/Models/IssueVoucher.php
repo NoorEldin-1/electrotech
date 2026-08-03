@@ -30,6 +30,11 @@ class IssueVoucher extends Model
         'issued_by',
         'signed_by',
         'signed_at',
+        // صرف كمية زائدة عن حاجة أمر التصنيع — recorded on the document itself.
+        'has_excess',
+        'excess_reason',
+        'excess_approved_by',
+        'excess_approved_at',
     ];
 
     protected function casts(): array
@@ -39,13 +44,15 @@ class IssueVoucher extends Model
             'total_value' => 'decimal:2',
             'voucher_date' => 'date',
             'signed_at' => 'datetime',
+            'has_excess' => 'boolean',
+            'excess_approved_at' => 'datetime',
         ];
     }
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['voucher_number', 'work_order_id', 'status', 'total_value', 'signed_at'])
+            ->logOnly(['voucher_number', 'work_order_id', 'status', 'total_value', 'signed_at', 'has_excess', 'excess_reason', 'excess_approved_by'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "Issue voucher {$this->voucher_number} was {$eventName}");
@@ -71,9 +78,23 @@ class IssueVoucher extends Model
         return $this->belongsTo(User::class, 'signed_by');
     }
 
+    public function excessApprovedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'excess_approved_by');
+    }
+
     public function isPosted(): bool
     {
         return $this->status === VoucherStatus::Posted;
+    }
+
+    /**
+     * Whether this voucher was posted knowingly carrying more than the work
+     * order's material plan required.
+     */
+    public function hasExcess(): bool
+    {
+        return (bool) $this->has_excess;
     }
 
     public static function generateVoucherNumber(): string

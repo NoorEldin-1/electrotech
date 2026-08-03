@@ -6,9 +6,7 @@ namespace App\Filament\Resources\IssueVoucherResource\Pages;
 
 use App\Filament\Resources\IssueVoucherResource;
 use App\Models\IssueVoucher;
-use App\Services\IssueVoucherService;
 use Filament\Actions;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
 class EditIssueVoucher extends EditRecord
@@ -18,30 +16,17 @@ class EditIssueVoucher extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('post')
-                ->label(__('resources.issue_vouchers.actions.post'))
-                ->icon('heroicon-o-check-circle')
-                ->color('success')
-                ->requiresConfirmation()
-                ->modalDescription(__('resources.issue_vouchers.actions.post_confirm'))
-                ->visible(fn (IssueVoucher $record) => auth()->user()?->can('post', $record))
-                ->action(function (IssueVoucher $record) {
-                    try {
-                        app(IssueVoucherService::class)->post($record);
-                        Notification::make()
-                            ->title(__('resources.issue_vouchers.notifications.posted'))
-                            ->success()
-                            ->send();
-
-                        $this->redirect(static::getResource()::getUrl('index'));
-                    } catch (\Throwable $e) {
-                        Notification::make()
-                            ->title(__('resources.common.action_failed'))
-                            ->body($e->getMessage())
-                            ->danger()
-                            ->send();
-                    }
-                }),
+            // The very same configured action the list row uses (over-issue
+            // gate, excess report, approval reason) — declared once in the
+            // resource so the two entry points cannot enforce different rules.
+            //
+            // The redirect is conditional on the post having actually gone
+            // through: a voucher stopped at the excess gate must stay open on
+            // its lines so the user can correct them.
+            IssueVoucherResource::headerPostAction()
+                ->after(fn (IssueVoucher $record) => $record->fresh()?->isPosted()
+                    ? $this->redirect(static::getResource()::getUrl('index'))
+                    : null),
             Actions\DeleteAction::make()
                 ->visible(fn (IssueVoucher $record) => ! $record->isPosted()),
         ];

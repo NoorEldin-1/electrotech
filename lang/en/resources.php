@@ -792,17 +792,23 @@ return [
         'sections' => [
             'details' => 'Voucher Details',
             'lines' => 'Issued Items',
+            'lines_description' => 'Auto-filled from the material plan of the manufacturing order with the quantities still owed and their costs — and editable afterwards.',
         ],
 
         'fields' => [
             'voucher_number' => 'Voucher Number',
             'work_order' => 'Manufacturing Order',
+            'work_order_helper' => 'Picking the order fills the issued items with whatever its material plan still needs.',
             'voucher_date' => 'Date',
             'notes' => 'Notes',
             'lines' => 'Items',
             'item' => 'Item',
             'quantity' => 'Quantity',
             'unit_cost' => 'Unit Cost',
+            'remaining_required' => 'Still required by the order: :qty',
+            'not_in_plan' => '⚠ This item is not on the material plan of the order.',
+            'excess_reason' => 'Reason for the excess',
+            'excess_reason_helper' => 'Stamped on the voucher with your name and the approval date.',
         ],
 
         'columns' => [
@@ -811,15 +817,38 @@ return [
             'voucher_date' => 'Date',
             'total_value' => 'Total Value',
             'status' => 'Status',
+            'has_excess' => 'Over-issue',
         ],
 
         'actions' => [
             'post' => 'Post',
             'post_confirm' => 'Posting moves the materials from raw stock into work-in-progress and loads their cost onto the operation. This cannot be undone.',
+            'refill' => 'Refill from the manufacturing order',
+            'refill_confirm' => 'Every current line will be replaced with the quantities the material plan still needs.',
+        ],
+
+        'excess' => [
+            'intro' => 'These quantities go past what the manufacturing order actually needs, after what has already been issued (net of returns).',
+            'may_approve' => 'Go back and correct the quantities, or carry on by approving the excess with a written reason below.',
+            'may_not_approve' => 'You may not approve an over-issue — go back and correct the quantities, or have it approved by someone who can.',
+            'live_warning' => '⚠ More than the order needs: :items',
+            'columns' => [
+                'item' => 'Item',
+                'required' => 'Planned',
+                'previously_issued' => 'Already issued',
+                'remaining' => 'Remaining',
+                'this_voucher' => 'On this voucher',
+                'excess' => 'Excess',
+            ],
         ],
 
         'notifications' => [
             'posted' => 'Issue voucher posted — materials moved to work-in-progress.',
+            'lines_filled' => 'Items filled from the manufacturing order',
+            'lines_filled_body' => ':count item(s) loaded with the quantities still owed and their costs. You can edit them.',
+            'nothing_remaining' => 'Nothing left to issue',
+            'nothing_remaining_body' => 'Every material on the order has already been issued. Add items manually for an additional issue.',
+            'excess_blocked' => 'Cannot post — more than the manufacturing order needs',
         ],
     ],
 
@@ -1759,6 +1788,8 @@ return [
 
         'sections' => [
             'wo_details' => 'Manufacturing Order Details',
+            'outputs' => 'Finished Products',
+            'outputs_description' => 'One order can produce several products, each with its own planned quantity. Their sum is the planned quantity of the order, and it is what scales the required materials and the issue vouchers.',
             'quantities_schedule' => 'Quantities & Schedule',
             'materials' => 'Materials',
             'materials_description' => 'Auto-filled from the finished good\'s standard BOM (scaled by the planned quantity). Adjust quantities freely for this order — the standard recipe stays unchanged.',
@@ -1774,7 +1805,9 @@ return [
             'title' => 'Title',
             'project' => 'Project',
             'linked_bom' => 'Linked BOM',
+            'outputs' => 'Finished Products',
             'output_item' => 'Finished Product',
+            'output_planned_quantity' => 'Planned Quantity (product)',
             'output_item_helper' => 'The item produced into finished goods when this work order completes.',
             'conductor_type' => 'Conductor Type',
             'cross_section' => 'Cross Section',
@@ -1789,8 +1822,10 @@ return [
             'priority' => 'Priority',
             'assigned_to' => 'Assigned To',
             'planned_quantity' => 'Planned Quantity',
+            'planned_quantity_helper' => 'Derived — the sum of the finished product quantities.',
             'produced_quantity' => 'Produced Quantity',
             'waste_quantity' => 'Waste Quantity',
+            'finish_gate' => 'Finish-manufacturing requirements',
             'materials' => 'Materials',
             'material_item' => 'Material',
             'material_quantity' => 'Quantity',
@@ -1813,6 +1848,7 @@ return [
             'project' => 'Project',
             'status' => 'Status',
             'priority' => 'Priority',
+            'outputs' => 'Finished Products',
             'planned' => 'Planned',
             'produced' => 'Produced',
             'estimated_cost' => 'Estimated Cost',
@@ -1831,11 +1867,15 @@ return [
             'return_scrap' => 'Return Scrap',
             'write_off_loss' => 'Write Off Loss',
             'submit_qa' => 'Submit QA',
+            'submit_qa_description' => 'Record the produced and waste quantities per finished product. This stage is the only place those quantities are set.',
             'approve_qa' => 'Approve QA',
             'complete' => 'Complete',
             'finish_manufacturing' => 'Finish Manufacturing',
+            'finish_manufacturing_confirm' => 'Declaring manufacturing finished tells every department the product is ready for delivery and opens the quality sheet. Both the PMO approval and the QA sign-off must already be on the order.',
             'quality_sheet' => 'Quality Sheet',
+            'add_output' => 'Add finished product',
             'fetch_standard_materials' => 'Fetch Standard Materials',
+            'fetch_standard_materials_confirm' => 'The whole material table will be replaced with the standard recipes of every finished product — manual edits included.',
             'material_variance' => 'Material Comparison',
         ],
 
@@ -1843,6 +1883,9 @@ return [
             'order_approved' => 'Order approved — released for manufacturing',
             'started' => 'Manufacturing Order started',
             'materials_fetched' => 'Standard materials loaded from the BOM',
+            'materials_not_refreshed' => 'Material table not refreshed',
+            'materials_not_refreshed_body' => 'It carries hand-edited quantities, so it was left alone. Use "Fetch Standard Materials" to recompute it from the standard recipes.',
+            'no_standard_bom_for' => 'Products with no approved standard BOM',
             'issue_voucher_created' => 'Draft issue voucher created',
             'return_voucher_created' => 'Draft return voucher created',
             'depreciation_voucher_created' => 'Draft depreciation voucher created',
@@ -1869,6 +1912,8 @@ return [
         'manufacturing' => [
             'finished_at' => '🏁 Finished on :date · Duration: :duration · By :name',
             'not_finished' => '⏳ Manufacturing in progress',
+            'finish_allowed' => '✅ Both approvals are in — Finish Manufacturing is available.',
+            'finish_blocked' => '🔒 Finish Manufacturing is locked: it needs both the PMO approval and the QA sign-off.',
         ],
 
         'priority_options' => [
@@ -2166,6 +2211,7 @@ return [
                 'view' => 'View Issue Vouchers',
                 'create' => 'Create Issue Voucher',
                 'post' => 'Post Issue Voucher',
+                'approve_excess' => 'Approve over-issue',
             ],
             'return_vouchers' => [
                 'view' => 'View Return Vouchers',

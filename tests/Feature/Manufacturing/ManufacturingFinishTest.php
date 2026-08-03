@@ -29,9 +29,13 @@ class ManufacturingFinishTest extends TestCase
         $this->actingAs($this->actor);
     }
 
+    /**
+     * An order that has cleared both approval gates and is mid-manufacture —
+     * the only state "انتهاء التصنيع" is allowed from.
+     */
     private function startedWorkOrder(int $startedMinutesAgo = 125): WorkOrder
     {
-        return WorkOrder::factory()->create([
+        return WorkOrder::factory()->approved()->create([
             'status' => WorkOrderStatus::InProgress,
             'actual_start_date' => now()->subMinutes($startedMinutesAgo),
             'actual_end_date' => null,
@@ -81,7 +85,7 @@ class ManufacturingFinishTest extends TestCase
 
     public function test_finish_works_during_qa_review(): void
     {
-        $wo = WorkOrder::factory()->create([
+        $wo = WorkOrder::factory()->approved()->create([
             'status' => WorkOrderStatus::QaReview,
             'actual_start_date' => now()->subHours(2),
             'manufacturing_finished_at' => null,
@@ -152,5 +156,68 @@ class ManufacturingFinishTest extends TestCase
         $factory->assignRole('Factory_Manager');
 
         $this->assertTrue($factory->can('work_orders.finish_manufacturing'));
+    }
+
+    /**
+     * The double approval gate (اعتماد مكتب المشروعات + اعتماد ضمان الجودة).
+     * Declaring an order finished tells every department the product may be
+     * delivered, so neither approval alone is enough to open it.
+     */
+    public function test_finish_is_refused_without_the_pmo_approval(): void
+    {
+        $wo = WorkOrder::factory()->create([
+            'status' => WorkOrderStatus::InProgress,
+            'actual_start_date' => now()->subHour(),
+            'manufacturing_finished_at' => null,
+            'order_approved_by' => null,
+            'order_approved_at' => null,
+            'qa_approved_by' => $this->actor->id,
+            'qa_approved_at' => now(),
+        ]);
+
+        try {
+            app(WorkOrderService::class)->finishManufacturing($wo);
+            $this->fail('An order without the PMO approval must not be finishable.');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString($wo->wo_number, $e->getMessage());
+        }
+
+        $this->assertFalse($wo->fresh()->isManufacturingFinished());
+    }
+
+    public function test_finish_is_refused_without_the_qa_approval(): void
+    {
+        $wo = WorkOrder::factory()->create([
+            'status' => WorkOrderStatus::InProgress,
+            'actual_start_date' => now()->subHour(),
+            'manufacturing_finished_at' => null,
+            'order_approved_by' => $this->actor->id,
+            'order_approved_at' => now(),
+            'qa_approved_by' => null,
+            'qa_approved_at' => null,
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+
+        app(WorkOrderService::class)->finishManufacturing($wo);
+    }
+
+    public function test_the_button_is_hidden_until_both_approvals_are_in(): void
+    {
+        $service = app(WorkOrderService::class);
+
+        $unapproved = WorkOrder::factory()->create([
+            'status' => WorkOrderStatus::InProgress,
+            'actual_start_date' => now()->subHour(),
+            'manufacturing_finished_at' => null,
+        ]);
+        $this->assertFalse($service->canFinishManufacturing($unapproved));
+
+        $approved = $this->startedWorkOrder();
+        $this->assertTrue($service->canFinishManufacturing($approved));
+
+        // And it disappears again once the order has been finished.
+        $service->finishManufacturing($approved);
+        $this->assertFalse($service->canFinishManufacturing($approved->fresh()));
     }
 }

@@ -130,6 +130,16 @@ class WorkOrder extends Model
         return $this->hasMany(WorkOrderMaterial::class);
     }
 
+    /**
+     * المنتجات التامة للأمر — one row per finished product with its own planned
+     * quantity. `output_item_id` mirrors the first of these for the many
+     * readers that still expect a single product.
+     */
+    public function outputs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(WorkOrderOutput::class);
+    }
+
     public function productionEntries(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(ProductionEntry::class);
@@ -180,6 +190,43 @@ class WorkOrder extends Model
         return (float) $this->materials->sum(
             fn (WorkOrderMaterial $line) => (float) $line->quantity * (float) $line->unit_cost
         );
+    }
+
+    /**
+     * Re-derive the order-level plan from its product lines:
+     *   - planned_quantity = Σ of the products' planned quantities (it is the
+     *     denominator of efficiency / waste % / cost variance, so it can never
+     *     be hand-typed independently of the products any more);
+     *   - output_item_id   = the first product, kept as the "primary product"
+     *     for the readers that still expect one (quality sheet, finish
+     *     notification, variance PDF, production entries);
+     *   - estimated_cost   = the planned material cost, now that the linked BOM
+     *     (which used to be the source of the snapshot) is gone from the form.
+     *
+     * Called after every save of the order and after its materials change.
+     * A legacy order with no product rows is left completely untouched.
+     */
+    public function syncDerivedPlan(): void
+    {
+        $this->load(['outputs', 'materials']);
+
+        if ($this->outputs->isEmpty()) {
+            return;
+        }
+
+        $attributes = [
+            'planned_quantity' => (float) $this->outputs->sum(fn (WorkOrderOutput $o) => (float) $o->planned_quantity),
+            'output_item_id' => $this->outputs->first()->item_id,
+        ];
+
+        // Only overwrite the estimate when the order actually carries a
+        // material plan — an order still being authored keeps whatever
+        // snapshot it had.
+        if ($this->materials->isNotEmpty()) {
+            $attributes['estimated_cost'] = round($this->planned_material_cost, 2);
+        }
+
+        $this->update($attributes);
     }
 
     /**

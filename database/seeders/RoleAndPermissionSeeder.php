@@ -146,6 +146,10 @@ class RoleAndPermissionSeeder extends Seeder
             'issue_vouchers.view',
             'issue_vouchers.create',
             'issue_vouchers.post',
+            // اعتماد صرف كمية زائدة: posting more than the work order's material
+            // plan still needs is stopped at the gate; only this permission may
+            // carry it through, and only with a written reason.
+            'issue_vouchers.approve_excess',
             'return_vouchers.view',
             'return_vouchers.create',
             'return_vouchers.post',
@@ -458,6 +462,10 @@ class RoleAndPermissionSeeder extends Seeder
                 'issue_vouchers.view',
                 'issue_vouchers.create',
                 'issue_vouchers.post',
+                // The store keeper may carry an over-issue through, but never
+                // silently: the excess table is shown first and the reason is
+                // stamped on the voucher with their name.
+                'issue_vouchers.approve_excess',
                 'return_vouchers.view',
                 'return_vouchers.create',
                 'return_vouchers.post',
