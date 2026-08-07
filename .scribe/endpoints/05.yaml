@@ -1,0 +1,430 @@
+name: '5. Roles'
+description: |-
+
+  Roles and their attached permissions. Gated by `roles.manage` through the
+  existing RolePolicy — the same gate the panel's Roles screen uses.
+
+  The Admin role is protected: RolePolicy refuses to delete it, and the
+  deploy-time seeder force-syncs it to every permission in the catalog. Do not
+  try to trim it through this API; the next deploy would undo it.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/roles
+    metadata:
+      custom: []
+      groupName: '5. Roles'
+      groupDescription: |-
+
+        Roles and their attached permissions. Gated by `roles.manage` through the
+        existing RolePolicy — the same gate the panel's Roles screen uses.
+
+        The Admin role is protected: RolePolicy refuses to delete it, and the
+        deploy-time seeder force-syncs it to every permission in the catalog. Do not
+        try to trim it through this API; the next deploy would undo it.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List roles'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: 'Matches the role name.'
+        required: false
+        example: sales
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Allowed: name, created_at. Prefix `-` for descending.'
+        required: false
+        example: name
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      include:
+        custom: []
+        name: include
+        description: 'Allowed: permissions.'
+        required: false
+        example: permissions
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: sales
+      sort: name
+      include: permissions
+      per_page: 25
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":1,"type":"role","name":"Admin","guard_name":"web","users_count":1}],"meta":{"request_id":"9f1c...","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"...","prev":null,"next":null,"last":"..."}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/roles/{id}'
+    metadata:
+      custom: []
+      groupName: '5. Roles'
+      groupDescription: |-
+
+        Roles and their attached permissions. Gated by `roles.manage` through the
+        existing RolePolicy — the same gate the panel's Roles screen uses.
+
+        The Admin role is protected: RolePolicy refuses to delete it, and the
+        deploy-time seeder force-syncs it to every permission in the catalog. Do not
+        try to trim it through this API; the next deploy would undo it.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show a role'
+      description: 'Always includes the full permission list attached to the role.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the role.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      role:
+        custom: []
+        name: role
+        description: 'The role id.'
+        required: true
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      role: 2
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":2,"type":"role","name":"Sales","guard_name":"web","users_count":4,"permissions":["projects.view","projects.create"]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/roles
+    metadata:
+      custom: []
+      groupName: '5. Roles'
+      groupDescription: |-
+
+        Roles and their attached permissions. Gated by `roles.manage` through the
+        existing RolePolicy — the same gate the panel's Roles screen uses.
+
+        The Admin role is protected: RolePolicy refuses to delete it, and the
+        deploy-time seeder force-syncs it to every permission in the catalog. Do not
+        try to trim it through this API; the next deploy would undo it.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create a role'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'Unique role name; letters, digits, spaces, `_` and `-`.'
+        required: true
+        example: Warehouse_Lead
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      permissions:
+        custom: []
+        name: permissions
+        description: 'Permission names from `GET /permissions`.'
+        required: true
+        example:
+          - inventory.view
+          - issue_vouchers.create
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: Warehouse_Lead
+      permissions:
+        - inventory.view
+        - issue_vouchers.create
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":9,"type":"role","name":"Warehouse_Lead","guard_name":"web","permissions":["inventory.view","issue_vouchers.create"]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        headers: []
+        description: Created
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PATCH
+    uri: 'api/v1/roles/{id}'
+    metadata:
+      custom: []
+      groupName: '5. Roles'
+      groupDescription: |-
+
+        Roles and their attached permissions. Gated by `roles.manage` through the
+        existing RolePolicy — the same gate the panel's Roles screen uses.
+
+        The Admin role is protected: RolePolicy refuses to delete it, and the
+        deploy-time seeder force-syncs it to every permission in the catalog. Do not
+        try to trim it through this API; the next deploy would undo it.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a role'
+      description: |-
+        `permissions` **replaces** the role's whole set — send the complete list,
+        not a delta. That mirrors the panel's checkbox grid, where saving writes
+        whatever is ticked.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the role.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      role:
+        custom: []
+        name: role
+        description: 'The role id.'
+        required: true
+        example: 9
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      role: 9
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'optional New unique role name.'
+        required: false
+        example: Warehouse_Supervisor
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      permissions:
+        custom: []
+        name: permissions
+        description: 'optional The complete replacement permission set.'
+        required: false
+        example:
+          - inventory.view
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: Warehouse_Supervisor
+      permissions:
+        - inventory.view
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":9,"type":"role","name":"Warehouse_Supervisor","guard_name":"web","permissions":["inventory.view"]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/roles/{id}'
+    metadata:
+      custom: []
+      groupName: '5. Roles'
+      groupDescription: |-
+
+        Roles and their attached permissions. Gated by `roles.manage` through the
+        existing RolePolicy — the same gate the panel's Roles screen uses.
+
+        The Admin role is protected: RolePolicy refuses to delete it, and the
+        deploy-time seeder force-syncs it to every permission in the catalog. Do not
+        try to trim it through this API; the next deploy would undo it.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a role'
+      description: |-
+        RolePolicy refuses to delete the Admin role, so that always returns 403.
+        Users who held the deleted role lose its permissions immediately; a user
+        left with no role at all can no longer sign in.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the role.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      role:
+        custom: []
+        name: role
+        description: 'The role id.'
+        required: true
+        example: 9
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      role: 9
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Deleted
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

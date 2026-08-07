@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApiDocsController;
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\GeneralLedgerPdfController;
 use App\Http\Controllers\JournalDaybookPdfController;
@@ -26,6 +27,18 @@ Route::get('/documentation', DocumentationController::class)->name('documentatio
 
 // Short, memorable alias so `/docs` also works when the link is typed by hand.
 Route::redirect('/docs', '/documentation', 301);
+
+// Generated REST API reference for client developers (Scribe). Public by
+// design: it describes the contract, not the data, and the link is shared
+// with the mobile developer.
+//
+// The files are static under public/api/docs/, so the web server normally
+// answers this without PHP. The route is the fallback for a server that does
+// not resolve `/api/docs` to `/api/docs/index.html` on its own.
+//
+// NOTE the path: `/docs` above is the Arabic end-user manual — a different
+// document for a different audience. Do not merge the two.
+Route::get('/api/docs', ApiDocsController::class)->name('api.docs');
 
 // Network-resilience ping. Lightweight — extends session TTL, lets the
 // browser measure RTT and decide whether to surface a "weak link" banner.

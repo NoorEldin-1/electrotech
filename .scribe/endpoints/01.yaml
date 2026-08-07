@@ -1,0 +1,271 @@
+name: '1. Authentication'
+description: |-
+
+  Sign in, sign out and token rotation.
+
+  Every other endpoint in this API requires a bearer token obtained here:
+
+      Authorization: Bearer 12|xxxxxxxxxxxxxxxx
+      Accept: application/json
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/auth/login
+    metadata:
+      custom: []
+      groupName: '1. Authentication'
+      groupDescription: |-
+
+        Sign in, sign out and token rotation.
+
+        Every other endpoint in this API requires a bearer token obtained here:
+
+            Authorization: Bearer 12|xxxxxxxxxxxxxxxx
+            Accept: application/json
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Sign in'
+      description: |-
+        Exchanges credentials for a bearer token. The plain-text token is
+        returned **once and only once** — store it in secure storage
+        (`flutter_secure_storage`), never in shared preferences.
+
+        Throttled to 5 attempts per minute per email+IP.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      email:
+        custom: []
+        name: email
+        description: "The user's email address."
+        required: true
+        example: warehouse@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: "The user's password."
+        required: true
+        example: secret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      device_name:
+        custom: []
+        name: device_name
+        description: 'A human-recognisable device label, shown in the devices list.'
+        required: true
+        example: 'Pixel 8 — Warehouse'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      abilities:
+        custom: []
+        name: abilities
+        description: "optional Narrow the token to specific modules. Omit for the user's full rights."
+        required: false
+        example:
+          - inventory
+          - manufacturing
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      email: warehouse@example.com
+      password: secret123
+      device_name: 'Pixel 8 — Warehouse'
+      abilities:
+        - inventory
+        - manufacturing
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"token":"12|Xj3kd...","token_type":"Bearer","expires_at":"2026-09-04T09:30:00+00:00","abilities":["*"],"user":{"id":1,"type":"user","name":"System Administrator","email":"admin@example.com","roles":[{"id":1,"name":"Admin"}],"permissions":["projects.view"]}},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        headers: []
+        description: Success
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"validation_failed","message":"The email or password is incorrect.","details":{"email":["The email or password is incorrect."]}},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        headers: []
+        description: 'Wrong credentials'
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/auth/logout
+    metadata:
+      custom: []
+      groupName: '1. Authentication'
+      groupDescription: |-
+
+        Sign in, sign out and token rotation.
+
+        Every other endpoint in this API requires a bearer token obtained here:
+
+            Authorization: Bearer 12|xxxxxxxxxxxxxxxx
+            Accept: application/json
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Sign out (this device)'
+      description: |-
+        Revokes only the token used to make this call. Other devices stay signed
+        in.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/auth/logout-all
+    metadata:
+      custom: []
+      groupName: '1. Authentication'
+      groupDescription: |-
+
+        Sign in, sign out and token rotation.
+
+        Every other endpoint in this API requires a bearer token obtained here:
+
+            Authorization: Bearer 12|xxxxxxxxxxxxxxxx
+            Accept: application/json
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Sign out everywhere'
+      description: |-
+        Revokes every token belonging to the caller, including the current one.
+        Use this for "I lost my phone".
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"revoked":3},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/auth/refresh
+    metadata:
+      custom: []
+      groupName: '1. Authentication'
+      groupDescription: |-
+
+        Sign in, sign out and token rotation.
+
+        Every other endpoint in this API requires a bearer token obtained here:
+
+            Authorization: Bearer 12|xxxxxxxxxxxxxxxx
+            Accept: application/json
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Rotate the access token'
+      description: |-
+        Issues a replacement token and revokes the current one atomically. The
+        new token inherits this one's name and abilities — refresh can never
+        widen a token's scope.
+
+        Call it when the token is within a few days of `expires_at`. There is no
+        separate refresh-token credential: the access token rotates itself.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"token":"13|Kd83j...","token_type":"Bearer","expires_at":"2026-10-04T09:30:00+00:00","abilities":["*"]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

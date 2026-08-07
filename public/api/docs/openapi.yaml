@@ -1,0 +1,1796 @@
+openapi: 3.0.3
+info:
+  title: 'Electrotech API — توثيق واجهات النظام'
+  description: 'REST API for the Electrotech ERP platform: sales pipeline, technical office, procurement, warehouse, manufacturing, delivery and accounting.'
+  version: 1.0.0
+servers:
+  -
+    url: 'https://app.electrotech.findosystem.com'
+tags:
+  -
+    name: '0. Meta'
+    description: "\nService discovery and shared vocabulary. Call these once at app start; the\npayloads change only when the platform is redeployed."
+  -
+    name: '1. Authentication'
+    description: "\nSign in, sign out and token rotation.\n\nEvery other endpoint in this API requires a bearer token obtained here:\n\n    Authorization: Bearer 12|xxxxxxxxxxxxxxxx\n    Accept: application/json"
+  -
+    name: '2. Profile'
+    description: "\nThe signed-in user's own account: who am I, edit my details, change my\npassword. Managing *other* users lives under \"Users\" and is permission-gated."
+  -
+    name: '3. Devices'
+    description: "\nThe caller's own active sign-in sessions. Every login creates one; this is\nhow a user reviews them and signs a lost device out.\n\nStrictly self-scoped: there is no endpoint here to inspect or revoke another\nuser's sessions. An administrator who needs to lock an account out disables\nthe user through the Users endpoints instead."
+  -
+    name: '4. Users'
+    description: "\nAdministration of user accounts. Every endpoint is gated by the same\n`users.*` permissions and the same UserPolicy the admin panel uses — the API\nintroduces no parallel authorization."
+  -
+    name: '5. Roles'
+    description: "\nRoles and their attached permissions. Gated by `roles.manage` through the\nexisting RolePolicy — the same gate the panel's Roles screen uses.\n\nThe Admin role is protected: RolePolicy refuses to delete it, and the\ndeploy-time seeder force-syncs it to every permission in the catalog. Do not\ntry to trim it through this API; the next deploy would undo it."
+  -
+    name: '6. Permissions'
+    description: "\nThe read-only permission catalog, grouped exactly as the panel's Roles\nscreen groups it. A Flutter role-editing screen renders this directly.\n\nPermissions are defined in code (RoleAndPermissionSeeder) and synced on\nevery deploy, so there is deliberately no create/update/delete here — a\npermission invented at runtime would be one nothing ever checks."
+components:
+  securitySchemes:
+    default:
+      type: http
+      scheme: bearer
+      description: 'Obtain a token from <code>POST /auth/login</code> with your email, password and a device name. The plain-text token is returned <b>once</b> — store it in secure storage (e.g. <code>flutter_secure_storage</code>), never in shared preferences. Tokens expire; rotate them with <code>POST /auth/refresh</code> before <code>expires_at</code>. A token can be issued with narrowed abilities (e.g. <code>["inventory"]</code>) so a shared warehouse tablet cannot reach finance endpoints even if its account could.'
+security:
+  -
+    default: []
+paths:
+  /api/v1/meta:
+    get:
+      summary: 'Service info'
+      operationId: serviceInfo
+      description: "A cheap, unauthenticated liveness + version probe. Use it as the app's\nconnectivity check and to detect that a client build is older than the\ndeployed API."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    service: Electrotech
+                    api_version: '1'
+                    server_time: '2026-08-05T09:30:00+00:00'
+                    locales:
+                      - en
+                      - ar
+                    default_locale: en
+                    token_ttl_minutes: 43200
+                    max_per_page: 100
+                    requires_idempotency_key: true
+                    abilities:
+                      - identity
+                      - sales
+                    docs_url: 'https://app.electrotech.findosystem.com/api/docs'
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      service:
+                        type: string
+                        example: Electrotech
+                      api_version:
+                        type: string
+                        example: '1'
+                      server_time:
+                        type: string
+                        example: '2026-08-05T09:30:00+00:00'
+                      locales:
+                        type: array
+                        example:
+                          - en
+                          - ar
+                        items:
+                          type: string
+                      default_locale:
+                        type: string
+                        example: en
+                      token_ttl_minutes:
+                        type: integer
+                        example: 43200
+                      max_per_page:
+                        type: integer
+                        example: 100
+                      requires_idempotency_key:
+                        type: boolean
+                        example: true
+                      abilities:
+                        type: array
+                        example:
+                          - identity
+                          - sales
+                        items:
+                          type: string
+                      docs_url:
+                        type: string
+                        example: 'https://app.electrotech.findosystem.com/api/docs'
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '0. Meta'
+      security: []
+  /api/v1/meta/enums:
+    get:
+      summary: 'Enum catalog'
+      operationId: enumCatalog
+      description: "Every enumerated value in the platform — project statuses, item types,\nvoucher statuses, units of measure — as `{value, label, color}`.\n\nBuild dropdowns and status badges from this instead of hard-coding\noptions in Dart. A new case added on the server then appears in the app\nwithout a release, and the Arabic labels stay in one place. `label`\nhonours `Accept-Language`; `color` is the same semantic colour the web\npanel paints that state."
+      parameters:
+        -
+          in: query
+          name: only
+          description: 'Comma-separated enum keys to return instead of all.'
+          example: 'project_status,item_type'
+          required: false
+          schema:
+            type: string
+            description: 'Comma-separated enum keys to return instead of all.'
+            example: 'project_status,item_type'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    project_status:
+                      -
+                        value: tender
+                        label: Tender
+                        color: info
+                      -
+                        value: in_progress
+                        label: 'In Progress'
+                        color: primary
+                    item_type:
+                      -
+                        value: raw_material
+                        label: 'Raw Material'
+                        color: info
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      project_status:
+                        type: array
+                        example:
+                          -
+                            value: tender
+                            label: Tender
+                            color: info
+                          -
+                            value: in_progress
+                            label: 'In Progress'
+                            color: primary
+                        items:
+                          type: object
+                          properties:
+                            value:
+                              type: string
+                              example: tender
+                            label:
+                              type: string
+                              example: Tender
+                            color:
+                              type: string
+                              example: info
+                      item_type:
+                        type: array
+                        example:
+                          -
+                            value: raw_material
+                            label: 'Raw Material'
+                            color: info
+                        items:
+                          type: object
+                          properties:
+                            value:
+                              type: string
+                              example: raw_material
+                            label:
+                              type: string
+                              example: 'Raw Material'
+                            color:
+                              type: string
+                              example: info
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '0. Meta'
+  /api/v1/auth/login:
+    post:
+      summary: 'Sign in'
+      operationId: signIn
+      description: "Exchanges credentials for a bearer token. The plain-text token is\nreturned **once and only once** — store it in secure storage\n(`flutter_secure_storage`), never in shared preferences.\n\nThrottled to 5 attempts per minute per email+IP."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    token: 12|Xj3kd...
+                    token_type: Bearer
+                    expires_at: '2026-09-04T09:30:00+00:00'
+                    abilities:
+                      - '*'
+                    user:
+                      id: 1
+                      type: user
+                      name: 'System Administrator'
+                      email: admin@example.com
+                      roles:
+                        -
+                          id: 1
+                          name: Admin
+                      permissions:
+                        - projects.view
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        example: 12|Xj3kd...
+                      token_type:
+                        type: string
+                        example: Bearer
+                      expires_at:
+                        type: string
+                        example: '2026-09-04T09:30:00+00:00'
+                      abilities:
+                        type: array
+                        example:
+                          - '*'
+                        items:
+                          type: string
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          type:
+                            type: string
+                            example: user
+                          name:
+                            type: string
+                            example: 'System Administrator'
+                          email:
+                            type: string
+                            example: admin@example.com
+                          roles:
+                            type: array
+                            example:
+                              -
+                                id: 1
+                                name: Admin
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                  example: 1
+                                name:
+                                  type: string
+                                  example: Admin
+                          permissions:
+                            type: array
+                            example:
+                              - projects.view
+                            items:
+                              type: string
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+        422:
+          description: 'Wrong credentials'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    code: validation_failed
+                    message: 'The email or password is incorrect.'
+                    details:
+                      email:
+                        - 'The email or password is incorrect.'
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: validation_failed
+                      message:
+                        type: string
+                        example: 'The email or password is incorrect.'
+                      details:
+                        type: object
+                        properties:
+                          email:
+                            type: array
+                            example:
+                              - 'The email or password is incorrect.'
+                            items:
+                              type: string
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '1. Authentication'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: "The user's email address."
+                  example: warehouse@example.com
+                password:
+                  type: string
+                  description: "The user's password."
+                  example: secret123
+                device_name:
+                  type: string
+                  description: 'A human-recognisable device label, shown in the devices list.'
+                  example: 'Pixel 8 — Warehouse'
+                abilities:
+                  type: array
+                  description: "optional Narrow the token to specific modules. Omit for the user's full rights."
+                  example:
+                    - inventory
+                    - manufacturing
+                  items:
+                    type: string
+              required:
+                - email
+                - password
+                - device_name
+      security: []
+  /api/v1/auth/logout:
+    post:
+      summary: 'Sign out (this device)'
+      operationId: signOutthisDevice
+      description: "Revokes only the token used to make this call. Other devices stay signed\nin."
+      parameters: []
+      responses:
+        204:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {  }
+                properties: {  }
+      tags:
+        - '1. Authentication'
+  /api/v1/auth/logout-all:
+    post:
+      summary: 'Sign out everywhere'
+      operationId: signOutEverywhere
+      description: "Revokes every token belonging to the caller, including the current one.\nUse this for \"I lost my phone\"."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    revoked: 3
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      revoked:
+                        type: integer
+                        example: 3
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '1. Authentication'
+  /api/v1/auth/refresh:
+    post:
+      summary: 'Rotate the access token'
+      operationId: rotateTheAccessToken
+      description: "Issues a replacement token and revokes the current one atomically. The\nnew token inherits this one's name and abilities — refresh can never\nwiden a token's scope.\n\nCall it when the token is within a few days of `expires_at`. There is no\nseparate refresh-token credential: the access token rotates itself."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    token: 13|Kd83j...
+                    token_type: Bearer
+                    expires_at: '2026-10-04T09:30:00+00:00'
+                    abilities:
+                      - '*'
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        example: 13|Kd83j...
+                      token_type:
+                        type: string
+                        example: Bearer
+                      expires_at:
+                        type: string
+                        example: '2026-10-04T09:30:00+00:00'
+                      abilities:
+                        type: array
+                        example:
+                          - '*'
+                        items:
+                          type: string
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '1. Authentication'
+  /api/v1/auth/me:
+    get:
+      summary: 'Who am I'
+      operationId: whoAmI
+      description: "Returns the caller's profile, roles, and the full flat permission list.\n\nCall this right after login and on app resume: the permission array is\nwhat the app uses to decide which menu items and buttons to show. It is\na UX affordance only — every endpoint re-checks server-side, so a stale\nclient list can never grant access."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 1
+                    type: user
+                    name: 'System Administrator'
+                    email: admin@example.com
+                    email_verified_at: null
+                    created_at: '2026-01-01T00:00:00+00:00'
+                    updated_at: '2026-01-01T00:00:00+00:00'
+                    roles:
+                      -
+                        id: 1
+                        name: Admin
+                    permissions:
+                      - projects.view
+                      - projects.create
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      type:
+                        type: string
+                        example: user
+                      name:
+                        type: string
+                        example: 'System Administrator'
+                      email:
+                        type: string
+                        example: admin@example.com
+                      email_verified_at:
+                        type: string
+                        example: null
+                        nullable: true
+                      created_at:
+                        type: string
+                        example: '2026-01-01T00:00:00+00:00'
+                      updated_at:
+                        type: string
+                        example: '2026-01-01T00:00:00+00:00'
+                      roles:
+                        type: array
+                        example:
+                          -
+                            id: 1
+                            name: Admin
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: Admin
+                      permissions:
+                        type: array
+                        example:
+                          - projects.view
+                          - projects.create
+                        items:
+                          type: string
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '2. Profile'
+  /api/v1/auth/change-password:
+    post:
+      summary: 'Change my password'
+      operationId: changeMyPassword
+      description: "Requires the current password. On success **every other device is signed\nout** — the device making the call keeps working, so the user is not\nkicked out of the app they are holding."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    other_devices_signed_out: 2
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      other_devices_signed_out:
+                        type: integer
+                        example: 2
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+        422:
+          description: 'Wrong current password'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    code: validation_failed
+                    message: 'The current password is incorrect.'
+                    details:
+                      current_password:
+                        - 'The current password is incorrect.'
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: validation_failed
+                      message:
+                        type: string
+                        example: 'The current password is incorrect.'
+                      details:
+                        type: object
+                        properties:
+                          current_password:
+                            type: array
+                            example:
+                              - 'The current password is incorrect.'
+                            items:
+                              type: string
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '2. Profile'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                current_password:
+                  type: string
+                  description: 'The password in use right now.'
+                  example: oldsecret1
+                password:
+                  type: string
+                  description: 'The new password: at least 8 characters with letters and numbers.'
+                  example: newsecret1
+                password_confirmation:
+                  type: string
+                  description: 'Must match `password`.'
+                  example: newsecret1
+              required:
+                - current_password
+                - password
+                - password_confirmation
+  /api/v1/auth/devices:
+    get:
+      summary: 'List my devices'
+      operationId: listMyDevices
+      description: "Active sessions only — expired tokens are filtered out so the list\nmatches what still works. Newest activity first.\n\nThe token value itself is never returned; only metadata."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      id: 12
+                      type: device
+                      name: 'Pixel 8 — Warehouse'
+                      abilities:
+                        - '*'
+                      last_used_at: '2026-08-05T09:12:00+00:00'
+                      expires_at: '2026-09-04T09:00:00+00:00'
+                      created_at: '2026-08-05T09:00:00+00:00'
+                      is_current: true
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                    count: 1
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 12
+                        type: device
+                        name: 'Pixel 8 — Warehouse'
+                        abilities:
+                          - '*'
+                        last_used_at: '2026-08-05T09:12:00+00:00'
+                        expires_at: '2026-09-04T09:00:00+00:00'
+                        created_at: '2026-08-05T09:00:00+00:00'
+                        is_current: true
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 12
+                        type:
+                          type: string
+                          example: device
+                        name:
+                          type: string
+                          example: 'Pixel 8 — Warehouse'
+                        abilities:
+                          type: array
+                          example:
+                            - '*'
+                          items:
+                            type: string
+                        last_used_at:
+                          type: string
+                          example: '2026-08-05T09:12:00+00:00'
+                        expires_at:
+                          type: string
+                          example: '2026-09-04T09:00:00+00:00'
+                        created_at:
+                          type: string
+                          example: '2026-08-05T09:00:00+00:00'
+                        is_current:
+                          type: boolean
+                          example: true
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+                      count:
+                        type: integer
+                        example: 1
+      tags:
+        - '3. Devices'
+  '/api/v1/auth/devices/{id}':
+    delete:
+      summary: 'Revoke a device'
+      operationId: revokeADevice
+      description: "Signs one session out. Revoking the session you are currently using is\nallowed and behaves exactly like `POST /auth/logout`.\n\nA device id belonging to another user returns 422 rather than 404, so\nthe endpoint cannot be used to probe which token ids exist."
+      parameters: []
+      responses:
+        204:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {  }
+                properties: {  }
+      tags:
+        - '3. Devices'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The device id from `GET /auth/devices`.'
+        example: 12
+        required: true
+        schema:
+          type: integer
+  /api/v1/users:
+    get:
+      summary: 'List users'
+      operationId: listUsers
+      description: ''
+      parameters:
+        -
+          in: query
+          name: page
+          description: 'The page number.'
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: 'The page number.'
+            example: 1
+        -
+          in: query
+          name: per_page
+          description: 'Rows per page, max 100.'
+          example: 25
+          required: false
+          schema:
+            type: integer
+            description: 'Rows per page, max 100.'
+            example: 25
+        -
+          in: query
+          name: search
+          description: 'Matches name or email.'
+          example: ahmed
+          required: false
+          schema:
+            type: string
+            description: 'Matches name or email.'
+            example: ahmed
+        -
+          in: query
+          name: 'filter[role]'
+          description: 'Filter by role name; comma-separate for OR.'
+          example: 'Sales,Sales_Manager'
+          required: false
+          schema:
+            type: string
+            description: 'Filter by role name; comma-separate for OR.'
+            example: 'Sales,Sales_Manager'
+        -
+          in: query
+          name: 'filter[created]'
+          description: 'Inclusive date range `from,until`; either side may be omitted.'
+          example: '2026-01-01,2026-06-30'
+          required: false
+          schema:
+            type: string
+            description: 'Inclusive date range `from,until`; either side may be omitted.'
+            example: '2026-01-01,2026-06-30'
+        -
+          in: query
+          name: sort
+          description: 'Comma-separated; prefix with `-` for descending. Allowed: name, email, created_at.'
+          example: '-created_at'
+          required: false
+          schema:
+            type: string
+            description: 'Comma-separated; prefix with `-` for descending. Allowed: name, email, created_at.'
+            example: '-created_at'
+        -
+          in: query
+          name: include
+          description: 'Comma-separated relations. Allowed: roles.'
+          example: roles
+          required: false
+          schema:
+            type: string
+            description: 'Comma-separated relations. Allowed: roles.'
+            example: roles
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      id: 1
+                      type: user
+                      name: 'System Administrator'
+                      email: admin@example.com
+                      roles:
+                        -
+                          id: 1
+                          name: Admin
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                    pagination:
+                      total: 1
+                      count: 1
+                      per_page: 25
+                      current_page: 1
+                      total_pages: 1
+                  links:
+                    first: ...
+                    prev: null
+                    next: null
+                    last: ...
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        type: user
+                        name: 'System Administrator'
+                        email: admin@example.com
+                        roles:
+                          -
+                            id: 1
+                            name: Admin
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        type:
+                          type: string
+                          example: user
+                        name:
+                          type: string
+                          example: 'System Administrator'
+                        email:
+                          type: string
+                          example: admin@example.com
+                        roles:
+                          type: array
+                          example:
+                            -
+                              id: 1
+                              name: Admin
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 1
+                              name:
+                                type: string
+                                example: Admin
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+                      pagination:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            example: 1
+                          count:
+                            type: integer
+                            example: 1
+                          per_page:
+                            type: integer
+                            example: 25
+                          current_page:
+                            type: integer
+                            example: 1
+                          total_pages:
+                            type: integer
+                            example: 1
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                        example: ...
+                      prev:
+                        type: string
+                        example: null
+                        nullable: true
+                      next:
+                        type: string
+                        example: null
+                        nullable: true
+                      last:
+                        type: string
+                        example: ...
+      tags:
+        - '4. Users'
+    post:
+      summary: 'Create a user'
+      operationId: createAUser
+      description: "At least one role is required: an account with no role cannot sign in\nat all, so creating one would silently produce a dead account."
+      parameters: []
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 4
+                    type: user
+                    name: 'Ahmed Hassan'
+                    email: ahmed@example.com
+                    roles:
+                      -
+                        id: 2
+                        name: Sales
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 4
+                      type:
+                        type: string
+                        example: user
+                      name:
+                        type: string
+                        example: 'Ahmed Hassan'
+                      email:
+                        type: string
+                        example: ahmed@example.com
+                      roles:
+                        type: array
+                        example:
+                          -
+                            id: 2
+                            name: Sales
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 2
+                            name:
+                              type: string
+                              example: Sales
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '4. Users'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 'Display name.'
+                  example: 'Ahmed Hassan'
+                email:
+                  type: string
+                  description: 'Unique email address.'
+                  example: ahmed@example.com
+                password:
+                  type: string
+                  description: 'At least 8 characters with letters and numbers.'
+                  example: secret123
+                roles:
+                  type: array
+                  description: 'One or more existing role names.'
+                  example:
+                    - Sales
+                  items:
+                    type: string
+              required:
+                - name
+                - email
+                - password
+                - roles
+  '/api/v1/users/{id}':
+    get:
+      summary: 'Show a user'
+      operationId: showAUser
+      description: "Includes the target's full resolved permission list, so an administrator\nscreen can show exactly what this account can do."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 3
+                    type: user
+                    name: 'Ahmed Hassan'
+                    email: ahmed@example.com
+                    roles:
+                      -
+                        id: 2
+                        name: Sales
+                    permissions:
+                      - projects.view
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 3
+                      type:
+                        type: string
+                        example: user
+                      name:
+                        type: string
+                        example: 'Ahmed Hassan'
+                      email:
+                        type: string
+                        example: ahmed@example.com
+                      roles:
+                        type: array
+                        example:
+                          -
+                            id: 2
+                            name: Sales
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 2
+                            name:
+                              type: string
+                              example: Sales
+                      permissions:
+                        type: array
+                        example:
+                          - projects.view
+                        items:
+                          type: string
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '4. Users'
+    patch:
+      summary: 'Update a user'
+      operationId: updateAUser
+      description: "Send only the fields you want changed. Setting `password` revokes every\nAPI session belonging to that user — an administrator resetting a\npassword expects the old credentials to stop working immediately."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 3
+                    type: user
+                    name: 'Ahmed H.'
+                    email: ahmed.h@example.com
+                    roles:
+                      -
+                        id: 3
+                        name: Sales_Manager
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 3
+                      type:
+                        type: string
+                        example: user
+                      name:
+                        type: string
+                        example: 'Ahmed H.'
+                      email:
+                        type: string
+                        example: ahmed.h@example.com
+                      roles:
+                        type: array
+                        example:
+                          -
+                            id: 3
+                            name: Sales_Manager
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 3
+                            name:
+                              type: string
+                              example: Sales_Manager
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '4. Users'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 'optional New display name.'
+                  example: 'Ahmed H.'
+                email:
+                  type: string
+                  description: 'optional New unique email.'
+                  example: ahmed.h@example.com
+                password:
+                  type: string
+                  description: "optional New password; revokes the user's sessions."
+                  example: newsecret1
+                roles:
+                  type: array
+                  description: "optional Replaces the user's roles entirely."
+                  example:
+                    - Sales_Manager
+                  items:
+                    type: string
+    delete:
+      summary: 'Delete a user'
+      operationId: deleteAUser
+      description: "Also revokes all of the target's API tokens. UserPolicy forbids deleting\nyour own account, so this always returns 403 when `user` is the caller."
+      parameters: []
+      responses:
+        204:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {  }
+                properties: {  }
+      tags:
+        - '4. Users'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the user.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+      -
+        in: path
+        name: user
+        description: 'The user id.'
+        example: 3
+        required: true
+        schema:
+          type: integer
+  /api/v1/roles:
+    get:
+      summary: 'List roles'
+      operationId: listRoles
+      description: ''
+      parameters:
+        -
+          in: query
+          name: search
+          description: 'Matches the role name.'
+          example: sales
+          required: false
+          schema:
+            type: string
+            description: 'Matches the role name.'
+            example: sales
+        -
+          in: query
+          name: sort
+          description: 'Allowed: name, created_at. Prefix `-` for descending.'
+          example: name
+          required: false
+          schema:
+            type: string
+            description: 'Allowed: name, created_at. Prefix `-` for descending.'
+            example: name
+        -
+          in: query
+          name: include
+          description: 'Allowed: permissions.'
+          example: permissions
+          required: false
+          schema:
+            type: string
+            description: 'Allowed: permissions.'
+            example: permissions
+        -
+          in: query
+          name: per_page
+          description: 'Rows per page, max 100.'
+          example: 25
+          required: false
+          schema:
+            type: integer
+            description: 'Rows per page, max 100.'
+            example: 25
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      id: 1
+                      type: role
+                      name: Admin
+                      guard_name: web
+                      users_count: 1
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                    pagination:
+                      total: 1
+                      count: 1
+                      per_page: 25
+                      current_page: 1
+                      total_pages: 1
+                  links:
+                    first: ...
+                    prev: null
+                    next: null
+                    last: ...
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        type: role
+                        name: Admin
+                        guard_name: web
+                        users_count: 1
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        type:
+                          type: string
+                          example: role
+                        name:
+                          type: string
+                          example: Admin
+                        guard_name:
+                          type: string
+                          example: web
+                        users_count:
+                          type: integer
+                          example: 1
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+                      pagination:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            example: 1
+                          count:
+                            type: integer
+                            example: 1
+                          per_page:
+                            type: integer
+                            example: 25
+                          current_page:
+                            type: integer
+                            example: 1
+                          total_pages:
+                            type: integer
+                            example: 1
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                        example: ...
+                      prev:
+                        type: string
+                        example: null
+                        nullable: true
+                      next:
+                        type: string
+                        example: null
+                        nullable: true
+                      last:
+                        type: string
+                        example: ...
+      tags:
+        - '5. Roles'
+    post:
+      summary: 'Create a role'
+      operationId: createARole
+      description: ''
+      parameters: []
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 9
+                    type: role
+                    name: Warehouse_Lead
+                    guard_name: web
+                    permissions:
+                      - inventory.view
+                      - issue_vouchers.create
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 9
+                      type:
+                        type: string
+                        example: role
+                      name:
+                        type: string
+                        example: Warehouse_Lead
+                      guard_name:
+                        type: string
+                        example: web
+                      permissions:
+                        type: array
+                        example:
+                          - inventory.view
+                          - issue_vouchers.create
+                        items:
+                          type: string
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '5. Roles'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 'Unique role name; letters, digits, spaces, `_` and `-`.'
+                  example: Warehouse_Lead
+                permissions:
+                  type: array
+                  description: 'Permission names from `GET /permissions`.'
+                  example:
+                    - inventory.view
+                    - issue_vouchers.create
+                  items:
+                    type: string
+              required:
+                - name
+                - permissions
+  '/api/v1/roles/{id}':
+    get:
+      summary: 'Show a role'
+      operationId: showARole
+      description: 'Always includes the full permission list attached to the role.'
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 2
+                    type: role
+                    name: Sales
+                    guard_name: web
+                    users_count: 4
+                    permissions:
+                      - projects.view
+                      - projects.create
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 2
+                      type:
+                        type: string
+                        example: role
+                      name:
+                        type: string
+                        example: Sales
+                      guard_name:
+                        type: string
+                        example: web
+                      users_count:
+                        type: integer
+                        example: 4
+                      permissions:
+                        type: array
+                        example:
+                          - projects.view
+                          - projects.create
+                        items:
+                          type: string
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '5. Roles'
+    patch:
+      summary: 'Update a role'
+      operationId: updateARole
+      description: "`permissions` **replaces** the role's whole set — send the complete list,\nnot a delta. That mirrors the panel's checkbox grid, where saving writes\nwhatever is ticked."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 9
+                    type: role
+                    name: Warehouse_Supervisor
+                    guard_name: web
+                    permissions:
+                      - inventory.view
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 9
+                      type:
+                        type: string
+                        example: role
+                      name:
+                        type: string
+                        example: Warehouse_Supervisor
+                      guard_name:
+                        type: string
+                        example: web
+                      permissions:
+                        type: array
+                        example:
+                          - inventory.view
+                        items:
+                          type: string
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '5. Roles'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 'optional New unique role name.'
+                  example: Warehouse_Supervisor
+                permissions:
+                  type: array
+                  description: 'optional The complete replacement permission set.'
+                  example:
+                    - inventory.view
+                  items:
+                    type: string
+    delete:
+      summary: 'Delete a role'
+      operationId: deleteARole
+      description: "RolePolicy refuses to delete the Admin role, so that always returns 403.\nUsers who held the deleted role lose its permissions immediately; a user\nleft with no role at all can no longer sign in."
+      parameters: []
+      responses:
+        204:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {  }
+                properties: {  }
+      tags:
+        - '5. Roles'
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the role.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+      -
+        in: path
+        name: role
+        description: 'The role id.'
+        example: 2
+        required: true
+        schema:
+          type: integer
+  /api/v1/permissions:
+    get:
+      summary: 'List permissions'
+      operationId: listPermissions
+      description: "Returns every permission in the catalog, grouped by its prefix, with the\nlocalized label the panel shows. Bounded (~190 rows, fixed by the\nseeder) so it is not paginated.\n\nLabels honour `Accept-Language`."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      group: projects
+                      group_label: 'Project Management'
+                      permissions:
+                        -
+                          name: projects.view
+                          label: 'View Projects'
+                        -
+                          name: projects.create
+                          label: 'Create Project'
+                  meta:
+                    request_id: 9f1c...
+                    api_version: '1'
+                    count: 1
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        group: projects
+                        group_label: 'Project Management'
+                        permissions:
+                          -
+                            name: projects.view
+                            label: 'View Projects'
+                          -
+                            name: projects.create
+                            label: 'Create Project'
+                    items:
+                      type: object
+                      properties:
+                        group:
+                          type: string
+                          example: projects
+                        group_label:
+                          type: string
+                          example: 'Project Management'
+                        permissions:
+                          type: array
+                          example:
+                            -
+                              name: projects.view
+                              label: 'View Projects'
+                            -
+                              name: projects.create
+                              label: 'Create Project'
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                example: projects.view
+                              label:
+                                type: string
+                                example: 'View Projects'
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c...
+                      api_version:
+                        type: string
+                        example: '1'
+                      count:
+                        type: integer
+                        example: 1
+      tags:
+        - '6. Permissions'

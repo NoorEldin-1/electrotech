@@ -121,10 +121,40 @@ class Idempotency
 
     private function cacheKey(Request $request, string $key): string
     {
-        // Scope by user so one tenant cannot replay another's response.
-        $userId = $request->user()?->getAuthIdentifier() ?? 'guest';
+        return "idempotency:u={$this->callerFingerprint($request)}:m={$request->method()}:k={$key}";
+    }
 
-        return "idempotency:u={$userId}:m={$request->method()}:k={$key}";
+    /**
+     * A stable per-caller scope, so one caller can never replay another's
+     * cached response by reusing their Idempotency-Key.
+     *
+     * This middleware is GLOBAL, so it runs before any route middleware has
+     * authenticated anyone: at this point `$request->user()` cannot see a
+     * bearer token (the `auth:sanctum` guard has not run) and, for the panel,
+     * the session has not been started either. It therefore returned 'guest'
+     * for effectively every request — collapsing all callers into one shared
+     * scope and defeating the isolation this key was supposed to provide.
+     *
+     * The bearer token is available here, unparsed, on every API request, so
+     * we fingerprint that instead. Two tokens of the same user get separate
+     * scopes, which is the conservative direction: a genuine client retry
+     * reuses the same token and still replays, while a different caller can
+     * never read a cached body that was not produced for it.
+     *
+     * The resolved-user fallback is kept for any caller that reaches this
+     * middleware already authenticated.
+     */
+    private function callerFingerprint(Request $request): string
+    {
+        $bearer = $request->bearerToken();
+
+        if (is_string($bearer) && $bearer !== '') {
+            return 't:'.hash('xxh128', $bearer);
+        }
+
+        $userId = $request->user()?->getAuthIdentifier();
+
+        return $userId !== null ? "u:{$userId}" : 'guest';
     }
 
     /**

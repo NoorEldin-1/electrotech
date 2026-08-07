@@ -201,6 +201,20 @@ return [
          * file. Using 'default' here means to use the `default` set in cache.php.
          */
 
-        'store' => 'redis',
+        /*
+         * Production uses Redis: the permission graph is read on essentially
+         * every request and Redis keeps it off the database.
+         *
+         * It MUST be overridable, though. A hardcoded 'redis' here also
+         * applies under PHPUnit, where it bypasses the `CACHE_STORE=array`
+         * set in phpunit.xml — so the test suite shares one persistent,
+         * process-external cache with the developer's running dev app while
+         * its own database is torn down and rebuilt between every test. The
+         * cache and the database then drift, and the seeder starts throwing
+         * `PermissionDoesNotExist` for permissions that are plainly in the
+         * table. phpunit.xml sets this to `array` so each test process gets a
+         * clean, isolated cache.
+         */
+        'store' => env('PERMISSION_CACHE_STORE', 'redis'),
     ],
 ];

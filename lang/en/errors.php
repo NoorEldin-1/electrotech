@@ -42,6 +42,27 @@ return [
         ],
     ],
 
+    /*
+     * REST API error envelope messages (API_Development_Plan.md §3.3). These
+     * are the `error.message` prose; the machine-readable `error.code` beside
+     * them never changes and is what a client branches on.
+     */
+    'api' => [
+        'unauthenticated' => 'Authentication required. Send a valid bearer token in the Authorization header.',
+        'invalid_credentials' => 'The email or password is incorrect.',
+        'account_disabled' => 'This account has no role assigned and cannot sign in. Contact your system administrator.',
+        'forbidden' => 'You do not have permission to perform this action.',
+        'insufficient_token_ability' => 'This access token was issued with a narrower scope than this endpoint requires. Sign in again requesting the needed abilities.',
+        'not_found' => 'The requested endpoint or resource does not exist.',
+        'model_not_found' => 'The requested :model was not found.',
+        'method_not_allowed' => 'This HTTP method is not supported on this endpoint.',
+        'rate_limited' => 'Too many requests. Wait for the period given in the Retry-After header, then retry.',
+        'maintenance' => 'The platform is briefly offline for an update. Retry in a few minutes.',
+        'server_error' => 'An unexpected error occurred and has been logged. Quote the request_id when reporting it.',
+        'password_incorrect' => 'The current password is incorrect.',
+        'token_limit_evicted' => 'The oldest device session was signed out because the per-user token limit was reached.',
+    ],
+
     'inventory' => [
         'insufficient_stock' => "Insufficient stock for ':item' in :warehouse. Available: :available, Requested: :requested.",
         'insufficient_transfer' => "Insufficient stock for ':item' to transfer from :warehouse. Available: :available, Requested: :requested.",

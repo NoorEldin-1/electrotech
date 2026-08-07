@@ -9,12 +9,19 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser
 {
+    // HasApiTokens powers the REST API's bearer authentication (Sanctum
+    // personal access tokens). It grants no extra rights on its own: a token
+    // is a *narrowing* of the user, and every API request still passes through
+    // the same Spatie permissions and policies the panel uses.
+    use HasApiTokens;
+
     use HasFactory;
     use HasRoles;
     use LogsActivity;

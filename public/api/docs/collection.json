@@ -1,0 +1,945 @@
+{
+    "variable": [
+        {
+            "id": "baseUrl",
+            "key": "baseUrl",
+            "type": "string",
+            "name": "string",
+            "value": "https:\/\/app.electrotech.findosystem.com"
+        }
+    ],
+    "info": {
+        "name": "Electrotech API \u2014 \u062a\u0648\u062b\u064a\u0642 \u0648\u0627\u062c\u0647\u0627\u062a \u0627\u0644\u0646\u0638\u0627\u0645",
+        "_postman_id": "491f11b8-5e37-4fe2-8ec3-d6dd01323207",
+        "description": "REST API for the Electrotech ERP platform: sales pipeline, technical office, procurement, warehouse, manufacturing, delivery and accounting.",
+        "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
+    },
+    "item": [
+        {
+            "name": "0. Meta",
+            "description": "\nService discovery and shared vocabulary. Call these once at app start; the\npayloads change only when the platform is redeployed.",
+            "item": [
+                {
+                    "name": "Service info",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/meta",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/meta"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "A cheap, unauthenticated liveness + version probe. Use it as the app's\nconnectivity check and to detect that a client build is older than the\ndeployed API.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"service\":\"Electrotech\",\"api_version\":\"1\",\"server_time\":\"2026-08-05T09:30:00+00:00\",\"locales\":[\"en\",\"ar\"],\"default_locale\":\"en\",\"token_ttl_minutes\":43200,\"max_per_page\":100,\"requires_idempotency_key\":true,\"abilities\":[\"identity\",\"sales\"],\"docs_url\":\"https:\/\/app.electrotech.findosystem.com\/api\/docs\"},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Enum catalog",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/meta\/enums",
+                            "query": [
+                                {
+                                    "key": "only",
+                                    "value": "project_status,item_type",
+                                    "description": "Comma-separated enum keys to return instead of all.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/meta\/enums?only=project_status%2Citem_type"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Every enumerated value in the platform \u2014 project statuses, item types,\nvoucher statuses, units of measure \u2014 as `{value, label, color}`.\n\nBuild dropdowns and status badges from this instead of hard-coding\noptions in Dart. A new case added on the server then appears in the app\nwithout a release, and the Arabic labels stay in one place. `label`\nhonours `Accept-Language`; `color` is the same semantic colour the web\npanel paints that state."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"project_status\":[{\"value\":\"tender\",\"label\":\"Tender\",\"color\":\"info\"},{\"value\":\"in_progress\",\"label\":\"In Progress\",\"color\":\"primary\"}],\"item_type\":[{\"value\":\"raw_material\",\"label\":\"Raw Material\",\"color\":\"info\"}]},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "1. Authentication",
+            "description": "\nSign in, sign out and token rotation.\n\nEvery other endpoint in this API requires a bearer token obtained here:\n\n    Authorization: Bearer 12|xxxxxxxxxxxxxxxx\n    Accept: application\/json",
+            "item": [
+                {
+                    "name": "Sign in",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/auth\/login",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/auth\/login"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"email\":\"warehouse@example.com\",\"password\":\"secret123\",\"device_name\":\"Pixel 8 \u2014 Warehouse\",\"abilities\":[\"inventory\",\"manufacturing\"]}"
+                        },
+                        "description": "Exchanges credentials for a bearer token. The plain-text token is\nreturned **once and only once** \u2014 store it in secure storage\n(`flutter_secure_storage`), never in shared preferences.\n\nThrottled to 5 attempts per minute per email+IP.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"token\":\"12|Xj3kd...\",\"token_type\":\"Bearer\",\"expires_at\":\"2026-09-04T09:30:00+00:00\",\"abilities\":[\"*\"],\"user\":{\"id\":1,\"type\":\"user\",\"name\":\"System Administrator\",\"email\":\"admin@example.com\",\"roles\":[{\"id\":1,\"name\":\"Admin\"}],\"permissions\":[\"projects.view\"]}},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"code\":\"validation_failed\",\"message\":\"The email or password is incorrect.\",\"details\":{\"email\":[\"The email or password is incorrect.\"]}},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Wrong credentials"
+                        }
+                    ]
+                },
+                {
+                    "name": "Sign out (this device)",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/auth\/logout",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/auth\/logout"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Revokes only the token used to make this call. Other devices stay signed\nin."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Sign out everywhere",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/auth\/logout-all",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/auth\/logout-all"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Revokes every token belonging to the caller, including the current one.\nUse this for \"I lost my phone\"."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"revoked\":3},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Rotate the access token",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/auth\/refresh",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/auth\/refresh"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Issues a replacement token and revokes the current one atomically. The\nnew token inherits this one's name and abilities \u2014 refresh can never\nwiden a token's scope.\n\nCall it when the token is within a few days of `expires_at`. There is no\nseparate refresh-token credential: the access token rotates itself."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"token\":\"13|Kd83j...\",\"token_type\":\"Bearer\",\"expires_at\":\"2026-10-04T09:30:00+00:00\",\"abilities\":[\"*\"]},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "2. Profile",
+            "description": "\nThe signed-in user's own account: who am I, edit my details, change my\npassword. Managing *other* users lives under \"Users\" and is permission-gated.",
+            "item": [
+                {
+                    "name": "Who am I",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/auth\/me",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/auth\/me"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns the caller's profile, roles, and the full flat permission list.\n\nCall this right after login and on app resume: the permission array is\nwhat the app uses to decide which menu items and buttons to show. It is\na UX affordance only \u2014 every endpoint re-checks server-side, so a stale\nclient list can never grant access."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"id\":1,\"type\":\"user\",\"name\":\"System Administrator\",\"email\":\"admin@example.com\",\"email_verified_at\":null,\"created_at\":\"2026-01-01T00:00:00+00:00\",\"updated_at\":\"2026-01-01T00:00:00+00:00\",\"roles\":[{\"id\":1,\"name\":\"Admin\"}],\"permissions\":[\"projects.view\",\"projects.create\"]},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Change my password",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/auth\/change-password",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/auth\/change-password"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"current_password\":\"oldsecret1\",\"password\":\"newsecret1\",\"password_confirmation\":\"newsecret1\"}"
+                        },
+                        "description": "Requires the current password. On success **every other device is signed\nout** \u2014 the device making the call keeps working, so the user is not\nkicked out of the app they are holding."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"other_devices_signed_out\":2},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"code\":\"validation_failed\",\"message\":\"The current password is incorrect.\",\"details\":{\"current_password\":[\"The current password is incorrect.\"]}},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Wrong current password"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "3. Devices",
+            "description": "\nThe caller's own active sign-in sessions. Every login creates one; this is\nhow a user reviews them and signs a lost device out.\n\nStrictly self-scoped: there is no endpoint here to inspect or revoke another\nuser's sessions. An administrator who needs to lock an account out disables\nthe user through the Users endpoints instead.",
+            "item": [
+                {
+                    "name": "List my devices",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/auth\/devices",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/auth\/devices"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Active sessions only \u2014 expired tokens are filtered out so the list\nmatches what still works. Newest activity first.\n\nThe token value itself is never returned; only metadata."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"id\":12,\"type\":\"device\",\"name\":\"Pixel 8 \u2014 Warehouse\",\"abilities\":[\"*\"],\"last_used_at\":\"2026-08-05T09:12:00+00:00\",\"expires_at\":\"2026-09-04T09:00:00+00:00\",\"created_at\":\"2026-08-05T09:00:00+00:00\",\"is_current\":true}],\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\",\"count\":1}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Revoke a device",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/auth\/devices\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/auth\/devices\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 12,
+                                    "description": "The device id from `GET \/auth\/devices`."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Signs one session out. Revoking the session you are currently using is\nallowed and behaves exactly like `POST \/auth\/logout`.\n\nA device id belonging to another user returns 422 rather than 404, so\nthe endpoint cannot be used to probe which token ids exist."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Success"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "4. Users",
+            "description": "\nAdministration of user accounts. Every endpoint is gated by the same\n`users.*` permissions and the same UserPolicy the admin panel uses \u2014 the API\nintroduces no parallel authorization.",
+            "item": [
+                {
+                    "name": "List users",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/users",
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "The page number.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "25",
+                                    "description": "Rows per page, max 100.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "ahmed",
+                                    "description": "Matches name or email.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "filter[role]",
+                                    "value": "Sales,Sales_Manager",
+                                    "description": "Filter by role name; comma-separate for OR.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "filter[created]",
+                                    "value": "2026-01-01,2026-06-30",
+                                    "description": "Inclusive date range `from,until`; either side may be omitted.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "-created_at",
+                                    "description": "Comma-separated; prefix with `-` for descending. Allowed: name, email, created_at.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "include",
+                                    "value": "roles",
+                                    "description": "Comma-separated relations. Allowed: roles.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/users?page=1&per_page=25&search=ahmed&filter%5Brole%5D=Sales%2CSales_Manager&filter%5Bcreated%5D=2026-01-01%2C2026-06-30&sort=-created_at&include=roles"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"id\":1,\"type\":\"user\",\"name\":\"System Administrator\",\"email\":\"admin@example.com\",\"roles\":[{\"id\":1,\"name\":\"Admin\"}]}],\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\",\"pagination\":{\"total\":1,\"count\":1,\"per_page\":25,\"current_page\":1,\"total_pages\":1}},\"links\":{\"first\":\"...\",\"prev\":null,\"next\":null,\"last\":\"...\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Show a user",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/users\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/users\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 1,
+                                    "description": "The ID of the user."
+                                },
+                                {
+                                    "id": "user",
+                                    "key": "user",
+                                    "value": 3,
+                                    "description": "The user id."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Includes the target's full resolved permission list, so an administrator\nscreen can show exactly what this account can do."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"id\":3,\"type\":\"user\",\"name\":\"Ahmed Hassan\",\"email\":\"ahmed@example.com\",\"roles\":[{\"id\":2,\"name\":\"Sales\"}],\"permissions\":[\"projects.view\"]},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create a user",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/users",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/users"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"Ahmed Hassan\",\"email\":\"ahmed@example.com\",\"password\":\"secret123\",\"roles\":[\"Sales\"]}"
+                        },
+                        "description": "At least one role is required: an account with no role cannot sign in\nat all, so creating one would silently produce a dead account."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"data\":{\"id\":4,\"type\":\"user\",\"name\":\"Ahmed Hassan\",\"email\":\"ahmed@example.com\",\"roles\":[{\"id\":2,\"name\":\"Sales\"}]},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Created"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update a user",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/users\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/users\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 1,
+                                    "description": "The ID of the user."
+                                },
+                                {
+                                    "id": "user",
+                                    "key": "user",
+                                    "value": 3,
+                                    "description": "The user id."
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"Ahmed H.\",\"email\":\"ahmed.h@example.com\",\"password\":\"newsecret1\",\"roles\":[\"Sales_Manager\"]}"
+                        },
+                        "description": "Send only the fields you want changed. Setting `password` revokes every\nAPI session belonging to that user \u2014 an administrator resetting a\npassword expects the old credentials to stop working immediately."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"id\":3,\"type\":\"user\",\"name\":\"Ahmed H.\",\"email\":\"ahmed.h@example.com\",\"roles\":[{\"id\":3,\"name\":\"Sales_Manager\"}]},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete a user",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/users\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/users\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 1,
+                                    "description": "The ID of the user."
+                                },
+                                {
+                                    "id": "user",
+                                    "key": "user",
+                                    "value": 3,
+                                    "description": "The user id."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Also revokes all of the target's API tokens. UserPolicy forbids deleting\nyour own account, so this always returns 403 when `user` is the caller."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Deleted"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "5. Roles",
+            "description": "\nRoles and their attached permissions. Gated by `roles.manage` through the\nexisting RolePolicy \u2014 the same gate the panel's Roles screen uses.\n\nThe Admin role is protected: RolePolicy refuses to delete it, and the\ndeploy-time seeder force-syncs it to every permission in the catalog. Do not\ntry to trim it through this API; the next deploy would undo it.",
+            "item": [
+                {
+                    "name": "List roles",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/roles",
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "sales",
+                                    "description": "Matches the role name.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "name",
+                                    "description": "Allowed: name, created_at. Prefix `-` for descending.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "include",
+                                    "value": "permissions",
+                                    "description": "Allowed: permissions.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "25",
+                                    "description": "Rows per page, max 100.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/roles?search=sales&sort=name&include=permissions&per_page=25"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"id\":1,\"type\":\"role\",\"name\":\"Admin\",\"guard_name\":\"web\",\"users_count\":1}],\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\",\"pagination\":{\"total\":1,\"count\":1,\"per_page\":25,\"current_page\":1,\"total_pages\":1}},\"links\":{\"first\":\"...\",\"prev\":null,\"next\":null,\"last\":\"...\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Show a role",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/roles\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/roles\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 1,
+                                    "description": "The ID of the role."
+                                },
+                                {
+                                    "id": "role",
+                                    "key": "role",
+                                    "value": 2,
+                                    "description": "The role id."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Always includes the full permission list attached to the role."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"id\":2,\"type\":\"role\",\"name\":\"Sales\",\"guard_name\":\"web\",\"users_count\":4,\"permissions\":[\"projects.view\",\"projects.create\"]},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create a role",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/roles",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/roles"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"Warehouse_Lead\",\"permissions\":[\"inventory.view\",\"issue_vouchers.create\"]}"
+                        },
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"data\":{\"id\":9,\"type\":\"role\",\"name\":\"Warehouse_Lead\",\"guard_name\":\"web\",\"permissions\":[\"inventory.view\",\"issue_vouchers.create\"]},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Created"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update a role",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/roles\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/roles\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 1,
+                                    "description": "The ID of the role."
+                                },
+                                {
+                                    "id": "role",
+                                    "key": "role",
+                                    "value": 9,
+                                    "description": "The role id."
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"Warehouse_Supervisor\",\"permissions\":[\"inventory.view\"]}"
+                        },
+                        "description": "`permissions` **replaces** the role's whole set \u2014 send the complete list,\nnot a delta. That mirrors the panel's checkbox grid, where saving writes\nwhatever is ticked."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"id\":9,\"type\":\"role\",\"name\":\"Warehouse_Supervisor\",\"guard_name\":\"web\",\"permissions\":[\"inventory.view\"]},\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete a role",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/roles\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/roles\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 1,
+                                    "description": "The ID of the role."
+                                },
+                                {
+                                    "id": "role",
+                                    "key": "role",
+                                    "value": 9,
+                                    "description": "The role id."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "RolePolicy refuses to delete the Admin role, so that always returns 403.\nUsers who held the deleted role lose its permissions immediately; a user\nleft with no role at all can no longer sign in."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Deleted"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "6. Permissions",
+            "description": "\nThe read-only permission catalog, grouped exactly as the panel's Roles\nscreen groups it. A Flutter role-editing screen renders this directly.\n\nPermissions are defined in code (RoleAndPermissionSeeder) and synced on\nevery deploy, so there is deliberately no create\/update\/delete here \u2014 a\npermission invented at runtime would be one nothing ever checks.",
+            "item": [
+                {
+                    "name": "List permissions",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/permissions",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/permissions"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns every permission in the catalog, grouped by its prefix, with the\nlocalized label the panel shows. Bounded (~190 rows, fixed by the\nseeder) so it is not paginated.\n\nLabels honour `Accept-Language`."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"group\":\"projects\",\"group_label\":\"Project Management\",\"permissions\":[{\"name\":\"projects.view\",\"label\":\"View Projects\"},{\"name\":\"projects.create\",\"label\":\"Create Project\"}]}],\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\",\"count\":1}}",
+                            "name": "Success"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "Authorization",
+                "type": "string"
+            }
+        ]
+    }
+}

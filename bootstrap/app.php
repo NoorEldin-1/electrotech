@@ -1,17 +1,27 @@
 <?php
 
+use App\Exceptions\Api\ApiExceptionRenderer;
+use App\Http\Middleware\ApiRequestId;
+use App\Http\Middleware\ApiSecurityHeaders;
 use App\Http\Middleware\CompressResponse;
+use App\Http\Middleware\ConditionalGet;
+use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\Idempotency;
+use App\Http\Middleware\RequireIdempotencyKey;
+use App\Http\Middleware\SetApiLocale;
 use App\Http\Middleware\StaticAssetCacheControl;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        apiPrefix: 'api',
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Network-resilience stack.
@@ -62,7 +72,53 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'admin/ping',
         ]);
+
+        // ------------------------------------------------------------------
+        // REST API stack (routes/api/v1.php). See API_Development_Plan.md §3.
+        //
+        // The API is stateless: no session, no cookies, no CSRF. The bearer
+        // token is the only credential, so Laravel's `api` group stays lean.
+        //
+        // Order, request flow (outermost → innermost):
+        //   1. ApiRequestId       — mint the correlation id first, so every
+        //                           later layer (including the exception
+        //                           renderer) can quote it
+        //   2. ApiSecurityHeaders — unconditional, header-only
+        //   3. ForceJsonResponse  — sets Accept: application/json before
+        //                           anything can render an HTML error page
+        //   4. SetApiLocale       — must run before validation so messages
+        //                           come back in the client's language
+        //   5. RequireIdempotencyKey — rejects an unprotected write before it
+        //                           reaches the controller. The global
+        //                           Idempotency middleware (appended above)
+        //                           then does the actual replay caching.
+        //   6. ConditionalGet     — innermost of these, so it hashes the
+        //                           final rendered body
+        // ------------------------------------------------------------------
+        // Sanctum ships these but does not self-register them in Laravel 11+.
+        // `ability:x` passes when the token holds ANY listed ability; a token
+        // issued with '*' satisfies every check, which is why the default
+        // login token needs no per-route change.
+        $middleware->alias([
+            'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
+            'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
+        ]);
+
+        $middleware->api(prepend: [
+            ApiRequestId::class,
+            ApiSecurityHeaders::class,
+            ForceJsonResponse::class,
+            SetApiLocale::class,
+            RequireIdempotencyKey::class,
+            ConditionalGet::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Every throwable escaping an `api/*` route is rendered as the error
+        // envelope in API_Development_Plan.md §3.3. Returning null from the
+        // renderer hands non-API requests back to Laravel, so the Filament
+        // panel keeps its HTML error pages untouched.
+        $exceptions->render(function (Throwable $e, Request $request) {
+            return app(ApiExceptionRenderer::class)->render($e, $request);
+        });
     })->create();
