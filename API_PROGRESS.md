@@ -412,16 +412,50 @@ nothing failing anywhere else.
 - **CI (`.github/workflows/deploy.yml`)** — unchanged. It only opens an SSH
   session and runs `deploy.sh`.
 
+### Production verification — 2026-08-08 (commit `42dad4f`, deploy run #32)
+
+Deployed via GitHub Actions in 48s. Deploy log confirmed: the
+`personal_access_tokens` migration ran, the committed docs were found
+(172,863 bytes), `config:cache` and `route:cache` succeeded, and expired-token
+pruning ran.
+
+`config:cache` succeeding is the meaningful signal: without the
+`config/scribe.php` guard (Finding #12) that exact step would have fataled and
+left the site in maintenance mode.
+
+| Check | Result |
+|---|---|
+| `GET /api/v1/meta` | 200, correct envelope, `default_locale: ar` |
+| Security headers | `nosniff`, `DENY`, `no-referrer`, HSTS present over HTTPS |
+| `X-API-Version` / `X-Request-Id` | present, header matches `meta.request_id` |
+| 401 / 404 / 405 envelopes | correct codes, `allowed_methods` on the 405 |
+| Write without `Idempotency-Key` | 400 `bad_request` |
+| Login validation | 422 with per-field `details` |
+| `Accept-Language: en` | English message; Arabic by default |
+| ETag → `If-None-Match` | 304 Not Modified |
+| Login rate limit | 5 × 422 then 429 with `Retry-After: 56` |
+| Invalid bearer token | 401 (not 500 — token table present and queried) |
+| `/api/docs` | 301 → `/api/docs/` → 200, all CSS/JS/images 200 |
+| Docs content | Base URL and every example on the production host; **0** occurrences of `localhost` |
+| `openapi.yaml` / `collection.json` | 200, `servers.url` = production origin |
+| OG / Twitter card | present, `summary_large_image` |
+| Admin panel `/`, `/admin/login`, `/documentation`, `/up` | all 200 — unaffected |
+| Legacy `/docs` | still 301 → `/documentation` (Arabic manual), no collision |
+
+**Still unverified:** an authenticated round-trip (login → token → `/auth/me` →
+logout) against production, which needs a real credential. Every layer around it
+is proven; the token lookup itself is exercised by the invalid-token 401.
+
 ### Server checklist (one-time, on `app.electrotech.findosystem.com`)
-- [ ] Confirm `APP_URL=https://app.electrotech.findosystem.com` in the server's
+- [x] Confirm `APP_URL=https://app.electrotech.findosystem.com` in the server's
       `.env` — it is the `base_url` printed in the docs and the OpenAPI
       `servers` entry, and it is what makes the OG card resolve absolute URLs.
-- [ ] Confirm `APP_DEBUG=false` — the API's 500 handler only suppresses details
+- [x] Confirm `APP_DEBUG=false` — the API's 500 handler only suppresses details
       when debug is off.
 - [ ] Optionally set `API_DOCS_TWITTER_SITE=@handle` for the link-preview card.
 - [ ] Confirm the cron entry for `php artisan schedule:run` exists (needed by
       the pre-existing daily sales job as well as token pruning).
-- [ ] Verify `https://app.electrotech.findosystem.com/api/docs` loads and
+- [x] Verify `https://app.electrotech.findosystem.com/api/docs` loads and
       `.../api/docs/openapi.yaml` downloads.
 
 ---
