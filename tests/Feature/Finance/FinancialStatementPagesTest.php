@@ -109,6 +109,27 @@ class FinancialStatementPagesTest extends TestCase
             ->assertForbidden();
     }
 
+    /**
+     * A guest — or anyone whose session expired while a report tab sat open —
+     * must be sent to the login screen, not handed a blank 500.
+     *
+     * Laravel's `auth` middleware redirects to a route named `login`, which
+     * this application does not have (the login screen belongs to the Filament
+     * panel). Without the redirectGuestsTo mapping in bootstrap/app.php, every
+     * print link in the system threw RouteNotFoundException for a guest.
+     */
+    public function test_guests_are_redirected_to_the_login_screen_not_a_server_error(): void
+    {
+        $this->get(route('finance.statements.pdf', ['statement' => 'income']))
+            ->assertRedirect(route('filament.admin.auth.login'));
+
+        // The same guard covers the other printable documents, so assert one
+        // of the pre-existing ones too — this is app-wide behaviour, not a
+        // quirk of the statements controller.
+        $this->get(route('finance.general_ledger.pdf', ['account' => 1]))
+            ->assertRedirect(route('filament.admin.auth.login'));
+    }
+
     public function test_every_statement_label_is_translated_in_both_locales(): void
     {
         $keys = [

@@ -73,6 +73,19 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin/ping',
         ]);
 
+        // The printable documents (offers, purchase orders, quality sheets,
+        // ledger and the financial statements) are plain web routes guarded by
+        // Laravel's `auth` middleware, which sends guests to a route NAMED
+        // `login`. This application has no such route — the login screen
+        // belongs to the Filament panel — so a guest, or anyone whose session
+        // expired while a report tab sat open, hit a RouteNotFoundException and
+        // got a blank HTTP 500 instead of being asked to sign in again.
+        //
+        // Deliberately a closure: route() cannot run this early in the
+        // bootstrap, and resolving it lazily keeps the panel's own path the
+        // single source of truth.
+        $middleware->redirectGuestsTo(fn (): string => route('filament.admin.auth.login'));
+
         // ------------------------------------------------------------------
         // REST API stack (routes/api/v1.php). See API_Development_Plan.md §3.
         //
