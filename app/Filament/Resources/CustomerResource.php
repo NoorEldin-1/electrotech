@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources;
 
 use App\Enums\AttachmentCategory;
+use App\Filament\Concerns\SplitsPartyBalances;
 use App\Filament\Resources\CustomerResource\Pages;
 use App\Filament\Support\EntityAttachments;
 use App\Filament\Support\PhoneInput;
@@ -20,6 +21,8 @@ use Illuminate\Validation\Rules\Unique;
 
 class CustomerResource extends Resource
 {
+    use SplitsPartyBalances;
+
     protected static ?string $model = Customer::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
@@ -139,6 +142,24 @@ class CustomerResource extends Resource
                     ->state(fn (Customer $record): float => $record->balance)
                     ->visible(fn () => auth()->user()?->can('customer_statements.view')),
 
+                // ماليات.pptx سلايد 7 — "يجب تقسيمهم الى نوعين: عملاء مدينة
+                // وعملاء دائنة (دفعات مقدمة)". The split is decided by the sign
+                // of the balance, and the balance sheet puts the two halves on
+                // opposite sides, so it is worth seeing here too.
+                Tables\Columns\TextColumn::make('balance_nature')
+                    ->label(__('resources.customers.columns.balance_nature'))
+                    ->badge()
+                    ->state(fn (Customer $record): string => __(
+                        'resources.parties.nature.' . self::balanceNature($record->balance)
+                    ))
+                    ->color(fn (Customer $record): string => match (self::balanceNature($record->balance)) {
+                        'debit' => 'info',
+                        'credit' => 'warning',
+                        default => 'gray',
+                    })
+                    ->tooltip(__('resources.parties.nature_hint_customer'))
+                    ->visible(fn () => auth()->user()?->can('customer_statements.view')),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('resources.customers.columns.created_at'))
                     ->dateTime()
@@ -147,6 +168,17 @@ class CustomerResource extends Resource
             ])
             ->defaultSort('name')
             ->filters([
+                // Computed from the sub-ledger, so the filter has to reach into
+                // it rather than a column: sum(amount) per party decides the side.
+                Tables\Filters\SelectFilter::make('balance_nature')
+                    ->label(__('resources.customers.columns.balance_nature'))
+                    ->options([
+                        'debit' => __('resources.parties.nature.debit'),
+                        'credit' => __('resources.parties.nature.credit'),
+                        'settled' => __('resources.parties.nature.settled'),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => self::filterByBalanceNature($query, $data['value'] ?? null)),
+
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

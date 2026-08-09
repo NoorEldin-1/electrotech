@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ApiDocsController;
 use App\Http\Controllers\DocumentationController;
+use App\Http\Controllers\FinancialStatementPdfController;
 use App\Http\Controllers\GeneralLedgerPdfController;
 use App\Http\Controllers\JournalDaybookPdfController;
 use App\Http\Controllers\LocaleController;
@@ -95,6 +96,13 @@ Route::middleware('auth')
 Route::middleware('auth')
     ->get('finance/general-ledger/pdf', GeneralLedgerPdfController::class)
     ->name('finance.general_ledger.pdf');
+
+// Printable financial statements (ماليات.pptx): قائمة التشغيل، قائمة الدخل،
+// قائمة المركز المالى، قائمة التدفقات النقدية. The `statement` query parameter
+// selects which one; each is gated by its own permission inside the controller.
+Route::middleware('auth')
+    ->get('finance/statements/pdf', FinancialStatementPdfController::class)
+    ->name('finance.statements.pdf');
 
 // Printable planned-vs-issued material comparison for a work order
 // (قائمة المواد سلايد 1). Gated by WorkOrderPolicy::view.

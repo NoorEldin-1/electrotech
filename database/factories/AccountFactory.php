@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\AccountDirection;
 use App\Enums\AccountType;
+use App\Enums\StatementSection;
 use App\Models\Account;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -38,6 +40,22 @@ class AccountFactory extends Factory
         return $this->state(fn () => [
             'opening_balance' => $amount,
             'opening_balance_date' => now()->startOfYear()->toDateString(),
+        ]);
+    }
+
+    /** Place the account on a specific financial-statement line (ماليات.pptx). */
+    public function inSection(StatementSection $section): static
+    {
+        return $this->state(fn () => ['statement_section' => $section]);
+    }
+
+    /** A contra account: natural side flipped against its type (مردودات / مجمع إهلاك). */
+    public function contra(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'nature' => ($attributes['type'] ?? AccountType::Asset)->naturalDirection() === AccountDirection::Debit
+                ? AccountDirection::Credit
+                : AccountDirection::Debit,
         ]);
     }
 }

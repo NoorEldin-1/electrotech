@@ -9,6 +9,7 @@ use App\Models\CostCenterClosing;
 use App\Models\Project;
 use App\Services\CostCenterClosingService;
 use App\Services\OperationCostService;
+use App\Services\OperationTimelineService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -144,6 +145,34 @@ class OperationCostFile extends Page
     public function canCloseCostCenter(): bool
     {
         return (bool) auth()->user()?->can('operations.close_cost_center');
+    }
+
+    /**
+     * ماليات.pptx سلايد 7 — "يجب عمل مراكز تكلفة + خط زمنى لكل مشروع بالعميل".
+     * The cost centre is this page; the timeline is the other half of that
+     * sentence, so it belongs on the same screen.
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    public function getTimeline(): \Illuminate\Support\Collection
+    {
+        $project = $this->getProject();
+
+        return $project
+            ? app(OperationTimelineService::class)->for($project)
+            : collect();
+    }
+
+    /**
+     * The single "where is it now" label (العملية في المصنع / تم تركيبها …).
+     *
+     * @return array{key: string, label: string, at: ?\Illuminate\Support\Carbon}|null
+     */
+    public function getCurrentStage(): ?array
+    {
+        $project = $this->getProject();
+
+        return $project ? app(OperationTimelineService::class)->currentStage($project) : null;
     }
 
     /**

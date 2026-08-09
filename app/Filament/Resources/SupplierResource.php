@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources;
 
 use App\Enums\AttachmentCategory;
+use App\Filament\Concerns\SplitsPartyBalances;
 use App\Filament\Resources\SupplierResource\Pages;
 use App\Filament\Support\EntityAttachments;
 use App\Filament\Support\PhoneInput;
@@ -20,7 +21,19 @@ use Illuminate\Validation\Rules\Unique;
 
 class SupplierResource extends Resource
 {
+    use SplitsPartyBalances;
+
     protected static ?string $model = Supplier::class;
+
+    /**
+     * A supplier's natural side is credit: a positive sub-ledger balance means
+     * we still owe them (التزام متداول), a negative one is an advance we paid
+     * (أصل متداول) — ماليات.pptx سلايد 7.
+     */
+    protected static function partyNaturalSideIsDebit(): bool
+    {
+        return false;
+    }
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
 
@@ -154,6 +167,23 @@ class SupplierResource extends Resource
                     ->state(fn (Supplier $record): float => $record->balance)
                     ->visible(fn () => auth()->user()?->can('supplier_statements.view')),
 
+                // ماليات.pptx سلايد 7 — a supplier with a debit balance is an
+                // advance we paid (أصل متداول); a credit balance is what we
+                // still owe (التزام متداول). The balance sheet splits them.
+                Tables\Columns\TextColumn::make('balance_nature')
+                    ->label(__('resources.suppliers.columns.balance_nature'))
+                    ->badge()
+                    ->state(fn (Supplier $record): string => __(
+                        'resources.parties.nature.' . self::balanceNature($record->balance)
+                    ))
+                    ->color(fn (Supplier $record): string => match (self::balanceNature($record->balance)) {
+                        'debit' => 'info',
+                        'credit' => 'warning',
+                        default => 'gray',
+                    })
+                    ->tooltip(__('resources.parties.nature_hint_supplier'))
+                    ->visible(fn () => auth()->user()?->can('supplier_statements.view')),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('resources.suppliers.columns.created_at'))
                     ->dateTime()
@@ -162,6 +192,15 @@ class SupplierResource extends Resource
             ])
             ->defaultSort('name')
             ->filters([
+                Tables\Filters\SelectFilter::make('balance_nature')
+                    ->label(__('resources.suppliers.columns.balance_nature'))
+                    ->options([
+                        'debit' => __('resources.parties.nature.debit'),
+                        'credit' => __('resources.parties.nature.credit'),
+                        'settled' => __('resources.parties.nature.settled'),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => self::filterByBalanceNature($query, $data['value'] ?? null)),
+
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

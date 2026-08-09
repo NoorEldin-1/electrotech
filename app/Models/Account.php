@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\AccountDirection;
 use App\Enums\AccountType;
+use App\Enums\StatementSection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,8 +32,11 @@ class Account extends Model
         'name_en',
         'type',
         'nature',
+        'statement_section',
         'currency',
         'parent_id',
+        'contra_of_account_id',
+        'party_control',
         'opening_balance',
         'opening_balance_date',
         'is_active',
@@ -44,6 +48,7 @@ class Account extends Model
         return [
             'type' => AccountType::class,
             'nature' => AccountDirection::class,
+            'statement_section' => StatementSection::class,
             'opening_balance' => 'decimal:2',
             'opening_balance_date' => 'date',
             'is_active' => 'boolean',
@@ -53,7 +58,7 @@ class Account extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['code', 'name', 'type', 'nature', 'currency', 'opening_balance', 'is_active'])
+            ->logOnly(['code', 'name', 'type', 'nature', 'statement_section', 'currency', 'opening_balance', 'is_active'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "Account {$this->name} was {$eventName}");
@@ -72,6 +77,34 @@ class Account extends Model
     public function journalLines(): HasMany
     {
         return $this->hasMany(JournalEntryLine::class);
+    }
+
+    /**
+     * For an accumulated-depreciation account: the fixed asset it is deducted
+     * from, so the balance sheet can print التكلفة / مجمع الإهلاك / الصافى
+     * side by side (سلايد 6).
+     */
+    public function contraOf(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'contra_of_account_id');
+    }
+
+    /** The contra accounts (accumulated depreciation) pointing at this asset. */
+    public function contraAccounts(): HasMany
+    {
+        return $this->hasMany(self::class, 'contra_of_account_id');
+    }
+
+    /**
+     * The account's financial-statement section, falling back to the section
+     * derived from its type when the accountant has not classified it yet.
+     * Statements must always call this, never the raw column, so that an
+     * unclassified account still appears somewhere defensible.
+     */
+    public function effectiveStatementSection(): StatementSection
+    {
+        return $this->statement_section
+            ?? StatementSection::defaultForType($this->type);
     }
 
     /**

@@ -669,6 +669,7 @@ return [
             'email' => 'Email',
             'profit_tax_exempt' => '1% Exempt',
             'balance' => 'Balance',
+            'balance_nature' => 'Balance side',
             'created_at' => 'Created At',
         ],
     ],
@@ -704,6 +705,7 @@ return [
             'phone' => 'Phone',
             'email' => 'Email',
             'balance' => 'Balance',
+            'balance_nature' => 'Balance side',
             'created_at' => 'Created At',
         ],
     ],
@@ -980,6 +982,8 @@ return [
         'sections' => [
             'details' => 'Account Details',
             'opening' => 'Opening Balance',
+            'statements' => 'Placement in the financial statements',
+            'statements_hint' => 'Decides where this account appears in the operating, income, balance sheet and cash flow statements. It does not affect posting or the trial balance.',
         ],
 
         'fields' => [
@@ -995,6 +999,11 @@ return [
             'opening_balance_hint' => 'Signed by the account nature (رصيد أول المدة).',
             'opening_balance_date' => 'Opening Balance Date',
             'notes' => 'Notes',
+            'statement_section' => 'Financial statement section',
+            'statement_section_hint' => 'Left empty, the account falls into ":default", derived from its type.',
+            'statement_section_hint_generic' => 'Left empty, the section is derived from the account type.',
+            'contra_of' => 'Accumulated depreciation of',
+            'contra_of_hint' => 'This account\'s balance is deducted from the chosen asset\'s cost in its own column on the balance sheet.',
         ],
 
         'columns' => [
@@ -1005,6 +1014,12 @@ return [
             'currency' => 'Currency',
             'opening_balance' => 'Opening Balance',
             'is_active' => 'Active',
+            'statement_section' => 'Statement section',
+            'statement_section_inherited' => 'Unclassified — the section is derived from the account type.',
+        ],
+
+        'filters' => [
+            'unclassified' => 'Accounts with no statement section',
         ],
     ],
 
@@ -1225,6 +1240,232 @@ return [
             'credit' => 'Credit',
             'balance' => 'Balance',
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Financial Statements — what follows the trial balance (ماليات.pptx)
+    |--------------------------------------------------------------------------
+    */
+
+    'financial_statements' => [
+        'filters' => [
+            'from' => 'From date',
+            'to' => 'To date',
+            'period_from' => 'Financial period start',
+            'as_of' => 'Position as of',
+        ],
+        'columns' => [
+            'line' => 'Description',
+            'description' => 'Description',
+            'account_code' => 'Account code',
+            'amount' => 'Amount',
+            'partial' => 'Partial',
+            'total' => 'Total',
+        ],
+        'no_rows' => 'No accounts in this section.',
+        'no_movement' => 'No movement in this period.',
+        'pdf' => [
+            'period' => 'For the period :from to :to',
+            'as_of' => 'As of :date',
+            'footer' => 'Automated report from the ElectroTech platform — Financial Statements',
+        ],
+    ],
+
+    'operating_statement' => [
+        'label' => 'Operating Statement',
+        'plural_label' => 'Operating Statements',
+        'navigation_label' => 'Operating Statement',
+        'title' => 'Operating Statement',
+        'description' => 'The components of cost of sales: cost of goods sold + operating expenses + installation expenses + export expenses + industrial expenses and depreciation.',
+        'cost_of_sales' => 'Cost of Sales',
+        'chart_note' => 'Every line here is an account in the chart of accounts classified under "Cost of sales". To add a new line, add the account and classify it under the same section.',
+        'empty' => 'No accounts are classified under cost of sales.',
+    ],
+
+    'income_statement' => [
+        'label' => 'Income Statement',
+        'plural_label' => 'Income Statements',
+        'navigation_label' => 'Income Statement',
+        'title' => 'Income Statement',
+        'description' => 'From net sales down to net profit, with the "partial" and "total" columns.',
+        'detail_heading' => 'The accounts behind each line',
+        'formula_note' => 'Gross profit = net sales − cost of sales · Total revenues = other revenue + capital gains + currency gains · Net profit = gross profit + total revenues − total expenses. The ( − ) sign shows the account nature only; the figures are positive and are subtracted once, in the total column.',
+
+        'rows' => [
+            'net_sales' => 'Net sales (sales − returns)',
+            'sales' => 'Sales',
+            'sales_returns' => 'Sales returns',
+            'cost_of_sales' => 'Cost of sales',
+            'gross_profit' => 'Gross profit',
+            'other_revenue' => 'Other revenue',
+            'capital_gains' => 'Capital gains',
+            'fx_gain' => 'Currency differences (gain)',
+            'total_revenues' => 'Total revenues',
+            'general_admin' => 'General and administrative expenses',
+            'fx_loss' => 'Currency differences (loss)',
+            'depreciation' => 'Expenses and depreciation',
+            'closed_letters_of_credit' => 'Previously closed letters of credit',
+            'finance_cost' => 'Interest expense',
+            'total_expenses' => 'Total expenses',
+            'net_profit' => 'Net profit',
+        ],
+    ],
+
+    'balance_sheet' => [
+        'label' => 'Balance Sheet',
+        'plural_label' => 'Balance Sheets',
+        'navigation_label' => 'Balance Sheet',
+        'title' => 'Balance Sheet',
+        'as_of_label' => 'Financial position as of :date',
+        'balanced' => 'The sheet balances: total investment = total funding.',
+        'unbalanced' => 'Does not balance — difference :difference',
+        'unbalanced_hint' => 'The difference between total investment and total funding is :difference. Usual causes: an account classified under the wrong statement section, an unposted entry, or a missing opening balance. Check the chart of accounts and the "unclassified accounts" filter.',
+        'period_profit' => 'Profit for the period',
+        'from_income_statement' => 'From the income statement',
+        'unlinked_accumulated_depreciation' => 'Accumulated depreciation not linked to an asset',
+        'memo_line' => 'There are :account amounting to :amount',
+
+        'sections' => [
+            'long_term_assets' => 'Long-term assets (fixed assets)',
+            'current_assets' => 'Current assets',
+            'current_liabilities' => 'Current liabilities',
+            'equations' => 'Equations',
+            'funding' => 'Funded as follows (equity)',
+            'funding_hint' => 'Capital + reserves and provisions + partners\' current account + profit for the period.',
+            'memo' => 'Outside the equations (memorandum accounts)',
+            'memo_hint' => 'Accounts that enter neither working capital nor total investment, and are noted as a footnote below the sheet.',
+        ],
+
+        'columns' => [
+            'cost' => 'Cost',
+            'accumulated_depreciation' => 'Accumulated depreciation',
+            'net' => 'Net',
+        ],
+
+        'cards' => [
+            'working_capital' => 'Working capital',
+            'fixed_assets_net' => 'Net fixed assets',
+            'total_investment' => 'Total investment',
+            'total_funding' => 'Total funding',
+        ],
+
+        'rows' => [
+            'total_long_term_assets' => 'Total long-term assets',
+            'total_current_assets' => 'Total current assets',
+            'total_current_liabilities' => 'Total current liabilities',
+            'working_capital_formula' => 'Working capital = current assets − current liabilities',
+            'total_investment_formula' => 'Total investment = working capital + fixed assets',
+            'total_funding' => 'Total equity and funding',
+        ],
+
+        'party' => [
+            'customer' => [
+                'debit' => 'Customers (debit balances)',
+                'credit' => 'Customers — advances received (credit balances)',
+            ],
+            'supplier' => [
+                'debit' => 'Suppliers — advances paid (debit balances)',
+                'credit' => 'Suppliers (credit balances)',
+            ],
+            'reconciliation' => ':account reconciliation difference (control account − party sub-ledger)',
+            'variance_badge' => 'Reconciliation difference',
+            'count' => ':count parties',
+            'detail_heading' => 'Customer and supplier split, party by party',
+            'detail_hint' => 'A party with a positive balance appears under assets; one with a negative balance under current liabilities.',
+        ],
+    ],
+
+    'cash_flow_statement' => [
+        'label' => 'Cash Flow Statement',
+        'plural_label' => 'Cash Flow Statements',
+        'navigation_label' => 'Cash Flow Statement',
+        'title' => 'Cash Flow Statement',
+        'description' => 'Starts from the net profit taken out of the income statement, then adjusts it with the other accounts to reach the closing cash balance.',
+        'from_income_statement' => 'From the income statement',
+        'reconciled' => 'Reconciled with actual cash',
+        'not_reconciled' => 'Not reconciled — difference :difference',
+        'case' => 'Case :case',
+        'no_adjustment' => 'No adjustment',
+        // User-facing copy only: no reference to the requirements document, and
+        // no configuration key names — those belong in config/finance.php, not
+        // on an accountant's screen.
+        'formula_note' => [
+            'heading_add_back' => 'Formula in use: reconciling (default)',
+            'body_add_back' => 'Operating profit = net profit + depreciation and provisions, with capital gains left unadjusted because their proceeds are already inside the cash figure. This is the only treatment under which the derived closing cash matches the actual balance.',
+            'heading_client' => 'Formula in use: alternative (depreciation and provisions deducted)',
+            'body_client' => 'Operating profit = net profit − depreciation and provisions + capital gains. With this formula the derived closing cash will not match the actual balance; the gap equals twice (depreciation + provisions) plus capital gains.',
+        ],
+
+        'columns' => [
+            'opening' => 'Opening balance',
+            'closing' => 'Closing balance',
+            'effect' => 'Cash effect',
+        ],
+
+        'sections' => [
+            'operating' => 'Cash flows from operating activities',
+            'investing' => 'Cash flows from investing activities',
+            'financing' => 'Cash flows from financing activities',
+        ],
+
+        'rows' => [
+            'net_profit' => 'Net profit for the period',
+            'depreciation' => 'Depreciation',
+            'provisions' => 'Provisions',
+            'capital_gains' => 'Capital gains',
+            'operating_profit_before_wc' => 'Operating profit before working capital changes',
+            'change_in' => 'Decrease (increase) in :account',
+            'operating_cash' => 'Net cash from operating activities',
+            'investing_total' => 'Net cash from investing activities',
+            'financing_total' => 'Net cash from financing activities',
+            'net_change' => 'Net change in cash',
+            'opening_cash' => 'Cash and equivalents at the start of the period',
+            'closing_cash' => 'Cash and equivalents at the end of the period',
+        ],
+
+        'reconciliation' => [
+            'heading' => 'Reconciliation with actual cash',
+            'description' => 'The balance derived by the statement must equal the actual balance of the cash and bank accounts on the same date.',
+            'derived' => 'Balance derived by the statement',
+            'actual' => 'Actual balance (cash and banks)',
+            'difference' => 'Difference',
+        ],
+    ],
+
+    'operation_timeline' => [
+        'heading' => 'Operation timeline',
+        'description' => 'The stages of the operation from intake to completion, derived automatically from the system\'s own documents.',
+        'not_reached' => 'Not reached yet',
+        'days_from_start' => ':days days from the start',
+
+        'stages' => [
+            'not_started' => 'Not started yet',
+            'sales' => 'Received from sales',
+            'activated' => 'Operation activated',
+            'technical_office' => 'At the PMO — creating the work order',
+            'order_approved' => 'Work order approved',
+            'in_factory' => 'At the factory — material issue started',
+            'manufacturing_finished' => 'Manufacturing finished',
+            'qa_approved' => 'Quality approved',
+            'delivered' => 'Delivered to the customer',
+            'installed' => 'Installed',
+            'completed' => 'Operation completed',
+        ],
+
+        'details' => [
+            'work_orders' => ':count work orders',
+        ],
+    ],
+
+    'parties' => [
+        'nature' => [
+            'debit' => 'Debit',
+            'credit' => 'Credit',
+            'settled' => 'Settled',
+        ],
+        'nature_hint_customer' => 'A positive balance means a debit customer (an asset); a negative one means a credit customer / advance received (a current liability).',
+        'nature_hint_supplier' => 'A positive balance means a debit supplier / advance paid (an asset); a negative one means a credit supplier (a current liability).',
     ],
 
     /*
@@ -2133,6 +2374,10 @@ return [
             'journal_daybook' => 'Analytical Daybook',
             'general_ledger' => 'General Ledger',
             'trial_balance' => 'Trial Balance',
+            'operating_statement' => 'Operating Statement',
+            'income_statement' => 'Income Statement',
+            'balance_sheet' => 'Balance Sheet',
+            'cash_flow_statement' => 'Cash Flow Statement',
             'operations' => 'Operations (General Management)',
             'delivery_minutes' => 'Delivery Minutes',
             'financial_claims' => 'Financial Claims',
@@ -2290,6 +2535,18 @@ return [
             ],
             'trial_balance' => [
                 'view' => 'View Trial Balance',
+            ],
+            'operating_statement' => [
+                'view' => 'View Operating Statement',
+            ],
+            'income_statement' => [
+                'view' => 'View Income Statement',
+            ],
+            'balance_sheet' => [
+                'view' => 'View Balance Sheet',
+            ],
+            'cash_flow_statement' => [
+                'view' => 'View Cash Flow Statement',
             ],
             'operations' => [
                 'overview' => 'View Operations Overview',
@@ -2650,6 +2907,30 @@ return [
             'equity' => 'Equity',
             'revenue' => 'Revenue',
             'expense' => 'Expense',
+        ],
+
+        // Financial statement section (ماليات.pptx)
+        'statement_section' => [
+            'cost_of_sales' => 'Cost of sales (operating statement)',
+            'sales' => 'Sales',
+            'sales_returns' => 'Sales returns',
+            'other_revenue' => 'Other revenue',
+            'fx_differences' => 'Currency differences',
+            'capital_gains' => 'Capital gains',
+            'general_admin_expenses' => 'General and administrative expenses',
+            'depreciation_expenses' => 'Expenses and depreciation',
+            'closed_letters_of_credit' => 'Previously closed letters of credit',
+            'finance_cost' => 'Interest and finance charges',
+            'fixed_assets' => 'Fixed assets',
+            'accumulated_depreciation' => 'Accumulated depreciation',
+            'current_assets' => 'Current assets',
+            'cash_and_banks' => 'Cash and banks',
+            'current_liabilities' => 'Current liabilities',
+            'provisions' => 'Reserves and provisions',
+            'equity' => 'Equity',
+            'partners_current_account' => 'Partners\' current account',
+            'excluded' => 'Outside the equations',
+            'memo' => 'Memorandum account (footnote)',
         ],
 
         'document_type' => [

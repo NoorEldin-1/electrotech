@@ -66,6 +66,67 @@
             </x-filament::section>
         </div>
 
+        {{-- ماليات.pptx سلايد 7: «مراكز تكلفة + خط زمنى لكل مشروع بالعميل» --}}
+        @php($timeline = $this->getTimeline())
+        @php($currentStage = $this->getCurrentStage())
+
+        <x-filament::section collapsible>
+            <x-slot name="heading">{{ __('resources.operation_timeline.heading') }}</x-slot>
+            <x-slot name="description">{{ __('resources.operation_timeline.description') }}</x-slot>
+
+            <x-slot name="headerEnd">
+                @if ($currentStage)
+                    <x-filament::badge color="primary">{{ $currentStage['label'] }}</x-filament::badge>
+                @endif
+            </x-slot>
+
+            <ol class="space-y-0">
+                @foreach ($timeline as $stage)
+                    <li class="flex gap-3">
+                        {{-- The rail: a filled dot for a stage reached, hollow for one still ahead. --}}
+                        <div class="flex flex-col items-center">
+                            <span @class([
+                                'mt-1 block size-3 shrink-0 rounded-full ring-2',
+                                'bg-primary-500 ring-primary-500/30' => $stage['reached'],
+                                'bg-gray-200 ring-gray-200 dark:bg-[var(--surface-3)] dark:ring-[var(--border-hairline)]' => ! $stage['reached'],
+                            ])></span>
+                            @unless ($loop->last)
+                                <span @class([
+                                    'w-px flex-1',
+                                    'bg-primary-500/40' => $stage['reached'],
+                                    'bg-gray-200 dark:bg-[var(--border-hairline)]' => ! $stage['reached'],
+                                ])></span>
+                            @endunless
+                        </div>
+
+                        <div class="pb-4">
+                            <div @class([
+                                'text-sm font-medium',
+                                'text-gray-950 dark:text-[var(--dark-text)]' => $stage['reached'],
+                                'text-gray-400 dark:text-[var(--dark-text-faint)]' => ! $stage['reached'],
+                            ])>
+                                {{ $stage['label'] }}
+                            </div>
+                            <div class="text-xs text-gray-500 dark:text-[var(--dark-text-muted)]">
+                                @if ($stage['reached'])
+                                    <span class="tabular-nums">{{ $stage['at']->format('Y-m-d') }}</span>
+                                    @if ($stage['days_from_start'])
+                                        <span class="mx-1">·</span>
+                                        {{ __('resources.operation_timeline.days_from_start', ['days' => $stage['days_from_start']]) }}
+                                    @endif
+                                    @if ($stage['detail'])
+                                        <span class="mx-1">·</span>{{ $stage['detail'] }}
+                                    @endif
+                                @else
+                                    {{ __('resources.operation_timeline.not_reached') }}
+                                @endif
+                            </div>
+                        </div>
+                    </li>
+                @endforeach
+            </ol>
+        </x-filament::section>
+
         {{-- سلايد 12: إقفال مركز التكلفة في ح/تكلفة البضاعة المباعة --}}
         @php($closingState = $this->getClosingState())
         @php($closings = $this->getClosings())

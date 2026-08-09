@@ -25,4 +25,45 @@ return [
         'USD' => '1011', // خزينة أجنبي
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | قائمة التدفقات النقدية (ماليات.pptx سلايد 9)
+    |--------------------------------------------------------------------------
+    |
+    | The slide asks for two things that cannot both hold. It writes the
+    | opening subtotal as "صافى الربح – الاهلاك والمخصصات + ارباح راسمالية",
+    | and it ends with the test "ويتم مطابقته مع الواقع" — the derived closing
+    | cash must equal the cash the ledger actually holds.
+    |
+    | Only adding depreciation and provisions BACK (they reduced profit without
+    | moving cash), and leaving capital gains unadjusted (their proceeds are
+    | already in the cash figure), makes the statement reconcile. The written
+    | formula throws it out by 2×(depreciation + provisions) + capital gains.
+    |
+    | The default (true) therefore follows the slide's own final check. Set it
+    | to false — or FINANCE_CASH_FLOW_ADD_BACK=false — to see the statement
+    | exactly as the slide words it; the screen labels which one is running.
+    |
+    */
+    'cash_flow' => [
+        'add_back_non_cash' => env('FINANCE_CASH_FLOW_ADD_BACK', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | حسابات مراقبة الأطراف (ماليات.pptx سلايد 7)
+    |--------------------------------------------------------------------------
+    |
+    | Control accounts whose pooled balance the balance sheet splits by party
+    | balance sign: debit customers are an asset, credit customers (دفعات
+    | مقدمة) a current liability, and the same for suppliers. The seeder marks
+    | these codes with `accounts.party_control`; an account edited by hand in
+    | the admin keeps whatever the admin set.
+    |
+    */
+    'party_control_accounts' => [
+        'customer' => ['1200'],           // العملاء
+        'supplier' => ['2010', '2011'],   // مورد محلي / مورد خارجي
+    ],
+
 ];

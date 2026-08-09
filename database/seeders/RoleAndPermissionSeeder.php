@@ -203,6 +203,15 @@ class RoleAndPermissionSeeder extends Seeder
             'general_ledger.view',
             'trial_balance.view',
 
+            // Finance — القوائم المالية (ماليات.pptx): what comes after the
+            // trial balance. Separate permissions per statement, because the
+            // balance sheet and the income statement expose company-level
+            // profitability that not every ledger reader should see.
+            'operating_statement.view',
+            'income_statement.view',
+            'balance_sheet.view',
+            'cash_flow_statement.view',
+
             // General Management (الإدارة العامة) — operations oversight, cost
             // center, delivery minutes and financial claims.
             'operations.overview',
@@ -519,6 +528,12 @@ class RoleAndPermissionSeeder extends Seeder
                 'journal_daybook.view',
                 'general_ledger.view',
                 'trial_balance.view',
+                // القوائم المالية (ماليات.pptx) — finance owns the annual
+                // closing set that follows the trial balance.
+                'operating_statement.view',
+                'income_statement.view',
+                'balance_sheet.view',
+                'cash_flow_statement.view',
                 // General management: the operation cost center and the
                 // financial-claim workflow live with finance.
                 'operations.view_cost',
@@ -568,6 +583,12 @@ class RoleAndPermissionSeeder extends Seeder
                 'journal_daybook.view',
                 'general_ledger.view',
                 'trial_balance.view',
+                // القوائم المالية — the general manager reads the company's
+                // profitability and position; they do not post entries.
+                'operating_statement.view',
+                'income_statement.view',
+                'balance_sheet.view',
+                'cash_flow_statement.view',
                 'transactions.view',
                 // General management permissions (the owning role).
                 'operations.overview',
