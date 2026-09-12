@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Exceptions\Api;
 
+use App\Exceptions\ExcessIssueException;
 use App\Http\Api\ApiResponse;
 use DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -56,7 +57,14 @@ final class ApiExceptionRenderer
             $e instanceof MethodNotAllowedHttpException => $this->methodNotAllowed($e),
             $e instanceof TooManyRequestsHttpException => $this->rateLimited($e),
             $e instanceof ServiceUnavailableHttpException => $this->maintenance($e),
+            // Before the generic RuntimeException branch: ExcessIssueException
+            // IS a RuntimeException, and folding it into
+            // `business_rule_violated` would cost the client the one thing it
+            // needs — the rows, and a code to branch on.
+            $e instanceof ExcessIssueException => $this->excessIssue($e),
+
             $e instanceof DomainException => $this->businessRule($e),
+            $this->isServiceRuntimeException($e) => $this->businessRule($e),
             $e instanceof HttpExceptionInterface => $this->httpException($e),
             default => $this->serverError($e),
         };
@@ -191,12 +199,91 @@ final class ApiExceptionRenderer
      * fix by retrying: something about the request was not acceptable given
      * current state.
      */
-    private function businessRule(DomainException $e): JsonResponse
+    private function businessRule(Throwable $e): JsonResponse
     {
         return ApiResponse::error(
             'business_rule_violated',
             $e->getMessage(),
             422,
+        );
+    }
+
+    /**
+     * صرف كمية زائدة عن حاجة أمر التصنيع — an issue voucher carrying more of
+     * an item than the work order's material plan still needs.
+     *
+     * This gets its own `error.code` rather than the generic
+     * `business_rule_violated` because it is the one refusal in the platform
+     * that the *client* can resolve: a user holding
+     * `issue_vouchers.approve_excess` may retry the same post with
+     * `allow_excess` and a written reason. A client cannot offer that flow if
+     * it cannot tell this refusal apart from "the voucher is already posted",
+     * and it cannot pre-fill the confirmation screen without the offending
+     * rows, so both travel in the envelope.
+     *
+     * `details.excess` is the same array the panel's confirmation modal
+     * renders: one row per item, with what the plan required, what was already
+     * issued, what is left, what this voucher asks for, and the overage.
+     */
+    private function excessIssue(ExcessIssueException $e): JsonResponse
+    {
+        return ApiResponse::error(
+            'issue_excess_requires_approval',
+            $e->getMessage(),
+            422,
+            ['excess' => $e->rows],
+        );
+    }
+
+    /**
+     * Whether a RuntimeException was raised by one of our own services as a
+     * business-rule refusal.
+     *
+     * This codebase signals "your payload was fine, the business state was
+     * not" with **two** exception types. Twelve places throw DomainException;
+     * fifty throw \RuntimeException with a localized `__('errors...')`
+     * message, and the Filament panel catches `\RuntimeException` and shows
+     * that message to the user as a notification. So in practice a service's
+     * RuntimeException *is* the business-rule signal, whatever the type name
+     * suggests.
+     *
+     * Without this branch every one of those fifty rules would reach the API
+     * as an unhandled `500 server_error` with a generic message, while the
+     * panel showed the real one. "Insufficient stock for Copper Busbar in Raw
+     * Materials. Available: 12, Requested: 40" would arrive at the warehouse
+     * tablet as "An unexpected error occurred" — the caller could not tell a
+     * refusal from an outage, and would retry a request that can never
+     * succeed.
+     *
+     * The origin check is what keeps this narrow. A RuntimeException thrown by
+     * a database driver, a filesystem call or a vendor package is a genuine
+     * fault and must stay a logged 500 — surfacing its message as user-facing
+     * prose would leak internals and tell the client to fix something it
+     * cannot. Only a throw whose own frame is inside `app/Services` is treated
+     * as a deliberate refusal.
+     *
+     * The long-term fix is a single explicit exception type across all sixty
+     * throw sites. That is a change to shared services the panel depends on,
+     * so it is deliberately not bundled with the API work; this predicate
+     * bridges the gap without touching either caller.
+     */
+    private function isServiceRuntimeException(Throwable $e): bool
+    {
+        if (! $e instanceof \RuntimeException) {
+            return false;
+        }
+
+        // Subclasses of RuntimeException that Laravel and vendors use for
+        // genuine faults must not be swept in by the path check alone.
+        if ($e instanceof \LogicException) {
+            return false;
+        }
+
+        $servicesPath = DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'Services'.DIRECTORY_SEPARATOR;
+
+        return str_contains(
+            str_replace('/', DIRECTORY_SEPARATOR, $e->getFile()),
+            $servicesPath,
         );
     }
 

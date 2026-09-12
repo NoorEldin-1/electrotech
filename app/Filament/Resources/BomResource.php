@@ -7,6 +7,7 @@ namespace App\Filament\Resources;
 use App\Enums\BomStatus;
 use App\Filament\Resources\BomResource\Pages;
 use App\Models\Bom;
+use App\Services\BomService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -220,11 +221,18 @@ class BomResource extends Resource
                         ->visible(fn (Bom $record) => $record->status === BomStatus::PendingApproval
                             && auth()->user()?->can('boms.approve'))
                         ->action(function (Bom $record) {
-                            $record->update([
-                                'status' => BomStatus::Approved,
-                                'approved_by' => Auth::id(),
-                                'approved_at' => now(),
-                            ]);
+                            // Delegated to the service so the panel and the API
+                            // approve a BOM by exactly the same rules — the
+                            // checks used to live here, which meant they
+                            // existed only where someone clicked this button.
+                            try {
+                                app(BomService::class)->approve($record);
+                            } catch (\DomainException $e) {
+                                Notification::make()->danger()->title($e->getMessage())->send();
+
+                                return;
+                            }
+
                             Notification::make()->success()->title(__('resources.boms.notifications.approved'))->send();
                         }),
                 ])

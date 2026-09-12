@@ -27,7 +27,11 @@ class UpdateProfileRequest extends FormRequest
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($this->user()->id),
+                // `?->` because Scribe evaluates rules() with no authenticated
+                // user while generating the docs, and a fatal there aborts the
+                // route's extraction. At request time the route is behind
+                // auth:sanctum, so the user is always present.
+                Rule::unique('users', 'email')->ignore($this->user()?->id),
             ],
         ];
     }

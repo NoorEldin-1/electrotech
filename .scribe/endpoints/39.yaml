@@ -1,0 +1,82 @@
+name: '39. Dashboard'
+description: |-
+
+  The five counts the platform opens on: active operations, deliveries waiting
+  for a signature, purchase orders out with suppliers, orders on the shop
+  floor, and items below their minimum.
+
+  These read the **same cache keys the admin panel's own dashboard reads** —
+  `dashboard:active_projects` and its four siblings — rather than recomputing
+  the numbers. Two consequences worth knowing:
+
+   - a phone and a desktop opened side by side show the same figures, because
+     they are the same figures, not two independent counts that happen to
+     agree most of the time;
+   - the numbers are invalidated by the model observers the moment the
+     underlying state changes, with a five-minute ceiling as a safety net in
+     case a write ever bypasses model events.
+
+  `low_stock` is the expensive one — it aggregates availability per item
+  across every warehouse — which is why the whole endpoint sits on the reports
+  rate limiter rather than the read one.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/dashboard
+    metadata:
+      custom: []
+      groupName: '39. Dashboard'
+      groupDescription: |-
+
+        The five counts the platform opens on: active operations, deliveries waiting
+        for a signature, purchase orders out with suppliers, orders on the shop
+        floor, and items below their minimum.
+
+        These read the **same cache keys the admin panel's own dashboard reads** —
+        `dashboard:active_projects` and its four siblings — rather than recomputing
+        the numbers. Two consequences worth knowing:
+
+         - a phone and a desktop opened side by side show the same figures, because
+           they are the same figures, not two independent counts that happen to
+           agree most of the time;
+         - the numbers are invalidated by the model observers the moment the
+           underlying state changes, with a five-minute ceiling as a safety net in
+           case a write ever bypasses model events.
+
+        `low_stock` is the expensive one — it aggregates availability per item
+        across every warehouse — which is why the whole endpoint sits on the reports
+        rate limiter rather than the read one.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Dashboard counts'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"active_projects":7,"pending_deliveries":2,"pending_purchase_orders":4,"active_work_orders":3,"low_stock_items":11,"generated_at":"2026-09-12T18:30:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

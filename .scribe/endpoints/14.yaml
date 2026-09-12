@@ -1,0 +1,394 @@
+name: '17. Inventory'
+description: |-
+
+  What is in the warehouses, how it got there, and what it is worth.
+
+  Everything here is **read-only**. Stock is never moved by writing to a
+  balance: it moves because a document was posted — an addition voucher, an
+  issue voucher, a reservation. Exposing a writable balance would let a client
+  put the ledger and the on-hand figure out of step with nothing to reconcile
+  them against, which is the one failure an inventory system cannot recover
+  from.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/inventory
+    metadata:
+      custom: []
+      groupName: '17. Inventory'
+      groupDescription: |-
+
+        What is in the warehouses, how it got there, and what it is worth.
+
+        Everything here is **read-only**. Stock is never moved by writing to a
+        balance: it moves because a document was posted — an addition voucher, an
+        issue voucher, a reservation. Exposing a writable balance would let a client
+        put the ledger and the on-hand figure out of step with nothing to reconcile
+        them against, which is the one failure an inventory system cannot recover
+        from.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List stock balances'
+      description: |-
+        One row per item per warehouse. `available` (= on hand − on hold) is the
+        number a planner may promise; `on_hand` is only what is physically
+        present, some of which may already be reserved.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'The page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[item]':
+        custom: []
+        name: 'filter[item]'
+        description: 'Item id.'
+        required: false
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[warehouse]':
+        custom: []
+        name: 'filter[warehouse]'
+        description: 'A warehouse_type value.'
+        required: false
+        example: raw_materials
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[in_stock]':
+        custom: []
+        name: 'filter[in_stock]'
+        description: 'Only rows with something on hand.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[below_minimum]':
+        custom: []
+        name: 'filter[below_minimum]'
+        description: "Only rows whose available quantity is under the item's minimum_stock."
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Allowed: on_hand_quantity, on_hold_quantity, updated_at.'
+        required: false
+        example: '-on_hand_quantity'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      'filter[item]': 7
+      'filter[warehouse]': raw_materials
+      'filter[in_stock]': true
+      'filter[below_minimum]': true
+      sort: '-on_hand_quantity'
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":3,"type":"inventory_level","item_id":7,"warehouse":{"value":"raw_materials","label":"Raw Materials","color":null},"on_hand":"120.0000","on_hold":"20.0000","available":"100.0000","value":"49500.00"}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/inventory-transactions
+    metadata:
+      custom: []
+      groupName: '17. Inventory'
+      groupDescription: |-
+
+        What is in the warehouses, how it got there, and what it is worth.
+
+        Everything here is **read-only**. Stock is never moved by writing to a
+        balance: it moves because a document was posted — an addition voucher, an
+        issue voucher, a reservation. Exposing a writable balance would let a client
+        put the ledger and the on-hand figure out of step with nothing to reconcile
+        them against, which is the one failure an inventory system cannot recover
+        from.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'The stock ledger'
+      description: |-
+        Every movement, newest first. Remember that `hold` and `release` change
+        availability only — sum `in` and `out` alone when valuing stock.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'The page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[item]':
+        custom: []
+        name: 'filter[item]'
+        description: 'Item id.'
+        required: false
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[warehouse]':
+        custom: []
+        name: 'filter[warehouse]'
+        description: 'A warehouse_type value.'
+        required: false
+        example: raw_materials
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[movement]':
+        custom: []
+        name: 'filter[movement]'
+        description: 'One or more transaction_type values, comma-separated.'
+        required: false
+        example: 'in,out'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[created]':
+        custom: []
+        name: 'filter[created]'
+        description: 'Inclusive date range from,until.'
+        required: false
+        example: '2026-01-01,2026-06-30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Allowed: created_at, quantity.'
+        required: false
+        example: '-created_at'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      include:
+        custom: []
+        name: include
+        description: 'Allowed: item, performedBy.'
+        required: false
+        example: item
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      'filter[item]': 7
+      'filter[warehouse]': raw_materials
+      'filter[movement]': 'in,out'
+      'filter[created]': '2026-01-01,2026-06-30'
+      sort: '-created_at'
+      include: item
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":91,"type":"inventory_transaction","item_id":7,"movement":{"value":"in","label":"In","color":"success"},"quantity":"40.0000","unit_cost":"1000.00","reference":{"type":"AdditionVoucher","id":15}}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/items/{item_id}/stock-card'
+    metadata:
+      custom: []
+      groupName: '17. Inventory'
+      groupDescription: |-
+
+        What is in the warehouses, how it got there, and what it is worth.
+
+        Everything here is **read-only**. Stock is never moved by writing to a
+        balance: it moves because a document was posted — an addition voucher, an
+        issue voucher, a reservation. Exposing a writable balance would let a client
+        put the ledger and the on-hand figure out of step with nothing to reconcile
+        them against, which is the one failure an inventory system cannot recover
+        from.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Item stock card'
+      description: |-
+        The valued movement history for one item in one warehouse (كارت الصنف):
+        every receipt and issue with its running quantity, weighted-average unit
+        cost and balance value.
+
+        `warehouse` defaults to the item's home warehouse. Reservations are
+        excluded — they change availability, not stock value — and scrap
+        variants are kept separate, because averaging two distinct items into one
+        pool would be accounting-incorrect.
+
+        On the **reports** rate limiter: it walks the item's whole movement
+        history, so it is materially more expensive than a page of the ledger.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      item_id:
+        custom: []
+        name: item_id
+        description: 'The ID of the item.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      item:
+        custom: []
+        name: item
+        description: 'The item id.'
+        required: true
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      item_id: 1
+      item: 7
+    queryParameters:
+      warehouse:
+        custom: []
+        name: warehouse
+        description: "A warehouse_type value; defaults to the item's home warehouse."
+        required: false
+        example: raw_materials
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      warehouse: raw_materials
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"warehouse":{"value":"raw_materials","label":"Raw Materials","color":null},"item":{"id":7,"name":"Copper Busbar","sku":"CU-BB-1"},"rows":[{"id":91,"date":"2026-09-01T09:00:00+00:00","reference":"Addition voucher AV-202609-0031","in_qty":"40.0000","in_price":"1000.00","in_value":"40000.00","out_qty":null,"balance_qty":"40.0000","balance_value":"40000.00"}],"totals":{"quantity":"40.0000","unit_cost":"1000.00","value":"40000.00"}},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

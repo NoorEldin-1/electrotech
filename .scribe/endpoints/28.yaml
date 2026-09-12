@@ -1,0 +1,463 @@
+name: '31. Sales invoices'
+description: |-
+
+  فواتير المبيعات — invoicing what was delivered.
+
+  An invoice is always raised **against a delivery voucher that is active**,
+  which is to say against goods that actually left the store. Its customer is
+  taken from that voucher rather than sent, so an invoice can never name
+  someone other than whoever received the goods.
+
+  A voucher may be invoiced in instalments, but the instalments may not add up
+  to more than was delivered. That single rule is what keeps "delivered" and
+  "invoiced" reconcilable, and it is what drives the voucher's own
+  `invoicing.status`, which is **re-derived** on every change — record an
+  invoice or delete one to move it, never write the field.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/sales-invoices
+    metadata:
+      custom: []
+      groupName: '31. Sales invoices'
+      groupDescription: |-
+
+        فواتير المبيعات — invoicing what was delivered.
+
+        An invoice is always raised **against a delivery voucher that is active**,
+        which is to say against goods that actually left the store. Its customer is
+        taken from that voucher rather than sent, so an invoice can never name
+        someone other than whoever received the goods.
+
+        A voucher may be invoiced in instalments, but the instalments may not add up
+        to more than was delivered. That single rule is what keeps "delivered" and
+        "invoiced" reconcilable, and it is what drives the voucher's own
+        `invoicing.status`, which is **re-derived** on every change — record an
+        invoice or delete one to move it, never write the field.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List sales invoices'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'The page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      search:
+        custom: []
+        name: search
+        description: 'Matches the invoice number.'
+        required: false
+        example: INV-2026
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[customer]':
+        custom: []
+        name: 'filter[customer]'
+        description: 'Customer id.'
+        required: false
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[delivery_voucher]':
+        custom: []
+        name: 'filter[delivery_voucher]'
+        description: 'Delivery voucher id.'
+        required: false
+        example: 18
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[invoice_date]':
+        custom: []
+        name: 'filter[invoice_date]'
+        description: 'Inclusive date range from,until.'
+        required: false
+        example: '2026-01-01,2026-06-30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Allowed: invoice_number, invoice_date, amount, created_at.'
+        required: false
+        example: '-invoice_date'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      include:
+        custom: []
+        name: include
+        description: 'Allowed: customer, deliveryVoucher.'
+        required: false
+        example: customer
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      search: INV-2026
+      'filter[customer]': 7
+      'filter[delivery_voucher]': 18
+      'filter[invoice_date]': '2026-01-01,2026-06-30'
+      sort: '-invoice_date'
+      include: customer
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":22,"type":"sales_invoice","invoice_number":"INV-2026-0044","amount":"150000.00","delivery_voucher_id":18}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/sales-invoices/{sales_invoice_id}'
+    metadata:
+      custom: []
+      groupName: '31. Sales invoices'
+      groupDescription: |-
+
+        فواتير المبيعات — invoicing what was delivered.
+
+        An invoice is always raised **against a delivery voucher that is active**,
+        which is to say against goods that actually left the store. Its customer is
+        taken from that voucher rather than sent, so an invoice can never name
+        someone other than whoever received the goods.
+
+        A voucher may be invoiced in instalments, but the instalments may not add up
+        to more than was delivered. That single rule is what keeps "delivered" and
+        "invoiced" reconcilable, and it is what drives the voucher's own
+        `invoicing.status`, which is **re-derived** on every change — record an
+        invoice or delete one to move it, never write the field.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show a sales invoice'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      sales_invoice_id:
+        custom: []
+        name: sales_invoice_id
+        description: 'The ID of the sales invoice.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      sales_invoice:
+        custom: []
+        name: sales_invoice
+        description: 'The invoice id.'
+        required: true
+        example: 22
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      sales_invoice_id: 1
+      sales_invoice: 22
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":22,"type":"sales_invoice","invoice_number":"INV-2026-0044","amount":"150000.00","delivery_voucher":{"total_value":"250000.00","invoiced_value":"150000.00"}},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/delivery-vouchers/{delivery_voucher_id}/invoices'
+    metadata:
+      custom: []
+      groupName: '31. Sales invoices'
+      groupDescription: |-
+
+        فواتير المبيعات — invoicing what was delivered.
+
+        An invoice is always raised **against a delivery voucher that is active**,
+        which is to say against goods that actually left the store. Its customer is
+        taken from that voucher rather than sent, so an invoice can never name
+        someone other than whoever received the goods.
+
+        A voucher may be invoiced in instalments, but the instalments may not add up
+        to more than was delivered. That single rule is what keeps "delivered" and
+        "invoiced" reconcilable, and it is what drives the voucher's own
+        `invoicing.status`, which is **re-derived** on every change — record an
+        invoice or delete one to move it, never write the field.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Invoice a delivery'
+      description: |-
+        Refused unless the voucher is **active** — an invoice for goods that
+        have not been delivered is a dispute waiting to happen — and refused
+        when the amount would take the voucher past its delivered value.
+
+        The refusal names the remaining amount, so the message can be shown as
+        written and the user can correct the figure without a second call.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      delivery_voucher_id:
+        custom: []
+        name: delivery_voucher_id
+        description: 'The ID of the delivery voucher.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      delivery_voucher:
+        custom: []
+        name: delivery_voucher
+        description: 'The delivery being invoiced.'
+        required: true
+        example: 18
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      delivery_voucher_id: 1
+      delivery_voucher: 18
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      invoice_number:
+        custom: []
+        name: invoice_number
+        description: "The invoice's own number."
+        required: true
+        example: INV-2026-0044
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      invoice_date:
+        custom: []
+        name: invoice_date
+        description: ''
+        required: true
+        example: '2026-09-15'
+        type: date
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      amount:
+        custom: []
+        name: amount
+        description: 'May be part of the delivered value; instalments are fine.'
+        required: true
+        example: 150000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: optional
+        required: false
+        example: 'First instalment, 60%'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      invoice_number: INV-2026-0044
+      invoice_date: '2026-09-15'
+      amount: 150000.0
+      notes: 'First instalment, 60%'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":22,"type":"sales_invoice","invoice_number":"INV-2026-0044","amount":"150000.00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Created
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"Invoicing DV-202609-0005 for more than was delivered. Remaining: 100,000.00."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Exceeds the delivery'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/sales-invoices/{sales_invoice_id}'
+    metadata:
+      custom: []
+      groupName: '31. Sales invoices'
+      groupDescription: |-
+
+        فواتير المبيعات — invoicing what was delivered.
+
+        An invoice is always raised **against a delivery voucher that is active**,
+        which is to say against goods that actually left the store. Its customer is
+        taken from that voucher rather than sent, so an invoice can never name
+        someone other than whoever received the goods.
+
+        A voucher may be invoiced in instalments, but the instalments may not add up
+        to more than was delivered. That single rule is what keeps "delivered" and
+        "invoiced" reconcilable, and it is what drives the voucher's own
+        `invoicing.status`, which is **re-derived** on every change — record an
+        invoice or delete one to move it, never write the field.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a sales invoice'
+      description: |-
+        The voucher's invoiced value and invoicing status are re-derived
+        immediately afterwards, so deleting the only invoice on a voucher puts
+        it back to `not_invoiced` rather than leaving a stale status behind.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      sales_invoice_id:
+        custom: []
+        name: sales_invoice_id
+        description: 'The ID of the sales invoice.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      sales_invoice:
+        custom: []
+        name: sales_invoice
+        description: 'The invoice id.'
+        required: true
+        example: 22
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      sales_invoice_id: 1
+      sales_invoice: 22
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Deleted
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

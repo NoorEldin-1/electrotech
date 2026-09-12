@@ -1,0 +1,660 @@
+name: '27. Installations'
+description: |-
+
+  مرحلة التركيب — installing what was delivered, on the customer's site.
+
+  Pending → **start** → In Progress → **complete** → Completed. Each
+  transition stamps its own timestamp, which is why there is no writable
+  `status`: a status a client can set is a status that drifts from the times
+  beside it.
+
+  Installation **expenses** are not modelled here. They reach the operation
+  through the general ledger, tagged to it like every other cost, so that the
+  operation's cost file has one source rather than a parallel field only this
+  screen knows about.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/installations
+    metadata:
+      custom: []
+      groupName: '27. Installations'
+      groupDescription: |-
+
+        مرحلة التركيب — installing what was delivered, on the customer's site.
+
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List installations'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'The page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[status]':
+        custom: []
+        name: 'filter[status]'
+        description: 'pending, in_progress or completed.'
+        required: false
+        example: in_progress
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[project]':
+        custom: []
+        name: 'filter[project]'
+        description: 'Operation id.'
+        required: false
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[delivery_voucher]':
+        custom: []
+        name: 'filter[delivery_voucher]'
+        description: 'Delivery voucher id.'
+        required: false
+        example: 18
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Allowed: status, started_at, completed_at, created_at.'
+        required: false
+        example: '-created_at'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      include:
+        custom: []
+        name: include
+        description: 'Allowed: project, deliveryVoucher.'
+        required: false
+        example: project
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      'filter[status]': in_progress
+      'filter[project]': 4
+      'filter[delivery_voucher]': 18
+      sort: '-created_at'
+      include: project
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":3,"type":"installation","status":{"value":"in_progress","label":"In Progress","color":"info"},"project_id":4,"started_at":"2026-09-13T08:00:00+00:00"}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/installations/{id}'
+    metadata:
+      custom: []
+      groupName: '27. Installations'
+      groupDescription: |-
+
+        مرحلة التركيب — installing what was delivered, on the customer's site.
+
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show an installation'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the installation.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      installation:
+        custom: []
+        name: installation
+        description: 'The installation id.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 17
+      installation: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":3,"type":"installation","status":{"value":"completed","label":"Completed","color":"success"},"started_at":"2026-09-13T08:00:00+00:00","completed_at":"2026-09-14T17:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/installations
+    metadata:
+      custom: []
+      groupName: '27. Installations'
+      groupDescription: |-
+
+        مرحلة التركيب — installing what was delivered, on the customer's site.
+
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Open an installation'
+      description: 'Always starts Pending. The timestamps belong to the transitions.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      project_id:
+        custom: []
+        name: project_id
+        description: 'The operation being installed.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      delivery_voucher_id:
+        custom: []
+        name: delivery_voucher_id
+        description: 'optional The delivery it follows.'
+        required: false
+        example: 18
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: optional
+        required: false
+        example: 'Third floor, crane access needed'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      project_id: 4
+      delivery_voucher_id: 18
+      notes: 'Third floor, crane access needed'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":3,"type":"installation","status":{"value":"pending","label":"Pending","color":"gray"}},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Created
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PATCH
+    uri: 'api/v1/installations/{id}'
+    metadata:
+      custom: []
+      groupName: '27. Installations'
+      groupDescription: |-
+
+        مرحلة التركيب — installing what was delivered, on the customer's site.
+
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update an installation'
+      description: 'Notes and links only — see the class note on why there is no `status`.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the installation.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      installation:
+        custom: []
+        name: installation
+        description: 'The installation id.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 17
+      installation: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      delivery_voucher_id:
+        custom: []
+        name: delivery_voucher_id
+        description: optional
+        required: false
+        example: 18
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: optional
+        required: false
+        example: 'Crane booked for Thursday'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      delivery_voucher_id: 18
+      notes: 'Crane booked for Thursday'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":3,"type":"installation","notes":"Crane booked for Thursday"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Updated
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/installations/{installation_id}/start'
+    metadata:
+      custom: []
+      groupName: '27. Installations'
+      groupDescription: |-
+
+        مرحلة التركيب — installing what was delivered, on the customer's site.
+
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Start the installation'
+      description: 'Pending only, and it stamps `started_at`.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      installation_id:
+        custom: []
+        name: installation_id
+        description: 'The ID of the installation.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      installation:
+        custom: []
+        name: installation
+        description: 'The installation id.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      installation_id: 17
+      installation: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":3,"type":"installation","status":{"value":"in_progress","label":"In Progress","color":"info"},"started_at":"2026-09-13T08:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Started
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"Cannot move from completed; expected pending."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Wrong stage'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/installations/{installation_id}/complete'
+    metadata:
+      custom: []
+      groupName: '27. Installations'
+      groupDescription: |-
+
+        مرحلة التركيب — installing what was delivered, on the customer's site.
+
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Complete the installation'
+      description: |-
+        In Progress only, and it stamps `completed_at`. An installation cannot
+        jump straight from Pending to Completed: the start time is what the
+        duration on site is measured from, and an installation with no start has
+        no duration.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      installation_id:
+        custom: []
+        name: installation_id
+        description: 'The ID of the installation.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      installation:
+        custom: []
+        name: installation
+        description: 'The installation id.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      installation_id: 17
+      installation: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":3,"type":"installation","status":{"value":"completed","label":"Completed","color":"success"},"completed_at":"2026-09-14T17:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Completed
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/installations/{id}'
+    metadata:
+      custom: []
+      groupName: '27. Installations'
+      groupDescription: |-
+
+        مرحلة التركيب — installing what was delivered, on the customer's site.
+
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete an installation'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the installation.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      installation:
+        custom: []
+        name: installation
+        description: 'The installation id.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 17
+      installation: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Deleted
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

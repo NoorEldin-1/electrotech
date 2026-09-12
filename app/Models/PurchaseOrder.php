@@ -200,17 +200,31 @@ class PurchaseOrder extends Model
      * Generate a unique PO number with format: PO-YYYYMM-XXXX
      *
      * See App\Models\Project::generateCode() for the rationale on the
-     * MAX(CAST(...)) aggregate + Redis lock pattern.
+     * lock-around-read-then-increment pattern.
+     *
+     * The sequence is parsed in PHP rather than with SUBSTRING_INDEX. That
+     * function is MySQL-only: the query ran fine in production and threw on
+     * SQLite, so the whole create path was untestable and the failure would
+     * only ever have shown up on a developer machine. Project::generateCode()
+     * and AdditionVoucher::generateVoucherNumber() already parse in PHP for
+     * exactly this reason; this one was missed. Soft-deleted rows are included
+     * because the unique index on po_number ignores deleted_at, so reusing a
+     * deleted number would fail on insert.
+     *
+     * Volume per month is small, so pulling the month's numbers into PHP costs
+     * nothing measurable.
      */
     public static function generatePoNumber(): string
     {
         $prefix = 'PO-' . now()->format('Ym') . '-';
 
         return \Illuminate\Support\Facades\Cache::lock('po_number_seq:' . $prefix, 5)->block(3, function () use ($prefix) {
-            $maxSequence = (int) static::query()
+            $maxSequence = static::query()
+                ->withTrashed()
                 ->where('po_number', 'like', $prefix . '%')
-                ->selectRaw('COALESCE(MAX(CAST(SUBSTRING_INDEX(po_number, "-", -1) AS UNSIGNED)), 0) AS seq')
-                ->value('seq');
+                ->pluck('po_number')
+                ->map(fn (string $number): int => (int) substr($number, strlen($prefix)))
+                ->max() ?? 0;
 
             return $prefix . str_pad((string) ($maxSequence + 1), 4, '0', STR_PAD_LEFT);
         });

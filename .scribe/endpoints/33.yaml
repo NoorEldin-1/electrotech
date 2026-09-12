@@ -1,0 +1,485 @@
+name: '36. Cost-centre closing'
+description: |-
+
+  إقفال مركز التكلفة — carrying an operation's accumulated cost out of
+  inventory and into cost of goods sold, once its goods have reached the
+  customer.
+
+  There are two paths in, and they behave differently on purpose. The
+  **automatic** one fires when a delivery voucher activates: it is silent, it
+  never fires while a work order is still open on the operation (cost would be
+  charged to sales before it finished accruing), and it never throws — a
+  missing account must not roll back a delivery that physically happened.
+
+  The **manual** one is this endpoint, and every refusal it makes is explicit,
+  so the user learns why nothing was posted rather than wondering: no active
+  delivery, nothing left to close, or the chart missing the COGS or inventory
+  account the entry needs.
+
+  Undoing a closing is a **reversal**, never a deletion. The journal entry
+  behind it is posted and immutable, so the reversal writes a mirror-image
+  entry plus a negative closing row; the unclosed balance comes back on its
+  own and the audit trail stays whole.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/cost-center-closings
+    metadata:
+      custom: []
+      groupName: '36. Cost-centre closing'
+      groupDescription: |-
+
+        إقفال مركز التكلفة — carrying an operation's accumulated cost out of
+        inventory and into cost of goods sold, once its goods have reached the
+        customer.
+
+        There are two paths in, and they behave differently on purpose. The
+        **automatic** one fires when a delivery voucher activates: it is silent, it
+        never fires while a work order is still open on the operation (cost would be
+        charged to sales before it finished accruing), and it never throws — a
+        missing account must not roll back a delivery that physically happened.
+
+        The **manual** one is this endpoint, and every refusal it makes is explicit,
+        so the user learns why nothing was posted rather than wondering: no active
+        delivery, nothing left to close, or the chart missing the COGS or inventory
+        account the entry needs.
+
+        Undoing a closing is a **reversal**, never a deletion. The journal entry
+        behind it is posted and immutable, so the reversal writes a mirror-image
+        entry plus a negative closing row; the unclosed balance comes back on its
+        own and the audit trail stays whole.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List cost-centre closings'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'The page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[project]':
+        custom: []
+        name: 'filter[project]'
+        description: 'Operation id.'
+        required: false
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[delivery_voucher]':
+        custom: []
+        name: 'filter[delivery_voucher]'
+        description: 'Delivery voucher id.'
+        required: false
+        example: 18
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[is_automatic]':
+        custom: []
+        name: 'filter[is_automatic]'
+        description: 'Raised by a delivery rather than by hand.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Allowed: closed_at, amount, created_at.'
+        required: false
+        example: '-closed_at'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      include:
+        custom: []
+        name: include
+        description: 'Allowed: project.'
+        required: false
+        example: project
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      'filter[project]': 4
+      'filter[delivery_voucher]': 18
+      'filter[is_automatic]': true
+      sort: '-closed_at'
+      include: project
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":5,"type":"cost_center_closing","project_id":4,"amount":"430000.00","is_automatic":true,"is_reversed":false}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/projects/{project_id}/cost-center'
+    metadata:
+      custom: []
+      groupName: '36. Cost-centre closing'
+      groupDescription: |-
+
+        إقفال مركز التكلفة — carrying an operation's accumulated cost out of
+        inventory and into cost of goods sold, once its goods have reached the
+        customer.
+
+        There are two paths in, and they behave differently on purpose. The
+        **automatic** one fires when a delivery voucher activates: it is silent, it
+        never fires while a work order is still open on the operation (cost would be
+        charged to sales before it finished accruing), and it never throws — a
+        missing account must not roll back a delivery that physically happened.
+
+        The **manual** one is this endpoint, and every refusal it makes is explicit,
+        so the user learns why nothing was posted rather than wondering: no active
+        delivery, nothing left to close, or the chart missing the COGS or inventory
+        account the entry needs.
+
+        Undoing a closing is a **reversal**, never a deletion. The journal entry
+        behind it is posted and immutable, so the reversal writes a mirror-image
+        entry plus a negative closing row; the unclosed balance comes back on its
+        own and the audit trail stays whole.
+      subgroup: ''
+      subgroupDescription: ''
+      title: "An operation's closing position"
+      description: |-
+        What the operation consumed, what has already been closed, and what is
+        still sitting in inventory waiting to be. Plus the two conditions that
+        decide whether it *can* be closed: an active delivery, and no work order
+        still open.
+
+        Call this before offering the close action — the same figures the close
+        endpoint would refuse on.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      project_id:
+        custom: []
+        name: project_id
+        description: 'The ID of the project.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      project:
+        custom: []
+        name: project
+        description: 'The operation id.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      project_id: 1
+      project: 4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"project_id":4,"inventory_consumed":"430000.00","closed_value":"0.00","unclosed_balance":"430000.00","is_closed":false,"is_partially_closed":false,"has_active_delivery":true,"has_open_work_orders":false,"can_close":true},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/projects/{project_id}/close-cost-center'
+    metadata:
+      custom: []
+      groupName: '36. Cost-centre closing'
+      groupDescription: |-
+
+        إقفال مركز التكلفة — carrying an operation's accumulated cost out of
+        inventory and into cost of goods sold, once its goods have reached the
+        customer.
+
+        There are two paths in, and they behave differently on purpose. The
+        **automatic** one fires when a delivery voucher activates: it is silent, it
+        never fires while a work order is still open on the operation (cost would be
+        charged to sales before it finished accruing), and it never throws — a
+        missing account must not roll back a delivery that physically happened.
+
+        The **manual** one is this endpoint, and every refusal it makes is explicit,
+        so the user learns why nothing was posted rather than wondering: no active
+        delivery, nothing left to close, or the chart missing the COGS or inventory
+        account the entry needs.
+
+        Undoing a closing is a **reversal**, never a deletion. The journal entry
+        behind it is posted and immutable, so the reversal writes a mirror-image
+        entry plus a negative closing row; the unclosed balance comes back on its
+        own and the audit trail stays whole.
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Close an operation's cost centre"
+      description: |-
+        Posts the journal entry that moves the unclosed balance from inventory to
+        cost of goods sold, and records the closing.
+
+        The amount is **not** a parameter: what gets carried is the operation's
+        unclosed balance, computed from what it actually consumed. A figure typed
+        by hand would be a number nothing reconciles against.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      project_id:
+        custom: []
+        name: project_id
+        description: 'The ID of the project.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      project:
+        custom: []
+        name: project
+        description: 'The operation id.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      project_id: 1
+      project: 4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      delivery_voucher_id:
+        custom: []
+        name: delivery_voucher_id
+        description: 'optional The delivery this closing belongs to, for the audit trail.'
+        required: false
+        example: 18
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      delivery_voucher_id: 18
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":5,"type":"cost_center_closing","project_id":4,"amount":"430000.00","is_automatic":false,"journal_entry_id":79},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Closed
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"Operation 2026-14 has no active delivery, so its cost centre cannot be closed."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Nothing delivered'
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"Operation 2026-14 has nothing left to close."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Nothing left to close'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/cost-center-closings/{cost_center_closing_id}/reverse'
+    metadata:
+      custom: []
+      groupName: '36. Cost-centre closing'
+      groupDescription: |-
+
+        إقفال مركز التكلفة — carrying an operation's accumulated cost out of
+        inventory and into cost of goods sold, once its goods have reached the
+        customer.
+
+        There are two paths in, and they behave differently on purpose. The
+        **automatic** one fires when a delivery voucher activates: it is silent, it
+        never fires while a work order is still open on the operation (cost would be
+        charged to sales before it finished accruing), and it never throws — a
+        missing account must not roll back a delivery that physically happened.
+
+        The **manual** one is this endpoint, and every refusal it makes is explicit,
+        so the user learns why nothing was posted rather than wondering: no active
+        delivery, nothing left to close, or the chart missing the COGS or inventory
+        account the entry needs.
+
+        Undoing a closing is a **reversal**, never a deletion. The journal entry
+        behind it is posted and immutable, so the reversal writes a mirror-image
+        entry plus a negative closing row; the unclosed balance comes back on its
+        own and the audit trail stays whole.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reverse a closing'
+      description: |-
+        Writes the mirror-image journal entry (Dr inventory / Cr COGS) and a
+        negative closing row linked to the original. Nothing is deleted, and the
+        operation's unclosed balance comes back on its own.
+
+        Refused on a row that is itself a reversal, and on one that has already
+        been reversed — reversing a reversal twice would quietly double the
+        correction.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      cost_center_closing_id:
+        custom: []
+        name: cost_center_closing_id
+        description: 'The ID of the cost center closing.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      cost_center_closing:
+        custom: []
+        name: cost_center_closing
+        description: 'The closing to undo.'
+        required: true
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      cost_center_closing_id: 1
+      cost_center_closing: 5
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      reason:
+        custom: []
+        name: reason
+        description: 'optional Why it is being undone.'
+        required: false
+        example: 'Delivery voucher was cancelled by the customer'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      reason: 'Delivery voucher was cancelled by the customer'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":6,"type":"cost_center_closing","amount":"-430000.00","is_reversal":true,"reverses_id":5},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Reversed
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"This closing has already been reversed."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Already reversed'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

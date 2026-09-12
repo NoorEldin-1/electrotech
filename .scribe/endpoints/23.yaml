@@ -1,0 +1,614 @@
+name: '26. Delivery minutes'
+description: |-
+
+  محضر التسليم — the record that a delivery was handed over, and the document
+  circulated to every department afterwards.
+
+  A minute is always raised **from a delivery voucher** and inherits that
+  voucher's operation and customer. Sending them separately would allow a
+  minute naming a different customer from the delivery it records — a
+  contradiction nobody could resolve months later.
+
+  `distribute` is the one state it has, and it is one-way and idempotent:
+  calling it twice does not send a second round of notifications. After
+  distribution the minute freezes, because every department is already
+  holding the copy that went out.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/delivery-minutes
+    metadata:
+      custom: []
+      groupName: '26. Delivery minutes'
+      groupDescription: |-
+
+        محضر التسليم — the record that a delivery was handed over, and the document
+        circulated to every department afterwards.
+
+        A minute is always raised **from a delivery voucher** and inherits that
+        voucher's operation and customer. Sending them separately would allow a
+        minute naming a different customer from the delivery it records — a
+        contradiction nobody could resolve months later.
+
+        `distribute` is the one state it has, and it is one-way and idempotent:
+        calling it twice does not send a second round of notifications. After
+        distribution the minute freezes, because every department is already
+        holding the copy that went out.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List delivery minutes'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'The page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      search:
+        custom: []
+        name: search
+        description: 'Matches the minute number.'
+        required: false
+        example: DM-2026
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[project]':
+        custom: []
+        name: 'filter[project]'
+        description: 'Operation id.'
+        required: false
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[customer]':
+        custom: []
+        name: 'filter[customer]'
+        description: 'Customer id.'
+        required: false
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[delivery_voucher]':
+        custom: []
+        name: 'filter[delivery_voucher]'
+        description: 'Delivery voucher id.'
+        required: false
+        example: 18
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[distributed]':
+        custom: []
+        name: 'filter[distributed]'
+        description: 'Whether it has gone out to the departments.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[minute_date]':
+        custom: []
+        name: 'filter[minute_date]'
+        description: 'Inclusive date range from,until.'
+        required: false
+        example: '2026-01-01,2026-06-30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Allowed: minute_number, minute_date, created_at.'
+        required: false
+        example: '-minute_date'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      include:
+        custom: []
+        name: include
+        description: 'Allowed: project, customer, deliveryVoucher.'
+        required: false
+        example: project
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      search: DM-2026
+      'filter[project]': 4
+      'filter[customer]': 7
+      'filter[delivery_voucher]': 18
+      'filter[distributed]': false
+      'filter[minute_date]': '2026-01-01,2026-06-30'
+      sort: '-minute_date'
+      include: project
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":6,"type":"delivery_minute","minute_number":"DM-202609-0002","distributed":false,"delivery_voucher_id":18}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/delivery-minutes/{delivery_minute_id}'
+    metadata:
+      custom: []
+      groupName: '26. Delivery minutes'
+      groupDescription: |-
+
+        محضر التسليم — the record that a delivery was handed over, and the document
+        circulated to every department afterwards.
+
+        A minute is always raised **from a delivery voucher** and inherits that
+        voucher's operation and customer. Sending them separately would allow a
+        minute naming a different customer from the delivery it records — a
+        contradiction nobody could resolve months later.
+
+        `distribute` is the one state it has, and it is one-way and idempotent:
+        calling it twice does not send a second round of notifications. After
+        distribution the minute freezes, because every department is already
+        holding the copy that went out.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show a delivery minute'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      delivery_minute_id:
+        custom: []
+        name: delivery_minute_id
+        description: 'The ID of the delivery minute.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      delivery_minute:
+        custom: []
+        name: delivery_minute
+        description: 'The minute id.'
+        required: true
+        example: 6
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      delivery_minute_id: 17
+      delivery_minute: 6
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":6,"type":"delivery_minute","minute_number":"DM-202609-0002","content":"Nine panels received in good order.","distributed":true,"distributed_at":"2026-09-12T16:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/delivery-minutes
+    metadata:
+      custom: []
+      groupName: '26. Delivery minutes'
+      groupDescription: |-
+
+        محضر التسليم — the record that a delivery was handed over, and the document
+        circulated to every department afterwards.
+
+        A minute is always raised **from a delivery voucher** and inherits that
+        voucher's operation and customer. Sending them separately would allow a
+        minute naming a different customer from the delivery it records — a
+        contradiction nobody could resolve months later.
+
+        `distribute` is the one state it has, and it is one-way and idempotent:
+        calling it twice does not send a second round of notifications. After
+        distribution the minute freezes, because every department is already
+        holding the copy that went out.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Raise a minute from a delivery'
+      description: |-
+        The operation and the customer come from the voucher. The number is
+        generated by the server.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      delivery_voucher_id:
+        custom: []
+        name: delivery_voucher_id
+        description: 'The delivery being recorded.'
+        required: true
+        example: 18
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      content:
+        custom: []
+        name: content
+        description: 'optional What was handed over and in what condition.'
+        required: false
+        example: 'Nine panels received in good order.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      delivery_voucher_id: 18
+      content: 'Nine panels received in good order.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":6,"type":"delivery_minute","minute_number":"DM-202609-0002","distributed":false},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Created
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PATCH
+    uri: 'api/v1/delivery-minutes/{delivery_minute_id}'
+    metadata:
+      custom: []
+      groupName: '26. Delivery minutes'
+      groupDescription: |-
+
+        محضر التسليم — the record that a delivery was handed over, and the document
+        circulated to every department afterwards.
+
+        A minute is always raised **from a delivery voucher** and inherits that
+        voucher's operation and customer. Sending them separately would allow a
+        minute naming a different customer from the delivery it records — a
+        contradiction nobody could resolve months later.
+
+        `distribute` is the one state it has, and it is one-way and idempotent:
+        calling it twice does not send a second round of notifications. After
+        distribution the minute freezes, because every department is already
+        holding the copy that went out.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Edit a minute'
+      description: |-
+        Only before distribution — the policy gates on that, so a circulated
+        minute answers **403**.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      delivery_minute_id:
+        custom: []
+        name: delivery_minute_id
+        description: 'The ID of the delivery minute.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      delivery_minute:
+        custom: []
+        name: delivery_minute
+        description: 'The minute id.'
+        required: true
+        example: 6
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      delivery_minute_id: 17
+      delivery_minute: 6
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      content:
+        custom: []
+        name: content
+        description: optional
+        required: false
+        example: 'Nine panels received; one crate opened for inspection.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      minute_date:
+        custom: []
+        name: minute_date
+        description: optional
+        required: false
+        example: '2026-09-12'
+        type: date
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      content: 'Nine panels received; one crate opened for inspection.'
+      minute_date: '2026-09-12'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":6,"type":"delivery_minute","content":"Nine panels received; one crate opened for inspection."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Updated
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/delivery-minutes/{delivery_minute_id}/distribute'
+    metadata:
+      custom: []
+      groupName: '26. Delivery minutes'
+      groupDescription: |-
+
+        محضر التسليم — the record that a delivery was handed over, and the document
+        circulated to every department afterwards.
+
+        A minute is always raised **from a delivery voucher** and inherits that
+        voucher's operation and customer. Sending them separately would allow a
+        minute naming a different customer from the delivery it records — a
+        contradiction nobody could resolve months later.
+
+        `distribute` is the one state it has, and it is one-way and idempotent:
+        calling it twice does not send a second round of notifications. After
+        distribution the minute freezes, because every department is already
+        holding the copy that went out.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Distribute to all departments'
+      description: |-
+        ارسالها لجميع الأقسام — stamps the minute as distributed and notifies
+        every configured department role.
+
+        Idempotent: a retry after the first distribution is a silent success and
+        sends nothing again, which matters on a weak link where the client
+        cannot tell a lost response from a lost request.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      delivery_minute_id:
+        custom: []
+        name: delivery_minute_id
+        description: 'The ID of the delivery minute.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      delivery_minute:
+        custom: []
+        name: delivery_minute
+        description: 'The minute id.'
+        required: true
+        example: 6
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      delivery_minute_id: 17
+      delivery_minute: 6
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":6,"type":"delivery_minute","distributed":true,"distributed_at":"2026-09-12T16:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Distributed
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/delivery-minutes/{delivery_minute_id}'
+    metadata:
+      custom: []
+      groupName: '26. Delivery minutes'
+      groupDescription: |-
+
+        محضر التسليم — the record that a delivery was handed over, and the document
+        circulated to every department afterwards.
+
+        A minute is always raised **from a delivery voucher** and inherits that
+        voucher's operation and customer. Sending them separately would allow a
+        minute naming a different customer from the delivery it records — a
+        contradiction nobody could resolve months later.
+
+        `distribute` is the one state it has, and it is one-way and idempotent:
+        calling it twice does not send a second round of notifications. After
+        distribution the minute freezes, because every department is already
+        holding the copy that went out.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a minute'
+      description: 'Only before distribution.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      delivery_minute_id:
+        custom: []
+        name: delivery_minute_id
+        description: 'The ID of the delivery minute.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      delivery_minute:
+        custom: []
+        name: delivery_minute
+        description: 'The minute id.'
+        required: true
+        example: 6
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      delivery_minute_id: 17
+      delivery_minute: 6
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Deleted
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

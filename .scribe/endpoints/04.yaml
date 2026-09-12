@@ -1,26 +1,28 @@
-name: '4. Users'
+name: '7. Items'
 description: |-
 
-  Administration of user accounts. Every endpoint is gated by the same
-  `users.*` permissions and the same UserPolicy the admin panel uses — the API
-  introduces no parallel authorization.
+  The material catalogue (الأصناف): raw materials, semi-finished parts,
+  finished goods and consumables. Every BOM line, purchase-order line, voucher
+  line and stock balance in the platform points at one of these, so this is
+  usually the first list a client caches after logging in.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/users
+    uri: api/v1/items
     metadata:
       custom: []
-      groupName: '4. Users'
+      groupName: '7. Items'
       groupDescription: |-
 
-        Administration of user accounts. Every endpoint is gated by the same
-        `users.*` permissions and the same UserPolicy the admin panel uses — the API
-        introduces no parallel authorization.
+        The material catalogue (الأصناف): raw materials, semi-finished parts,
+        finished goods and consumables. Every BOM line, purchase-order line, voucher
+        line and stock balance in the platform points at one of these, so this is
+        usually the first list a client caches after logging in.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List users'
+      title: 'List items'
       description: ''
       authenticated: true
       deprecated: false
@@ -56,21 +58,54 @@ endpoints:
       search:
         custom: []
         name: search
-        description: 'Matches name or email.'
+        description: 'Matches name, SKU or description.'
         required: false
-        example: ahmed
+        example: copper
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      'filter[role]':
+      'filter[type]':
         custom: []
-        name: 'filter[role]'
-        description: 'Filter by role name; comma-separate for OR.'
+        name: 'filter[type]'
+        description: 'Item type; comma-separate for OR.'
         required: false
-        example: 'Sales,Sales_Manager'
+        example: 'raw_material,consumable'
         type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[unit]':
+        custom: []
+        name: 'filter[unit]'
+        description: 'Unit of measure.'
+        required: false
+        example: kg
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[is_scrap]':
+        custom: []
+        name: 'filter[is_scrap]'
+        description: 'Only scrap variants (true) or only real items (false).'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[below_minimum]':
+        custom: []
+        name: 'filter[below_minimum]'
+        description: 'Only items whose total available quantity is under minimum_stock.'
+        required: false
+        example: true
+        type: boolean
         enumValues: []
         exampleWasSpecified: true
         nullable: false
@@ -78,7 +113,7 @@ endpoints:
       'filter[created]':
         custom: []
         name: 'filter[created]'
-        description: 'Inclusive date range `from,until`; either side may be omitted.'
+        description: 'Inclusive date range from,until.'
         required: false
         example: '2026-01-01,2026-06-30'
         type: string
@@ -89,9 +124,9 @@ endpoints:
       sort:
         custom: []
         name: sort
-        description: 'Comma-separated; prefix with `-` for descending. Allowed: name, email, created_at.'
+        description: 'Comma-separated; prefix with - for descending. Allowed: name, sku, unit_cost, created_at.'
         required: false
-        example: '-created_at'
+        example: name
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -100,9 +135,20 @@ endpoints:
       include:
         custom: []
         name: include
-        description: 'Comma-separated relations. Allowed: roles.'
+        description: 'Comma-separated relations. Allowed: inventories, scrapSource.'
         required: false
-        example: roles
+        example: inventories
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      updated_after:
+        custom: []
+        name: updated_after
+        description: 'ISO-8601 timestamp; returns only rows changed since then.'
+        required: false
+        example: '2026-08-01T10:00:00Z'
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -111,11 +157,15 @@ endpoints:
     cleanQueryParameters:
       page: 1
       per_page: 25
-      search: ahmed
-      'filter[role]': 'Sales,Sales_Manager'
+      search: copper
+      'filter[type]': 'raw_material,consumable'
+      'filter[unit]': kg
+      'filter[is_scrap]': false
+      'filter[below_minimum]': true
       'filter[created]': '2026-01-01,2026-06-30'
-      sort: '-created_at'
-      include: roles
+      sort: name
+      include: inventories
+      updated_after: '2026-08-01T10:00:00Z'
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
@@ -123,7 +173,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":[{"id":1,"type":"user","name":"System Administrator","email":"admin@example.com","roles":[{"id":1,"name":"Admin"}]}],"meta":{"request_id":"9f1c...","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"...","prev":null,"next":null,"last":"..."}}'
+        content: '{"data":[{"id":1,"type":"item","name":"Copper Busbar 100x10","sku":"CU-BB-10010","item_type":{"value":"raw_material","label":"Raw Material","color":"info"},"unit":{"value":"kg","label":"Kilogram","color":null},"unit_cost":"412.50","minimum_stock":"50.0000","is_scrap":false,"home_warehouse":{"value":"raw_materials","label":"Raw Materials","color":null}}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
         headers: []
         description: Success
     responseFields: []
@@ -138,21 +188,22 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/users/{id}'
+    uri: 'api/v1/items/{id}'
     metadata:
       custom: []
-      groupName: '4. Users'
+      groupName: '7. Items'
       groupDescription: |-
 
-        Administration of user accounts. Every endpoint is gated by the same
-        `users.*` permissions and the same UserPolicy the admin panel uses — the API
-        introduces no parallel authorization.
+        The material catalogue (الأصناف): raw materials, semi-finished parts,
+        finished goods and consumables. Every BOM line, purchase-order line, voucher
+        line and stock balance in the platform points at one of these, so this is
+        usually the first list a client caches after logging in.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Show a user'
+      title: 'Show an item'
       description: |-
-        Includes the target's full resolved permission list, so an administrator
-        screen can show exactly what this account can do.
+        Always carries the per-warehouse stock balances: a single item card is
+        exactly where they are wanted, and it costs one extra query.
       authenticated: true
       deprecated: false
     headers:
@@ -163,7 +214,7 @@ endpoints:
       id:
         custom: []
         name: id
-        description: 'The ID of the user.'
+        description: 'The ID of the item.'
         required: true
         example: 1
         type: integer
@@ -171,12 +222,12 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      user:
+      item:
         custom: []
-        name: user
-        description: 'The user id.'
+        name: item
+        description: 'The item id.'
         required: true
-        example: 3
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: true
@@ -184,7 +235,7 @@ endpoints:
         deprecated: false
     cleanUrlParameters:
       id: 1
-      user: 3
+      item: 1
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -194,7 +245,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":3,"type":"user","name":"Ahmed Hassan","email":"ahmed@example.com","roles":[{"id":2,"name":"Sales"}],"permissions":["projects.view"]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        content: '{"data":{"id":1,"type":"item","name":"Copper Busbar 100x10","sku":"CU-BB-10010","unit_cost":"412.50","stock":[{"warehouse":{"value":"raw_materials","label":"Raw Materials","color":null},"on_hand":"120.0000","on_hold":"20.0000","available":"100.0000"}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Success
     responseFields: []
@@ -209,21 +260,20 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/users
+    uri: api/v1/items
     metadata:
       custom: []
-      groupName: '4. Users'
+      groupName: '7. Items'
       groupDescription: |-
 
-        Administration of user accounts. Every endpoint is gated by the same
-        `users.*` permissions and the same UserPolicy the admin panel uses — the API
-        introduces no parallel authorization.
+        The material catalogue (الأصناف): raw materials, semi-finished parts,
+        finished goods and consumables. Every BOM line, purchase-order line, voucher
+        line and stock balance in the platform points at one of these, so this is
+        usually the first list a client caches after logging in.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Create a user'
-      description: |-
-        At least one role is required: an account with no role cannot sign in
-        at all, so creating one would silently produce a dead account.
+      title: 'Create an item'
+      description: ''
       authenticated: true
       deprecated: false
     headers:
@@ -238,60 +288,94 @@ endpoints:
       name:
         custom: []
         name: name
-        description: 'Display name.'
+        description: 'Item name.'
         required: true
-        example: 'Ahmed Hassan'
+        example: 'Copper Busbar 100x10'
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      email:
+      sku:
         custom: []
-        name: email
-        description: 'Unique email address.'
+        name: sku
+        description: 'Unique stock-keeping code.'
         required: true
-        example: ahmed@example.com
+        example: CU-BB-10010
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      password:
+      type:
         custom: []
-        name: password
-        description: 'At least 8 characters with letters and numbers.'
+        name: type
+        description: 'One of the item_type enum values.'
         required: true
-        example: secret123
+        example: raw_material
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      roles:
+      unit:
         custom: []
-        name: roles
-        description: 'One or more existing role names.'
+        name: unit
+        description: 'One of the unit_of_measure enum values.'
         required: true
-        example:
-          - Sales
-        type: 'string[]'
+        example: kg
+        type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
+        deprecated: false
+      unit_cost:
+        custom: []
+        name: unit_cost
+        description: 'Standard cost per unit, in EGP.'
+        required: true
+        example: 412.5
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      minimum_stock:
+        custom: []
+        name: minimum_stock
+        description: 'optional Re-order threshold; 0 disables the low-stock alert.'
+        required: false
+        example: 50.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'optional Free text.'
+        required: false
+        example: 'Electrolytic copper'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
         deprecated: false
     cleanBodyParameters:
-      name: 'Ahmed Hassan'
-      email: ahmed@example.com
-      password: secret123
-      roles:
-        - Sales
+      name: 'Copper Busbar 100x10'
+      sku: CU-BB-10010
+      type: raw_material
+      unit: kg
+      unit_cost: 412.5
+      minimum_stock: 50.0
+      description: 'Electrolytic copper'
     fileParameters: []
     responses:
       -
         custom: []
         status: 201
-        content: '{"data":{"id":4,"type":"user","name":"Ahmed Hassan","email":"ahmed@example.com","roles":[{"id":2,"name":"Sales"}]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        content: '{"data":{"id":9,"type":"item","name":"Copper Busbar 100x10","sku":"CU-BB-10010"},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Created
     responseFields: []
@@ -306,22 +390,23 @@ endpoints:
     custom: []
     httpMethods:
       - PATCH
-    uri: 'api/v1/users/{id}'
+    uri: 'api/v1/items/{id}'
     metadata:
       custom: []
-      groupName: '4. Users'
+      groupName: '7. Items'
       groupDescription: |-
 
-        Administration of user accounts. Every endpoint is gated by the same
-        `users.*` permissions and the same UserPolicy the admin panel uses — the API
-        introduces no parallel authorization.
+        The material catalogue (الأصناف): raw materials, semi-finished parts,
+        finished goods and consumables. Every BOM line, purchase-order line, voucher
+        line and stock balance in the platform points at one of these, so this is
+        usually the first list a client caches after logging in.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Update a user'
+      title: 'Update an item'
       description: |-
-        Send only the fields you want changed. Setting `password` revokes every
-        API session belonging to that user — an administrator resetting a
-        password expects the old credentials to stop working immediately.
+        Send only the fields to change. `type` is editable, but changing it also
+        changes the item's home warehouse while existing stock rows stay where
+        they are, so only do it for an item with no movements yet.
       authenticated: true
       deprecated: false
     headers:
@@ -332,7 +417,7 @@ endpoints:
       id:
         custom: []
         name: id
-        description: 'The ID of the user.'
+        description: 'The ID of the item.'
         required: true
         example: 1
         type: integer
@@ -340,12 +425,12 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      user:
+      item:
         custom: []
-        name: user
-        description: 'The user id.'
+        name: item
+        description: 'The item id.'
         required: true
-        example: 3
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: true
@@ -353,67 +438,101 @@ endpoints:
         deprecated: false
     cleanUrlParameters:
       id: 1
-      user: 3
+      item: 1
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
       name:
         custom: []
         name: name
-        description: 'optional New display name.'
+        description: optional
         required: false
-        example: 'Ahmed H.'
+        example: 'Copper Busbar 100x12'
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      email:
+      sku:
         custom: []
-        name: email
-        description: 'optional New unique email.'
+        name: sku
+        description: 'optional Must stay unique.'
         required: false
-        example: ahmed.h@example.com
+        example: CU-BB-10012
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      password:
+      type:
         custom: []
-        name: password
-        description: "optional New password; revokes the user's sessions."
+        name: type
+        description: optional
         required: false
-        example: newsecret1
+        example: raw_material
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      roles:
+      unit:
         custom: []
-        name: roles
-        description: "optional Replaces the user's roles entirely."
+        name: unit
+        description: optional
         required: false
-        example:
-          - Sales_Manager
-        type: 'string[]'
+        example: kg
+        type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
+        deprecated: false
+      unit_cost:
+        custom: []
+        name: unit_cost
+        description: optional
+        required: false
+        example: 430.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      minimum_stock:
+        custom: []
+        name: minimum_stock
+        description: optional
+        required: false
+        example: 60.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: optional
+        required: false
+        example: 'Electrolytic copper'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
         deprecated: false
     cleanBodyParameters:
-      name: 'Ahmed H.'
-      email: ahmed.h@example.com
-      password: newsecret1
-      roles:
-        - Sales_Manager
+      name: 'Copper Busbar 100x12'
+      sku: CU-BB-10012
+      type: raw_material
+      unit: kg
+      unit_cost: 430.0
+      minimum_stock: 60.0
+      description: 'Electrolytic copper'
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":3,"type":"user","name":"Ahmed H.","email":"ahmed.h@example.com","roles":[{"id":3,"name":"Sales_Manager"}]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        content: '{"data":{"id":1,"type":"item","name":"Copper Busbar 100x12"},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Success
     responseFields: []
@@ -428,21 +547,24 @@ endpoints:
     custom: []
     httpMethods:
       - DELETE
-    uri: 'api/v1/users/{id}'
+    uri: 'api/v1/items/{id}'
     metadata:
       custom: []
-      groupName: '4. Users'
+      groupName: '7. Items'
       groupDescription: |-
 
-        Administration of user accounts. Every endpoint is gated by the same
-        `users.*` permissions and the same UserPolicy the admin panel uses — the API
-        introduces no parallel authorization.
+        The material catalogue (الأصناف): raw materials, semi-finished parts,
+        finished goods and consumables. Every BOM line, purchase-order line, voucher
+        line and stock balance in the platform points at one of these, so this is
+        usually the first list a client caches after logging in.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Delete a user'
+      title: 'Delete an item'
       description: |-
-        Also revokes all of the target's API tokens. UserPolicy forbids deleting
-        your own account, so this always returns 403 when `user` is the caller.
+        A soft delete: the row stays so historical vouchers and BOM lines keep
+        resolving their item name. An item that still has stock on hand is
+        refused, because deleting it would strand a balance with nothing left to
+        report it against.
       authenticated: true
       deprecated: false
     headers:
@@ -453,7 +575,7 @@ endpoints:
       id:
         custom: []
         name: id
-        description: 'The ID of the user.'
+        description: 'The ID of the item.'
         required: true
         example: 1
         type: integer
@@ -461,12 +583,12 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      user:
+      item:
         custom: []
-        name: user
-        description: 'The user id.'
+        name: item
+        description: 'The item id.'
         required: true
-        example: 3
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: true
@@ -474,7 +596,7 @@ endpoints:
         deprecated: false
     cleanUrlParameters:
       id: 1
-      user: 3
+      item: 1
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -487,6 +609,12 @@ endpoints:
         content: '{}'
         headers: []
         description: Deleted
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"Cannot delete an item that still holds stock."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Still in stock'
     responseFields: []
     auth:
       - headers

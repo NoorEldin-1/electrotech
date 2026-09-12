@@ -268,11 +268,16 @@ class PurchaseOrderResource extends Resource
                         ->visible(fn (PurchaseOrder $record) => $record->status === PurchaseOrderStatus::Draft
                             && (auth()->user()?->can('approve', $record) ?? false))
                         ->action(function (PurchaseOrder $record) {
-                            $record->update([
-                                'status' => PurchaseOrderStatus::Submitted,
-                                'approved_by' => auth()->id(),
-                                'approved_at' => now(),
-                            ]);
+                            // Delegated so the panel and the API approve by the
+                            // same rules. The checks used to live here, which
+                            // meant they existed only where someone clicked.
+                            try {
+                                app(PurchaseOrderService::class)->approve($record);
+                            } catch (\RuntimeException $e) {
+                                Notification::make()->danger()->title($e->getMessage())->send();
+
+                                return;
+                            }
 
                             Notification::make()
                                 ->success()

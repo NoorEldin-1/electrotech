@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Api\ApiResponse;
 use App\Http\Controllers\Controller;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
@@ -52,14 +53,34 @@ abstract class ApiController extends Controller
      * user's active devices. Anything that grows with business volume must be
      * paginated instead.
      */
-    protected function respondCollection(array $items): JsonResponse
+    protected function respondCollection(array $items, int $status = 200): JsonResponse
     {
-        return ApiResponse::collection($items);
+        return ApiResponse::collection($items, $status);
     }
 
     protected function respondNoContent(): JsonResponse
     {
         return ApiResponse::noContent();
+    }
+
+    /**
+     * Authorize against a bare permission string.
+     *
+     * Most endpoints authorize against a policy, which is right: the policy is
+     * the shared gate the panel uses. A few actions have no policy method
+     * because the panel gates them on the permission directly — `boms.approve`
+     * and `purchase_orders.receive` are checked with `$user->can(...)` inside
+     * the Filament action's `visible()` closure and nowhere else.
+     *
+     * For those, checking the same string is the honest translation. Inventing
+     * a policy method the panel does not call would create a second gate that
+     * looks authoritative and is not.
+     */
+    protected function authorizePermission(string $permission): void
+    {
+        if (! (request()->user()?->can($permission) ?? false)) {
+            throw new AuthorizationException(__('errors.api.forbidden'));
+        }
     }
 
     /**

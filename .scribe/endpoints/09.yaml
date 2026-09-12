@@ -1,0 +1,881 @@
+name: '13. Offers & BOQ'
+description: |-
+
+  The quotations submitted for an operation, and the bill of quantities behind
+  each one.
+
+  **The money is derived, never posted.** A client sends line items —
+  description, unit, quantity, unit price — and the server multiplies, sums,
+  applies VAT and installation, and returns the totals. Accepting a
+  `grand_total` from the client would mean the printed offer, the pipeline
+  list and the ledger could each hold a different number for the same
+  quotation.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/projects/{project_id}/offers'
+    metadata:
+      custom: []
+      groupName: '13. Offers & BOQ'
+      groupDescription: |-
+
+        The quotations submitted for an operation, and the bill of quantities behind
+        each one.
+
+        **The money is derived, never posted.** A client sends line items —
+        description, unit, quantity, unit price — and the server multiplies, sums,
+        applies VAT and installation, and returns the totals. Accepting a
+        `grand_total` from the client would mean the printed offer, the pipeline
+        list and the ledger could each hold a different number for the same
+        quotation.
+      subgroup: ''
+      subgroupDescription: ''
+      title: "List an operation's offers"
+      description: 'Ordered newest version first, so the current price is `data[0]`.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      project_id:
+        custom: []
+        name: project_id
+        description: 'The ID of the project.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      project:
+        custom: []
+        name: project
+        description: 'The operation id.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      project_id: 1
+      project: 1
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'The page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[is_winning]':
+        custom: []
+        name: 'filter[is_winning]'
+        description: 'Only the offer that won.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Allowed: version, submitted_at, grand_total.'
+        required: false
+        example: '-version'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      'filter[is_winning]': true
+      sort: '-version'
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":4,"type":"offer","project_id":1,"version":2,"grand_total":"1430000.00","is_winning":false}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/offers/{id}'
+    metadata:
+      custom: []
+      groupName: '13. Offers & BOQ'
+      groupDescription: |-
+
+        The quotations submitted for an operation, and the bill of quantities behind
+        each one.
+
+        **The money is derived, never posted.** A client sends line items —
+        description, unit, quantity, unit price — and the server multiplies, sums,
+        applies VAT and installation, and returns the totals. Accepting a
+        `grand_total` from the client would mean the printed offer, the pipeline
+        list and the ledger could each hold a different number for the same
+        quotation.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show an offer'
+      description: 'Carries the full BOQ: every group and every line.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the offer.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      offer:
+        custom: []
+        name: offer
+        description: 'The offer id.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      offer: 4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":4,"type":"offer","version":2,"subtotal":"1250000.00","tax_amount":"175000.00","grand_total":"1425000.00","groups":[{"id":7,"label":"Copper Offer","conductor_type":{"value":"copper","label":"Copper","color":null},"subtotal":"1250000.00","items":[{"id":21,"description":"Busbar 2500A","unit":"m","quantity":"120.0000","unit_price":"10416.67","line_total":"1250000.40"}]}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/projects/{project_id}/offers'
+    metadata:
+      custom: []
+      groupName: '13. Offers & BOQ'
+      groupDescription: |-
+
+        The quotations submitted for an operation, and the bill of quantities behind
+        each one.
+
+        **The money is derived, never posted.** A client sends line items —
+        description, unit, quantity, unit price — and the server multiplies, sums,
+        applies VAT and installation, and returns the totals. Accepting a
+        `grand_total` from the client would mean the printed offer, the pipeline
+        list and the ledger could each hold a different number for the same
+        quotation.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Record an offer'
+      description: |-
+        `version` is assigned by the server, per operation, and cannot be sent:
+        two people quoting the same job in the same minute would otherwise
+        collide on the unique index.
+
+        The offer is created empty of lines and its totals are all zero. Send the
+        BOQ with `PUT /offers/{offer}/boq` to price it.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      project_id:
+        custom: []
+        name: project_id
+        description: 'The ID of the project.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      project:
+        custom: []
+        name: project
+        description: 'The operation id.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      project_id: 1
+      project: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      quotation_number:
+        custom: []
+        name: quotation_number
+        description: 'optional Your own reference.'
+        required: false
+        example: Q-2026-0147
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      currency:
+        custom: []
+        name: currency
+        description: 'optional Three-letter code; defaults to EGP.'
+        required: false
+        example: EGP
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      vat_percentage:
+        custom: []
+        name: vat_percentage
+        description: 'optional VAT rate applied to the subtotal.'
+        required: false
+        example: 14.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      show_vat:
+        custom: []
+        name: show_vat
+        description: 'optional Whether the printed offer shows a VAT line.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      installation_percentage:
+        custom: []
+        name: installation_percentage
+        description: 'optional Installation rate applied to the subtotal.'
+        required: false
+        example: 5.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      show_installation:
+        custom: []
+        name: show_installation
+        description: 'optional Whether the printed offer shows an installation line.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      header_note:
+        custom: []
+        name: header_note
+        description: 'optional Printed above the tables.'
+        required: false
+        example: 'Prices valid for 30 days'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      terms:
+        custom: []
+        name: terms
+        description: 'optional Payment/delivery terms.'
+        required: false
+        example: '50% advance'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      general_terms:
+        custom: []
+        name: general_terms
+        description: 'optional Standard conditions.'
+        required: false
+        example: 'Ex-works Cairo'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: 'optional Internal note, not printed.'
+        required: false
+        example: 'Consultant asked for aluminium alternative'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      quotation_number: Q-2026-0147
+      currency: EGP
+      vat_percentage: 14.0
+      show_vat: true
+      installation_percentage: 5.0
+      show_installation: true
+      header_note: 'Prices valid for 30 days'
+      terms: '50% advance'
+      general_terms: 'Ex-works Cairo'
+      notes: 'Consultant asked for aluminium alternative'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":5,"type":"offer","project_id":1,"version":3,"grand_total":"0.00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Created
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PATCH
+    uri: 'api/v1/offers/{id}'
+    metadata:
+      custom: []
+      groupName: '13. Offers & BOQ'
+      groupDescription: |-
+
+        The quotations submitted for an operation, and the bill of quantities behind
+        each one.
+
+        **The money is derived, never posted.** A client sends line items —
+        description, unit, quantity, unit price — and the server multiplies, sums,
+        applies VAT and installation, and returns the totals. Accepting a
+        `grand_total` from the client would mean the printed offer, the pipeline
+        list and the ledger could each hold a different number for the same
+        quotation.
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Update an offer's header"
+      description: |-
+        Terms, notes, and the VAT / installation settings. Changing a rate
+        re-derives the totals from the existing lines immediately, so the client
+        gets the new grand total back in the same response.
+
+        The lines themselves are replaced through the BOQ endpoint, not here.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the offer.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      offer:
+        custom: []
+        name: offer
+        description: 'The offer id.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      offer: 4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      quotation_number:
+        custom: []
+        name: quotation_number
+        description: optional
+        required: false
+        example: Q-2026-0147
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      currency:
+        custom: []
+        name: currency
+        description: 'Must be 3 characters.'
+        required: false
+        example: amn
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      vat_percentage:
+        custom: []
+        name: vat_percentage
+        description: optional
+        required: false
+        example: 14.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      show_vat:
+        custom: []
+        name: show_vat
+        description: optional
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      installation_percentage:
+        custom: []
+        name: installation_percentage
+        description: optional
+        required: false
+        example: 5.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      show_installation:
+        custom: []
+        name: show_installation
+        description: optional
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      header_note:
+        custom: []
+        name: header_note
+        description: optional
+        required: false
+        example: 'Prices valid for 30 days'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      terms:
+        custom: []
+        name: terms
+        description: optional
+        required: false
+        example: '50% advance'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      general_terms:
+        custom: []
+        name: general_terms
+        description: optional
+        required: false
+        example: 'Ex-works Cairo'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: optional
+        required: false
+        example: 'Revised after the site visit'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      quotation_number: Q-2026-0147
+      currency: amn
+      vat_percentage: 14.0
+      show_vat: true
+      installation_percentage: 5.0
+      show_installation: false
+      header_note: 'Prices valid for 30 days'
+      terms: '50% advance'
+      general_terms: 'Ex-works Cairo'
+      notes: 'Revised after the site visit'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":4,"type":"offer","vat_percentage":"14.00","tax_amount":"175000.00","grand_total":"1425000.00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/v1/offers/{offer_id}/boq'
+    metadata:
+      custom: []
+      groupName: '13. Offers & BOQ'
+      groupDescription: |-
+
+        The quotations submitted for an operation, and the bill of quantities behind
+        each one.
+
+        **The money is derived, never posted.** A client sends line items —
+        description, unit, quantity, unit price — and the server multiplies, sums,
+        applies VAT and installation, and returns the totals. Accepting a
+        `grand_total` from the client would mean the printed offer, the pipeline
+        list and the ledger could each hold a different number for the same
+        quotation.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Replace the BOQ'
+      description: |-
+        Sends the whole bill of quantities in one request: a list of groups (the
+        priced tables — "Copper Offer", "Bi-Metal Offer") each holding its line
+        items. Whatever was there before is replaced.
+
+        **Replace, not merge, and deliberately so.** A phone editing a BOQ over a
+        weak link cannot reliably sequence "add line 4, delete line 2, edit line
+        3": a dropped request in the middle leaves the server holding a document
+        that never existed on either side. Sending the finished table is one
+        atomic decision the client can retry safely, and the `Idempotency-Key`
+        makes the retry free.
+
+        Line totals, group subtotals, VAT, installation and the grand total are
+        all computed server-side and returned.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      offer_id:
+        custom: []
+        name: offer_id
+        description: 'The ID of the offer.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      offer:
+        custom: []
+        name: offer
+        description: 'The offer id.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      offer_id: 1
+      offer: 4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      groups:
+        custom: []
+        name: groups
+        description: 'The priced tables. Send an empty array to clear the BOQ.'
+        required: true
+        example:
+          - []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'groups[].label':
+        custom: []
+        name: 'groups[].label'
+        description: 'Table heading.'
+        required: true
+        example: 'Copper Offer'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'groups[].conductor_type':
+        custom: []
+        name: 'groups[].conductor_type'
+        description: 'optional One of the conductor_type enum values.'
+        required: false
+        example: copper
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'groups[].items':
+        custom: []
+        name: 'groups[].items'
+        description: 'The lines of this table.'
+        required: true
+        example:
+          - []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'groups[].items[].description':
+        custom: []
+        name: 'groups[].items[].description'
+        description: ''
+        required: true
+        example: 'Busbar trunking 2500A'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'groups[].items[].unit':
+        custom: []
+        name: 'groups[].items[].unit'
+        description: optional
+        required: false
+        example: m
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'groups[].items[].quantity':
+        custom: []
+        name: 'groups[].items[].quantity'
+        description: ''
+        required: true
+        example: 120.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'groups[].items[].unit_price':
+        custom: []
+        name: 'groups[].items[].unit_price'
+        description: 'Price per unit in EGP.'
+        required: true
+        example: 10416.67
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      groups:
+        -
+          label: 'Copper Offer'
+          conductor_type: copper
+          items:
+            -
+              description: 'Busbar trunking 2500A'
+              unit: m
+              quantity: 120.0
+              unit_price: 10416.67
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":4,"type":"offer","subtotal":"1250000.40","tax_amount":"175000.06","grand_total":"1425000.46","groups":[{"id":9,"label":"Copper Offer","subtotal":"1250000.40","items":[{"id":31,"description":"Busbar trunking 2500A","quantity":"120.0000","unit_price":"10416.67","line_total":"1250000.40"}]}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/offers/{id}'
+    metadata:
+      custom: []
+      groupName: '13. Offers & BOQ'
+      groupDescription: |-
+
+        The quotations submitted for an operation, and the bill of quantities behind
+        each one.
+
+        **The money is derived, never posted.** A client sends line items —
+        description, unit, quantity, unit price — and the server multiplies, sums,
+        applies VAT and installation, and returns the totals. Accepting a
+        `grand_total` from the client would mean the printed offer, the pipeline
+        list and the ledger could each hold a different number for the same
+        quotation.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete an offer'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the offer.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      offer:
+        custom: []
+        name: offer
+        description: 'The offer id.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      offer: 4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Deleted
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"This offer is marked as the winning offer of an active operation and can no longer be changed."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Winning offer'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

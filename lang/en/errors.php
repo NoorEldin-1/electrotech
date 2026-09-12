@@ -61,6 +61,38 @@ return [
         'server_error' => 'An unexpected error occurred and has been logged. Quote the request_id when reporting it.',
         'password_incorrect' => 'The current password is incorrect.',
         'token_limit_evicted' => 'The oldest device session was signed out because the per-user token limit was reached.',
+
+        // Guards raised by API endpoints for state the panel prevents through
+        // the UI rather than through a service. They render as
+        // `business_rule_violated` (422), so the message is shown to the user
+        // as written.
+        'item_has_stock' => 'Cannot delete an item that still holds stock. On hand: :quantity.',
+        'customer_has_projects' => 'Cannot delete a customer that still has projects. Reassign or remove them first.',
+        'supplier_has_purchase_orders' => 'Cannot delete a supplier that still has purchase orders.',
+        'project_has_documents' => 'Cannot delete an operation that already has BOMs, purchase orders, work orders or delivery vouchers.',
+        'offer_locked' => 'This offer is marked as the winning offer of an active operation and can no longer be changed.',
+        'bom_not_pending_approval' => 'Only a BOM awaiting approval can be approved. This one is :status.',
+        'bom_approved_is_immutable' => 'An approved BOM cannot be edited. Create a new version instead.',
+        'bom_requires_items' => 'A BOM must have at least one material line before it can be approved.',
+        'purchase_order_not_draft' => 'Only a draft purchase order can be approved. This one is :status.',
+        'purchase_order_not_editable' => 'A purchase order can only be edited while it is a draft.',
+        'purchase_order_no_supplier' => 'A purchase order needs a supplier before it can be approved.',
+        'purchase_order_no_items' => 'A purchase order needs at least one line item before it can be approved.',
+        'reservation_already_released' => 'This reservation has already been released.',
+        'voucher_not_draft' => 'Only a draft voucher can be edited or deleted.',
+        'work_order_not_deletable' => 'Only a draft or cancelled manufacturing order can be deleted. Cancel it instead — its vouchers and costs still point at it.',
+        'quality_sheet_approved' => 'An approved quality sheet cannot be deleted. It is the evidence behind a certificate that has already been issued.',
+        'delivery_voucher_not_editable' => 'An active delivery voucher can no longer be changed. Its goods have left the store and the customer has been debited.',
+        'delivery_minute_needs_operation' => 'Delivery voucher :number is not linked to an operation, so no delivery minute can be raised from it.',
+        'delivery_minute_distributed' => 'A distributed delivery minute can no longer be changed or deleted.',
+        'journal_entry_not_draft' => 'A posted journal entry is immutable. Correct it with a reversing entry.',
+        'payment_has_journal' => 'This payment has already been reflected in the general ledger and can no longer be changed. Post a correcting entry instead.',
+        'claim_not_draft' => 'Only a draft financial claim can be edited or deleted.',
+        'facility_has_allocations' => 'Cannot delete a credit facility that still has allocations. Release them first.',
+        'account_has_entries' => 'Cannot delete an account that already carries journal lines.',
+        'account_has_children' => 'Cannot delete an account that has sub-accounts. Remove or re-parent them first.',
+        'invoice_voucher_not_active' => 'An invoice can only be recorded against a delivered (active) voucher.',
+        'report_period_invalid' => 'The end of the period must not be before its start.',
     ],
 
     'inventory' => [

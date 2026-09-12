@@ -323,17 +323,31 @@ class WorkOrder extends Model
      * Generate a unique WO number with format: WO-YYYYMM-XXXX
      *
      * See App\Models\Project::generateCode() for the rationale on the
-     * MAX(CAST(...)) aggregate + Redis lock pattern.
+     * lock-around-read-then-increment pattern.
+     *
+     * The sequence is parsed in PHP rather than with SUBSTRING_INDEX, which is
+     * MySQL-only: the aggregate ran fine in production and threw on the SQLite
+     * test database, so the entire work-order create path was untestable and
+     * the failure could only ever surface on a developer machine.
+     * Project::generateCode(), PurchaseOrder::generatePoNumber() and
+     * AdditionVoucher::generateVoucherNumber() all parse in PHP for exactly
+     * this reason; this one was the last that did not.
+     *
+     * Soft-deleted rows are included because the unique index on `wo_number`
+     * ignores `deleted_at` — reusing a deleted order's number would fail on
+     * insert with a duplicate-key error nobody could act on.
      */
     public static function generateWoNumber(): string
     {
         $prefix = 'WO-' . now()->format('Ym') . '-';
 
         return \Illuminate\Support\Facades\Cache::lock('wo_number_seq:' . $prefix, 5)->block(3, function () use ($prefix) {
-            $maxSequence = (int) static::query()
+            $maxSequence = static::query()
+                ->withTrashed()
                 ->where('wo_number', 'like', $prefix . '%')
-                ->selectRaw('COALESCE(MAX(CAST(SUBSTRING_INDEX(wo_number, "-", -1) AS UNSIGNED)), 0) AS seq')
-                ->value('seq');
+                ->pluck('wo_number')
+                ->map(fn (string $number): int => (int) substr($number, strlen($prefix)))
+                ->max() ?? 0;
 
             return $prefix . str_pad((string) ($maxSequence + 1), 4, '0', STR_PAD_LEFT);
         });

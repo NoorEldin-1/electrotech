@@ -14,29 +14,30 @@
 
 | | |
 |---|---|
-| **Last updated** | 2026-08-05 |
-| **Modules complete** | 1 of 11 |
-| **Current module** | ✅ Module 1 — Foundation & Identity (DONE) |
-| **Next module** | ⬜ Module 2 — Master Data & Files |
-| **Tests** | 97 API tests passing (see § Test inventory) |
+| **Last updated** | 2026-09-12 |
+| **Modules complete** | **11 of 11 — the API surface is complete** |
+| **Current module** | ✅ Modules 1-11 (DONE) |
+| **Next module** | — none. See § What is deliberately not built |
+| **Endpoints** | 229 routes under `/api/v1` |
+| **Tests** | 404 API tests passing — 96 from Module 1, 168 from Modules 2-6, 140 from Modules 7-11 |
 | **Docs** | Generated, committed at `public/api/docs/` |
-| **Committed?** | ✅ Yes — committed and deployed to production on 2026-08-08 |
+| **Committed?** | Module 1 deployed 2026-08-08. **Modules 2-11 are BUILT AND UNCOMMITTED** — see § Uncommitted work |
 
 ### Module board
 
 | # | Module | Status | Endpoints | Tests |
 |---|--------|--------|-----------|-------|
-| 1 | **Foundation & Identity** | ✅ **Done** | 22 | 97 |
-| 2 | Master Data & Files — Items, Customers, Suppliers, Attachments | ⬜ Not started | — | — |
-| 3 | Sales & CRM — Projects, Offers, BOQ | ⬜ Not started | — | — |
-| 4 | Technical Office / PMO — BOMs, Standard BOM | ⬜ Not started | — | — |
-| 5 | Procurement — Purchase Orders, Reservations | ⬜ Not started | — | — |
-| 6 | Inventory & Warehouse — levels, transactions, addition/depreciation vouchers | ⬜ Not started | — | — |
-| 7 | Manufacturing & Material Movement — Work Orders, Quality Sheets, issue/return vouchers | ⬜ Not started | — | — |
-| 8 | Delivery & Field Ops — delivery vouchers/minutes, installations, surveys | ⬜ Not started | — | — |
-| 9 | Finance & Accounting — GL, journals, invoices, payments, claims | ⬜ Not started | — | — |
-| 10 | Reports & Documents — trial balance, ledger, daybook, PDFs | ⬜ Not started | — | — |
-| 11 | Cross-cutting — dashboard, notifications, activity log, search | ⬜ Not started | — | — |
+| 1 | **Foundation & Identity** | ✅ **Done** | 22 | 96 |
+| 2 | **Master Data & Files** — Items, Customers, Suppliers, Attachments | ✅ **Done** | 18 | 44 |
+| 3 | **Sales & CRM** — Projects, Offers, BOQ | ✅ **Done** | 18 | 43 |
+| 4 | **Technical Office / PMO** — BOMs, Standard BOM | ✅ **Done** | 8 | 19 |
+| 5 | **Procurement** — Purchase Orders, Reservations | ✅ **Done** | 13 | 32 |
+| 6 | **Inventory & Warehouse** — levels, transactions, addition/depreciation vouchers | ✅ **Done** | 15 | 30 |
+| 7 | **Manufacturing & Material Movement** — Work Orders, Quality Sheets, issue/return vouchers, production entries | ✅ **Done** | 38 | 47 |
+| 8 | **Delivery & Field Ops** — delivery vouchers/minutes, installations, surveys | ✅ **Done** | 27 | 23 |
+| 9 | **Finance & Accounting** — GL, journals, invoices, payments, claims, facilities, cost-centre closing | ✅ **Done** | 43 | 37 |
+| 10 | **Reports & Documents** — trial balance, ledger, daybook, statements, PDFs | ✅ **Done** | 16 | 14 |
+| 11 | **Cross-cutting** — dashboard, notifications, activity log, search | ✅ **Done** | 8 | 19 |
 
 Dependency order and the rationale for it are in `API_Development_Plan.md` §5.
 **Do not start module N+1 while module N has an unticked box in §6 of the plan.**
@@ -127,6 +128,686 @@ who you are, learn what you may do, and learn the platform's vocabulary.
 - [x] This file updated
 
 ---
+
+## Modules 2-6 — the business core ✅
+
+Five modules built in one round. They are described together because they share
+one shape: a catalogue, a document with lines, a state machine, and a service
+that already existed.
+
+### Endpoints shipped (72)
+
+**Module 2 — Master Data & Files** (`ability:master-data`)
+
+| Method | Path | Permission |
+|---|---|---|
+| GET | `/api/v1/items` | `items.view` |
+| GET | `/api/v1/items/{item}` | `items.view` |
+| POST | `/api/v1/items` | `items.create` |
+| PATCH | `/api/v1/items/{item}` | `items.edit` |
+| DELETE | `/api/v1/items/{item}` | `items.delete` |
+| GET | `/api/v1/customers` (+ show/store/update/destroy) | `customers.*` |
+| GET | `/api/v1/suppliers` (+ show/store/update/destroy) | `suppliers.*` |
+| GET | `/api/v1/attachments?owner_type=&owner_id=` | the owner's `view` policy |
+| POST | `/api/v1/attachments` (multipart) | the owner's `update` policy |
+| GET | `/api/v1/attachments/{attachment}/download` | the owner's `view` policy |
+| DELETE | `/api/v1/attachments/{attachment}` | the owner's `update` policy |
+
+**Module 3 — Sales & CRM** (`ability:sales`)
+
+| Method | Path | Permission |
+|---|---|---|
+| GET/POST/PATCH/DELETE | `/api/v1/projects[/{project}]` | `projects.*` |
+| POST | `/api/v1/projects/{project}/move-to-tender` | `projects.move_to_tender` |
+| POST | `/api/v1/projects/{project}/move-to-in-hand` | `projects.move_to_inhand` |
+| POST | `/api/v1/projects/{project}/move-to-active` | `projects.move_to_active` |
+| POST | `/api/v1/projects/{project}/manager-approve` | `projects.manager_approve` |
+| POST | `/api/v1/projects/{project}/cancel-to-lost` | `projects.cancel_to_lost` |
+| PUT/DELETE | `/api/v1/projects/{project}/alarm` | `projects.set_alarm` |
+| GET/POST | `/api/v1/projects/{project}/offers` | `project_offers.view/create` |
+| GET/PATCH/DELETE | `/api/v1/offers/{offer}` | `project_offers.*` |
+| PUT | `/api/v1/offers/{offer}/boq` | `project_offers.edit` |
+
+**Module 4 — Technical Office / PMO** (`ability:technical-office`)
+
+| Method | Path | Permission |
+|---|---|---|
+| GET/POST/PATCH/DELETE | `/api/v1/boms[/{bom}]` | `boms.*` |
+| PUT | `/api/v1/boms/{bom}/items` | `boms.edit` |
+| POST | `/api/v1/boms/{bom}/submit` | `boms.edit` |
+| POST | `/api/v1/boms/{bom}/approve` | `boms.approve` |
+| GET | `/api/v1/items/{item}/standard-bom` | `boms.view` |
+
+**Module 5 — Procurement** (`ability:procurement`)
+
+| Method | Path | Permission |
+|---|---|---|
+| GET/POST/PATCH/DELETE | `/api/v1/purchase-orders[/{purchase_order}]` | `purchase_orders.*` |
+| PUT | `/api/v1/purchase-orders/{purchase_order}/items` | `purchase_orders.edit` |
+| POST | `/api/v1/purchase-orders/{purchase_order}/approve` | `purchase_orders.approve` |
+| POST | `/api/v1/purchase-orders/{purchase_order}/receive` | `purchase_orders.receive` |
+| GET/POST | `/api/v1/stock-reservations[/{id}]` | `operations.reserve` |
+| POST | `/api/v1/stock-reservations/{id}/release` | `operations.reserve` |
+| POST | `/api/v1/projects/{project}/reserve-approved-bom` | `operations.reserve` |
+
+**Module 6 — Inventory & Warehouse** (`ability:inventory`)
+
+| Method | Path | Permission |
+|---|---|---|
+| GET | `/api/v1/inventory` | `transactions.view` |
+| GET | `/api/v1/inventory-transactions` | `transactions.view` |
+| GET | `/api/v1/items/{item}/stock-card` *(reports limiter)* | `transactions.view` |
+| GET/POST/DELETE | `/api/v1/addition-vouchers[/{id}]` | `addition_vouchers.*` |
+| POST | `/api/v1/addition-vouchers/{id}/post` | `addition_vouchers.post` |
+| POST | `/api/v1/addition-vouchers/{id}/invoice` | `addition_vouchers.invoice` |
+| POST | `/api/v1/addition-vouchers/{id}/close` | `addition_vouchers.invoice` |
+| GET/POST/PATCH/DELETE | `/api/v1/depreciation-vouchers[/{id}]` | `depreciation_vouchers.*` |
+| POST | `/api/v1/depreciation-vouchers/{id}/post` | `depreciation_vouchers.post` |
+
+### Design decisions worth knowing before Module 7
+
+**1. Line collections are REPLACED, never merged.**
+The BOQ, BOM lines and purchase-order lines are each written with a single
+`PUT` that carries the whole list. A phone on a weak link cannot reliably
+sequence "add line 4, delete line 2, edit line 3": one dropped request in the
+middle leaves the server holding a document that never existed on either side.
+Sending the finished table is one decision the client can retry safely, and the
+`Idempotency-Key` makes the retry free. **Module 7's work-order materials
+should follow this.**
+
+**2. Money is always derived, never posted.**
+No endpoint accepts a total. The client sends quantities and unit prices; the
+server multiplies, sums, applies VAT / installation / the profit-tax
+withholding, and returns every component. Accepting a `grand_total` would let
+the printed offer, the pipeline list and the ledger each hold a different
+number for the same document.
+
+Note the purchase-order total is `subtotal + VAT − profit tax` — the 1%
+withholding is **deducted**, and skipped for an exempt supplier. Every
+component is published rather than left to be re-derived, because a client
+summing them naively would show the supplier ~2% too much.
+
+**3. State transitions are POSTs with their own permissions, never a `status`
+field on PATCH.** `projects.move_to_active` is not `projects.edit`;
+`boms.approve` is not `boms.edit`; `addition_vouchers.post` is not
+`addition_vouchers.create`. A state machine expressed as an editable column is
+a state machine that gets bypassed. `UpdateProjectRequest` has no `status` rule
+at all, and there is a test asserting a PATCH cannot move a stage.
+
+**4. Receiving goods returns an ADDITION VOUCHER, not the order.**
+`POST /purchase-orders/{id}/receive` raises and posts an إذن إضافة. That single
+document adds the stock, credits the supplier, and closes the order by
+comparing ordered against received. The voucher's number is what the warehouse
+writes on the paperwork, so it is what comes back.
+
+**5. Attachments name their owner with a key, never a class name.**
+`owner_type` is one of `project`, `customer`, `supplier`, `purchase_order`,
+`addition_voucher`, mapped to classes by `App\Http\Api\AttachmentOwner`.
+`attachable_type` is a plain string column: if the request body could set it, a
+caller could attach a row to any model in the app and read it back through an
+endpoint whose authorization was written with suppliers in mind.
+
+There are **no `attachments.*` permissions**. Attaching a file to a supplier is
+an edit of that supplier and reading one is a view of it, so the owner's own
+policy answers both. A separate permission would start out matching the panel
+and drift the first time somebody changed one and not the other.
+
+**6. Inventory balances and the ledger are read-only.**
+Stock moves because a document was posted, never because a balance was written.
+A writable balance could put the ledger and the on-hand figure out of step with
+nothing to reconcile them against.
+
+### Definition-of-done checklist (Modules 2-6)
+
+**Contract**
+- [x] Routes registered in `routes/api/v1.php`, one commented section per module
+- [x] One `JsonResource` per entity; no model serialized directly
+- [x] One `FormRequest` per write endpoint; no `$request->all()` anywhere
+- [x] Filters / sorts / includes explicitly whitelisted via `ApiQuery`
+- [x] Enum fields emitted as `{value,label,color}`
+- [x] Money/decimal fields as strings — via the new `SerializesDecimals` trait
+
+**Behaviour**
+- [x] Writes delegate to a service; no business rules in controllers
+- [x] `DomainException` → `422 business_rule_violated` — **and now service
+      `RuntimeException` too, see Finding #14**
+- [x] Every endpoint `authorize()`s against the existing policy
+- [x] Detail GETs emit an `ETag` (via the existing `ConditionalGet` middleware)
+
+**Performance**
+- [x] No N+1 — the projects index has a query-count test that compares 3 rows
+      against 9 rather than asserting a magic ceiling; it caught a real one
+      (Finding #15)
+- [x] Index endpoints paginated, `per_page` cap enforced
+- [x] `stock-card` on the `api-reports` limiter — it walks a whole item history
+
+**Security**
+- [x] `401` swept across all routes by `RouteConventionsTest`
+- [x] `403` per permission-gated endpoint — one test per module
+- [x] Token-ability gate per module (`master-data`, `sales`, `technical-office`,
+      `procurement`, `inventory`), each with a test
+- [x] Uploads: extension allow-list, 20 MB cap, **generated** stored filename,
+      downloads streamed through a policy-gated controller
+
+**Tests** — 168 new tests across five directories
+- [x] Happy path per endpoint
+- [x] Validation failure per write endpoint
+- [x] RBAC denial per gated endpoint
+- [x] Unauthenticated denial
+- [x] Business-rule violation for each state-machine guard
+- [x] Idempotency replay does not double-write (items, offers, PO receipt,
+      voucher post)
+- [x] Pagination / filter / sort shape
+
+**Docs**
+- [x] Scribe annotations on every endpoint
+- [x] Arabic terms named where the domain word is what people actually say
+- [x] `php artisan scribe:generate` re-run and output committed
+- [x] This file updated
+
+---
+
+## Changes to shared code (panel + API)
+
+Design rule #1 says a missing rule goes in the **service**, so both the panel
+and the API get it. Three rules were living inside Filament actions, where they
+existed only if somebody clicked a button. They were moved:
+
+| What | From | To |
+|---|---|---|
+| BOM approval | `BomResource`'s approve action | **new** `App\Services\BomService` |
+| PO approval | `PurchaseOrderResource`'s approve action | `PurchaseOrderService::approve()` |
+| PO editability + line replacement | nowhere (implicit) | `PurchaseOrderService::assertEditable()` / `replaceItems()` |
+
+Both Filament actions now call the service and surface its message. This
+tightened the panel slightly, deliberately:
+
+- Approving a BOM now **supersedes** the previously approved version of the
+  same subject, and refuses a BOM with no lines. Two approved recipes for one
+  product made which one a work order used depend on an ordering tiebreak
+  rather than on a decision anyone made.
+- Approving a PO now refuses one with no lines (a receipt could never complete
+  it, so it would sit in Submitted forever) or no supplier at all. This broke
+  `PurchaseOrderApprovalTest`, whose fixture approved an empty order; the
+  fixture gained the line item the test always implied it had.
+
+  The supplier check accepts **either** `supplier_id` or the free-text
+  `supplier_name`. Requiring the foreign key was the first attempt and was
+  wrong: `PurchaseOrderFactory` and a real class of existing orders carry only
+  the name (the supplier file came later than purchase orders), so those orders
+  would have become unapprovable with no way to fix them short of editing the
+  database.
+
+---
+
+## Modules 7-11 — the rest of the platform ✅
+
+Five modules built in one round, finishing the API surface. Where Modules 2-6
+were catalogues and documents, these are **state machines and money**, and
+almost every design note below is about a gate.
+
+### Endpoints shipped (132)
+
+**Module 7 — Manufacturing & Material Movement** (`ability:manufacturing`)
+
+| Method | Path | Permission |
+|---|---|---|
+| GET/POST/PATCH/DELETE | `/api/v1/work-orders[/{work_order}]` | `work_orders.*` |
+| PUT | `/api/v1/work-orders/{id}/outputs` | `work_orders.edit` |
+| PUT | `/api/v1/work-orders/{id}/materials` | `work_orders.edit` |
+| POST | `/api/v1/work-orders/{id}/fetch-standard-materials` | `work_orders.edit` |
+| GET | `/api/v1/work-orders/{id}/material-requirement` *(reports limiter)* | `work_orders.view` |
+| GET | `/api/v1/work-orders/{id}/material-variance` *(reports limiter)* | `work_orders.view` |
+| POST | `/api/v1/work-orders/{id}/approve-order` | `work_orders.approve_order` |
+| POST | `/api/v1/work-orders/{id}/start` | `work_orders.start` |
+| POST | `/api/v1/work-orders/{id}/submit-qa` | `work_orders.submit_qa` |
+| POST | `/api/v1/work-orders/{id}/approve-qa` | `work_orders.approve_qa` |
+| POST | `/api/v1/work-orders/{id}/finish-manufacturing` | `work_orders.finish_manufacturing` |
+| POST | `/api/v1/work-orders/{id}/complete` | `work_orders.complete` |
+| POST | `/api/v1/work-orders/{id}/quality-sheet` | `quality_sheets.create` |
+| GET/POST/DELETE | `/api/v1/issue-vouchers[/{id}]` | `issue_vouchers.*` |
+| PUT | `/api/v1/issue-vouchers/{id}/lines` | `issue_vouchers.create` |
+| POST | `/api/v1/issue-vouchers/{id}/post` | `issue_vouchers.post` (+ `approve_excess`) |
+| GET | `/api/v1/issue-vouchers/{id}/excess` | `issue_vouchers.view` |
+| GET/POST/DELETE | `/api/v1/return-vouchers[/{id}]` | `return_vouchers.*` |
+| PUT | `/api/v1/return-vouchers/{id}/lines` | `return_vouchers.create` |
+| POST | `/api/v1/return-vouchers/{id}/post` | `return_vouchers.post` |
+| GET/DELETE | `/api/v1/quality-sheets[/{id}]` | `quality_sheets.*` |
+| PUT | `/api/v1/quality-sheets/{id}/lines` | `quality_sheets.create` |
+| POST | `/api/v1/quality-sheets/{id}/fill` | `quality_sheets.fill` |
+| POST | `/api/v1/quality-sheets/{id}/approve` | `quality_sheets.approve` |
+| GET | `/api/v1/production-entries[/{id}]` | `production_entries.view` |
+
+**Module 8 — Delivery & Field Ops** (`ability:delivery`)
+
+| Method | Path | Permission |
+|---|---|---|
+| GET/POST/PATCH/DELETE | `/api/v1/delivery-vouchers[/{id}]` | `delivery_vouchers.*` |
+| PUT | `/api/v1/delivery-vouchers/{id}/lines` | `delivery_vouchers.create` |
+| POST | `/api/v1/delivery-vouchers/{id}/approve-technical` | `delivery_vouchers.approve_technical` |
+| POST | `/api/v1/delivery-vouchers/{id}/approve-financial` | `delivery_vouchers.approve_financial` |
+| POST | `/api/v1/delivery-vouchers/{id}/cancel` | `delivery_vouchers.cancel` |
+| GET/POST/PATCH/DELETE | `/api/v1/delivery-minutes[/{id}]` | `delivery_minutes.*` |
+| POST | `/api/v1/delivery-minutes/{id}/distribute` | `delivery_minutes.distribute` |
+| GET/POST/PATCH/DELETE | `/api/v1/installations[/{id}]` | `installations.*` |
+| POST | `/api/v1/installations/{id}/start` \| `/complete` | `installations.manage` |
+| GET/POST/PATCH/DELETE | `/api/v1/site-surveys[/{id}]` | `site_surveys.*` |
+
+**Module 9 — Finance & Accounting** (`ability:finance`)
+
+| Method | Path | Permission |
+|---|---|---|
+| GET/POST/PATCH/DELETE | `/api/v1/accounts[/{account}]` | `accounts.*` |
+| GET/POST/PATCH/DELETE | `/api/v1/journal-entries[/{id}]` | `journal_entries.*` |
+| PUT | `/api/v1/journal-entries/{id}/lines` | `journal_entries.edit` |
+| POST | `/api/v1/journal-entries/{id}/post` | `journal_entries.post` |
+| GET | `/api/v1/sales-invoices[/{id}]` | `sales_invoices.view` |
+| POST | `/api/v1/delivery-vouchers/{id}/invoices` | `sales_invoices.create` |
+| DELETE | `/api/v1/sales-invoices/{id}` | `sales_invoices.delete` |
+| GET/POST/DELETE | `/api/v1/operation-payments[/{id}]` | `operation_payments.*` |
+| POST | `/api/v1/operation-payments/{id}/allocate/{claim}` | `operation_payments.record` |
+| GET | `/api/v1/projects/{project}/payment-totals` | `operation_payments.view` |
+| GET/POST/PATCH/DELETE | `/api/v1/financial-claims[/{id}]` | `financial_claims.*` |
+| POST | `/api/v1/financial-claims/{id}/submit` \| `/collect` | `financial_claims.submit` / `.collect` |
+| GET/POST/PATCH/DELETE | `/api/v1/credit-facilities[/{id}]` | `credit_facilities.*` |
+| POST | `/api/v1/credit-facilities/{id}/allocate` | `credit_facilities.manage` |
+| POST | `/api/v1/facility-allocations/{id}/release` | `credit_facilities.manage` |
+| GET | `/api/v1/account-entries` | `customer_statements.view` \| `supplier_statements.view` |
+| GET | `/api/v1/customers/{id}/statement` *(reports limiter)* | `customer_statements.view` |
+| GET | `/api/v1/suppliers/{id}/statement` *(reports limiter)* | `supplier_statements.view` |
+| GET | `/api/v1/cost-center-closings`, `/projects/{id}/cost-center` | `operations.view_cost` |
+| POST | `/api/v1/projects/{id}/close-cost-center` | `operations.close_cost_center` |
+| POST | `/api/v1/cost-center-closings/{id}/reverse` | `operations.close_cost_center` |
+
+**Module 10 — Reports & Documents** (`ability:reports`, all on `throttle:api-reports`)
+
+| Method | Path | Permission |
+|---|---|---|
+| GET | `/api/v1/reports/trial-balance` | `trial_balance.view` |
+| GET | `/api/v1/reports/general-ledger` | `general_ledger.view` |
+| GET | `/api/v1/reports/journal-daybook` | `journal_daybook.view` |
+| GET | `/api/v1/reports/income-statement` | `income_statement.view` |
+| GET | `/api/v1/reports/balance-sheet` | `balance_sheet.view` |
+| GET | `/api/v1/reports/cash-flow` | `cash_flow_statement.view` |
+| GET | `/api/v1/reports/operating-statement` | `operating_statement.view` |
+| GET | `/api/v1/projects/{id}/cost-breakdown` | `operations.view_cost` |
+| GET | `/api/v1/projects/{id}/timeline` | `operations.overview` |
+| GET | `/api/v1/documents/...` (7 PDF routes) | each document's own `*.print` / report permission |
+
+**Module 11 — Cross-cutting** (no token ability — see below)
+
+| Method | Path | Permission |
+|---|---|---|
+| GET | `/api/v1/dashboard` *(reports limiter)* | `dashboard.view` |
+| GET | `/api/v1/notifications`, `/unread-count` | **none — self-scoped** |
+| POST | `/api/v1/notifications/{id}/read`, `/read-all` | **none — self-scoped** |
+| DELETE | `/api/v1/notifications/{id}` | **none — self-scoped** |
+| GET | `/api/v1/activity-log` | `activity_log.view` |
+| GET | `/api/v1/search` | each type's own `*.view` |
+
+### Design decisions worth knowing
+
+**1. The excess-issue gate gets its own `error.code`.**
+`ExcessIssueException` is the only refusal in the platform the *client* can
+resolve: a user holding `issue_vouchers.approve_excess` may retry the same post
+with `allow_excess` and a written reason. So it renders as
+`422 issue_excess_requires_approval` with the offending rows in
+`details.excess`, not as the generic `business_rule_violated`. A client cannot
+offer the approve-excess flow if it cannot tell that refusal apart from "this
+voucher is already posted", and it cannot pre-fill the confirmation screen
+without the rows.
+
+`GET /issue-vouchers/{id}/excess` runs the same comparison without posting, so
+a client can warn before the user commits rather than after they are refused.
+
+**2. Approving an overage is checked in the CONTROLLER, not the service.**
+`IssueVoucherService::post()` takes `$allowExcess` as a parameter and trusts
+it, because the panel gates the same decision by hiding the action. The API has
+no UI to hide, so `issue_vouchers.approve_excess` is authorized in the
+controller before the flag is passed down. Putting it in the service would have
+been the wrong place *and* a change to shared code the panel already gates
+correctly.
+
+**3. Dual approval is two endpoints, never one.**
+A delivery voucher needs a technical signature and a financial one, in either
+order, and the second one activates it — deducting finished goods, debiting the
+customer, and closing the operation's cost centre. They are two routes with two
+permissions because one person holding a merged `approve` would defeat the
+point of having two signatures.
+
+The signature and the activation are **one transaction**. If activation fails
+(insufficient finished goods is the common one) the signature must not survive
+it, or the voucher would show an approval that never took effect while the user
+was told it failed. `DeliveryApiTest::test_a_failed_activation_does_not_leave_a_signature_behind`
+locks that in.
+
+**4. A posted document is immutable, and the API has no route that pretends
+otherwise.** There is no edit or delete for a posted journal entry, no way to
+un-post one, and no `status` on any PATCH anywhere in these five modules.
+Cost-centre closings are **reversed** rather than deleted — a mirror-image entry
+plus a negative closing row — so the unclosed balance returns on its own and
+the audit trail stays whole.
+
+**5. Party statements and production entries are read-only surfaces.**
+Neither has a write route, and both policies refuse create/update/delete.
+`AccountEntry` rows are written by documents (posting a receipt credits its
+supplier; activating a delivery debits its customer), and production entries
+are written by a work order completing. An editable statement could be brought
+into line with a balance somebody expected rather than with the documents that
+produced it.
+
+**6. `AccountEntry.amount` carries the SIGN; `direction` is the label.**
+This surprised us, so it is now documented in the resource. A party's balance
+is the plain `SUM(amount)` — that is what `Customer::getBalanceAttribute`, its
+supplier twin and the panel's own running-balance column all compute. A client
+that re-signs the figure by reading `direction` would make every settlement add
+instead of subtract.
+
+**7. Module 11 is deliberately NOT behind a token ability.**
+Every other module has a natural scope a device token can be narrowed to; the
+dashboard, notifications, the activity log and search span all of them.
+Inventing a `platform` ability would have locked **every existing token** out of
+the bell and the search box on the first deploy — tokens carry the abilities
+they were issued with, and there is no way to widen one already in the field.
+The same reasoning as the "no `api.access` permission" decision in Module 1.
+
+Authorization is per endpoint instead, and notifications carry **no permission
+at all**: they are self-scoped, which is the strongest rule available. There is
+no endpoint that reads another user's notifications, so there is nothing to get
+wrong. Another user's notification id answers **404**, not 403 — a 403 would
+confirm that it exists.
+
+**8. Global search respects each type's own view permission.**
+A user who cannot view suppliers gets no supplier results, and `data.types`
+reports what was *actually* searched so a client can say so rather than
+presenting a permission gap as an absence. A global search that ignored
+per-type permissions would be the easiest way in the platform to confirm a
+record exists without being allowed to read it.
+
+**9. PDFs delegate to the panel's own print controllers.**
+`/documents/*` streams `application/pdf` — the one place the response is not
+the JSON envelope — and calls the same controllers the admin panel prints
+through. Re-implementing the layouts for the API would guarantee the two drift,
+and the printed offer a customer holds is not a thing to let drift. Each keeps
+its own `*.print` permission: being able to read a record is not being able to
+print it.
+
+**10. Report shapes come from the services, normalized by type.**
+`App\Http\Api\ReportSerializer` walks a statement's structure and normalizes by
+type rather than by shape: `Account` → `{id, code, name, type}`, `Carbon` →
+date string, enum → `{value,label,color}`, **float → decimal string**, integers
+left alone. Nine hand-written resources would each need revising whenever a
+statement gains a line, and the first one missed would silently leak a whole
+Eloquent model.
+
+### Definition-of-done checklist (Modules 7-11)
+
+**Contract**
+- [x] Routes registered in `routes/api/v1.php`, one commented section per module
+- [x] One `JsonResource` per entity; no model serialized directly
+      (reports go through `ReportSerializer` — see decision #10)
+- [x] One `FormRequest` per write endpoint; no `$request->all()` anywhere
+- [x] Filters / sorts / includes explicitly whitelisted via `ApiQuery`
+- [x] Enum fields emitted as `{value,label,color}`
+- [x] Money/decimal fields as strings, at each column's real precision
+
+**Behaviour**
+- [x] Writes delegate to the existing service; no business rules in controllers
+      (the two exceptions are documented: the excess permission check, and the
+      delivery-minute operation guard)
+- [x] `DomainException` and service `RuntimeException` → `422 business_rule_violated`
+- [x] `ExcessIssueException` → `422 issue_excess_requires_approval` with rows
+- [x] Every endpoint `authorize()`s against the existing policy or permission
+- [x] Detail GETs emit an `ETag`
+
+**Performance**
+- [x] No N+1 — query-count tests on the work-order, delivery-voucher and
+      journal-entry indexes, each comparing 3 rows against 9
+- [x] Three N+1s found and fixed with subquery aggregates (Finding #21)
+- [x] Index endpoints paginated, `per_page` cap enforced
+- [x] All of Module 10, plus the dashboard, the material requirement/variance
+      and the two party statements, on the `api-reports` limiter
+
+**Security**
+- [x] `401` swept across all 229 routes by `RouteConventionsTest`
+- [x] `403` per permission-gated endpoint — at least one test per module
+- [x] Token-ability gate per module (`manufacturing`, `delivery`, `finance`,
+      `reports`), each with a test; Module 11 deliberately exempt (decision #7)
+- [x] Self-scoped endpoints answer 404, not 403, for another user's record
+- [x] Search cannot confirm the existence of a record the caller may not view
+
+**Tests** — 140 new tests across five directories
+- [x] Happy path per endpoint
+- [x] Validation failure per write endpoint
+- [x] RBAC denial per gated endpoint
+- [x] Unauthenticated denial
+- [x] Business-rule violation for each state-machine guard
+- [x] Idempotency replay does not double-write (work order create, issue
+      voucher post, delivery approval, journal post)
+- [x] Pagination / filter / sort shape
+
+**Docs**
+- [x] Scribe annotations on every endpoint, groups 20-42
+- [x] Arabic terms named where the domain word is what people actually say
+- [x] `php artisan scribe:generate` re-run and output committed
+- [x] This file updated
+
+---
+
+## Findings — Modules 7-11
+
+Continuing the numbering from Modules 2-6.
+
+### 21. Three more N+1s, all hiding behind an accessor in a resource
+
+The same shape as Finding #15 and worth stating as a rule, because it will
+recur: **a model accessor that sums a relation is an N+1 the moment a resource
+reads it on a list page.**
+
+| Where | Accessor | Fix |
+|---|---|---|
+| `WorkOrderResource` | `planned_material_cost` sums `materials` | `withSum('materials as materials_plan_value', DB::raw('quantity * unit_cost'))` |
+| `DeliveryVoucherResource` | `lines_value` sums `lines` | `withSum('lines as lines_value_sum', ...)` |
+| `JournalEntryResource` | `linesDebitTotal()` / `linesCreditTotal()` | two filtered `withSum`s, one per direction |
+
+One wrinkle cost a debugging pass and is now the rule for all three: **check
+for the presence of the ATTRIBUTE, not for a non-null value.** A work order
+with no material lines sums to SQL `NULL`, so
+
+```php
+$this->materials_plan_value ?? $this->planned_material_cost   // WRONG
+```
+
+falls through to the accessor on exactly those rows, lazy-loads the relation
+and reintroduces the N+1 — while *looking* correct, because a row with lines
+takes the fast path. The right test is `array_key_exists(..., $this->resource->getAttributes())`.
+
+### 22. `WorkOrder::generateWoNumber()` was the last MySQL-only generator
+
+Exactly Finding #16 again, in the one place that was missed: `SUBSTRING_INDEX`
+inside a `selectRaw`, which works in production and throws on SQLite, so **the
+whole work-order create path was untestable**. Now parses the sequence in PHP
+like `Project::generateCode()` and the rest, and includes soft-deleted rows —
+the unique index on `wo_number` ignores `deleted_at`, so reusing a deleted
+number would fail on insert.
+
+Grepping `SUBSTRING_INDEX` across `app/` now returns nothing.
+
+### 23. The report services type-hint Laravel's Carbon, not the base one
+
+`IncomeStatementService::build(?Illuminate\Support\Carbon $from)`. Passing a
+`Carbon\Carbon` — which is what `Carbon::parse()` returns if you import the
+base class — is a `TypeError`, rendered as a 500. Import
+`Illuminate\Support\Carbon` in anything that feeds a report service.
+
+### 24. A delivery minute cannot exist without an operation
+
+`delivery_minutes.project_id` is NOT NULL, and a delivery voucher's
+`project_id` is nullable. Raising a minute from a voucher with no operation was
+therefore a database error surfacing as a 500. It is now an explicit
+`422 business_rule_violated` naming the voucher — a minute is filed in an
+operation's folder and circulated in its name, so there is genuinely nowhere to
+put one without an operation.
+
+### 25. `WorkOrder.project_id` is NOT NULL, so `project_id` is required
+
+The first draft of `StoreWorkOrderRequest` had it nullable, which produced a
+500 on the insert. It is required now, and that is the honest contract: the
+operation is the cost centre every issued material is loaded onto, so an order
+without one would have nowhere to put its cost. (Contrast purchase orders,
+where an empty project deliberately means a warehouse order.)
+
+### 26. `ProjectFactory` randomizes status, which makes count assertions flaky
+
+`WorkOrder::factory()` creates a project per order, and `ProjectFactory` picks
+a random `ProjectStatus`. A dashboard test that created three work orders and
+asserted "2 active operations" passed alone and failed in the full suite,
+because some of those incidental projects rolled `InProgress`.
+
+**Any test that asserts a count must pin the status of every record it creates
+incidentally**, not just the ones it creates on purpose.
+
+### 27. `CreditFacilityService::utilization()` returns `used`, not `allocated`
+
+A small thing that would have shipped a wrong field name in the contract. The
+resource publishes `{limit, used, available, percent}`, and `percent` is
+**null** when the limit is zero — a percentage of nothing is undefined, not
+zero, and flattening the two would draw a full gauge on an empty facility.
+
+---
+
+## Findings — Modules 2-6
+
+Continuing the numbering from Module 1.
+
+### 14. Fifty business rules would have surfaced as `500 server_error`
+
+The codebase signals "your payload was fine, the business state was not" with
+**two** exception types. Twelve places throw `DomainException`; **fifty** throw
+`\RuntimeException` carrying a localized `__('errors...')` message — and the
+Filament panel catches `\RuntimeException` and shows that message to the user
+as a notification. So in practice a service's `RuntimeException` *is* the
+business-rule signal, whatever the type name suggests.
+
+`ApiExceptionRenderer` only knew about `DomainException`. Every one of those
+fifty rules would have reached a client as an unhandled `500 server_error` with
+a generic message, while the panel showed the real one. "Insufficient stock for
+Copper Busbar in Raw Materials. Available: 12, Requested: 40" would have
+arrived at a warehouse tablet as "An unexpected error occurred" — the caller
+could not tell a refusal from an outage, and would retry a request that can
+never succeed.
+
+Fixed with `isServiceRuntimeException()`: a `RuntimeException` whose own throw
+frame is inside `app/Services` is rendered as `422 business_rule_violated`.
+The origin check is what keeps it narrow — a `RuntimeException` from a database
+driver, a filesystem call or a vendor package is a genuine fault and stays a
+logged 500, because surfacing its message as user-facing prose would leak
+internals and tell the client to fix something it cannot.
+
+**The proper fix is a single explicit exception type across all sixty throw
+sites.** That is a change to shared services the panel depends on, so it was
+deliberately not bundled with this round. Do it before the module count makes
+it a bigger change than it is now.
+
+### 15. `has_smb` was an N+1 hiding in a resource
+
+`ProjectResource` called `$this->hasSmb()`, which runs an `EXISTS` query. On a
+25-row page that is 25 extra queries for a boolean. The index now adds a
+`withExists` aggregate resolved as one subquery, and the resource reads that
+when present, falling back to the method for single-record endpoints.
+
+Worth noting *how* it was caught. The first version of the test asserted a
+fixed ceiling (`assertLessThan(14, $queries)`), which is a magic number that
+drifts whenever the auth path or the permission cache changes. Rewritten to
+measure the same endpoint over 3 rows and over 9 and assert the two agree,
+which is what an N+1 actually *is*. **Copy that shape in Module 7.**
+
+One wrinkle: the first request of a test also warms Spatie's permission cache,
+so the measurement needs a throwaway call first — otherwise it reports *fewer*
+queries for more rows.
+
+### 16. `PurchaseOrder::generatePoNumber()` was MySQL-only
+
+It used `SUBSTRING_INDEX`, which SQLite does not have. The query worked in
+production and threw on the test database, so **the entire purchase-order
+create path was untestable** and nobody had noticed.
+
+`Project::generateCode()` and `AdditionVoucher::generateVoucherNumber()` both
+parse the sequence in PHP with a comment explaining it is "portable across
+MySQL (production) and SQLite (tests)". This one was missed. Now it matches
+them, and also includes soft-deleted rows — the unique index on `po_number`
+ignores `deleted_at`, so reusing a deleted number would fail on insert.
+
+**Check any other `selectRaw` before relying on it in a test.**
+
+### 17. Uploads must go through a multipart helper, not `apiJson`
+
+`ApiTestCase::apiJson()` serializes the payload as a JSON body, so an
+`UploadedFile` arrives at the server as an object literal and validation
+rejects it as "not a file" — which looks exactly like a broken rule rather than
+a broken test. Added `apiUpload()`, which uses Laravel's `post()` helper and
+sets `Content-Type: multipart/form-data`.
+
+That header matters twice over: Laravel's `post()` defaults to
+form-urlencoded, which `ForceJsonResponse` answers with a **415**, so without
+it every upload test fails for a reason unrelated to the endpoint. A real
+Flutter client sends `multipart/form-data` with a boundary, which the
+middleware allows.
+
+### 18. An idempotency test must reuse one token
+
+`actingAsApi()` issues a **new** token each call. Since Finding #3 keys the
+idempotency cache on the bearer token, calling it twice puts the two requests
+in different scopes — so the replay legitimately executes again and the test
+asserts nothing. Call `actingAsApi()` once, then make both requests.
+
+### 19. A new offer's money columns were `null`, not zero
+
+The derived columns are filled by `OfferTotalsService`, which had not run yet
+on a freshly created offer. The API promises money fields are decimal strings;
+a client having to handle `null` on a brand-new offer and `"0.00"` a second
+later will get one of the two branches wrong. `store()` now runs the totals
+service once so the offer starts at zero.
+
+### 20. Policy checks can fire before a service's own guard
+
+Posting an already-posted addition voucher returns **403**, not 422, because
+`AdditionVoucherPolicy::post()` gates on `! $voucher->isPosted()`. That is the
+same order the panel applies (the action is hidden once posted) and the
+service check behind it remains as the last line of defence — but a client
+branching on `error.code` needs to expect `forbidden` there, not
+`business_rule_violated`. The same is true of editing a posted voucher.
+
+---
+
+## Uncommitted work
+
+**Modules 2-11 are built, tested and NOT committed.** `main` in production
+still serves Module 1 only.
+
+Before shipping this round:
+
+1. `php artisan test tests/Feature/Api` — expect 404 passing.
+2. `php artisan scribe:generate`, then commit `public/api/docs/` **and**
+   `.scribe/` (both are build product that production cannot rebuild, because
+   Scribe is `require-dev` and the server installs `--no-dev`).
+3. Confirm `config:cache` succeeds locally — Finding #12 is still the failure
+   mode that takes the whole site down.
+4. No new migration and no new permission in this round either, so `deploy.sh`
+   needs no change. Every endpoint in Modules 7-11 reuses a permission the
+   seeder already grants.
+
+### Changes to shared code in this round
+
+Two, both narrow:
+
+| What | Why |
+|---|---|
+| `WorkOrder::generateWoNumber()` now parses its sequence in PHP | Finding #22 — it was MySQL-only, so the create path was untestable. Behaviour in production is identical. |
+| `ApiExceptionRenderer` gained an `ExcessIssueException` branch | Design decision #1. Placed **before** the generic `RuntimeException` branch, since `ExcessIssueException` is one. |
+
+Thirteen new `errors.api.*` strings were added in both locales for the guards
+these modules raise from controllers.
 
 ## What was added to the codebase
 
@@ -462,7 +1143,7 @@ is proven; the token lookup itself is exercised by the invalid-token 401.
 
 ## Test inventory
 
-`php artisan test tests/Feature/Api` — **96 tests**
+`php artisan test tests/Feature/Api` — **404 tests**
 
 | Suite | Tests | Covers |
 |---|---|---|
@@ -472,7 +1153,26 @@ is proven; the token lookup itself is exercised by the invalid-token 401.
 | `Auth/AuthenticationTest` | 16 | Login, credential-enumeration resistance, roleless account, token expiry, logout/logout-all, rotation, ability narrowing, LRU eviction |
 | `Auth/ProfileAndDeviceTest` | 13 | me/profile/password, privilege-escalation guard, device list/revoke, cross-user revoke |
 | `Identity/UserManagementTest` | 17 | CRUD, pagination/filter/sort/search, N+1 guard, RBAC sweep, admin password reset revokes sessions |
-| `Identity/RoleAndPermissionTest` | 16 | Role CRUD, permission catalog, cache invalidation, Admin-role protection, i18n labels |
+| `Identity/RoleAndPermissionTest` | 12 | Role CRUD, permission catalog, cache invalidation, Admin-role protection, i18n labels |
+| `MasterData/ItemApiTest` | 18 | CRUD, enum + decimal-string shape, per-warehouse stock, below-minimum filter, N+1 guard, idempotent create, delete blocked while stocked |
+| `MasterData/PartyApiTest` | 13 | Customers and suppliers side by side: CRUD, ledger balance on detail only, profit-tax-exemption filter, delete guards |
+| `MasterData/AttachmentApiTest` | 13 | Upload/list/download/delete, owner-type whitelist, generated filename, MIME allow-list, owner-policy gating, missing-file 404 |
+| `Sales/ProjectApiTest` | 16 | CRUD, server-generated code, status not settable via PATCH, stage + missing-offer filters, query-count invariance |
+| `Sales/PipelineApiTest` | 14 | Every transition and its pre-conditions, SMB derivation, winning-offer marking, per-transition permissions, alarms |
+| `Sales/OfferApiTest` | 13 | Offer versioning, BOQ replace, derived totals incl. VAT + installation, winning-offer lock, idempotent create |
+| `TechnicalOffice/BomApiTest` | 19 | Project vs standard scope, line replacement, waste-adjusted quantity, draft→pending→approved, supersede rules, immutability, standard-recipe lookup |
+| `Procurement/PurchaseOrderApiTest` | 20 | Money breakdown incl. deducted profit tax, approve guards, receive → addition voucher, over-receipt refusal, draft-only editing, idempotent receipt |
+| `Procurement/StockReservationApiTest` | 12 | Hold/release, availability guard, double-promise guard, bulk approved-BOM reserve is all-or-nothing |
+| `Inventory/InventoryApiTest` | 11 | Balances (on hand / on hold / available), ledger filters, stock card reshaped to the API contract, read-only surface |
+| `Inventory/VoucherApiTest` | 19 | Addition voucher draft→post→invoice/close, derived invoicing status, invoice-value mismatch, depreciation pre-fill → post → WIP deduction + journal |
+| `Manufacturing/WorkOrderApiTest` | 20 | Draft creation + generated number, status not settable via PATCH, material/output replacement, the full approve→start→submit-qa→approve-qa→complete chain, plan gates, the double-approval finish gate, query-count invariance, idempotent create |
+| `Manufacturing/MaterialMovementApiTest` | 16 | Issue voucher pre-filled from the remaining requirement, posting moves raw→WIP and loads the operation, the excess gate and its approval flow, insufficient stock, return voucher pre-filled at zero and reversing value, idempotent post |
+| `Manufacturing/QualitySheetApiTest` | 11 | Idempotent sheet opening, spec snapshot frozen against later order edits, test-grid round trip, fill→approve lifecycle, approved sheet frozen, production entries read-only |
+| `Delivery/DeliveryApiTest` | 23 | Dual signature in either order, activation moving stock + debiting the customer, atomic rollback of a failed activation, active voucher frozen, minute inheritance and one-way distribution, installation stages, site surveys, query-count invariance |
+| `Finance/LedgerApiTest` | 17 | Account CRUD + natural sign, delete guards, two-column entry writing, double-entry enforcement, posted-entry immutability, line update/keep/delete in one pass, query-count invariance, idempotent post |
+| `Finance/ReceivablesApiTest` | 20 | Invoicing in instalments with derived status, over-invoicing refused, payment totals, claim submit/collect gates and auto-collection, facility double-promise guard and release, party statements with running balance |
+| `Reports/ReportApiTest` | 14 | Trial balance grouped by currency, decimal-string money, ledger opening/closing/running balance, backwards period refused, drafts excluded, the four statements, operation cost + timeline, per-report permissions, PDF streaming |
+| `Platform/PlatformApiTest` | 19 | Dashboard sharing the panel's cache keys, self-scoped notifications (404 not 403 across users), unread count, activity log read-only, search respecting per-type permissions, LIKE-wildcard escaping |
 
 ### Commands
 ```bash
@@ -488,33 +1188,38 @@ php artisan scribe:generate
 
 ---
 
-## Starting Module 2 — a concrete recipe
+## What is deliberately not built
 
-Module 2 is **Master Data & Files**: Items, Customers, Suppliers, and a generic
-Attachments endpoint. Everything from Module 3 onward references these.
+The eleven modules are done. What remains unbuilt is unbuilt on purpose, and
+each of these is a decision rather than a gap:
 
-1. Read `API_Development_Plan.md` §3 (the contract) and §6 (definition of done).
-2. Re-read **Findings #2 and #4** above — both will bite in Module 2.
-3. For each entity:
-   - `app/Http/Resources/Api/V1/MasterData/<Entity>Resource.php` — explicit
-     field list; money as strings; enums via `EnumPresenter::present()`.
-   - `app/Http/Requests/Api/V1/MasterData/{Store,Update}<Entity>Request.php` —
-     with `authorize()` implemented.
-   - `app/Http/Controllers/Api/V1/MasterData/<Entity>Controller.php` extending
-     `ApiController`; index via `ApiQuery` with explicit whitelists;
-     `$this->authorize()` on every action; writes delegate to the existing
-     service where one exists.
-   - Routes under a `Route::middleware('ability:master-data')` group in
-     `routes/api/v1.php`, split between `throttle:api-read` and
-     `throttle:api-write`.
-   - `tests/Feature/Api/V1/MasterData/<Entity>Test.php` extending `ApiTestCase`.
-4. Attachments need care: uploads are `multipart/form-data` (already allowed by
-   `ForceJsonResponse`), must reuse `App\Services\EntityAttachmentPersistence`,
-   and downloads must stream through a policy-gated controller — never a public
-   URL.
-5. Run `php artisan test tests/Feature/Api`, then `php artisan scribe:generate`,
-   then update this file's module board and add a Module 2 section mirroring
-   Module 1's.
+| Not built | Why |
+|---|---|
+| **Push notifications** | The API exposes the notification *rows* (Module 11); delivering them to a device needs FCM credentials, a device-token registry and a production decision about what is worth waking a phone for. The read surface is what the app needs to show a bell; push is a separate project. |
+| **A real delta-sync protocol** | `updated_after` is a plain `updated_at >` filter and the server holds no cursor. The sync layer was deleted on purpose (plan §1.3); re-adding one would re-create the class of bug that removal was meant to end. |
+| **Password reset by email** | `MAIL_MAILER=log`, and the panel has no reset flow either. Administrators reset via `PATCH /users/{user}`. |
+| **Write endpoints for production entries, party statements and the activity log** | All three are written by documents or by the system, and all three policies refuse writes. An editable audit surface is not an audit surface. |
+| **A `v2`** | Additive changes are non-breaking by the contract in plan §3.1. A new version file is added when something genuinely breaks, never as a tidy-up. |
+
+### If you are adding a twelfth thing
+
+The conventions that survived eleven modules and are worth copying:
+
+1. **The module sections in `routes/api/v1.php`** — one `ability:` group, split
+   into `throttle:api-read` / `api-write` / `api-reports`, with a comment block
+   saying what the module is and why anything unusual in it is that way.
+2. **Replace, never merge**, for any line collection (`PUT .../lines`).
+3. **A state change is a POST with its own permission**, never a `status` on
+   PATCH.
+4. **`SerializesDecimals` on every resource**, at the column's real precision —
+   `decimal(*,2)` for money, `decimal(*,4)` for quantities.
+5. **The query-count test shape**: 3 rows against 9, with a warm-up call first,
+   and never a fixed ceiling.
+6. **Check for the attribute, not for non-null**, when a resource prefers a
+   subquery aggregate over an accessor (Finding #21).
+7. **Read the policy before asserting a status code.** Several policies gate on
+   state (`! isPosted()`, `isDraft()`, `! isActive()`), so the "already done"
+   case answers **403**, not 422. Assert what the policy actually does.
 
 ---
 
@@ -530,6 +1235,7 @@ was touched.
 | `NetworkResilienceTest::test_large_response_is_compressed_for_gzip_client` | Expects `Content-Encoding: gzip`, gets none | `App\Http\Middleware\CompressResponse` is **imported in `bootstrap/app.php` but never appended to the stack**. The comment block describes it as step 3 of the resilience chain; the `$middleware->append()` call is missing. Compression is off in production. |
 | `NetworkResilienceTest::test_ping_endpoint_is_auth_gated_but_csrf_exempt` | Expects `401` unauthenticated, gets `200` | The `/admin/ping` route's comment says it "Uses Laravel's standard `auth` middleware", but the middleware array in `routes/web.php` lists only cookie/session/binding middleware — **`auth` is not there**. The endpoint is currently open to anonymous callers. |
 | `ActivityLogTest::test_subject_type_is_translated_to_locale_label` | Expects `'Work Order'`, gets `'Manufacturing Order'` | The English label was deliberately renamed during the PMO round; the assertion was never updated. The test is stale, not the code. |
+| `GeneralManagement/DeliveryMinuteTest` (notification count) | Expects 1 notification, gets a different count | Confirmed pre-existing during the Modules 2-6 round by stashing every change and re-running on a clean tree — it fails there too. Not diagnosed further; it is unrelated to the API. |
 
 The ping one is the only one with a security edge (an unauthenticated endpoint
 that returns `user_id` and touches the session). It is a one-line fix — adding

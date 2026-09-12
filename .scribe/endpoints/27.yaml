@@ -1,0 +1,1106 @@
+name: '30. Journal entries'
+description: |-
+
+  قيود اليومية — the general ledger's only source of movement.
+
+  An entry is written as **two columns**, مدين and دائن, rather than as rows
+  each carrying a direction. The side a line is written on IS its direction,
+  which removes a whole class of mistake: a row cannot end up on the wrong
+  side because someone mistyped a field. The read shape gives you both — the
+  flat `lines` and the split `debit_lines` / `credit_lines`.
+
+  Draft → **post**. Posting enforces double entry: at least two lines, and
+  total debits equal to total credits. A posted entry is then **immutable** —
+  no edit, no delete, no re-post — because its numbers have already reached
+  the trial balance and every statement built on it. The correction for a
+  mistake is a reversing entry.
+
+  Numbering is threefold and all of it is the server's: `entry_serial` is the
+  continuous sequence an auditor follows, `document_number` the per-type
+  sequence (أمر صرف / إيصال توريد / قيد تسوية), and `entry_number` the
+  human-readable reference.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/journal-entries
+    metadata:
+      custom: []
+      groupName: '30. Journal entries'
+      groupDescription: |-
+
+        قيود اليومية — the general ledger's only source of movement.
+
+        An entry is written as **two columns**, مدين and دائن, rather than as rows
+        each carrying a direction. The side a line is written on IS its direction,
+        which removes a whole class of mistake: a row cannot end up on the wrong
+        side because someone mistyped a field. The read shape gives you both — the
+        flat `lines` and the split `debit_lines` / `credit_lines`.
+
+        Draft → **post**. Posting enforces double entry: at least two lines, and
+        total debits equal to total credits. A posted entry is then **immutable** —
+        no edit, no delete, no re-post — because its numbers have already reached
+        the trial balance and every statement built on it. The correction for a
+        mistake is a reversing entry.
+
+        Numbering is threefold and all of it is the server's: `entry_serial` is the
+        continuous sequence an auditor follows, `document_number` the per-type
+        sequence (أمر صرف / إيصال توريد / قيد تسوية), and `entry_number` the
+        human-readable reference.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List journal entries'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'The page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      search:
+        custom: []
+        name: search
+        description: 'Matches the entry number, document number or description.'
+        required: false
+        example: JE-2026
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[status]':
+        custom: []
+        name: 'filter[status]'
+        description: 'draft or posted.'
+        required: false
+        example: posted
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[document_type]':
+        custom: []
+        name: 'filter[document_type]'
+        description: 'payment_order, supply_receipt or settlement.'
+        required: false
+        example: payment_order
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[entry_date]':
+        custom: []
+        name: 'filter[entry_date]'
+        description: 'Inclusive date range from,until.'
+        required: false
+        example: '2026-01-01,2026-06-30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[currency]':
+        custom: []
+        name: 'filter[currency]'
+        description: ''
+        required: false
+        example: EGP
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Allowed: entry_serial, entry_number, entry_date, total_debit, created_at.'
+        required: false
+        example: '-entry_date'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      search: JE-2026
+      'filter[status]': posted
+      'filter[document_type]': payment_order
+      'filter[entry_date]': '2026-01-01,2026-06-30'
+      'filter[currency]': EGP
+      sort: '-entry_date'
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":77,"type":"journal_entry","entry_number":"JE-202609-0031","entry_serial":412,"status":{"value":"posted","label":"Posted","color":"success"},"totals":{"debit":"40000.00","credit":"40000.00","balanced":true}}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/journal-entries/{journal_entry_id}'
+    metadata:
+      custom: []
+      groupName: '30. Journal entries'
+      groupDescription: |-
+
+        قيود اليومية — the general ledger's only source of movement.
+
+        An entry is written as **two columns**, مدين and دائن, rather than as rows
+        each carrying a direction. The side a line is written on IS its direction,
+        which removes a whole class of mistake: a row cannot end up on the wrong
+        side because someone mistyped a field. The read shape gives you both — the
+        flat `lines` and the split `debit_lines` / `credit_lines`.
+
+        Draft → **post**. Posting enforces double entry: at least two lines, and
+        total debits equal to total credits. A posted entry is then **immutable** —
+        no edit, no delete, no re-post — because its numbers have already reached
+        the trial balance and every statement built on it. The correction for a
+        mistake is a reversing entry.
+
+        Numbering is threefold and all of it is the server's: `entry_serial` is the
+        continuous sequence an auditor follows, `document_number` the per-type
+        sequence (أمر صرف / إيصال توريد / قيد تسوية), and `entry_number` the
+        human-readable reference.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show a journal entry'
+      description: |-
+        Returns the lines three ways: flat, and split into the two columns an
+        accountant reads.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      journal_entry_id:
+        custom: []
+        name: journal_entry_id
+        description: 'The ID of the journal entry.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      journal_entry:
+        custom: []
+        name: journal_entry
+        description: 'The entry id.'
+        required: true
+        example: 77
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      journal_entry_id: 1
+      journal_entry: 77
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":77,"type":"journal_entry","entry_number":"JE-202609-0031","totals":{"debit":"40000.00","credit":"40000.00","balanced":true},"debit_lines":[{"account_id":12,"amount":"40000.00"}],"credit_lines":[{"account_id":31,"amount":"40000.00"}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/journal-entries
+    metadata:
+      custom: []
+      groupName: '30. Journal entries'
+      groupDescription: |-
+
+        قيود اليومية — the general ledger's only source of movement.
+
+        An entry is written as **two columns**, مدين and دائن, rather than as rows
+        each carrying a direction. The side a line is written on IS its direction,
+        which removes a whole class of mistake: a row cannot end up on the wrong
+        side because someone mistyped a field. The read shape gives you both — the
+        flat `lines` and the split `debit_lines` / `credit_lines`.
+
+        Draft → **post**. Posting enforces double entry: at least two lines, and
+        total debits equal to total credits. A posted entry is then **immutable** —
+        no edit, no delete, no re-post — because its numbers have already reached
+        the trial balance and every statement built on it. The correction for a
+        mistake is a reversing entry.
+
+        Numbering is threefold and all of it is the server's: `entry_serial` is the
+        continuous sequence an auditor follows, `document_number` the per-type
+        sequence (أمر صرف / إيصال توريد / قيد تسوية), and `entry_number` the
+        human-readable reference.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Open a draft entry'
+      description: |-
+        The numbering is generated by the server. Lines may be sent here or
+        written afterwards; either way they go in as two columns.
+
+        Nothing reaches the ledger until `post`.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      document_type:
+        custom: []
+        name: document_type
+        description: 'payment_order, supply_receipt or settlement.'
+        required: true
+        example: settlement
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      entry_date:
+        custom: []
+        name: entry_date
+        description: 'optional Defaults to today.'
+        required: false
+        example: '2026-09-12'
+        type: date
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: optional
+        required: false
+        example: 'Closing the cost centre of operation 2026-14'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      currency:
+        custom: []
+        name: currency
+        description: 'optional Three letters, defaults to EGP.'
+        required: false
+        example: EGP
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: 'Must not be greater than 5000 characters.'
+        required: false
+        example: sufvyvddqamniihfqcoyn
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      debit_lines:
+        custom: []
+        name: debit_lines
+        description: 'optional The مدين column.'
+        required: false
+        example:
+          - []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      credit_lines:
+        custom: []
+        name: credit_lines
+        description: 'optional The دائن column, same shape.'
+        required: false
+        example:
+          - []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'debit_lines[].id':
+        custom: []
+        name: 'debit_lines[].id'
+        description: ''
+        required: false
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'debit_lines[].account_id':
+        custom: []
+        name: 'debit_lines[].account_id'
+        description: ''
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'debit_lines[].project_id':
+        custom: []
+        name: 'debit_lines[].project_id'
+        description: 'optional The operation this line is charged to.'
+        required: false
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'debit_lines[].amount':
+        custom: []
+        name: 'debit_lines[].amount'
+        description: ''
+        required: true
+        example: 40000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'debit_lines[].line_notes':
+        custom: []
+        name: 'debit_lines[].line_notes'
+        description: optional
+        required: false
+        example: 'Busbar consumption'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'credit_lines[].id':
+        custom: []
+        name: 'credit_lines[].id'
+        description: ''
+        required: false
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'credit_lines[].account_id':
+        custom: []
+        name: 'credit_lines[].account_id'
+        description: 'Must match an existing stored value.'
+        required: false
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'credit_lines[].project_id':
+        custom: []
+        name: 'credit_lines[].project_id'
+        description: 'Must match an existing stored value.'
+        required: false
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'credit_lines[].amount':
+        custom: []
+        name: 'credit_lines[].amount'
+        description: 'Must be at least 0.'
+        required: true
+        example: 45
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'credit_lines[].line_notes':
+        custom: []
+        name: 'credit_lines[].line_notes'
+        description: 'Must not be greater than 1000 characters.'
+        required: false
+        example: qeopfuudtdsufvyvddqam
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      document_type: settlement
+      entry_date: '2026-09-12'
+      description: 'Closing the cost centre of operation 2026-14'
+      currency: EGP
+      notes: sufvyvddqamniihfqcoyn
+      debit_lines:
+        -
+          id: 17
+          account_id: 12
+          project_id: 4
+          amount: 40000.0
+          line_notes: 'Busbar consumption'
+      credit_lines:
+        -
+          id: 17
+          account_id: 17
+          project_id: 17
+          amount: 45
+          line_notes: qeopfuudtdsufvyvddqam
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":77,"type":"journal_entry","entry_number":"JE-202609-0031","status":{"value":"draft","label":"Draft","color":"gray"},"totals":{"balanced":true}},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Created
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PATCH
+    uri: 'api/v1/journal-entries/{journal_entry_id}'
+    metadata:
+      custom: []
+      groupName: '30. Journal entries'
+      groupDescription: |-
+
+        قيود اليومية — the general ledger's only source of movement.
+
+        An entry is written as **two columns**, مدين and دائن, rather than as rows
+        each carrying a direction. The side a line is written on IS its direction,
+        which removes a whole class of mistake: a row cannot end up on the wrong
+        side because someone mistyped a field. The read shape gives you both — the
+        flat `lines` and the split `debit_lines` / `credit_lines`.
+
+        Draft → **post**. Posting enforces double entry: at least two lines, and
+        total debits equal to total credits. A posted entry is then **immutable** —
+        no edit, no delete, no re-post — because its numbers have already reached
+        the trial balance and every statement built on it. The correction for a
+        mistake is a reversing entry.
+
+        Numbering is threefold and all of it is the server's: `entry_serial` is the
+        continuous sequence an auditor follows, `document_number` the per-type
+        sequence (أمر صرف / إيصال توريد / قيد تسوية), and `entry_number` the
+        human-readable reference.
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Update a draft entry's header"
+      description: 'Drafts only — the policy answers **403** on a posted entry.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      journal_entry_id:
+        custom: []
+        name: journal_entry_id
+        description: 'The ID of the journal entry.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      journal_entry:
+        custom: []
+        name: journal_entry
+        description: 'The entry id.'
+        required: true
+        example: 77
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      journal_entry_id: 1
+      journal_entry: 77
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      document_type:
+        custom: []
+        name: document_type
+        description: ''
+        required: false
+        example: supply_receipt
+        type: string
+        enumValues:
+          - payment_order
+          - supply_receipt
+          - settlement
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      entry_date:
+        custom: []
+        name: entry_date
+        description: optional
+        required: false
+        example: '2026-09-13'
+        type: date
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: optional
+        required: false
+        example: 'Corrected description'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      currency:
+        custom: []
+        name: currency
+        description: 'Must be 3 characters.'
+        required: false
+        example: dtd
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: 'Must not be greater than 5000 characters.'
+        required: false
+        example: sufvyvddqamniihfqcoyn
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      document_type: supply_receipt
+      entry_date: '2026-09-13'
+      description: 'Corrected description'
+      currency: dtd
+      notes: sufvyvddqamniihfqcoyn
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":77,"type":"journal_entry","description":"Corrected description"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Updated
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/v1/journal-entries/{journal_entry_id}/lines'
+    metadata:
+      custom: []
+      groupName: '30. Journal entries'
+      groupDescription: |-
+
+        قيود اليومية — the general ledger's only source of movement.
+
+        An entry is written as **two columns**, مدين and دائن, rather than as rows
+        each carrying a direction. The side a line is written on IS its direction,
+        which removes a whole class of mistake: a row cannot end up on the wrong
+        side because someone mistyped a field. The read shape gives you both — the
+        flat `lines` and the split `debit_lines` / `credit_lines`.
+
+        Draft → **post**. Posting enforces double entry: at least two lines, and
+        total debits equal to total credits. A posted entry is then **immutable** —
+        no edit, no delete, no re-post — because its numbers have already reached
+        the trial balance and every statement built on it. The correction for a
+        mistake is a reversing entry.
+
+        Numbering is threefold and all of it is the server's: `entry_serial` is the
+        continuous sequence an auditor follows, `document_number` the per-type
+        sequence (أمر صرف / إيصال توريد / قيد تسوية), and `entry_number` the
+        human-readable reference.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Write both sides of a draft entry'
+      description: |-
+        Rows carrying an `id` are updated in place, new rows are created, and
+        rows left out are deleted — in one transaction, so a half-written entry
+        can never reach the books. Rows with no `account_id` are ignored, which
+        is what lets a client send the empty row a form always has at the
+        bottom.
+
+        The totals are recomputed afterwards, so `totals.balanced` in the
+        response tells you straight away whether the entry can be posted.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      journal_entry_id:
+        custom: []
+        name: journal_entry_id
+        description: 'The ID of the journal entry.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      journal_entry:
+        custom: []
+        name: journal_entry
+        description: 'The entry id.'
+        required: true
+        example: 77
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      journal_entry_id: 1
+      journal_entry: 77
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      debit_lines:
+        custom: []
+        name: debit_lines
+        description: 'The complete مدين column. Send `[]` to clear it.'
+        required: true
+        example:
+          - []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      credit_lines:
+        custom: []
+        name: credit_lines
+        description: 'The complete دائن column, same shape.'
+        required: true
+        example:
+          - []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'debit_lines[].id':
+        custom: []
+        name: 'debit_lines[].id'
+        description: 'optional The line to update; omit for a new one.'
+        required: false
+        example: 140
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'debit_lines[].account_id':
+        custom: []
+        name: 'debit_lines[].account_id'
+        description: ''
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'debit_lines[].project_id':
+        custom: []
+        name: 'debit_lines[].project_id'
+        description: optional
+        required: false
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'debit_lines[].amount':
+        custom: []
+        name: 'debit_lines[].amount'
+        description: ''
+        required: true
+        example: 40000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'debit_lines[].line_notes':
+        custom: []
+        name: 'debit_lines[].line_notes'
+        description: 'Must not be greater than 1000 characters.'
+        required: false
+        example: qeopfuudtdsufvyvddqam
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'credit_lines[].id':
+        custom: []
+        name: 'credit_lines[].id'
+        description: ''
+        required: false
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'credit_lines[].account_id':
+        custom: []
+        name: 'credit_lines[].account_id'
+        description: 'Must match an existing stored value.'
+        required: false
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'credit_lines[].project_id':
+        custom: []
+        name: 'credit_lines[].project_id'
+        description: 'Must match an existing stored value.'
+        required: false
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'credit_lines[].amount':
+        custom: []
+        name: 'credit_lines[].amount'
+        description: 'Must be at least 0.'
+        required: true
+        example: 45
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'credit_lines[].line_notes':
+        custom: []
+        name: 'credit_lines[].line_notes'
+        description: 'Must not be greater than 1000 characters.'
+        required: false
+        example: qeopfuudtdsufvyvddqam
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      debit_lines:
+        -
+          id: 140
+          account_id: 12
+          project_id: 4
+          amount: 40000.0
+          line_notes: qeopfuudtdsufvyvddqam
+      credit_lines:
+        -
+          id: 17
+          account_id: 17
+          project_id: 17
+          amount: 45
+          line_notes: qeopfuudtdsufvyvddqam
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":77,"type":"journal_entry","totals":{"debit":"40000.00","credit":"40000.00","balanced":true}},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Written
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/journal-entries/{journal_entry_id}/post'
+    metadata:
+      custom: []
+      groupName: '30. Journal entries'
+      groupDescription: |-
+
+        قيود اليومية — the general ledger's only source of movement.
+
+        An entry is written as **two columns**, مدين and دائن, rather than as rows
+        each carrying a direction. The side a line is written on IS its direction,
+        which removes a whole class of mistake: a row cannot end up on the wrong
+        side because someone mistyped a field. The read shape gives you both — the
+        flat `lines` and the split `debit_lines` / `credit_lines`.
+
+        Draft → **post**. Posting enforces double entry: at least two lines, and
+        total debits equal to total credits. A posted entry is then **immutable** —
+        no edit, no delete, no re-post — because its numbers have already reached
+        the trial balance and every statement built on it. The correction for a
+        mistake is a reversing entry.
+
+        Numbering is threefold and all of it is the server's: `entry_serial` is the
+        continuous sequence an auditor follows, `document_number` the per-type
+        sequence (أمر صرف / إيصال توريد / قيد تسوية), and `entry_number` the
+        human-readable reference.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Post an entry to the ledger'
+      description: |-
+        Enforces double entry: at least two lines, and total debits equal to
+        total credits. Both refusals name the figures, so the message can be
+        shown as written.
+
+        After this the entry is immutable and appears in the trial balance, the
+        general ledger and every statement built on them.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      journal_entry_id:
+        custom: []
+        name: journal_entry_id
+        description: 'The ID of the journal entry.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      journal_entry:
+        custom: []
+        name: journal_entry
+        description: 'The entry id.'
+        required: true
+        example: 77
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      journal_entry_id: 1
+      journal_entry: 77
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":77,"type":"journal_entry","status":{"value":"posted","label":"Posted","color":"success"},"posted_at":"2026-09-12T18:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Posted
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"Entry JE-202609-0031 is unbalanced: debit 40,000.00 vs credit 39,000.00."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Unbalanced
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/journal-entries/{journal_entry_id}'
+    metadata:
+      custom: []
+      groupName: '30. Journal entries'
+      groupDescription: |-
+
+        قيود اليومية — the general ledger's only source of movement.
+
+        An entry is written as **two columns**, مدين and دائن, rather than as rows
+        each carrying a direction. The side a line is written on IS its direction,
+        which removes a whole class of mistake: a row cannot end up on the wrong
+        side because someone mistyped a field. The read shape gives you both — the
+        flat `lines` and the split `debit_lines` / `credit_lines`.
+
+        Draft → **post**. Posting enforces double entry: at least two lines, and
+        total debits equal to total credits. A posted entry is then **immutable** —
+        no edit, no delete, no re-post — because its numbers have already reached
+        the trial balance and every statement built on it. The correction for a
+        mistake is a reversing entry.
+
+        Numbering is threefold and all of it is the server's: `entry_serial` is the
+        continuous sequence an auditor follows, `document_number` the per-type
+        sequence (أمر صرف / إيصال توريد / قيد تسوية), and `entry_number` the
+        human-readable reference.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a draft entry'
+      description: |-
+        Drafts only — the policy answers **403** on a posted entry, because a
+        posted entry that could be deleted would take its movements out of the
+        trial balance with nothing left to say they ever existed.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      journal_entry_id:
+        custom: []
+        name: journal_entry_id
+        description: 'The ID of the journal entry.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      journal_entry:
+        custom: []
+        name: journal_entry
+        description: 'The entry id.'
+        required: true
+        example: 77
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      journal_entry_id: 1
+      journal_entry: 77
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Deleted
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

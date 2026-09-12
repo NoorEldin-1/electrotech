@@ -1,0 +1,497 @@
+name: '4. Users'
+description: |-
+
+  Administration of user accounts. Every endpoint is gated by the same
+  `users.*` permissions and the same UserPolicy the admin panel uses — the API
+  introduces no parallel authorization.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/users
+    metadata:
+      custom: []
+      groupName: '4. Users'
+      groupDescription: |-
+
+        Administration of user accounts. Every endpoint is gated by the same
+        `users.*` permissions and the same UserPolicy the admin panel uses — the API
+        introduces no parallel authorization.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List users'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'The page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      search:
+        custom: []
+        name: search
+        description: 'Matches name or email.'
+        required: false
+        example: ahmed
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[role]':
+        custom: []
+        name: 'filter[role]'
+        description: 'Filter by role name; comma-separate for OR.'
+        required: false
+        example: 'Sales,Sales_Manager'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[created]':
+        custom: []
+        name: 'filter[created]'
+        description: 'Inclusive date range `from,until`; either side may be omitted.'
+        required: false
+        example: '2026-01-01,2026-06-30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Comma-separated; prefix with `-` for descending. Allowed: name, email, created_at.'
+        required: false
+        example: '-created_at'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      include:
+        custom: []
+        name: include
+        description: 'Comma-separated relations. Allowed: roles.'
+        required: false
+        example: roles
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      search: ahmed
+      'filter[role]': 'Sales,Sales_Manager'
+      'filter[created]': '2026-01-01,2026-06-30'
+      sort: '-created_at'
+      include: roles
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":1,"type":"user","name":"System Administrator","email":"admin@example.com","roles":[{"id":1,"name":"Admin"}]}],"meta":{"request_id":"9f1c...","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"...","prev":null,"next":null,"last":"..."}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/users/{id}'
+    metadata:
+      custom: []
+      groupName: '4. Users'
+      groupDescription: |-
+
+        Administration of user accounts. Every endpoint is gated by the same
+        `users.*` permissions and the same UserPolicy the admin panel uses — the API
+        introduces no parallel authorization.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show a user'
+      description: |-
+        Includes the target's full resolved permission list, so an administrator
+        screen can show exactly what this account can do.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the user.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      user:
+        custom: []
+        name: user
+        description: 'The user id.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      user: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":3,"type":"user","name":"Ahmed Hassan","email":"ahmed@example.com","roles":[{"id":2,"name":"Sales"}],"permissions":["projects.view"]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/users
+    metadata:
+      custom: []
+      groupName: '4. Users'
+      groupDescription: |-
+
+        Administration of user accounts. Every endpoint is gated by the same
+        `users.*` permissions and the same UserPolicy the admin panel uses — the API
+        introduces no parallel authorization.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create a user'
+      description: |-
+        At least one role is required: an account with no role cannot sign in
+        at all, so creating one would silently produce a dead account.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'Display name.'
+        required: true
+        example: 'Ahmed Hassan'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: 'Unique email address.'
+        required: true
+        example: ahmed@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: 'At least 8 characters with letters and numbers.'
+        required: true
+        example: secret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      roles:
+        custom: []
+        name: roles
+        description: 'One or more existing role names.'
+        required: true
+        example:
+          - Sales
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: 'Ahmed Hassan'
+      email: ahmed@example.com
+      password: secret123
+      roles:
+        - Sales
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":4,"type":"user","name":"Ahmed Hassan","email":"ahmed@example.com","roles":[{"id":2,"name":"Sales"}]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        headers: []
+        description: Created
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PATCH
+    uri: 'api/v1/users/{id}'
+    metadata:
+      custom: []
+      groupName: '4. Users'
+      groupDescription: |-
+
+        Administration of user accounts. Every endpoint is gated by the same
+        `users.*` permissions and the same UserPolicy the admin panel uses — the API
+        introduces no parallel authorization.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a user'
+      description: |-
+        Send only the fields you want changed. Setting `password` revokes every
+        API session belonging to that user — an administrator resetting a
+        password expects the old credentials to stop working immediately.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the user.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      user:
+        custom: []
+        name: user
+        description: 'The user id.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      user: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'optional New display name.'
+        required: false
+        example: 'Ahmed H.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: 'optional New unique email.'
+        required: false
+        example: ahmed.h@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: "optional New password; revokes the user's sessions."
+        required: false
+        example: newsecret1
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      roles:
+        custom: []
+        name: roles
+        description: "optional Replaces the user's roles entirely."
+        required: false
+        example:
+          - Sales_Manager
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: 'Ahmed H.'
+      email: ahmed.h@example.com
+      password: newsecret1
+      roles:
+        - Sales_Manager
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":3,"type":"user","name":"Ahmed H.","email":"ahmed.h@example.com","roles":[{"id":3,"name":"Sales_Manager"}]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/users/{id}'
+    metadata:
+      custom: []
+      groupName: '4. Users'
+      groupDescription: |-
+
+        Administration of user accounts. Every endpoint is gated by the same
+        `users.*` permissions and the same UserPolicy the admin panel uses — the API
+        introduces no parallel authorization.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a user'
+      description: |-
+        Also revokes all of the target's API tokens. UserPolicy forbids deleting
+        your own account, so this always returns 403 when `user` is the caller.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the user.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      user:
+        custom: []
+        name: user
+        description: 'The user id.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      user: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Deleted
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

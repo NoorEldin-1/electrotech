@@ -1,0 +1,867 @@
+name: '18. Addition vouchers'
+description: |-
+
+  Goods receipt (إذن إضافة). This is the **only** document that adds purchased
+  stock, which is why receiving against a purchase order produces one rather
+  than touching the balance directly.
+
+  The lifecycle is Draft → Posted, and posting is the moment everything
+  happens at once: the stock is added, the supplier is credited, and any linked
+  purchase order has its received quantities updated and its status re-derived.
+  A posted voucher is immutable — the correction for a mistake is a separate
+  document, not an edit, because the stock and the ledger have already moved.
+
+  After posting, the **invoicing** state takes over: `not_invoiced` until the
+  supplier's invoice arrives, then `invoiced`, or `closed_uninvoiced` when it
+  is decided the invoice never will. That field is derived on every save —
+  record an invoice or close the voucher to change it, never write it.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/addition-vouchers
+    metadata:
+      custom: []
+      groupName: '18. Addition vouchers'
+      groupDescription: |-
+
+        Goods receipt (إذن إضافة). This is the **only** document that adds purchased
+        stock, which is why receiving against a purchase order produces one rather
+        than touching the balance directly.
+
+        The lifecycle is Draft → Posted, and posting is the moment everything
+        happens at once: the stock is added, the supplier is credited, and any linked
+        purchase order has its received quantities updated and its status re-derived.
+        A posted voucher is immutable — the correction for a mistake is a separate
+        document, not an edit, because the stock and the ledger have already moved.
+
+        After posting, the **invoicing** state takes over: `not_invoiced` until the
+        supplier's invoice arrives, then `invoiced`, or `closed_uninvoiced` when it
+        is decided the invoice never will. That field is derived on every save —
+        record an invoice or close the voucher to change it, never write it.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List addition vouchers'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'The page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      search:
+        custom: []
+        name: search
+        description: 'Matches the voucher number, supplier name or invoice number.'
+        required: false
+        example: AV-2026
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[status]':
+        custom: []
+        name: 'filter[status]'
+        description: 'draft or posted.'
+        required: false
+        example: posted
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[invoicing_status]':
+        custom: []
+        name: 'filter[invoicing_status]'
+        description: 'One or more purchase_invoicing_status values.'
+        required: false
+        example: not_invoiced
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[supplier]':
+        custom: []
+        name: 'filter[supplier]'
+        description: 'Supplier id.'
+        required: false
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[purchase_order]':
+        custom: []
+        name: 'filter[purchase_order]'
+        description: 'Purchase order id.'
+        required: false
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[voucher_date]':
+        custom: []
+        name: 'filter[voucher_date]'
+        description: 'Inclusive date range from,until.'
+        required: false
+        example: '2026-01-01,2026-06-30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Allowed: voucher_number, voucher_date, posted_at, created_at.'
+        required: false
+        example: '-voucher_date'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      include:
+        custom: []
+        name: include
+        description: 'Allowed: supplier, purchaseOrder.'
+        required: false
+        example: supplier
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      search: AV-2026
+      'filter[status]': posted
+      'filter[invoicing_status]': not_invoiced
+      'filter[supplier]': 3
+      'filter[purchase_order]': 4
+      'filter[voucher_date]': '2026-01-01,2026-06-30'
+      sort: '-voucher_date'
+      include: supplier
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":15,"type":"addition_voucher","voucher_number":"AV-202609-0031","status":{"value":"posted","label":"Posted","color":"success"},"invoicing_status":{"value":"not_invoiced","label":"Not Invoiced","color":"warning"},"received_value":"40000.00","lines_count":1}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/addition-vouchers/{addition_voucher_id}'
+    metadata:
+      custom: []
+      groupName: '18. Addition vouchers'
+      groupDescription: |-
+
+        Goods receipt (إذن إضافة). This is the **only** document that adds purchased
+        stock, which is why receiving against a purchase order produces one rather
+        than touching the balance directly.
+
+        The lifecycle is Draft → Posted, and posting is the moment everything
+        happens at once: the stock is added, the supplier is credited, and any linked
+        purchase order has its received quantities updated and its status re-derived.
+        A posted voucher is immutable — the correction for a mistake is a separate
+        document, not an edit, because the stock and the ledger have already moved.
+
+        After posting, the **invoicing** state takes over: `not_invoiced` until the
+        supplier's invoice arrives, then `invoiced`, or `closed_uninvoiced` when it
+        is decided the invoice never will. That field is derived on every save —
+        record an invoice or close the voucher to change it, never write it.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show an addition voucher'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      addition_voucher_id:
+        custom: []
+        name: addition_voucher_id
+        description: 'The ID of the addition voucher.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      addition_voucher:
+        custom: []
+        name: addition_voucher
+        description: 'The voucher id.'
+        required: true
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      addition_voucher_id: 1
+      addition_voucher: 15
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":15,"type":"addition_voucher","voucher_number":"AV-202609-0031","status":{"value":"posted","label":"Posted","color":"success"},"lines":[{"item_id":7,"quantity":"40.0000","unit_cost":"1000.00","line_value":"40000.00"}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/addition-vouchers
+    metadata:
+      custom: []
+      groupName: '18. Addition vouchers'
+      groupDescription: |-
+
+        Goods receipt (إذن إضافة). This is the **only** document that adds purchased
+        stock, which is why receiving against a purchase order produces one rather
+        than touching the balance directly.
+
+        The lifecycle is Draft → Posted, and posting is the moment everything
+        happens at once: the stock is added, the supplier is credited, and any linked
+        purchase order has its received quantities updated and its status re-derived.
+        A posted voucher is immutable — the correction for a mistake is a separate
+        document, not an edit, because the stock and the ledger have already moved.
+
+        After posting, the **invoicing** state takes over: `not_invoiced` until the
+        supplier's invoice arrives, then `invoiced`, or `closed_uninvoiced` when it
+        is decided the invoice never will. That field is derived on every save —
+        record an invoice or close the voucher to change it, never write it.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create a draft addition voucher'
+      description: |-
+        For goods arriving **without** a purchase order. Receiving against an
+        order goes through `POST /purchase-orders/{id}/receive` instead, which
+        builds and posts the voucher for you and enforces the ordered quantities.
+
+        `voucher_number` is generated by the server. The lines are sent with the
+        voucher; nothing moves until it is posted.
+
+        A registered `supplier_id` is optional — a receipt with no invoice and no
+        order may carry only a free-text `supplier_name`. Note the consequence:
+        with no supplier record there is nobody to credit, so posting adds the
+        stock and writes no ledger entry.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      supplier_id:
+        custom: []
+        name: supplier_id
+        description: 'optional The supplier to credit on posting.'
+        required: false
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      supplier_name:
+        custom: []
+        name: supplier_name
+        description: 'optional Free-text name when there is no supplier record.'
+        required: false
+        example: 'Walk-in supplier'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      voucher_date:
+        custom: []
+        name: voucher_date
+        description: 'optional Defaults to today.'
+        required: false
+        example: '2026-09-08'
+        type: date
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      invoice_number:
+        custom: []
+        name: invoice_number
+        description: 'optional If the invoice arrived with the goods.'
+        required: false
+        example: INV-88213
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      invoice_value:
+        custom: []
+        name: invoice_value
+        description: 'optional The invoice total; falls back to the stock value when omitted.'
+        required: false
+        example: 40000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: optional
+        required: false
+        example: 'Received at the Cairo store'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      lines:
+        custom: []
+        name: lines
+        description: 'What arrived.'
+        required: true
+        example:
+          - []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'lines[].item_id':
+        custom: []
+        name: 'lines[].item_id'
+        description: ''
+        required: true
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'lines[].quantity':
+        custom: []
+        name: 'lines[].quantity'
+        description: ''
+        required: true
+        example: 40.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'lines[].unit_cost':
+        custom: []
+        name: 'lines[].unit_cost'
+        description: 'Cost per unit in EGP.'
+        required: true
+        example: 1000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      supplier_id: 3
+      supplier_name: 'Walk-in supplier'
+      voucher_date: '2026-09-08'
+      invoice_number: INV-88213
+      invoice_value: 40000.0
+      notes: 'Received at the Cairo store'
+      lines:
+        -
+          item_id: 7
+          quantity: 40.0
+          unit_cost: 1000.0
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":16,"type":"addition_voucher","voucher_number":"AV-202609-0032","status":{"value":"draft","label":"Draft","color":"gray"}},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Created
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/addition-vouchers/{addition_voucher_id}/post'
+    metadata:
+      custom: []
+      groupName: '18. Addition vouchers'
+      groupDescription: |-
+
+        Goods receipt (إذن إضافة). This is the **only** document that adds purchased
+        stock, which is why receiving against a purchase order produces one rather
+        than touching the balance directly.
+
+        The lifecycle is Draft → Posted, and posting is the moment everything
+        happens at once: the stock is added, the supplier is credited, and any linked
+        purchase order has its received quantities updated and its status re-derived.
+        A posted voucher is immutable — the correction for a mistake is a separate
+        document, not an edit, because the stock and the ledger have already moved.
+
+        After posting, the **invoicing** state takes over: `not_invoiced` until the
+        supplier's invoice arrives, then `invoiced`, or `closed_uninvoiced` when it
+        is decided the invoice never will. That field is derived on every save —
+        record an invoice or close the voucher to change it, never write it.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Post an addition voucher'
+      description: |-
+        The moment everything happens: each line is added to its warehouse, the
+        supplier is credited, and a linked purchase order has its received
+        quantities updated and its status re-derived. All in one transaction.
+
+        Gated by `addition_vouchers.post`, which is not
+        `addition_vouchers.create` — raising a receipt and committing it to the
+        stock ledger and the supplier's account are different acts.
+
+        Posting twice is refused, not ignored. That is what makes double-posting
+        impossible even if the `Idempotency-Key` is fumbled.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      addition_voucher_id:
+        custom: []
+        name: addition_voucher_id
+        description: 'The ID of the addition voucher.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      addition_voucher:
+        custom: []
+        name: addition_voucher
+        description: 'The voucher id.'
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      addition_voucher_id: 1
+      addition_voucher: 16
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":16,"type":"addition_voucher","status":{"value":"posted","label":"Posted","color":"success"},"posted_at":"2026-09-08T12:45:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Posted
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"Voucher AV-202609-0032 is already posted."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Already posted'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/addition-vouchers/{addition_voucher_id}/invoice'
+    metadata:
+      custom: []
+      groupName: '18. Addition vouchers'
+      groupDescription: |-
+
+        Goods receipt (إذن إضافة). This is the **only** document that adds purchased
+        stock, which is why receiving against a purchase order produces one rather
+        than touching the balance directly.
+
+        The lifecycle is Draft → Posted, and posting is the moment everything
+        happens at once: the stock is added, the supplier is credited, and any linked
+        purchase order has its received quantities updated and its status re-derived.
+        A posted voucher is immutable — the correction for a mistake is a separate
+        document, not an edit, because the stock and the ledger have already moved.
+
+        After posting, the **invoicing** state takes over: `not_invoiced` until the
+        supplier's invoice arrives, then `invoiced`, or `closed_uninvoiced` when it
+        is decided the invoice never will. That field is derived on every save —
+        record an invoice or close the voucher to change it, never write it.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Record the supplier invoice'
+      description: |-
+        The supplier was credited at posting time with the stock value, because
+        the invoice had not arrived. This **corrects** that entry to the real
+        figure rather than adding a second one — a new entry would double the
+        supplier's balance.
+
+        An invoice also reopens a voucher that had been closed as never-to-be-
+        invoiced: the file said the invoice would never come, and it was wrong.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      addition_voucher_id:
+        custom: []
+        name: addition_voucher_id
+        description: 'The ID of the addition voucher.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      addition_voucher:
+        custom: []
+        name: addition_voucher
+        description: 'The voucher id.'
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      addition_voucher_id: 1
+      addition_voucher: 16
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      invoice_number:
+        custom: []
+        name: invoice_number
+        description: "The supplier's invoice number."
+        required: true
+        example: INV-88213
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      invoice_date:
+        custom: []
+        name: invoice_date
+        description: optional
+        required: false
+        example: '2026-09-10'
+        type: date
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      invoice_value:
+        custom: []
+        name: invoice_value
+        description: 'optional The invoice total; keeps the existing value when omitted.'
+        required: false
+        example: 40250.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      invoice_number: INV-88213
+      invoice_date: '2026-09-10'
+      invoice_value: 40250.0
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":16,"type":"addition_voucher","invoicing_status":{"value":"invoiced","label":"Invoiced","color":"success"},"invoice_number":"INV-88213","invoice_value":"40250.00","invoice_value_mismatch":"250.00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Recorded
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/addition-vouchers/{addition_voucher_id}/close'
+    metadata:
+      custom: []
+      groupName: '18. Addition vouchers'
+      groupDescription: |-
+
+        Goods receipt (إذن إضافة). This is the **only** document that adds purchased
+        stock, which is why receiving against a purchase order produces one rather
+        than touching the balance directly.
+
+        The lifecycle is Draft → Posted, and posting is the moment everything
+        happens at once: the stock is added, the supplier is credited, and any linked
+        purchase order has its received quantities updated and its status re-derived.
+        A posted voucher is immutable — the correction for a mistake is a separate
+        document, not an edit, because the stock and the ledger have already moved.
+
+        After posting, the **invoicing** state takes over: `not_invoiced` until the
+        supplier's invoice arrives, then `invoiced`, or `closed_uninvoiced` when it
+        is decided the invoice never will. That field is derived on every save —
+        record an invoice or close the voucher to change it, never write it.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Close without an invoice'
+      description: |-
+        إقفال الإذن بدون فاتورة — the receipt will never be invoiced, and the
+        reason is written down. Only a posted, uninvoiced voucher can be closed:
+        a draft is still editable and deletable, so closing it would mean
+        nothing.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      addition_voucher_id:
+        custom: []
+        name: addition_voucher_id
+        description: 'The ID of the addition voucher.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      addition_voucher:
+        custom: []
+        name: addition_voucher
+        description: 'The voucher id.'
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      addition_voucher_id: 1
+      addition_voucher: 16
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      reason:
+        custom: []
+        name: reason
+        description: 'Why no invoice will arrive.'
+        required: true
+        example: 'Free replacement for a damaged delivery'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      reason: 'Free replacement for a damaged delivery'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":16,"type":"addition_voucher","invoicing_status":{"value":"closed_uninvoiced","label":"Closed Uninvoiced","color":"gray"},"closure_reason":"Free replacement for a damaged delivery"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Closed
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"Voucher AV-202609-0032 is not posted, so it cannot be closed."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Not posted'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/addition-vouchers/{addition_voucher_id}'
+    metadata:
+      custom: []
+      groupName: '18. Addition vouchers'
+      groupDescription: |-
+
+        Goods receipt (إذن إضافة). This is the **only** document that adds purchased
+        stock, which is why receiving against a purchase order produces one rather
+        than touching the balance directly.
+
+        The lifecycle is Draft → Posted, and posting is the moment everything
+        happens at once: the stock is added, the supplier is credited, and any linked
+        purchase order has its received quantities updated and its status re-derived.
+        A posted voucher is immutable — the correction for a mistake is a separate
+        document, not an edit, because the stock and the ledger have already moved.
+
+        After posting, the **invoicing** state takes over: `not_invoiced` until the
+        supplier's invoice arrives, then `invoiced`, or `closed_uninvoiced` when it
+        is decided the invoice never will. That field is derived on every save —
+        record an invoice or close the voucher to change it, never write it.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a draft addition voucher'
+      description: |-
+        Draft only. A posted voucher has already moved stock and credited a
+        supplier; the correction for a mistake is a separate document, not a
+        deletion that leaves the ledger holding movements with no source.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      addition_voucher_id:
+        custom: []
+        name: addition_voucher_id
+        description: 'The ID of the addition voucher.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      addition_voucher:
+        custom: []
+        name: addition_voucher
+        description: 'The voucher id.'
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      addition_voucher_id: 1
+      addition_voucher: 16
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Deleted
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

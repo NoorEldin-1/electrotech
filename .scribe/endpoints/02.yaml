@@ -57,6 +57,76 @@ endpoints:
   -
     custom: []
     httpMethods:
+      - PATCH
+    uri: api/v1/auth/profile
+    metadata:
+      custom: []
+      groupName: '2. Profile'
+      groupDescription: |-
+
+        The signed-in user's own account: who am I, edit my details, change my
+        password. Managing *other* users lives under "Users" and is permission-gated.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update my profile'
+      description: |-
+        Changes the caller's own name and/or email. Send only the fields you
+        want changed.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'optional New display name.'
+        required: false
+        example: 'Ahmed Hassan'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: 'optional New email address; must be unique.'
+        required: false
+        example: ahmed@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: 'Ahmed Hassan'
+      email: ahmed@example.com
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":1,"type":"user","name":"Ahmed Hassan","email":"ahmed@example.com","roles":[{"id":2,"name":"Sales"}]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
       - POST
     uri: api/v1/auth/change-password
     metadata:

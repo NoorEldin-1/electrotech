@@ -127,6 +127,36 @@ abstract class ApiTestCase extends TestCase
         return $this->json($method, $uri, $data, $headers);
     }
 
+    /**
+     * A multipart upload.
+     *
+     * File uploads cannot go through apiJson(): that serializes the payload as
+     * a JSON body, so an UploadedFile arrives at the server as an object
+     * literal and validation rejects it as "not a file" — which looks exactly
+     * like a broken rule rather than a broken test. Laravel's `post()` helper
+     * lifts UploadedFile instances out of the parameter array into a real
+     * multipart request, which is what a Flutter client actually sends.
+     */
+    protected function apiUpload(string $uri, array $data = [], array $headers = []): TestResponse
+    {
+        $this->app['auth']->forgetGuards();
+
+        $headers = array_merge([
+            'Accept' => 'application/json',
+
+            // Laravel's post() helper defaults the content type to
+            // form-urlencoded, which ForceJsonResponse rejects with a 415 — so
+            // without this every upload test would fail for a reason that has
+            // nothing to do with the endpoint. A real Flutter client sends
+            // multipart/form-data with a boundary, which the middleware allows.
+            'Content-Type' => 'multipart/form-data',
+
+            'Idempotency-Key' => (string) Str::uuid(),
+        ], $headers);
+
+        return $this->post($uri, $data, $headers);
+    }
+
     protected function apiGet(string $uri, array $headers = []): TestResponse
     {
         return $this->apiJson('GET', $uri, [], $headers);

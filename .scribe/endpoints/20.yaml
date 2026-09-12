@@ -1,0 +1,1031 @@
+name: '23. Quality sheets'
+description: |-
+
+  ورقة الجودة — the test record and the certificate printed from it.
+
+  A draft sheet is opened **automatically** when a work order's manufacturing
+  is declared finished, seeded with ten blank test rows and a snapshot of the
+  order's technical specification. `POST /work-orders/{id}/quality-sheet` is
+  idempotent and returns the existing sheet rather than a second one, so a
+  client may call it freely.
+
+  Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
+  factory manager's final sign-off, which announces to every department that
+  the operation has finished manufacturing). Approval is final: an approved
+  sheet can no longer be edited, which is what makes the printed certificate
+  worth anything.
+
+  Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
+  the signature, so an inspector can save a partly-filled grid all afternoon
+  and sign once.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/quality-sheets
+    metadata:
+      custom: []
+      groupName: '23. Quality sheets'
+      groupDescription: |-
+
+        ورقة الجودة — the test record and the certificate printed from it.
+
+        A draft sheet is opened **automatically** when a work order's manufacturing
+        is declared finished, seeded with ten blank test rows and a snapshot of the
+        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
+        idempotent and returns the existing sheet rather than a second one, so a
+        client may call it freely.
+
+        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
+        factory manager's final sign-off, which announces to every department that
+        the operation has finished manufacturing). Approval is final: an approved
+        sheet can no longer be edited, which is what makes the printed certificate
+        worth anything.
+
+        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
+        the signature, so an inspector can save a partly-filled grid all afternoon
+        and sign once.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List quality sheets'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'The page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      search:
+        custom: []
+        name: search
+        description: 'Matches the sheet number or operation name.'
+        required: false
+        example: QS-2026
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[status]':
+        custom: []
+        name: 'filter[status]'
+        description: 'draft, qa_filled or approved.'
+        required: false
+        example: qa_filled
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[work_order]':
+        custom: []
+        name: 'filter[work_order]'
+        description: 'Work order id.'
+        required: false
+        example: 31
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[test_date]':
+        custom: []
+        name: 'filter[test_date]'
+        description: 'Inclusive date range from,until.'
+        required: false
+        example: '2026-01-01,2026-06-30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Allowed: sheet_number, test_date, status, created_at.'
+        required: false
+        example: '-test_date'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      include:
+        custom: []
+        name: include
+        description: 'Allowed: workOrder.'
+        required: false
+        example: workOrder
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      search: QS-2026
+      'filter[status]': qa_filled
+      'filter[work_order]': 31
+      'filter[test_date]': '2026-01-01,2026-06-30'
+      sort: '-test_date'
+      include: workOrder
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":12,"type":"quality_sheet","sheet_number":"QS-202609-0007","status":{"value":"qa_filled","label":"QA Filled","color":"warning"},"work_order_id":31,"lines_count":10}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/quality-sheets/{quality_sheet_id}'
+    metadata:
+      custom: []
+      groupName: '23. Quality sheets'
+      groupDescription: |-
+
+        ورقة الجودة — the test record and the certificate printed from it.
+
+        A draft sheet is opened **automatically** when a work order's manufacturing
+        is declared finished, seeded with ten blank test rows and a snapshot of the
+        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
+        idempotent and returns the existing sheet rather than a second one, so a
+        client may call it freely.
+
+        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
+        factory manager's final sign-off, which announces to every department that
+        the operation has finished manufacturing). Approval is final: an approved
+        sheet can no longer be edited, which is what makes the printed certificate
+        worth anything.
+
+        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
+        the signature, so an inspector can save a partly-filled grid all afternoon
+        and sign once.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show a quality sheet'
+      description: 'Returns the header, the specification snapshot and the full test grid.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      quality_sheet_id:
+        custom: []
+        name: quality_sheet_id
+        description: 'The ID of the quality sheet.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      quality_sheet:
+        custom: []
+        name: quality_sheet
+        description: 'The sheet id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      quality_sheet_id: 1
+      quality_sheet: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":12,"type":"quality_sheet","sheet_number":"QS-202609-0007","status":{"value":"draft","label":"Draft","color":"gray"},"specs":{"protection_degree":"IP54","poles_count":4},"lines":[{"line_no":1,"checks":{"visual_quality":true,"assembly":true,"earth_bond_pe_fe":false},"tests":{"pe_l123n":{"r1":"0.12","r2":"0.13"}}}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/work-orders/{work_order_id}/quality-sheet'
+    metadata:
+      custom: []
+      groupName: '23. Quality sheets'
+      groupDescription: |-
+
+        ورقة الجودة — the test record and the certificate printed from it.
+
+        A draft sheet is opened **automatically** when a work order's manufacturing
+        is declared finished, seeded with ten blank test rows and a snapshot of the
+        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
+        idempotent and returns the existing sheet rather than a second one, so a
+        client may call it freely.
+
+        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
+        factory manager's final sign-off, which announces to every department that
+        the operation has finished manufacturing). Approval is final: an approved
+        sheet can no longer be edited, which is what makes the printed certificate
+        worth anything.
+
+        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
+        the signature, so an inspector can save a partly-filled grid all afternoon
+        and sign once.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Open (or fetch) the sheet for a work order'
+      description: |-
+        Idempotent and race-safe: an order never has two sheets. If one already
+        exists this returns it unchanged — including a sheet that is already
+        approved — so a client can call it without checking first.
+
+        A new sheet is seeded with ten blank rows and a **snapshot** of the
+        order's technical specification. The snapshot is taken once: editing the
+        order afterwards does not change a sheet that already exists, because a
+        certificate must keep saying what was actually tested.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      work_order_id:
+        custom: []
+        name: work_order_id
+        description: 'The ID of the work order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      work_order:
+        custom: []
+        name: work_order
+        description: 'The order id.'
+        required: true
+        example: 31
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      work_order_id: 1
+      work_order: 31
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":12,"type":"quality_sheet","sheet_number":"QS-202609-0007","status":{"value":"draft","label":"Draft","color":"gray"},"lines_count":10},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Existing sheet returned'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/v1/quality-sheets/{quality_sheet_id}/lines'
+    metadata:
+      custom: []
+      groupName: '23. Quality sheets'
+      groupDescription: |-
+
+        ورقة الجودة — the test record and the certificate printed from it.
+
+        A draft sheet is opened **automatically** when a work order's manufacturing
+        is declared finished, seeded with ten blank test rows and a snapshot of the
+        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
+        idempotent and returns the existing sheet rather than a second one, so a
+        client may call it freely.
+
+        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
+        factory manager's final sign-off, which announces to every department that
+        the operation has finished manufacturing). Approval is final: an approved
+        sheet can no longer be edited, which is what makes the printed certificate
+        worth anything.
+
+        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
+        the signature, so an inspector can save a partly-filled grid all afternoon
+        and sign once.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Write the test grid'
+      description: |-
+        Replaces every row in one request. The payload mirrors the read shape
+        exactly, so a client can fetch a sheet, edit it and send it back
+        unchanged in structure.
+
+        Readings are **strings**, not numbers: the sheet records what the meter
+        showed, and the paper form it replaces legitimately carries entries like
+        "OK" or a dash.
+
+        Refused once the sheet is approved — the policy stops it, so the answer
+        there is 403 rather than 422.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      quality_sheet_id:
+        custom: []
+        name: quality_sheet_id
+        description: 'The ID of the quality sheet.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      quality_sheet:
+        custom: []
+        name: quality_sheet
+        description: 'The sheet id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      quality_sheet_id: 1
+      quality_sheet: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      lines:
+        custom: []
+        name: lines
+        description: 'The complete grid. Send `[]` to clear it.'
+        required: true
+        example:
+          - []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'lines[].line_no':
+        custom: []
+        name: 'lines[].line_no'
+        description: 'optional Row number on the paper form; defaults to its position.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'lines[].label':
+        custom: []
+        name: 'lines[].label'
+        description: optional
+        required: false
+        example: 'Panel section A'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'lines[].piece_number':
+        custom: []
+        name: 'lines[].piece_number'
+        description: optional
+        required: false
+        example: '4'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'lines[].required_size':
+        custom: []
+        name: 'lines[].required_size'
+        description: optional
+        required: false
+        example: 16mm
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'lines[].notes':
+        custom: []
+        name: 'lines[].notes'
+        description: optional
+        required: false
+        example: 'Retested after rework'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'lines[].checks':
+        custom: []
+        name: 'lines[].checks'
+        description: 'optional The three pass/fail marks.'
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].checks.visual_quality':
+        custom: []
+        name: 'lines[].checks.visual_quality'
+        description: optional
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'lines[].checks.assembly':
+        custom: []
+        name: 'lines[].checks.assembly'
+        description: optional
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'lines[].checks.earth_bond_pe_fe':
+        custom: []
+        name: 'lines[].checks.earth_bond_pe_fe'
+        description: optional
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'lines[].tests':
+        custom: []
+        name: 'lines[].tests'
+        description: 'optional Keys: pe_l123n, fe_l123n, n_l12l3, l1_l2l3, l2_l3 — each with two readings.'
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.pe_l123n':
+        custom: []
+        name: 'lines[].tests.pe_l123n'
+        description: ''
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.pe_l123n.r1':
+        custom: []
+        name: 'lines[].tests.pe_l123n.r1'
+        description: 'optional First reading.'
+        required: false
+        example: '0.12'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'lines[].tests.pe_l123n.r2':
+        custom: []
+        name: 'lines[].tests.pe_l123n.r2'
+        description: 'optional Second reading.'
+        required: false
+        example: '0.13'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      'lines[].tests.fe_l123n':
+        custom: []
+        name: 'lines[].tests.fe_l123n'
+        description: ''
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.fe_l123n.r1':
+        custom: []
+        name: 'lines[].tests.fe_l123n.r1'
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: xjubqouzswiwxtrkimfca
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.fe_l123n.r2':
+        custom: []
+        name: 'lines[].tests.fe_l123n.r2'
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: tbxspzmrazsroyjpxmqes
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.n_l12l3':
+        custom: []
+        name: 'lines[].tests.n_l12l3'
+        description: ''
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.n_l12l3.r1':
+        custom: []
+        name: 'lines[].tests.n_l12l3.r1'
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: edyghenqcopwvownkbaml
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.n_l12l3.r2':
+        custom: []
+        name: 'lines[].tests.n_l12l3.r2'
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: nfngefbeilfzsyuxoezbd
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.l1_l2l3':
+        custom: []
+        name: 'lines[].tests.l1_l2l3'
+        description: ''
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.l1_l2l3.r1':
+        custom: []
+        name: 'lines[].tests.l1_l2l3.r1'
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: tabptcyyerevrljcbwkth
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.l1_l2l3.r2':
+        custom: []
+        name: 'lines[].tests.l1_l2l3.r2'
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: jnescwsestcouxpqsydki
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.l2_l3':
+        custom: []
+        name: 'lines[].tests.l2_l3'
+        description: ''
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.l2_l3.r1':
+        custom: []
+        name: 'lines[].tests.l2_l3.r1'
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: gioyoyprjkfdjsneawgaa
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'lines[].tests.l2_l3.r2':
+        custom: []
+        name: 'lines[].tests.l2_l3.r2'
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: vuiwlezlcraoooxrrjhbd
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      lines:
+        -
+          line_no: 1
+          label: 'Panel section A'
+          piece_number: '4'
+          required_size: 16mm
+          notes: 'Retested after rework'
+          checks:
+            visual_quality: true
+            assembly: true
+            earth_bond_pe_fe: true
+          tests:
+            pe_l123n:
+              r1: '0.12'
+              r2: '0.13'
+            fe_l123n:
+              r1: xjubqouzswiwxtrkimfca
+              r2: tbxspzmrazsroyjpxmqes
+            n_l12l3:
+              r1: edyghenqcopwvownkbaml
+              r2: nfngefbeilfzsyuxoezbd
+            l1_l2l3:
+              r1: tabptcyyerevrljcbwkth
+              r2: jnescwsestcouxpqsydki
+            l2_l3:
+              r1: gioyoyprjkfdjsneawgaa
+              r2: vuiwlezlcraoooxrrjhbd
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":12,"type":"quality_sheet","lines":[{"line_no":1,"checks":{"visual_quality":true,"assembly":true,"earth_bond_pe_fe":true},"tests":{"pe_l123n":{"r1":"0.12","r2":"0.13"}}}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Written
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/quality-sheets/{quality_sheet_id}/fill'
+    metadata:
+      custom: []
+      groupName: '23. Quality sheets'
+      groupDescription: |-
+
+        ورقة الجودة — the test record and the certificate printed from it.
+
+        A draft sheet is opened **automatically** when a work order's manufacturing
+        is declared finished, seeded with ten blank test rows and a snapshot of the
+        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
+        idempotent and returns the existing sheet rather than a second one, so a
+        client may call it freely.
+
+        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
+        factory manager's final sign-off, which announces to every department that
+        the operation has finished manufacturing). Approval is final: an approved
+        sheet can no longer be edited, which is what makes the printed certificate
+        worth anything.
+
+        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
+        the signature, so an inspector can save a partly-filled grid all afternoon
+        and sign once.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'QA signs the sheet'
+      description: |-
+        Moves the sheet to QA Filled and records who signed it and when. A sheet
+        may be re-signed after a re-test, right up until the factory manager
+        gives final approval — which is the point at which it freezes.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      quality_sheet_id:
+        custom: []
+        name: quality_sheet_id
+        description: 'The ID of the quality sheet.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      quality_sheet:
+        custom: []
+        name: quality_sheet
+        description: 'The sheet id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      quality_sheet_id: 1
+      quality_sheet: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      qa_inspector_notes:
+        custom: []
+        name: qa_inspector_notes
+        description: optional
+        required: false
+        example: 'Earth bond re-measured after rework'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      qa_inspector_notes: 'Earth bond re-measured after rework'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":12,"type":"quality_sheet","status":{"value":"qa_filled","label":"QA Filled","color":"warning"},"qa_filled_at":"2026-09-12T13:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Signed
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/quality-sheets/{quality_sheet_id}/approve'
+    metadata:
+      custom: []
+      groupName: '23. Quality sheets'
+      groupDescription: |-
+
+        ورقة الجودة — the test record and the certificate printed from it.
+
+        A draft sheet is opened **automatically** when a work order's manufacturing
+        is declared finished, seeded with ten blank test rows and a snapshot of the
+        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
+        idempotent and returns the existing sheet rather than a second one, so a
+        client may call it freely.
+
+        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
+        factory manager's final sign-off, which announces to every department that
+        the operation has finished manufacturing). Approval is final: an approved
+        sheet can no longer be edited, which is what makes the printed certificate
+        worth anything.
+
+        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
+        the signature, so an inspector can save a partly-filled grid all afternoon
+        and sign once.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Factory manager approval'
+      description: |-
+        اعتماد نهائي من مدير المصنع — the final sign-off. It requires the QA
+        department to have signed first, freezes the sheet, and announces to
+        every department that the operation has finished manufacturing.
+
+        Retrying after the first approval is a silent success. Note the policy
+        gates on the sheet already being QA-filled, so approving a Draft answers
+        **403**, not 422 — the same order the panel applies, where the action is
+        simply not offered.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      quality_sheet_id:
+        custom: []
+        name: quality_sheet_id
+        description: 'The ID of the quality sheet.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      quality_sheet:
+        custom: []
+        name: quality_sheet
+        description: 'The sheet id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      quality_sheet_id: 1
+      quality_sheet: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":12,"type":"quality_sheet","status":{"value":"approved","label":"Approved","color":"success"},"factory_approved_at":"2026-09-12T14:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Approved
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/quality-sheets/{quality_sheet_id}'
+    metadata:
+      custom: []
+      groupName: '23. Quality sheets'
+      groupDescription: |-
+
+        ورقة الجودة — the test record and the certificate printed from it.
+
+        A draft sheet is opened **automatically** when a work order's manufacturing
+        is declared finished, seeded with ten blank test rows and a snapshot of the
+        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
+        idempotent and returns the existing sheet rather than a second one, so a
+        client may call it freely.
+
+        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
+        factory manager's final sign-off, which announces to every department that
+        the operation has finished manufacturing). Approval is final: an approved
+        sheet can no longer be edited, which is what makes the printed certificate
+        worth anything.
+
+        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
+        the signature, so an inspector can save a partly-filled grid all afternoon
+        and sign once.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a quality sheet'
+      description: |-
+        Only before final approval. An approved sheet is the evidence behind a
+        certificate that has already left the building.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      quality_sheet_id:
+        custom: []
+        name: quality_sheet_id
+        description: 'The ID of the quality sheet.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      quality_sheet:
+        custom: []
+        name: quality_sheet
+        description: 'The sheet id.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      quality_sheet_id: 1
+      quality_sheet: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Deleted
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

@@ -1,0 +1,1021 @@
+name: '15. Purchase orders'
+description: |-
+
+  Buying (أوامر الشراء): Draft → Submitted → Partially received → Received.
+
+  Two things about this module surprise people reading it for the first time.
+
+  **The money is derived.** `subtotal`, `vat_amount`, `profit_tax_amount` and
+  `total_amount` are all computed from the line items and the configured
+  rates; the client sends quantities and unit prices only. And the total is
+  `subtotal + VAT − profit tax` — the 1% profit-tax withholding is deducted,
+  and skipped entirely for an exempt supplier.
+
+  **Receiving does not touch stock directly.** It raises an addition voucher
+  (إذن إضافة), the single goods-receipt document, and posts it. That voucher
+  adds the stock once, credits the supplier, and closes the order by comparing
+  ordered against received. Adding stock here as well would double-count every
+  delivery.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/purchase-orders
+    metadata:
+      custom: []
+      groupName: '15. Purchase orders'
+      groupDescription: |-
+
+        Buying (أوامر الشراء): Draft → Submitted → Partially received → Received.
+
+        Two things about this module surprise people reading it for the first time.
+
+        **The money is derived.** `subtotal`, `vat_amount`, `profit_tax_amount` and
+        `total_amount` are all computed from the line items and the configured
+        rates; the client sends quantities and unit prices only. And the total is
+        `subtotal + VAT − profit tax` — the 1% profit-tax withholding is deducted,
+        and skipped entirely for an exempt supplier.
+
+        **Receiving does not touch stock directly.** It raises an addition voucher
+        (إذن إضافة), the single goods-receipt document, and posts it. That voucher
+        adds the stock once, credits the supplier, and closes the order by comparing
+        ordered against received. Adding stock here as well would double-count every
+        delivery.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List purchase orders'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: 'The page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Rows per page, max 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      search:
+        custom: []
+        name: search
+        description: 'Matches the PO number or the supplier name.'
+        required: false
+        example: PO-2026
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[status]':
+        custom: []
+        name: 'filter[status]'
+        description: 'One or more purchase_order_status values, comma-separated.'
+        required: false
+        example: 'submitted,partially_received'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[supplier]':
+        custom: []
+        name: 'filter[supplier]'
+        description: 'Supplier id.'
+        required: false
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[project]':
+        custom: []
+        name: 'filter[project]'
+        description: 'Operation id.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[warehouse_only]':
+        custom: []
+        name: 'filter[warehouse_only]'
+        description: 'Only orders with no operation — stock bought for the store.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[created]':
+        custom: []
+        name: 'filter[created]'
+        description: 'Inclusive date range from,until.'
+        required: false
+        example: '2026-01-01,2026-06-30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Allowed: po_number, status, total_amount, created_at, expected_delivery_date.'
+        required: false
+        example: '-created_at'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      include:
+        custom: []
+        name: include
+        description: 'Allowed: supplier, project, approvedBy.'
+        required: false
+        example: supplier
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      updated_after:
+        custom: []
+        name: updated_after
+        description: 'ISO-8601 timestamp for cache refresh.'
+        required: false
+        example: '2026-08-01T10:00:00Z'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      per_page: 25
+      search: PO-2026
+      'filter[status]': 'submitted,partially_received'
+      'filter[supplier]': 3
+      'filter[project]': 1
+      'filter[warehouse_only]': true
+      'filter[created]': '2026-01-01,2026-06-30'
+      sort: '-created_at'
+      include: supplier
+      updated_after: '2026-08-01T10:00:00Z'
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":4,"type":"purchase_order","po_number":"PO-202609-0007","status":{"value":"submitted","label":"Submitted","color":"info"},"subtotal":"100000.00","vat_amount":"14000.00","profit_tax_amount":"1000.00","total_amount":"113000.00","items_count":3}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/purchase-orders/{purchase_order_id}'
+    metadata:
+      custom: []
+      groupName: '15. Purchase orders'
+      groupDescription: |-
+
+        Buying (أوامر الشراء): Draft → Submitted → Partially received → Received.
+
+        Two things about this module surprise people reading it for the first time.
+
+        **The money is derived.** `subtotal`, `vat_amount`, `profit_tax_amount` and
+        `total_amount` are all computed from the line items and the configured
+        rates; the client sends quantities and unit prices only. And the total is
+        `subtotal + VAT − profit tax` — the 1% profit-tax withholding is deducted,
+        and skipped entirely for an exempt supplier.
+
+        **Receiving does not touch stock directly.** It raises an addition voucher
+        (إذن إضافة), the single goods-receipt document, and posts it. That voucher
+        adds the stock once, credits the supplier, and closes the order by comparing
+        ordered against received. Adding stock here as well would double-count every
+        delivery.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show a purchase order'
+      description: |-
+        Carries every line with its ordered, received and remaining quantities —
+        `remaining_quantity` is the per-line cap the receive endpoint enforces.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      purchase_order_id:
+        custom: []
+        name: purchase_order_id
+        description: 'The ID of the purchase order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      purchase_order:
+        custom: []
+        name: purchase_order
+        description: 'The purchase order id.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      purchase_order_id: 1
+      purchase_order: 4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":4,"type":"purchase_order","po_number":"PO-202609-0007","total_amount":"113000.00","items":[{"id":11,"item_id":7,"quantity":"100.0000","unit_price":"1000.00","received_quantity":"40.0000","remaining_quantity":"60.0000","is_fully_received":false}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/purchase-orders
+    metadata:
+      custom: []
+      groupName: '15. Purchase orders'
+      groupDescription: |-
+
+        Buying (أوامر الشراء): Draft → Submitted → Partially received → Received.
+
+        Two things about this module surprise people reading it for the first time.
+
+        **The money is derived.** `subtotal`, `vat_amount`, `profit_tax_amount` and
+        `total_amount` are all computed from the line items and the configured
+        rates; the client sends quantities and unit prices only. And the total is
+        `subtotal + VAT − profit tax` — the 1% profit-tax withholding is deducted,
+        and skipped entirely for an exempt supplier.
+
+        **Receiving does not touch stock directly.** It raises an addition voucher
+        (إذن إضافة), the single goods-receipt document, and posts it. That voucher
+        adds the stock once, credits the supplier, and closes the order by comparing
+        ordered against received. Adding stock here as well would double-count every
+        delivery.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create a purchase order'
+      description: |-
+        `po_number` is generated by the server (`PO-YYYYMM-NNNN`) and cannot be
+        supplied. The order is created as a **draft** with no lines and zero
+        totals; send the lines with `PUT /purchase-orders/{id}/items`.
+
+        `project_id` is optional: leaving it out means stock bought for the
+        store rather than against one operation.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      supplier_id:
+        custom: []
+        name: supplier_id
+        description: 'The supplier.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      project_id:
+        custom: []
+        name: project_id
+        description: 'optional The operation this is bought for; omit for a warehouse purchase.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      apply_profit_tax:
+        custom: []
+        name: apply_profit_tax
+        description: 'optional Whether to deduct the 1% profit-tax withholding. Defaults to true unless the supplier is exempt.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      expected_delivery_date:
+        custom: []
+        name: expected_delivery_date
+        description: optional
+        required: false
+        example: '2026-10-15'
+        type: date
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      supplier_contact:
+        custom: []
+        name: supplier_contact
+        description: optional
+        required: false
+        example: 'Sara Ali, +20 100 000 0000'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: optional
+        required: false
+        example: 'Deliver to the Cairo store'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      supplier_id: 3
+      project_id: 1
+      apply_profit_tax: true
+      expected_delivery_date: '2026-10-15'
+      supplier_contact: 'Sara Ali, +20 100 000 0000'
+      notes: 'Deliver to the Cairo store'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":9,"type":"purchase_order","po_number":"PO-202609-0012","status":{"value":"draft","label":"Draft","color":"gray"},"total_amount":"0.00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Created
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PATCH
+    uri: 'api/v1/purchase-orders/{purchase_order_id}'
+    metadata:
+      custom: []
+      groupName: '15. Purchase orders'
+      groupDescription: |-
+
+        Buying (أوامر الشراء): Draft → Submitted → Partially received → Received.
+
+        Two things about this module surprise people reading it for the first time.
+
+        **The money is derived.** `subtotal`, `vat_amount`, `profit_tax_amount` and
+        `total_amount` are all computed from the line items and the configured
+        rates; the client sends quantities and unit prices only. And the total is
+        `subtotal + VAT − profit tax` — the 1% profit-tax withholding is deducted,
+        and skipped entirely for an exempt supplier.
+
+        **Receiving does not touch stock directly.** It raises an addition voucher
+        (إذن إضافة), the single goods-receipt document, and posts it. That voucher
+        adds the stock once, credits the supplier, and closes the order by comparing
+        ordered against received. Adding stock here as well would double-count every
+        delivery.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a purchase order'
+      description: |-
+        Only while it is a draft. Once approved the order has been sent to a
+        supplier, and once anything has been received the line quantities are
+        what the goods-receipt note was matched against.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      purchase_order_id:
+        custom: []
+        name: purchase_order_id
+        description: 'The ID of the purchase order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      purchase_order:
+        custom: []
+        name: purchase_order
+        description: 'The purchase order id.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      purchase_order_id: 1
+      purchase_order: 4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      supplier_id:
+        custom: []
+        name: supplier_id
+        description: optional
+        required: false
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      project_id:
+        custom: []
+        name: project_id
+        description: optional
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      apply_profit_tax:
+        custom: []
+        name: apply_profit_tax
+        description: optional
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      expected_delivery_date:
+        custom: []
+        name: expected_delivery_date
+        description: optional
+        required: false
+        example: '2026-10-20'
+        type: date
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      supplier_contact:
+        custom: []
+        name: supplier_contact
+        description: optional
+        required: false
+        example: 'Sara Ali'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: optional
+        required: false
+        example: 'Revised delivery address'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      supplier_id: 3
+      project_id: 1
+      apply_profit_tax: false
+      expected_delivery_date: '2026-10-20'
+      supplier_contact: 'Sara Ali'
+      notes: 'Revised delivery address'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":4,"type":"purchase_order","notes":"Revised delivery address"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"A purchase order can only be edited while it is a draft."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Not a draft'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/v1/purchase-orders/{purchase_order_id}/items'
+    metadata:
+      custom: []
+      groupName: '15. Purchase orders'
+      groupDescription: |-
+
+        Buying (أوامر الشراء): Draft → Submitted → Partially received → Received.
+
+        Two things about this module surprise people reading it for the first time.
+
+        **The money is derived.** `subtotal`, `vat_amount`, `profit_tax_amount` and
+        `total_amount` are all computed from the line items and the configured
+        rates; the client sends quantities and unit prices only. And the total is
+        `subtotal + VAT − profit tax` — the 1% profit-tax withholding is deducted,
+        and skipped entirely for an exempt supplier.
+
+        **Receiving does not touch stock directly.** It raises an addition voucher
+        (إذن إضافة), the single goods-receipt document, and posts it. That voucher
+        adds the stock once, credits the supplier, and closes the order by comparing
+        ordered against received. Adding stock here as well would double-count every
+        delivery.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Replace the line items'
+      description: |-
+        Sends the whole order in one atomic request and re-derives the money.
+        Draft only. Same replace-not-merge reasoning as the BOQ and BOM
+        endpoints.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      purchase_order_id:
+        custom: []
+        name: purchase_order_id
+        description: 'The ID of the purchase order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      purchase_order:
+        custom: []
+        name: purchase_order
+        description: 'The purchase order id.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      purchase_order_id: 1
+      purchase_order: 4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      items:
+        custom: []
+        name: items
+        description: 'The order lines. Send an empty array to clear them.'
+        required: true
+        example:
+          - []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'items[].item_id':
+        custom: []
+        name: 'items[].item_id'
+        description: 'An existing item id.'
+        required: true
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'items[].quantity':
+        custom: []
+        name: 'items[].quantity'
+        description: 'Ordered quantity.'
+        required: true
+        example: 100.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'items[].unit_price':
+        custom: []
+        name: 'items[].unit_price'
+        description: 'Agreed price per unit in EGP.'
+        required: true
+        example: 1000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      items:
+        -
+          item_id: 7
+          quantity: 100.0
+          unit_price: 1000.0
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":4,"type":"purchase_order","subtotal":"100000.00","vat_amount":"14000.00","profit_tax_amount":"1000.00","total_amount":"113000.00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/purchase-orders/{purchase_order_id}/approve'
+    metadata:
+      custom: []
+      groupName: '15. Purchase orders'
+      groupDescription: |-
+
+        Buying (أوامر الشراء): Draft → Submitted → Partially received → Received.
+
+        Two things about this module surprise people reading it for the first time.
+
+        **The money is derived.** `subtotal`, `vat_amount`, `profit_tax_amount` and
+        `total_amount` are all computed from the line items and the configured
+        rates; the client sends quantities and unit prices only. And the total is
+        `subtotal + VAT − profit tax` — the 1% profit-tax withholding is deducted,
+        and skipped entirely for an exempt supplier.
+
+        **Receiving does not touch stock directly.** It raises an addition voucher
+        (إذن إضافة), the single goods-receipt document, and posts it. That voucher
+        adds the stock once, credits the supplier, and closes the order by comparing
+        ordered against received. Adding stock here as well would double-count every
+        delivery.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Approve a purchase order'
+      description: |-
+        Draft → Submitted, after which goods may be received against it.
+        Refused for an order with no supplier (nobody to send it to, nobody to
+        credit) or no lines (a receipt could never complete it).
+
+        Gated by `purchase_orders.approve`, which is not `purchase_orders.edit`.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      purchase_order_id:
+        custom: []
+        name: purchase_order_id
+        description: 'The ID of the purchase order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      purchase_order:
+        custom: []
+        name: purchase_order
+        description: 'The purchase order id.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      purchase_order_id: 1
+      purchase_order: 4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":4,"type":"purchase_order","status":{"value":"submitted","label":"Submitted","color":"info"},"approved_at":"2026-09-08T12:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Success
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"A purchase order needs at least one line item before it can be approved."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'No line items'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/purchase-orders/{purchase_order_id}/receive'
+    metadata:
+      custom: []
+      groupName: '15. Purchase orders'
+      groupDescription: |-
+
+        Buying (أوامر الشراء): Draft → Submitted → Partially received → Received.
+
+        Two things about this module surprise people reading it for the first time.
+
+        **The money is derived.** `subtotal`, `vat_amount`, `profit_tax_amount` and
+        `total_amount` are all computed from the line items and the configured
+        rates; the client sends quantities and unit prices only. And the total is
+        `subtotal + VAT − profit tax` — the 1% profit-tax withholding is deducted,
+        and skipped entirely for an exempt supplier.
+
+        **Receiving does not touch stock directly.** It raises an addition voucher
+        (إذن إضافة), the single goods-receipt document, and posts it. That voucher
+        adds the stock once, credits the supplier, and closes the order by comparing
+        ordered against received. Adding stock here as well would double-count every
+        delivery.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Receive goods against a purchase order'
+      description: |-
+        Send the quantities that actually arrived, keyed by **purchase order
+        item id** — not item id, because one order may hold the same material on
+        two lines at two prices.
+
+        This raises and posts an addition voucher (إذن إضافة). That single
+        document adds the stock, credits the supplier, and re-derives the order's
+        status by comparing ordered against received. The **voucher** is what
+        comes back, because its number is what the warehouse writes on the
+        paperwork.
+
+        A quantity above a line's `remaining_quantity` is refused outright rather
+        than capped: over-receipt means the delivery note and the order disagree,
+        and silently accepting the smaller number would hide that.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      purchase_order_id:
+        custom: []
+        name: purchase_order_id
+        description: 'The ID of the purchase order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      purchase_order:
+        custom: []
+        name: purchase_order
+        description: 'The purchase order id.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      purchase_order_id: 1
+      purchase_order: 4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      items:
+        custom: []
+        name: items
+        description: 'Received quantities keyed by purchase-order-item id.'
+        required: true
+        example:
+          11: 40
+        type: object
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      invoice_number:
+        custom: []
+        name: invoice_number
+        description: 'optional The supplier invoice, if it arrived with the goods.'
+        required: false
+        example: INV-88213
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      items:
+        11: 40
+      invoice_number: INV-88213
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":15,"type":"addition_voucher","voucher_number":"AV-202609-0031","status":{"value":"posted","label":"Posted","color":"success"},"purchase_order_id":4,"lines":[{"item_id":7,"quantity":"40.0000","unit_cost":"1000.00"}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Received
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"Cannot receive 200 of ''Copper Busbar'': ordered 100, already received 40."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'More than ordered'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/purchase-orders/{purchase_order_id}'
+    metadata:
+      custom: []
+      groupName: '15. Purchase orders'
+      groupDescription: |-
+
+        Buying (أوامر الشراء): Draft → Submitted → Partially received → Received.
+
+        Two things about this module surprise people reading it for the first time.
+
+        **The money is derived.** `subtotal`, `vat_amount`, `profit_tax_amount` and
+        `total_amount` are all computed from the line items and the configured
+        rates; the client sends quantities and unit prices only. And the total is
+        `subtotal + VAT − profit tax` — the 1% profit-tax withholding is deducted,
+        and skipped entirely for an exempt supplier.
+
+        **Receiving does not touch stock directly.** It raises an addition voucher
+        (إذن إضافة), the single goods-receipt document, and posts it. That voucher
+        adds the stock once, credits the supplier, and closes the order by comparing
+        ordered against received. Adding stock here as well would double-count every
+        delivery.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a purchase order'
+      description: 'Soft delete, draft only.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      purchase_order_id:
+        custom: []
+        name: purchase_order_id
+        description: 'The ID of the purchase order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      purchase_order:
+        custom: []
+        name: purchase_order
+        description: 'The purchase order id.'
+        required: true
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      purchase_order_id: 1
+      purchase_order: 4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Deleted
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
