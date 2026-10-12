@@ -42,6 +42,15 @@ php artisan migrate --force
 log "Syncing roles and permissions catalog"
 php artisan db:seed --class=Database\\Seeders\\RoleAndPermissionSeeder --force
 
+# The seeder never updates existing department roles, so the project-management
+# permissions (timeline / customer follow-up) are granted once. The marker keeps
+# it from re-granting a permission an admin later removed from a role.
+PM_GRANT_MARKER="storage/app/.granted-project-management"
+if [ ! -f "$PM_GRANT_MARKER" ]; then
+  log "Granting project-management permissions to existing roles (one-time)"
+  php artisan permissions:grant-project-management && touch "$PM_GRANT_MARKER"
+fi
+
 log "Seeding chart of accounts (only adds missing accounts; never overwrites admin edits)"
 php artisan db:seed --class=Database\\Seeders\\ChartOfAccountsSeeder --force
 

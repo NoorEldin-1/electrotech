@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Delivery;
 
+use App\Enums\AttachmentCategory;
 use App\Enums\InstallationStatus;
 use App\Http\Api\ApiQuery;
 use App\Http\Controllers\Api\V1\ApiController;
@@ -15,6 +16,7 @@ use App\Services\InstallationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 /**
  * @group 27. Installations
@@ -174,17 +176,57 @@ class InstallationController extends ApiController
      * duration on site is measured from, and an installation with no start has
      * no duration.
      *
+     * An installation is finished BY the works-handover minutes (محاضر تسليم
+     * الأعمال — Presentation.pptx slide 8). Send the signed minutes as
+     * `handover_minutes` (multipart) and they are filed on the operation under
+     * the `handover_minutes` attachment category; without a file, the operation
+     * must already have minutes on file or the call fails with 422. Uploading
+     * the minutes through `POST /attachments` completes the running
+     * installation by itself.
+     *
      * @authenticated
      *
      * @urlParam installation integer required The installation id. Example: 3
      *
+     * @bodyParam handover_minutes file optional The signed works-handover minutes (max 40 MB). Required unless the operation already has minutes on file.
+     *
+     * @response 422 scenario="No handover minutes" {"message":"An installation can only be finished with the works handover minutes. Upload the minutes first.","errors":{"handover_minutes":["An installation can only be finished with the works handover minutes. Upload the minutes first."]}}
      * @response 200 scenario="Completed" {"data":{"id":3,"type":"installation","status":{"value":"completed","label":"Completed","color":"success"},"completed_at":"2026-09-14T17:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}
      */
-    public function complete(Installation $installation): JsonResponse
+    public function complete(Request $request, Installation $installation): JsonResponse
     {
         $this->authorize('update', $installation);
 
-        $this->installations->complete($installation);
+        $request->validate([
+            'handover_minutes' => ['nullable', 'file', 'max:40960'],
+        ]);
+
+        $file = $request->file('handover_minutes');
+
+        // A Pending installation is refused by the service as a business rule
+        // first; the minutes only matter for one that is actually running.
+        if ($file === null && $installation->isInProgress()
+            && ! $this->installations->hasHandoverMinutes($installation->project_id)) {
+            $this->failValidation('handover_minutes', __('errors.installations.handover_minutes_required'));
+        }
+
+        if ($file !== null && $installation->isInProgress()) {
+            // Same storage rule as POST /attachments: the client's filename is
+            // display text, never a path segment.
+            $path = $file->storeAs(
+                'attachments/'.$installation->project_id.'/'.AttachmentCategory::HandoverMinutes->value,
+                Str::uuid()->toString().'.'.strtolower((string) $file->getClientOriginalExtension()),
+                'public',
+            );
+
+            // Filing the minutes completes the running installation (observer).
+            $this->installations->attachHandoverMinutes($installation->project, $path, $file->getClientOriginalName());
+            $installation->refresh();
+        }
+
+        if (! $installation->isCompleted()) {
+            $this->installations->complete($installation);
+        }
 
         return $this->respond(new InstallationResource(
             $installation->fresh()->load(['project', 'deliveryVoucher']),

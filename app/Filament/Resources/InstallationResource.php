@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\AttachmentCategory;
 use App\Filament\Resources\InstallationResource\Pages;
 use App\Models\Installation;
 use App\Services\InstallationService;
@@ -112,15 +113,31 @@ class InstallationResource extends Resource
                             __('resources.installations.notifications.started'),
                         )),
 
+                    // Presentation.pptx سلايد 8 — the installation is finished
+                    // BY the works-handover minutes: the action asks for the
+                    // file (unless one is already on the operation) and files
+                    // it under محاضر التسليم before completing.
                     Tables\Actions\Action::make('complete')
                         ->label(__('resources.installations.actions.complete'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
-                        ->requiresConfirmation()
+                        ->modalDescription(__('resources.installations.complete_modal.description'))
+                        ->form(fn (Installation $record): array => [
+                            Forms\Components\FileUpload::make('handover_minutes')
+                                ->label(__('resources.enums.attachment_category.handover_minutes'))
+                                ->helperText(app(InstallationService::class)->hasHandoverMinutes($record->project_id)
+                                    ? __('resources.installations.complete_modal.already_on_file')
+                                    : null)
+                                ->required(fn (): bool => ! app(InstallationService::class)->hasHandoverMinutes($record->project_id))
+                                ->preserveFilenames()
+                                ->maxSize(40960)
+                                ->disk('public')
+                                ->directory('attachments/'.$record->project_id.'/'.AttachmentCategory::HandoverMinutes->value),
+                        ])
                         ->visible(fn (Installation $record) => $record->isInProgress()
                             && (auth()->user()?->can('installations.manage') ?? false))
-                        ->action(fn (Installation $record) => static::runStage(
-                            fn () => app(InstallationService::class)->complete($record),
+                        ->action(fn (Installation $record, array $data) => static::runStage(
+                            fn () => app(InstallationService::class)->complete($record, ($data['handover_minutes'] ?? null) ?: null),
                             __('resources.installations.notifications.completed'),
                         )),
 

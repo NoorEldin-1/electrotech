@@ -169,6 +169,25 @@ class Project extends Model
         return $this->hasMany(Attachment::class);
     }
 
+    /**
+     * متابعة العملاء (Presentation.pptx سلايد 6–7) — touchpoints with the
+     * customer; the first contact / site-readiness entries feed the timeline.
+     */
+    public function customerInteractions(): HasMany
+    {
+        return $this->hasMany(CustomerInteraction::class);
+    }
+
+    public function siteSurveys(): HasMany
+    {
+        return $this->hasMany(SiteSurvey::class);
+    }
+
+    public function installations(): HasMany
+    {
+        return $this->hasMany(Installation::class);
+    }
+
     public function attachmentsByCategory(AttachmentCategory $category): HasMany
     {
         return $this->attachments()->where('category', $category->value);

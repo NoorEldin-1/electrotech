@@ -8,6 +8,7 @@ use App\Enums\DeliveryVoucherStatus;
 use App\Enums\InstallationStatus;
 use App\Enums\ItemType;
 use App\Enums\WarehouseType;
+use App\Models\Attachment;
 use App\Models\Customer;
 use App\Models\DeliveryMinute;
 use App\Models\DeliveryVoucher;
@@ -15,8 +16,11 @@ use App\Models\Installation;
 use App\Models\Item;
 use App\Models\Project;
 use App\Models\SiteSurvey;
+use App\Services\DeliveryVoucherService;
 use App\Services\InventoryService;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\Feature\Api\V1\ApiTestCase;
 
@@ -334,12 +338,28 @@ class DeliveryApiTest extends ApiTestCase
         $started->assertJsonPath('data.status.value', 'in_progress');
         $this->assertNotNull($started->json('data.started_at'));
 
-        $completed = $this->actingAsApi($user)
+        // Presentation.pptx slide 8 — finished BY the works handover minutes.
+        $refused = $this->actingAsApi($user)
             ->apiPost(self::BASE.'/installations/'.$installation->id.'/complete');
+        $refused->assertStatus(422);
+        $this->assertErrorEnvelope($refused, 'validation_failed');
+        $this->assertNotNull($refused->json('error.details.handover_minutes.0'));
+
+        Storage::fake('public');
+        $completed = $this->actingAsApi($user)
+            ->apiUpload(self::BASE.'/installations/'.$installation->id.'/complete', [
+                'handover_minutes' => UploadedFile::fake()->create('../minutes.pdf', 30, 'application/pdf'),
+            ]);
 
         $completed->assertOk();
         $completed->assertJsonPath('data.status.value', 'completed');
         $this->assertNotNull($completed->json('data.completed_at'));
+
+        // Filed on the operation, under a server-chosen name.
+        $minutes = Attachment::sole();
+        $this->assertSame('handover_minutes', $minutes->category->value);
+        $this->assertSame($installation->project_id, $minutes->project_id);
+        $this->assertStringNotContainsString('..', $minutes->file_path);
     }
 
     public function test_an_installation_cannot_skip_straight_to_completed(): void
@@ -463,7 +483,7 @@ class DeliveryApiTest extends ApiTestCase
 
     private function activate(DeliveryVoucher $voucher): void
     {
-        $service = app(\App\Services\DeliveryVoucherService::class);
+        $service = app(DeliveryVoucherService::class);
         $service->approveTechnical($voucher, $this->admin());
         $service->approveFinancial($voucher->fresh(), $this->admin());
     }

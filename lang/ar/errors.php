@@ -175,4 +175,8 @@ return [
         'reserve_exceeds_available' => "لا يمكن حجز :quantity من الصنف ':item'. المتاح فقط :available في :warehouse.",
         'facility_exceeds_available' => "لا يمكن تخصيص :amount من التسهيل ':facility'. المتاح فقط :available.",
     ],
+
+    'installations' => [
+        'handover_minutes_required' => 'لا يمكن إنهاء التركيب إلا بمحضر تسليم الأعمال. ارفع المحضر أولاً.',
+    ],
 ];

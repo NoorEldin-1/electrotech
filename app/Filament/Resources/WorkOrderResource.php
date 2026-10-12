@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\WorkOrderPhase;
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource\Pages;
+use App\Models\Item;
 use App\Models\WorkOrder;
 use App\Services\DepreciationVoucherService;
 use App\Services\QualitySheetService;
 use App\Services\ReturnVoucherService;
+use App\Services\WorkOrderMaterialService;
 use App\Services\WorkOrderMaterialVarianceService;
 use App\Services\WorkOrderService;
 use Filament\Forms;
@@ -89,8 +92,8 @@ class WorkOrderResource extends Resource
      * refill would silently throw its work away; the user is told instead, and
      * the explicit "جلب الخامات القياسية" button remains the way to overwrite.
      *
-     * @param  array<int, mixed>  $outputs   current state of the products repeater
-     * @param  array<int, mixed>  $materials current state of the materials repeater
+     * @param  array<int, mixed>  $outputs  current state of the products repeater
+     * @param  array<int, mixed>  $materials  current state of the materials repeater
      * @param  callable(array<int, mixed>): void  $apply
      */
     protected static function refreshStandardMaterials(array $outputs, array $materials, callable $apply): void
@@ -107,7 +110,7 @@ class WorkOrderResource extends Resource
             return;
         }
 
-        $result = app(\App\Services\WorkOrderMaterialService::class)->standardMaterialsForOutputs(
+        $result = app(WorkOrderMaterialService::class)->standardMaterialsForOutputs(
             collect($outputs)->map(fn ($row) => [
                 'item_id' => $row['item_id'] ?? null,
                 'planned_quantity' => $row['planned_quantity'] ?? 0,
@@ -180,6 +183,15 @@ class WorkOrderResource extends Resource
                             ->required()
                             ->native(false),
 
+                        // Presentation.pptx سلايد 4 — which of the operation's two
+                        // manufacturing orders this is. Left empty, it is derived
+                        // from whether the shop drawing is already approved.
+                        Forms\Components\Select::make('timeline_phase')
+                            ->label(__('resources.work_orders.fields.timeline_phase'))
+                            ->options(WorkOrderPhase::class)
+                            ->placeholder(__('resources.work_orders.fields.timeline_phase_auto'))
+                            ->helperText(__('resources.work_orders.fields.timeline_phase_hint')),
+
                         Forms\Components\Select::make('assigned_to')
                             ->label(__('resources.work_orders.fields.assigned_to'))
                             ->relationship('assignedTo', 'name')
@@ -208,7 +220,7 @@ class WorkOrderResource extends Resource
                             ->reorderable(false)
                             ->addActionLabel(__('resources.work_orders.actions.add_output'))
                             ->itemLabel(fn (array $state): ?string => filled($state['item_id'] ?? null)
-                                ? \App\Models\Item::find($state['item_id'])?->name
+                                ? Item::find($state['item_id'])?->name
                                 : null)
                             ->schema([
                                 Forms\Components\Select::make('item_id')
@@ -336,7 +348,7 @@ class WorkOrderResource extends Resource
                                 ->modalDescription(__('resources.work_orders.actions.fetch_standard_materials_confirm'))
                                 ->visible(fn (Forms\Get $get) => filled($get('outputs')))
                                 ->action(function (Forms\Get $get, Forms\Set $set): void {
-                                    $result = app(\App\Services\WorkOrderMaterialService::class)
+                                    $result = app(WorkOrderMaterialService::class)
                                         ->standardMaterialsForOutputs(
                                             collect($get('outputs') ?? [])->map(fn ($row) => [
                                                 'item_id' => $row['item_id'] ?? null,
@@ -387,7 +399,7 @@ class WorkOrderResource extends Resource
                                         // Default the unit cost from the item's
                                         // card (سلايد 8) when a row is added.
                                         if ($state && static::canViewPricing()) {
-                                            $set('unit_cost', (float) (\App\Models\Item::find($state)?->unit_cost ?? 0));
+                                            $set('unit_cost', (float) (Item::find($state)?->unit_cost ?? 0));
                                         }
                                     })
                                     ->suffixAction(ItemResource::quickViewAction())
@@ -517,6 +529,11 @@ class WorkOrderResource extends Resource
                     ->badge()
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('timeline_phase')
+                    ->label(__('resources.work_orders.columns.timeline_phase'))
+                    ->badge()
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('priority')
                     ->label(__('resources.work_orders.columns.priority'))
                     ->badge()
@@ -586,6 +603,9 @@ class WorkOrderResource extends Resource
                     ->label(__('resources.work_orders.columns.status'))
                     ->options(WorkOrderStatus::class)
                     ->multiple(),
+                Tables\Filters\SelectFilter::make('timeline_phase')
+                    ->label(__('resources.work_orders.columns.timeline_phase'))
+                    ->options(WorkOrderPhase::class),
                 Tables\Filters\SelectFilter::make('priority')
                     ->label(__('resources.work_orders.columns.priority'))
                     ->options(fn () => [
@@ -616,6 +636,7 @@ class WorkOrderResource extends Resource
                             $fresh = $record->fresh();
                             if ($fresh && $fresh->status !== WorkOrderStatus::Draft) {
                                 Notification::make()->success()->title(__('resources.work_orders.notifications.order_approved'))->send();
+
                                 return;
                             }
                             try {
@@ -647,6 +668,7 @@ class WorkOrderResource extends Resource
                             $fresh = $record->fresh();
                             if ($fresh && $fresh->status !== WorkOrderStatus::Pending) {
                                 Notification::make()->success()->title(__('resources.work_orders.notifications.started'))->send();
+
                                 return;
                             }
                             try {
@@ -801,6 +823,7 @@ class WorkOrderResource extends Resource
                             $fresh = $record->fresh();
                             if ($fresh && $fresh->status !== WorkOrderStatus::InProgress) {
                                 Notification::make()->success()->title(__('resources.work_orders.notifications.submitted_qa'))->send();
+
                                 return;
                             }
 
@@ -837,6 +860,7 @@ class WorkOrderResource extends Resource
                             $fresh = $record->fresh();
                             if ($fresh && $fresh->isQaApproved()) {
                                 Notification::make()->success()->title(__('resources.work_orders.notifications.qa_approved'))->send();
+
                                 return;
                             }
                             try {
@@ -860,6 +884,7 @@ class WorkOrderResource extends Resource
                             $fresh = $record->fresh();
                             if ($fresh && $fresh->status === WorkOrderStatus::Completed) {
                                 Notification::make()->success()->title(__('resources.work_orders.notifications.completed'))->send();
+
                                 return;
                             }
                             try {
@@ -892,6 +917,7 @@ class WorkOrderResource extends Resource
                             $fresh = $record->fresh();
                             if ($fresh && $fresh->isManufacturingFinished()) {
                                 Notification::make()->success()->title(__('resources.work_orders.notifications.manufacturing_finished'))->send();
+
                                 return;
                             }
                             try {

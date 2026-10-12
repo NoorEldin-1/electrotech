@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ProjectResource\RelationManagers;
 
+use App\Models\CustomerInteraction;
 use App\Models\DeliveryMinute;
 use App\Models\DeliveryVoucher;
 use App\Models\Installation;
@@ -61,6 +62,7 @@ class ActivitiesRelationManager extends RelationManager
                     Installation::class => Installation::where('project_id', $owner->getKey())->pluck('id'),
                     DeliveryVoucher::class => DeliveryVoucher::where('project_id', $owner->getKey())->pluck('id'),
                     DeliveryMinute::class => DeliveryMinute::where('project_id', $owner->getKey())->pluck('id'),
+                    CustomerInteraction::class => CustomerInteraction::where('project_id', $owner->getKey())->pluck('id'),
                 ];
 
                 foreach ($children as $class => $ids) {
@@ -131,6 +133,7 @@ class ActivitiesRelationManager extends RelationManager
             Installation::class => 'installation',
             DeliveryVoucher::class => 'delivery_voucher',
             DeliveryMinute::class => 'delivery_minute',
+            CustomerInteraction::class => 'customer_interaction',
             default => null,
         };
 
@@ -151,6 +154,7 @@ class ActivitiesRelationManager extends RelationManager
             'resources.projects.fields.',
             'resources.project_offers.fields.',
             'resources.operation_payments.fields.',
+            'resources.customer_interactions.fields.',
             'resources.activities.field_labels.',
         ] as $prefix) {
             $translated = __($prefix.$key);

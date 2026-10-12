@@ -27,14 +27,14 @@ class I18nTest extends TestCase
 
         app()->setLocale('en');
         foreach ($keys as $k) {
-            $val = __('resources.enums.project_status.' . $k);
-            $this->assertNotSame('resources.enums.project_status.' . $k, $val, "Missing EN key: $k");
+            $val = __('resources.enums.project_status.'.$k);
+            $this->assertNotSame('resources.enums.project_status.'.$k, $val, "Missing EN key: $k");
         }
 
         app()->setLocale('ar');
         foreach ($keys as $k) {
-            $val = __('resources.enums.project_status.' . $k);
-            $this->assertNotSame('resources.enums.project_status.' . $k, $val, "Missing AR key: $k");
+            $val = __('resources.enums.project_status.'.$k);
+            $this->assertNotSame('resources.enums.project_status.'.$k, $val, "Missing AR key: $k");
         }
     }
 
@@ -49,9 +49,14 @@ class I18nTest extends TestCase
     {
         foreach (['en', 'ar'] as $locale) {
             app()->setLocale($locale);
-            $this->assertSame('UPLOAD', __('resources.enums.attachment_category.upload'));
             $this->assertSame('BOQ', __('resources.enums.attachment_category.boq'));
         }
+
+        // Presentation.pptx سلايد 2: «بدلاً من upload هيكون الرسم المبدئي».
+        app()->setLocale('ar');
+        $this->assertSame('الرسم المبدئي', __('resources.enums.attachment_category.upload'));
+        app()->setLocale('en');
+        $this->assertSame('Preliminary Drawing', __('resources.enums.attachment_category.upload'));
     }
 
     public function test_new_permission_labels_resolve_in_both_locales(): void
@@ -61,9 +66,9 @@ class I18nTest extends TestCase
         foreach (['en', 'ar'] as $locale) {
             app()->setLocale($locale);
             foreach ($perms as $p) {
-                $val = __('resources.roles.permissions.projects.' . $p);
+                $val = __('resources.roles.permissions.projects.'.$p);
                 $this->assertNotSame(
-                    'resources.roles.permissions.projects.' . $p,
+                    'resources.roles.permissions.projects.'.$p,
                     $val,
                     "Missing $locale key: roles.permissions.projects.$p"
                 );

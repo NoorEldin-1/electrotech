@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Reports;
 
+use App\Enums\ProjectStatus;
+use App\Http\Api\EnumPresenter;
 use App\Http\Api\ReportSerializer;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Models\Account;
@@ -17,12 +19,13 @@ use App\Services\OperatingStatementService;
 use App\Services\OperationCostService;
 use App\Services\OperationTimelineService;
 use App\Services\TrialBalanceService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 // Laravel's Carbon subclass, not the base one: every report service
 // type-hints `Illuminate\Support\Carbon`, and a base Carbon\Carbon is not an
 // instance of it.
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -331,22 +334,96 @@ class ReportController extends ApiController
      * only showed what happened could not show what is next, which is the
      * question anyone opening it is actually asking.
      *
+     * Eighteen stages in three groups (`preliminary`, `executive`, `handover`),
+     * in the order of the project-management deck. A stage is reached when the
+     * record proving it exists — an uploaded drawing/approval file, a logged
+     * customer contact, a started work order — so it moves on its own. A
+     * `skipped` stage is the optional preliminary manufacturing order of an
+     * operation that went straight to the executive phase. `summary` answers
+     * the customer's question: where the operation is and how long is left
+     * until `expected_delivery` (the operation's end date).
+     *
      * @authenticated
      *
      * @urlParam project integer required The operation id. Example: 4
      *
-     * @response 200 scenario="Success" {"data":{"project_id":4,"current_stage":{"key":"delivered","label":"Delivered"},"stages":[{"key":"offer","label":"Offer","at":"2026-02-01","reached":true,"days_from_start":0},{"key":"installed","label":"Installed","at":null,"reached":false,"days_from_start":null}]},"meta":{"request_id":"9f1c","api_version":"1"}}
+     * @response 200 scenario="Success" {"data":{"project_id":4,"project_code":"2026-4","current_stage":{"key":"executive_drawing","label":"Shop Drawing","group":"executive","group_label":"Executive Phase","at":"2026-09-02T10:00:00+00:00"},"summary":{"progress_percent":44,"expected_delivery":"2026-10-30T00:00:00+00:00","delivered_at":null,"days_remaining":19,"days_overdue":null},"stages":[{"key":"sales","label":"Sales","group":"preliminary","at":"2026-08-01T09:00:00+00:00","reached":true,"skipped":false,"detail":"Nile Contracting","days_from_start":0},{"key":"preliminary_mo_created","label":"Manufacturing Order","group":"preliminary","at":null,"reached":false,"skipped":true,"detail":null,"days_from_start":null}]},"meta":{"request_id":"9f1c","api_version":"1"}}
      */
     public function operationTimeline(Project $project): JsonResponse
     {
-        $this->authorizePermission('operations.overview');
+        // The project-management timeline permission, or the general-management
+        // overview that already opened this endpoint before.
+        if (! (request()->user()?->can('operations.timeline') ?? false)) {
+            $this->authorizePermission('operations.overview');
+        }
+
+        $timeline = $this->timeline->for($project);
+        $summary = $this->timeline->summary($project, $timeline);
 
         return $this->respond([
             'project_id' => $project->id,
             'project_code' => $project->code,
-            'current_stage' => ReportSerializer::normalize($this->timeline->currentStage($project)),
-            'stages' => ReportSerializer::normalize($this->timeline->for($project)->all()),
+            'current_stage' => ReportSerializer::normalize($summary['current_stage']),
+            'summary' => ReportSerializer::normalize(array_diff_key($summary, ['current_stage' => true])),
+            'stages' => ReportSerializer::normalize($timeline->all()),
         ]);
+    }
+
+    /**
+     * Operations timeline (list)
+     *
+     * قسم إدارة المشروعات — every active (or on-hold) operation with where it
+     * stands and how long is left until delivery: the same data as the web
+     * panel's Operations Timeline page. Built in a fixed number of queries
+     * however many operations are listed. Fetch one operation's full stage
+     * list from `GET /projects/{project}/timeline`.
+     *
+     * @authenticated
+     *
+     * @queryParam group string Only operations whose current stage is in this group: preliminary, executive or handover. Example: executive
+     * @queryParam overdue boolean Only operations past their expected delivery and not delivered. Example: true
+     *
+     * @response 200 scenario="Success" {"data":[{"project_id":4,"project_code":"2026-4","name":"Substation A","customer":"Nile Contracting","status":{"value":"in_progress","label":"In Progress","color":"primary"},"current_stage":{"key":"executive_drawing","label":"Shop Drawing","group":"executive","group_label":"Executive Phase","at":"2026-09-02T10:00:00+00:00"},"progress_percent":44,"expected_delivery":"2026-10-30T00:00:00+00:00","delivered_at":null,"days_remaining":19,"days_overdue":null}],"meta":{"request_id":"9f1c","api_version":"1","count":1}}
+     */
+    public function operationsTimeline(Request $request): JsonResponse
+    {
+        $this->authorizePermission('operations.timeline');
+
+        $request->validate([
+            'group' => ['nullable', 'string', Rule::in(OperationTimelineService::GROUPS)],
+            'overdue' => ['nullable', 'boolean'],
+        ]);
+
+        $projects = Project::query()
+            ->whereIn('status', [ProjectStatus::InProgress, ProjectStatus::OnHold])
+            ->with('customer:id,name')
+            ->orderBy('end_date')
+            ->get();
+
+        $timelines = $this->timeline->forMany($projects);
+
+        $rows = $projects->map(function (Project $project) use ($timelines): array {
+            $summary = $this->timeline->summary($project, $timelines[$project->id]);
+
+            return [
+                'project_id' => $project->id,
+                'project_code' => $project->code,
+                'name' => $project->name,
+                'customer' => $project->customer?->name ?? $project->client_name,
+                'status' => EnumPresenter::present($project->status),
+                ...ReportSerializer::normalize($summary),
+            ];
+        })
+            ->when($request->filled('group'), fn ($rows) => $rows->filter(
+                fn (array $row): bool => $row['current_stage']['group'] === $request->string('group')->toString()
+            ))
+            ->when($request->boolean('overdue'), fn ($rows) => $rows->filter(
+                fn (array $row): bool => $row['days_overdue'] !== null
+            ))
+            ->values();
+
+        // Bounded: active operations only, not every operation ever raised.
+        return $this->respondCollection($rows->all());
     }
 
     /**

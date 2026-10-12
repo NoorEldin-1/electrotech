@@ -242,6 +242,13 @@ class RoleAndPermissionSeeder extends Seeder
             'site_surveys.view',
             'site_surveys.manage',
 
+            // قسم إدارة المشروعات (Presentation.pptx) — the operations timeline
+            // page + the timeline section on the operation file, and the
+            // customer follow-up log (قسم إدارة العملاء).
+            'operations.timeline',
+            'customer_interactions.view',
+            'customer_interactions.manage',
+
             // Manufacturing / Work Orders
             'work_orders.view',
             'work_orders.create',
@@ -303,6 +310,11 @@ class RoleAndPermissionSeeder extends Seeder
                 'sales_invoices.view',
                 'attachments.upload',
                 'attachments.download',
+                // Presentation.pptx — logs customer contact / site readiness and
+                // answers "where is my operation" from the timeline.
+                'customer_interactions.view',
+                'customer_interactions.manage',
+                'operations.timeline',
                 'dashboard.view',
             ],
 
@@ -341,6 +353,9 @@ class RoleAndPermissionSeeder extends Seeder
                 'operations.overview',
                 'operations.activate',
                 'delivery_minutes.view',
+                'customer_interactions.view',
+                'customer_interactions.manage',
+                'operations.timeline',
                 'dashboard.view',
             ],
 
@@ -379,6 +394,9 @@ class RoleAndPermissionSeeder extends Seeder
                 'site_surveys.view',
                 'site_surveys.manage',
                 'installations.view',
+                // قسم إدارة المشروعات — the timeline page lives in the PMO group.
+                'operations.timeline',
+                'customer_interactions.view',
                 'dashboard.view',
             ],
 
@@ -449,6 +467,7 @@ class RoleAndPermissionSeeder extends Seeder
                 // Phase 7 — executes installation on the floor.
                 'installations.view',
                 'installations.manage',
+                'operations.timeline',
                 'dashboard.view',
             ],
 
@@ -591,6 +610,8 @@ class RoleAndPermissionSeeder extends Seeder
                 'cash_flow_statement.view',
                 'transactions.view',
                 // General management permissions (the owning role).
+                'operations.timeline',
+                'customer_interactions.view',
                 'operations.overview',
                 'operations.view_cost',
                 'operations.close_cost_center',

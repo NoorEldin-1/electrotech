@@ -1360,6 +1360,21 @@ html:not(.dark) .fi-modal-heading {
     border-color: var(--border-hairline);
 }
 
+/* Operation timeline (Presentation.pptx) — the rail dots, connecting line,
+   progress track and the dashed "skipped" dot use the light gray scale;
+   re-map them like the rest of the et-report surface. */
+.dark .et-timeline .bg-gray-200 {
+    background-color: var(--surface-3);
+}
+
+.dark .et-timeline .ring-gray-200 {
+    --tw-ring-color: var(--border-hairline);
+}
+
+.dark .et-timeline .border-gray-400 {
+    border-color: var(--dark-text-faint);
+}
+
 .dark .fi-stock-card [class*='ring-gray-950'] {
     --tw-ring-color: var(--border-hairline);
 }

@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Attachment;
 use App\Models\Project;
 use App\Models\ProjectOffer;
 use App\Models\PurchaseOrder;
 use App\Models\WorkOrder;
+use App\Observers\AttachmentObserver;
 use App\Observers\PermissionObserver;
 use App\Observers\ProjectObserver;
 use App\Observers\ProjectOfferObserver;
@@ -67,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
         ProjectOffer::observe(ProjectOfferObserver::class);
         PurchaseOrder::observe(PurchaseOrderObserver::class);
         WorkOrder::observe(WorkOrderObserver::class);
+        Attachment::observe(AttachmentObserver::class);
 
         // NOTE: the OperationActivated → NotifyDepartmentsOfActivation binding
         // is registered automatically via Laravel's listener auto-discovery

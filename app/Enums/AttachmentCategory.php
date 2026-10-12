@@ -13,9 +13,12 @@ use Filament\Support\Contracts\HasLabel;
  * mirror the requirements doc — they are the project's source of
  * truth for these labels.
  */
-enum AttachmentCategory: string implements HasLabel, HasIcon
+enum AttachmentCategory: string implements HasIcon, HasLabel
 {
-    case Upload = 'upload';
+    // الرسم المبدئي (Presentation.pptx سلايد 2: «بدلاً من upload هيكون الرسم
+    // المبدئي»). The stored value stays `upload` so existing rows and API
+    // clients sending `upload` keep working — only the meaning/label changed.
+    case PreliminaryDrawing = 'upload';
     case VendorList = 'vendor_list';
     case Drowing = 'drowing';
     case Speces = 'speces';
@@ -48,6 +51,44 @@ enum AttachmentCategory: string implements HasLabel, HasIcon
     // General customer-file documents: contracts, IDs, correspondence — any
     // files the sales team wants to keep on the customer record.
     case CustomerDocument = 'customer_document';
+
+    // مرفقات ملف العملية الجديدة (Presentation.pptx سلايد 2). Each one is also
+    // a timeline signal: the stage is reached when its file is uploaded.
+    case CustomerDrawings = 'customer_drawings';
+    case PreliminaryApproval = 'preliminary_approval';
+    case ExecutiveDrawing = 'executive_drawing';
+    case ExecutiveApproval = 'executive_approval';
+    case ConsultantNotes = 'consultant_notes';
+    case ConsultantApproval = 'consultant_approval';
+    // محاضر تسليم الأعمال — uploading one finishes the running installation.
+    case HandoverMinutes = 'handover_minutes';
+
+    /**
+     * Project-file categories grouped into the sections of the project form's
+     * Attachments panel, in display order. Customer documents and PO /
+     * addition-voucher scans live on their own records, not here.
+     *
+     * @return array<string, array<int, self>>
+     */
+    public static function projectCategoryGroups(): array
+    {
+        return [
+            'sales' => [self::CustomerDrawings, self::Boq, self::Speces, self::VendorList, self::Submittal, self::CustomerAcceptance],
+            'drawings' => [self::PreliminaryDrawing, self::PreliminaryApproval, self::SiteMeasurement, self::Drowing, self::ExecutiveDrawing, self::ExecutiveApproval],
+            'consultant' => [self::ConsultantNotes, self::ConsultantApproval],
+            'handover' => [self::HandoverMinutes],
+        ];
+    }
+
+    /**
+     * Every category shown on the project form.
+     *
+     * @return array<int, self>
+     */
+    public static function projectCategories(): array
+    {
+        return array_merge(...array_values(self::projectCategoryGroups()));
+    }
 
     /**
      * Supplier-file document categories (slide 3).
@@ -92,13 +133,13 @@ enum AttachmentCategory: string implements HasLabel, HasIcon
 
     public function getLabel(): string
     {
-        return __('resources.enums.attachment_category.' . $this->value);
+        return __('resources.enums.attachment_category.'.$this->value);
     }
 
     public function getIcon(): ?string
     {
         return match ($this) {
-            self::Upload => 'heroicon-o-arrow-up-tray',
+            self::PreliminaryDrawing => 'heroicon-o-pencil',
             self::VendorList => 'heroicon-o-building-storefront',
             self::Drowing => 'heroicon-o-paint-brush',
             self::Speces => 'heroicon-o-clipboard-document-list',
@@ -112,6 +153,13 @@ enum AttachmentCategory: string implements HasLabel, HasIcon
             self::AdditionVoucherScan => 'heroicon-o-arrow-down-on-square',
             self::CustomerAcceptance => 'heroicon-o-hand-thumb-up',
             self::CustomerDocument => 'heroicon-o-paper-clip',
+            self::CustomerDrawings => 'heroicon-o-photo',
+            self::PreliminaryApproval => 'heroicon-o-check-badge',
+            self::ExecutiveDrawing => 'heroicon-o-square-3-stack-3d',
+            self::ExecutiveApproval => 'heroicon-o-shield-check',
+            self::ConsultantNotes => 'heroicon-o-chat-bubble-left-ellipsis',
+            self::ConsultantApproval => 'heroicon-o-hand-thumb-up',
+            self::HandoverMinutes => 'heroicon-o-clipboard-document-check',
         };
     }
 }

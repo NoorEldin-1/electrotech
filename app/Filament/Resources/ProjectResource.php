@@ -209,6 +209,18 @@ class ProjectResource extends Resource
                             ->content(__('resources.projects.sections.offers_after_save_hint')),
                     ]),
 
+                // Presentation.pptx سلايد 1 — customer service opens the
+                // operation and sees where it stands and how long is left.
+                Forms\Components\Section::make(__('resources.operation_timeline.heading'))
+                    ->icon('heroicon-o-queue-list')
+                    ->description(__('resources.operation_timeline.description'))
+                    ->collapsible()
+                    ->visible(fn (string $operation): bool => $operation === 'edit'
+                        && (auth()->user()?->can('operations.timeline') ?? false))
+                    ->schema([
+                        Forms\Components\View::make('filament.components.project-timeline-field'),
+                    ]),
+
                 Forms\Components\Section::make(__('resources.projects.sections.attachments'))
                     ->icon('heroicon-o-paper-clip')
                     ->description(__('resources.projects.sections.attachments_description'))
@@ -237,61 +249,52 @@ class ProjectResource extends Resource
      */
     protected static function attachmentCategorySchema(): array
     {
-        $components = [];
-        foreach (AttachmentCategory::cases() as $category) {
-            // Customer Documents are a customer-only bucket surfaced on the
-            // Customer resource — they don't belong on the project form. Every
-            // other category is shown here, including Customer Acceptance: the
-            // consultant acceptance file (also uploaded by the In-Hand "move to
-            // active" action) is stored as a project attachment under the same
-            // category/directory, so it surfaces in — and can be managed from —
-            // this section.
-            //
-            // PO / Addition-Voucher scans are uploaded directly on their own
-            // records (not here): their upload fields were removed from the PO
-            // and Addition Voucher forms too, so they're skipped on the project
-            // form as well to keep the surfaces consistent. The enum cases stay
-            // for any already-stored rows and the persistence layer.
-            if (in_array($category, [
-                AttachmentCategory::CustomerDocument,
-                AttachmentCategory::PurchaseOrderScan,
-                AttachmentCategory::AdditionVoucherScan,
-            ], true)) {
-                continue;
-            }
+        // Presentation.pptx سلايد 2 grew the list to 17 categories, so they are
+        // grouped (sales documents / drawings & approvals / consultant /
+        // handover) instead of one long stack. The grouping lives on the enum
+        // (projectCategoryGroups) — customer documents and PO / addition-voucher
+        // scans stay on their own records and are deliberately absent.
+        $groups = [];
+        foreach (AttachmentCategory::projectCategoryGroups() as $group => $categories) {
+            $groups[] = Forms\Components\Fieldset::make(__("resources.projects.attachment_groups.{$group}"))
+                ->columns(1)
+                ->schema(array_map(self::attachmentUpload(...), $categories));
+        }
 
-            $components[] = Forms\Components\FileUpload::make("attachments_{$category->value}")
-                ->label(__('resources.enums.attachment_category.'.$category->value))
-                ->multiple()
-                ->preserveFilenames()
+        return $groups;
+    }
+
+    protected static function attachmentUpload(AttachmentCategory $category): Forms\Components\FileUpload
+    {
+        return Forms\Components\FileUpload::make("attachments_{$category->value}")
+            ->label(__('resources.enums.attachment_category.'.$category->value))
+            ->multiple()
+            ->preserveFilenames()
                 // Files are engineering deliverables (AutoCAD, BOQ sheets, and
                 // crucially .rar/.zip bundles). Browsers can't preview an archive,
                 // which is why "the file wouldn't open" (Slide 3). Keep the upload
                 // unrestricted but expose explicit download/open controls and
                 // disable the inline preview so every category is retrievable by
                 // any department that can see the project.
-                ->downloadable()
-                ->openable()
-                ->previewable(false)
+            ->downloadable()
+            ->openable()
+            ->previewable(false)
                 // Download-only departments see the files but can't add/remove
                 // them (a disabled FileUpload still exposes download/open).
-                ->disabled(fn (): bool => ! (auth()->user()?->can('attachments.upload') ?? false))
-                ->maxSize(40960) // 40 MB — kept in sync with config/livewire.php temporary_file_upload rules
-                ->directory(fn (?Project $record) => 'attachments/'.($record?->id ?? 'new').'/'.$category->value)
-                ->disk('public')
-                ->afterStateHydrated(function (Forms\Components\FileUpload $component, ?Project $record) use ($category) {
-                    if ($record === null) {
-                        return;
-                    }
-                    $component->state(
-                        $record->attachmentsByCategory($category)
-                            ->pluck('file_path')
-                            ->all()
-                    );
-                });
-        }
-
-        return $components;
+            ->disabled(fn (): bool => ! (auth()->user()?->can('attachments.upload') ?? false))
+            ->maxSize(40960) // 40 MB — kept in sync with config/livewire.php temporary_file_upload rules
+            ->directory(fn (?Project $record) => 'attachments/'.($record?->id ?? 'new').'/'.$category->value)
+            ->disk('public')
+            ->afterStateHydrated(function (Forms\Components\FileUpload $component, ?Project $record) use ($category) {
+                if ($record === null) {
+                    return;
+                }
+                $component->state(
+                    $record->attachmentsByCategory($category)
+                        ->pluck('file_path')
+                        ->all()
+                );
+            });
     }
 
     public static function table(Table $table): Table
@@ -399,6 +402,7 @@ class ProjectResource extends Resource
     {
         return [
             ProjectResource\RelationManagers\OffersRelationManager::class,
+            ProjectResource\RelationManagers\CustomerInteractionsRelationManager::class,
             ProjectResource\RelationManagers\ActivitiesRelationManager::class,
         ];
     }

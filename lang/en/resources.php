@@ -14,6 +14,14 @@ return [
         'plural_label' => 'Projects',
         'navigation_label' => 'Projects',
 
+        // Attachments panel groups (Presentation.pptx slide 2)
+        'attachment_groups' => [
+            'sales' => 'Sales documents',
+            'drawings' => 'Drawings & approvals',
+            'consultant' => 'Consultant',
+            'handover' => 'Handover',
+        ],
+
         'sections' => [
             'project_information' => 'Project Information',
             'technical_specifications' => 'Technical Specifications',
@@ -110,6 +118,7 @@ return [
                     'installation' => 'Installation',
                     'delivery_voucher' => 'Delivery',
                     'delivery_minute' => 'Delivery Minute',
+                    'customer_interaction' => 'Customer Follow-up',
                 ],
                 'events' => [
                     'created' => 'Created',
@@ -1433,28 +1442,113 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Customer Follow-up (Presentation.pptx slides 6-7)
+    |--------------------------------------------------------------------------
+    */
+    'customer_interactions' => [
+        'label' => 'Customer Interaction',
+        'plural_label' => 'Customer Follow-up',
+        'navigation_label' => 'Customer Follow-up',
+        'sections' => [
+            'details' => 'Interaction Details',
+        ],
+        'fields' => [
+            'operation' => 'Operation',
+            'type' => 'Type',
+            'channel' => 'Channel',
+            'interacted_at' => 'Date & Time',
+            'site_ready' => 'Site is ready',
+            'site_ready_hint' => 'Marks the "Site Readiness" stage reached on the operation timeline.',
+            'notes' => 'Notes',
+        ],
+        'columns' => [
+            'interacted_at' => 'Date',
+            'operation' => 'Operation',
+            'customer' => 'Customer',
+            'type' => 'Type',
+            'channel' => 'Channel',
+            'site_ready' => 'Site Ready',
+            'notes' => 'Notes',
+            'created_by' => 'Recorded By',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Operations Timeline page (Presentation.pptx slide 1)
+    |--------------------------------------------------------------------------
+    */
+    'projects_timeline' => [
+        'navigation_label' => 'Operations Timeline',
+        'title' => 'Operations Timeline',
+        'subheading' => 'Where every active operation stands and how long is left until delivery — click a row for its full timeline.',
+        'empty' => 'No active operations.',
+        'columns' => [
+            'current_stage' => 'Current Stage',
+            'progress' => 'Progress',
+            'expected_delivery' => 'Expected Delivery',
+            'remaining' => 'Remaining',
+        ],
+        'filters' => [
+            'current_group' => 'Current Phase',
+            'overdue' => 'Past delivery date',
+        ],
+        'actions' => [
+            'view_timeline' => 'View Timeline',
+            'open_operation' => 'Open Operation File',
+        ],
+    ],
+
     'operation_timeline' => [
-        'heading' => 'Operation timeline',
-        'description' => 'The stages of the operation from intake to completion, derived automatically from the system\'s own documents.',
+        'heading' => 'Operation Timeline',
+        'description' => 'The operation stages from sales to installation, derived automatically from system records.',
         'not_reached' => 'Not reached yet',
-        'days_from_start' => ':days days from the start',
+        'skipped' => 'Skipped — no preliminary order for this operation',
+        'days_from_start' => ':days days from start',
+
+        'groups' => [
+            'preliminary' => 'Preliminary Phase',
+            'executive' => 'Executive Phase',
+            'handover' => 'Delivery & Installation',
+        ],
 
         'stages' => [
-            'not_started' => 'Not started yet',
-            'sales' => 'Received from sales',
-            'activated' => 'Operation activated',
-            'technical_office' => 'At the PMO — creating the work order',
-            'order_approved' => 'Work order approved',
-            'in_factory' => 'At the factory — material issue started',
-            'manufacturing_finished' => 'Manufacturing finished',
-            'qa_approved' => 'Quality approved',
-            'delivered' => 'Delivered to the customer',
-            'installed' => 'Installed',
-            'completed' => 'Operation completed',
+            'not_started' => 'Not started',
+            'sales' => 'Sales',
+            'customer_contact' => 'Customer Contact',
+            'customer_drawings' => 'Customer Drawings',
+            'preliminary_drawing' => 'Preliminary Drawing',
+            'preliminary_approval' => 'Preliminary Drawing Approval',
+            'preliminary_mo_created' => 'Manufacturing Order',
+            'preliminary_mo_started' => 'Manufacturing Started',
+            'preliminary_mo_finished' => 'Manufacturing Finished',
+            'site_readiness' => 'Site Readiness',
+            'site_measurement' => 'Site Measurements',
+            'executive_drawing' => 'Shop Drawing',
+            'executive_approval' => 'Shop Drawing Approval',
+            'executive_mo_created' => 'Manufacturing Order',
+            'executive_mo_started' => 'Manufacturing Started',
+            'executive_mo_finished' => 'Manufacturing Finished',
+            'delivered' => 'Delivery',
+            'installation_started' => 'Installation Started',
+            'installation_finished' => 'Installation Finished',
+        ],
+
+        'summary' => [
+            'current_stage' => 'Current Stage',
+            'progress' => 'Progress',
+            'expected_delivery' => 'Expected Delivery',
+            'remaining' => 'Until Delivery',
+            'not_set' => 'Not set',
+            'days_remaining' => ':days days left',
+            'days_overdue' => ':days days overdue',
+            'delivered_on' => 'Delivered :date',
         ],
 
         'details' => [
-            'work_orders' => ':count work orders',
+            'work_orders' => ':count work order(s)',
         ],
     ],
 
@@ -1830,6 +1924,10 @@ return [
         'label' => 'Installation',
         'plural_label' => 'Installations',
         'navigation_label' => 'Installations',
+        'complete_modal' => [
+            'description' => 'The installation is finished by the works handover minutes — attach the signed minutes; they are filed in the operation attachments under Handover Minutes.',
+            'already_on_file' => 'Handover minutes are already on the operation file — uploading another is optional.',
+        ],
         'sections' => [
             'details' => 'Installation Details',
         ],
@@ -2042,6 +2140,9 @@ return [
         ],
 
         'fields' => [
+            'timeline_phase' => 'Timeline Phase',
+            'timeline_phase_auto' => 'Automatic',
+            'timeline_phase_hint' => 'Preliminary = raised after the preliminary drawing approval; executive = after the shop drawing approval. Leave empty to decide automatically.',
             'wo_number' => 'WO Number',
             'title' => 'Title',
             'project' => 'Project',
@@ -2084,6 +2185,7 @@ return [
         ],
 
         'columns' => [
+            'timeline_phase' => 'Phase',
             'wo_number' => 'WO #',
             'title' => 'Title',
             'project' => 'Project',
@@ -2386,6 +2488,7 @@ return [
             'credit_facilities' => 'Credit Facilities',
             'installations' => 'Installations',
             'site_surveys' => 'Site Surveys',
+            'customer_interactions' => 'Customer Follow-up',
             'work_orders' => 'Manufacturing Orders',
             'quality_sheets' => 'Quality Sheets',
             'users' => 'Users Management',
@@ -2556,6 +2659,7 @@ return [
                 'complete' => 'Complete Operation',
                 'hold' => 'Put Operation On Hold',
                 'reserve' => 'Reserve Stock for Operation',
+                'timeline' => 'View Operations Timeline',
             ],
             'delivery_minutes' => [
                 'view' => 'View Delivery Minutes',
@@ -2586,6 +2690,10 @@ return [
             'site_surveys' => [
                 'view' => 'View Site Surveys',
                 'manage' => 'Manage Site Surveys',
+            ],
+            'customer_interactions' => [
+                'view' => 'View Customer Follow-up',
+                'manage' => 'Manage Customer Follow-up',
             ],
             'work_orders' => [
                 'view' => 'View Manufacturing Orders',
@@ -2806,8 +2914,26 @@ return [
             'bi_metal' => 'Bi-Metal',
         ],
 
+        'interaction_type' => [
+            'contact' => 'Customer Contact',
+            'site_readiness' => 'Site Readiness',
+            'follow_up' => 'Follow-up',
+        ],
+
+        'interaction_channel' => [
+            'call' => 'Phone Call',
+            'visit' => 'Visit',
+            'whatsapp' => 'WhatsApp',
+            'email' => 'Email',
+        ],
+
+        'work_order_phase' => [
+            'preliminary' => 'Preliminary Order',
+            'executive' => 'Executive Order',
+        ],
+
         'attachment_category' => [
-            'upload' => 'UPLOAD',
+            'upload' => 'Preliminary Drawing',
             'vendor_list' => 'VENDOR LIST',
             'drowing' => 'DROWING',
             'speces' => 'SPECES',
@@ -2821,6 +2947,13 @@ return [
             'addition_voucher_scan' => 'Addition Voucher Scan',
             'customer_acceptance' => 'Customer Acceptance',
             'customer_document' => 'Customer Files',
+            'customer_drawings' => 'Customer Drawings',
+            'preliminary_approval' => 'Preliminary Drawing Approval',
+            'executive_drawing' => 'Shop Drawing',
+            'executive_approval' => 'Shop Drawing Approval',
+            'consultant_notes' => 'Consultant Notes',
+            'consultant_approval' => 'Consultant Approval',
+            'handover_minutes' => 'Handover Minutes',
         ],
 
         'lost_reason' => [

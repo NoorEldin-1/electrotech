@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Manufacturing;
 
+use App\Enums\WorkOrderStatus;
 use App\Http\Api\ApiQuery;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Api\V1\Manufacturing\ApproveWorkOrderQaRequest;
@@ -154,6 +155,7 @@ class WorkOrderController extends ApiController
      * @bodyParam title string required Example: Main distribution panel
      * @bodyParam description string optional Example: Three-phase, outdoor
      * @bodyParam priority string optional low, normal, high or urgent. Defaults to normal. Example: high
+     * @bodyParam timeline_phase string optional preliminary or executive — which manufacturing order this is on the operation timeline. Omitted, it is executive once the shop drawing is approved, otherwise preliminary. Example: executive
      * @bodyParam planned_quantity number optional Ignored when `outputs` is sent — the sum of the lines wins. Example: 10
      * @bodyParam estimated_cost number optional Example: 250000
      * @bodyParam planned_start_date date optional Example: 2026-09-15
@@ -183,7 +185,8 @@ class WorkOrderController extends ApiController
                     'title' => $request->string('title')->toString(),
                     'description' => $request->input('description'),
                     'priority' => $request->input('priority', 'normal'),
-                    'status' => \App\Enums\WorkOrderStatus::Draft,
+                    'timeline_phase' => $request->input('timeline_phase'),
+                    'status' => WorkOrderStatus::Draft,
                     'planned_quantity' => $request->input('planned_quantity', 0),
                     'estimated_cost' => $request->input('estimated_cost', 0),
                     'planned_start_date' => $request->input('planned_start_date'),
@@ -220,6 +223,7 @@ class WorkOrderController extends ApiController
      *
      * @bodyParam title string optional Example: Main distribution panel — rev B
      * @bodyParam priority string optional low, normal, high or urgent. Example: urgent
+     * @bodyParam timeline_phase string optional preliminary or executive; null re-derives it. Example: preliminary
      * @bodyParam planned_quantity number optional Example: 12
      * @bodyParam planned_start_date date optional Example: 2026-09-16
      * @bodyParam planned_end_date date optional Example: 2026-10-02
@@ -262,8 +266,8 @@ class WorkOrderController extends ApiController
         $this->authorize('delete', $workOrder);
 
         if (! in_array($workOrder->status, [
-            \App\Enums\WorkOrderStatus::Draft,
-            \App\Enums\WorkOrderStatus::Cancelled,
+            WorkOrderStatus::Draft,
+            WorkOrderStatus::Cancelled,
         ], true)) {
             throw new DomainException(__('errors.api.work_order_not_deletable'));
         }

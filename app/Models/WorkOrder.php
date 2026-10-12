@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\AttachmentCategory;
+use App\Enums\WorkOrderPhase;
 use App\Enums\WorkOrderStatus;
+use Carbon\CarbonInterval;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -36,6 +41,8 @@ class WorkOrder extends Model
         'ampere',
         'poles_count',
         'status',
+        // طلب التصنيع المبدئي / التنفيذي على الخط الزمني (Presentation.pptx سلايد 4).
+        'timeline_phase',
         'priority',
         'planned_quantity',
         'produced_quantity',
@@ -63,6 +70,7 @@ class WorkOrder extends Model
     {
         return [
             'status' => WorkOrderStatus::class,
+            'timeline_phase' => WorkOrderPhase::class,
             'poles_count' => 'integer',
             'planned_quantity' => 'decimal:4',
             'produced_quantity' => 'decimal:4',
@@ -89,6 +97,26 @@ class WorkOrder extends Model
                 $workOrder->estimated_cost = $workOrder->bom?->total_cost ?? 0;
             }
         });
+
+        // An order raised once the shop drawing is approved is the executive
+        // manufacturing order; before that it is the preliminary one. Only a
+        // default — the form / API may set it explicitly, and clearing it
+        // re-derives it rather than writing NULL.
+        static::saving(function (WorkOrder $workOrder): void {
+            if ($workOrder->timeline_phase === null) {
+                $workOrder->timeline_phase = static::defaultPhaseFor($workOrder->project_id);
+            }
+        });
+    }
+
+    public static function defaultPhaseFor(?int $projectId): WorkOrderPhase
+    {
+        $approved = $projectId !== null && Attachment::query()
+            ->where('project_id', $projectId)
+            ->where('category', AttachmentCategory::ExecutiveApproval->value)
+            ->exists();
+
+        return $approved ? WorkOrderPhase::Executive : WorkOrderPhase::Preliminary;
     }
 
     public function getActivitylogOptions(): LogOptions
@@ -115,7 +143,7 @@ class WorkOrder extends Model
         return $this->belongsTo(Item::class, 'output_item_id');
     }
 
-    public function issueVouchers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function issueVouchers(): HasMany
     {
         return $this->hasMany(IssueVoucher::class);
     }
@@ -125,7 +153,7 @@ class WorkOrder extends Model
      * item's standard BOM, then adjustable for this order; the issue voucher
      * is built from these rather than the raw BOM.
      */
-    public function materials(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function materials(): HasMany
     {
         return $this->hasMany(WorkOrderMaterial::class);
     }
@@ -135,22 +163,22 @@ class WorkOrder extends Model
      * quantity. `output_item_id` mirrors the first of these for the many
      * readers that still expect a single product.
      */
-    public function outputs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function outputs(): HasMany
     {
         return $this->hasMany(WorkOrderOutput::class);
     }
 
-    public function productionEntries(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function productionEntries(): HasMany
     {
         return $this->hasMany(ProductionEntry::class);
     }
 
-    public function depreciationVouchers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function depreciationVouchers(): HasMany
     {
         return $this->hasMany(DepreciationVoucher::class);
     }
 
-    public function qualitySheets(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function qualitySheets(): HasMany
     {
         return $this->hasMany(QualitySheet::class);
     }
@@ -314,7 +342,7 @@ class WorkOrder extends Model
             return null;
         }
 
-        return \Carbon\CarbonInterval::minutes($this->manufacturing_duration_minutes)
+        return CarbonInterval::minutes($this->manufacturing_duration_minutes)
             ->cascade()
             ->forHumans(['short' => false]);
     }
@@ -339,17 +367,17 @@ class WorkOrder extends Model
      */
     public static function generateWoNumber(): string
     {
-        $prefix = 'WO-' . now()->format('Ym') . '-';
+        $prefix = 'WO-'.now()->format('Ym').'-';
 
-        return \Illuminate\Support\Facades\Cache::lock('wo_number_seq:' . $prefix, 5)->block(3, function () use ($prefix) {
+        return Cache::lock('wo_number_seq:'.$prefix, 5)->block(3, function () use ($prefix) {
             $maxSequence = static::query()
                 ->withTrashed()
-                ->where('wo_number', 'like', $prefix . '%')
+                ->where('wo_number', 'like', $prefix.'%')
                 ->pluck('wo_number')
                 ->map(fn (string $number): int => (int) substr($number, strlen($prefix)))
                 ->max() ?? 0;
 
-            return $prefix . str_pad((string) ($maxSequence + 1), 4, '0', STR_PAD_LEFT);
+            return $prefix.str_pad((string) ($maxSequence + 1), 4, '0', STR_PAD_LEFT);
         });
     }
 }

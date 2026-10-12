@@ -37,10 +37,6 @@ use App\Http\Controllers\Api\V1\Finance\SalesInvoiceController;
 use App\Http\Controllers\Api\V1\Identity\PermissionController;
 use App\Http\Controllers\Api\V1\Identity\RoleController;
 use App\Http\Controllers\Api\V1\Identity\UserController;
-use App\Http\Controllers\Api\V1\MasterData\AttachmentController;
-use App\Http\Controllers\Api\V1\MasterData\CustomerController;
-use App\Http\Controllers\Api\V1\MasterData\ItemController;
-use App\Http\Controllers\Api\V1\MasterData\SupplierController;
 use App\Http\Controllers\Api\V1\Inventory\AdditionVoucherController;
 use App\Http\Controllers\Api\V1\Inventory\DepreciationVoucherController;
 use App\Http\Controllers\Api\V1\Inventory\InventoryController;
@@ -49,15 +45,20 @@ use App\Http\Controllers\Api\V1\Manufacturing\ProductionEntryController;
 use App\Http\Controllers\Api\V1\Manufacturing\QualitySheetController;
 use App\Http\Controllers\Api\V1\Manufacturing\ReturnVoucherController;
 use App\Http\Controllers\Api\V1\Manufacturing\WorkOrderController;
+use App\Http\Controllers\Api\V1\MasterData\AttachmentController;
+use App\Http\Controllers\Api\V1\MasterData\CustomerController;
+use App\Http\Controllers\Api\V1\MasterData\ItemController;
+use App\Http\Controllers\Api\V1\MasterData\SupplierController;
 use App\Http\Controllers\Api\V1\Meta\MetaController;
 use App\Http\Controllers\Api\V1\Platform\ActivityLogController;
 use App\Http\Controllers\Api\V1\Platform\DashboardController;
 use App\Http\Controllers\Api\V1\Platform\NotificationController;
 use App\Http\Controllers\Api\V1\Platform\SearchController;
-use App\Http\Controllers\Api\V1\Reports\DocumentController;
-use App\Http\Controllers\Api\V1\Reports\ReportController;
 use App\Http\Controllers\Api\V1\Procurement\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\Procurement\StockReservationController;
+use App\Http\Controllers\Api\V1\Reports\DocumentController;
+use App\Http\Controllers\Api\V1\Reports\ReportController;
+use App\Http\Controllers\Api\V1\Sales\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\Sales\OfferController;
 use App\Http\Controllers\Api\V1\Sales\PipelineController;
 use App\Http\Controllers\Api\V1\Sales\ProjectController;
@@ -219,6 +220,13 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::get('offers/{offer}', [OfferController::class, 'show'])
                 ->whereNumber('offer')
                 ->name('offers.show');
+
+            // متابعة العملاء (Presentation.pptx slides 6-7).
+            Route::get('customer-interactions', [CustomerInteractionController::class, 'index'])
+                ->name('customer_interactions.index');
+            Route::get('customer-interactions/{customer_interaction}', [CustomerInteractionController::class, 'show'])
+                ->whereNumber('customer_interaction')
+                ->name('customer_interactions.show');
         });
 
         Route::middleware('throttle:api-write')->group(function (): void {
@@ -266,6 +274,15 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::delete('offers/{offer}', [OfferController::class, 'destroy'])
                 ->whereNumber('offer')
                 ->name('offers.destroy');
+
+            Route::post('customer-interactions', [CustomerInteractionController::class, 'store'])
+                ->name('customer_interactions.store');
+            Route::patch('customer-interactions/{customer_interaction}', [CustomerInteractionController::class, 'update'])
+                ->whereNumber('customer_interaction')
+                ->name('customer_interactions.update');
+            Route::delete('customer-interactions/{customer_interaction}', [CustomerInteractionController::class, 'destroy'])
+                ->whereNumber('customer_interaction')
+                ->name('customer_interactions.destroy');
         });
     });
 
@@ -909,6 +926,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('projects/{project}/timeline', [ReportController::class, 'operationTimeline'])
             ->whereNumber('project')
             ->name('projects.timeline');
+        // قسم إدارة المشروعات — every active operation's stage and countdown.
+        Route::get('operations-timeline', [ReportController::class, 'operationsTimeline'])
+            ->name('operations_timeline');
 
         // PDFs. Each keeps its own print permission, enforced inside the
         // shared controller - being able to read a record is not being able to

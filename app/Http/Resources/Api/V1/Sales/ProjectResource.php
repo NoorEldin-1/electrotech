@@ -85,6 +85,13 @@ class ProjectResource extends JsonResource
             'lost_reason_note' => $this->lost_reason_note,
             'winning_competitor' => $this->winning_competitor,
 
+            // Where the operation stands on the project-management timeline
+            // ({key, label, group, group_label, at}); present on index/show.
+            'current_stage' => $this->when(
+                $this->resource->getAttribute('timeline_current_stage') !== null,
+                fn () => $this->resource->getAttribute('timeline_current_stage'),
+            ),
+
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
 

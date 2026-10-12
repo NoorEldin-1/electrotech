@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Manufacturing;
 
+use App\Enums\WorkOrderPhase;
 use App\Models\WorkOrder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -41,6 +42,9 @@ class StoreWorkOrderRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
             'priority' => ['nullable', 'string', Rule::in(['low', 'normal', 'high', 'urgent'])],
+            // Presentation.pptx سلايد 4 — omitted, it is derived from whether the
+            // operation's shop drawing is already approved.
+            'timeline_phase' => ['nullable', Rule::enum(WorkOrderPhase::class)],
 
             'planned_quantity' => ['nullable', 'numeric', 'min:0'],
             'estimated_cost' => ['nullable', 'numeric', 'min:0'],

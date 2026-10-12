@@ -14,6 +14,14 @@ return [
         'plural_label' => 'المشاريع',
         'navigation_label' => 'المشاريع',
 
+        // مجموعات قسم المرفقات (Presentation.pptx سلايد 2)
+        'attachment_groups' => [
+            'sales' => 'مستندات المبيعات',
+            'drawings' => 'الرسومات والاعتمادات',
+            'consultant' => 'الاستشاري',
+            'handover' => 'التسليم',
+        ],
+
         'sections' => [
             'project_information' => 'معلومات المشروع',
             'technical_specifications' => 'المواصفات الفنية',
@@ -110,6 +118,7 @@ return [
                     'installation' => 'تركيب',
                     'delivery_voucher' => 'إذن تسليم',
                     'delivery_minute' => 'محضر تسليم',
+                    'customer_interaction' => 'متابعة العملاء',
                 ],
                 'events' => [
                     'created' => 'إنشاء',
@@ -1436,24 +1445,109 @@ return [
     ],
 
     // سلايد 7 — الخط الزمني للعملية
+    /*
+    |--------------------------------------------------------------------------
+    | متابعة العملاء — قسم إدارة العملاء (Presentation.pptx سلايد 6–7)
+    |--------------------------------------------------------------------------
+    */
+    'customer_interactions' => [
+        'label' => 'تفاعل مع العميل',
+        'plural_label' => 'متابعة العملاء',
+        'navigation_label' => 'متابعة العملاء',
+        'sections' => [
+            'details' => 'بيانات التفاعل',
+        ],
+        'fields' => [
+            'operation' => 'العملية',
+            'type' => 'النوع',
+            'channel' => 'الوسيلة',
+            'interacted_at' => 'التاريخ والوقت',
+            'site_ready' => 'الموقع جاهز',
+            'site_ready_hint' => 'يعتبر مرحلة «جاهزية الموقع» منجزة في الخط الزمني للعملية.',
+            'notes' => 'ملاحظات',
+        ],
+        'columns' => [
+            'interacted_at' => 'التاريخ',
+            'operation' => 'العملية',
+            'customer' => 'العميل',
+            'type' => 'النوع',
+            'channel' => 'الوسيلة',
+            'site_ready' => 'الموقع جاهز',
+            'notes' => 'ملاحظات',
+            'created_by' => 'سجّله',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | الخط الزمني للعمليات — قسم إدارة المشروعات (Presentation.pptx سلايد 1)
+    |--------------------------------------------------------------------------
+    */
+    'projects_timeline' => [
+        'navigation_label' => 'الخط الزمني للعمليات',
+        'title' => 'الخط الزمني للعمليات',
+        'subheading' => 'كل عملية نشطة في أي مرحلة، وفاضل قد إيه على التسليم — اضغط على العملية لعرض خطها الزمني كاملاً.',
+        'empty' => 'لا توجد عمليات نشطة.',
+        'columns' => [
+            'current_stage' => 'المرحلة الحالية',
+            'progress' => 'نسبة الإنجاز',
+            'expected_delivery' => 'موعد التسليم المتوقع',
+            'remaining' => 'المتبقي',
+        ],
+        'filters' => [
+            'current_group' => 'المرحلة الحالية',
+            'overdue' => 'تجاوزت موعد التسليم',
+        ],
+        'actions' => [
+            'view_timeline' => 'عرض الخط الزمني',
+            'open_operation' => 'فتح ملف العملية',
+        ],
+    ],
+
     'operation_timeline' => [
         'heading' => 'الخط الزمني للعملية',
-        'description' => 'مراحل العملية من استلامها حتى إتمامها، مشتقة تلقائياً من مستندات النظام.',
+        'description' => 'مراحل العملية من المبيعات حتى التركيب، مشتقة تلقائياً من مستندات النظام.',
         'not_reached' => 'لم تُنجَز بعد',
+        'skipped' => 'تم تخطيها — لا يوجد طلب تصنيع مبدئي لهذه العملية',
         'days_from_start' => 'بعد :days يوم من البداية',
+
+        'groups' => [
+            'preliminary' => 'المرحلة المبدئية',
+            'executive' => 'المرحلة التنفيذية',
+            'handover' => 'التسليم والتركيب',
+        ],
 
         'stages' => [
             'not_started' => 'لم تبدأ بعد',
-            'sales' => 'استلام العملية من المبيعات',
-            'activated' => 'تنشيط العملية',
-            'technical_office' => 'في مكتب إدارة المشروعات — إنشاء أمر التشغيل',
-            'order_approved' => 'اعتماد أمر التشغيل',
-            'in_factory' => 'في المصنع — بدء صرف الخامات',
-            'manufacturing_finished' => 'انتهاء التصنيع',
-            'qa_approved' => 'اعتماد الجودة',
-            'delivered' => 'التسليم للعميل',
-            'installed' => 'تم التركيب',
-            'completed' => 'إتمام العملية',
+            'sales' => 'المبيعات',
+            'customer_contact' => 'التواصل مع العميل',
+            'customer_drawings' => 'رسومات من العميل',
+            'preliminary_drawing' => 'رسم مبدئي',
+            'preliminary_approval' => 'اعتماد الرسم المبدئي',
+            'preliminary_mo_created' => 'طلب تصنيع',
+            'preliminary_mo_started' => 'بدء التصنيع',
+            'preliminary_mo_finished' => 'انتهاء التصنيع',
+            'site_readiness' => 'جاهزية الموقع',
+            'site_measurement' => 'رفع مقاسات',
+            'executive_drawing' => 'رسم تنفيذي',
+            'executive_approval' => 'اعتماد الرسم التنفيذي',
+            'executive_mo_created' => 'طلب التصنيع',
+            'executive_mo_started' => 'بدء التصنيع',
+            'executive_mo_finished' => 'انتهاء التصنيع',
+            'delivered' => 'التسليم',
+            'installation_started' => 'بدء التركيب',
+            'installation_finished' => 'انتهاء التركيب',
+        ],
+
+        'summary' => [
+            'current_stage' => 'المرحلة الحالية',
+            'progress' => 'نسبة الإنجاز',
+            'expected_delivery' => 'موعد التسليم المتوقع',
+            'remaining' => 'المتبقي على التسليم',
+            'not_set' => 'غير محدد',
+            'days_remaining' => 'باقي :days يوم',
+            'days_overdue' => 'متأخر :days يوم',
+            'delivered_on' => 'تم التسليم :date',
         ],
 
         'details' => [
@@ -1834,6 +1928,10 @@ return [
         'label' => 'تركيب',
         'plural_label' => 'التركيبات',
         'navigation_label' => 'التركيبات',
+        'complete_modal' => [
+            'description' => 'انتهاء التركيب يتم عن طريق محضر تسليم الأعمال — ارفع المحضر الموقّع، وسيُحفظ في مرفقات العملية تحت «محاضر التسليم».',
+            'already_on_file' => 'يوجد محضر تسليم في ملف العملية بالفعل — رفع محضر آخر اختياري.',
+        ],
         'sections' => [
             'details' => 'بيانات التركيب',
         ],
@@ -2046,6 +2144,9 @@ return [
         ],
 
         'fields' => [
+            'timeline_phase' => 'مرحلة الخط الزمني',
+            'timeline_phase_auto' => 'تلقائي',
+            'timeline_phase_hint' => 'المبدئي = بعد اعتماد الرسم المبدئي، والتنفيذي = بعد اعتماد الرسم التنفيذي. اتركه فارغاً ليُحدَّد تلقائياً.',
             'wo_number' => 'رقم أمر التصنيع',
             'title' => 'العنوان',
             'project' => 'المشروع',
@@ -2088,6 +2189,7 @@ return [
         ],
 
         'columns' => [
+            'timeline_phase' => 'المرحلة',
             'wo_number' => 'رقم الأمر',
             'title' => 'العنوان',
             'project' => 'المشروع',
@@ -2390,6 +2492,7 @@ return [
             'credit_facilities' => 'التسهيلات الائتمانية',
             'installations' => 'التركيبات',
             'site_surveys' => 'معاينات الموقع',
+            'customer_interactions' => 'متابعة العملاء',
             'work_orders' => 'أوامر التصنيع',
             'quality_sheets' => 'أوراق الجودة',
             'users' => 'إدارة المستخدمين',
@@ -2560,6 +2663,7 @@ return [
                 'complete' => 'إنهاء العملية',
                 'hold' => 'تعليق العملية',
                 'reserve' => 'حجز مخزون للعملية',
+                'timeline' => 'عرض الخط الزمني للعمليات',
             ],
             'delivery_minutes' => [
                 'view' => 'عرض محاضر التسليم',
@@ -2590,6 +2694,10 @@ return [
             'site_surveys' => [
                 'view' => 'عرض معاينات الموقع',
                 'manage' => 'إدارة معاينات الموقع',
+            ],
+            'customer_interactions' => [
+                'view' => 'عرض متابعة العملاء',
+                'manage' => 'إدارة متابعة العملاء',
             ],
             'work_orders' => [
                 'view' => 'عرض أوامر التصنيع',
@@ -2810,8 +2918,26 @@ return [
             'bi_metal' => 'باي ميتال',
         ],
 
+        'interaction_type' => [
+            'contact' => 'التواصل مع العميل',
+            'site_readiness' => 'جاهزية الموقع',
+            'follow_up' => 'متابعة',
+        ],
+
+        'interaction_channel' => [
+            'call' => 'مكالمة',
+            'visit' => 'زيارة',
+            'whatsapp' => 'واتساب',
+            'email' => 'بريد إلكتروني',
+        ],
+
+        'work_order_phase' => [
+            'preliminary' => 'طلب تصنيع مبدئي',
+            'executive' => 'طلب تصنيع تنفيذي',
+        ],
+
         'attachment_category' => [
-            'upload' => 'UPLOAD',
+            'upload' => 'الرسم المبدئي',
             'vendor_list' => 'VENDOR LIST',
             'drowing' => 'DROWING',
             'speces' => 'SPECES',
@@ -2825,6 +2951,13 @@ return [
             'addition_voucher_scan' => 'صورة إذن الإضافة',
             'customer_acceptance' => 'قبول العميل',
             'customer_document' => 'ملفات العميل',
+            'customer_drawings' => 'رسومات من العميل',
+            'preliminary_approval' => 'اعتماد الرسم المبدئي',
+            'executive_drawing' => 'الرسم التنفيذي',
+            'executive_approval' => 'اعتماد الرسم التنفيذي',
+            'consultant_notes' => 'ملاحظات الاستشاري',
+            'consultant_approval' => 'اعتماد الاستشاري',
+            'handover_minutes' => 'محاضر التسليم',
         ],
 
         'lost_reason' => [

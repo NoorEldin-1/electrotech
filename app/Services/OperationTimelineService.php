@@ -4,210 +4,344 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\ProjectStatus;
-use App\Enums\VoucherStatus;
+use App\Enums\AttachmentCategory;
+use App\Enums\InteractionType;
+use App\Enums\WorkOrderPhase;
+use App\Enums\WorkOrderStatus;
+use App\Models\Attachment;
+use App\Models\CustomerInteraction;
 use App\Models\DeliveryVoucher;
 use App\Models\Installation;
-use App\Models\IssueVoucher;
 use App\Models\Project;
+use App\Models\SiteSurvey;
 use App\Models\WorkOrder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
- * الخط الزمنى للعملية — ماليات.pptx سلايد 7:
+ * الخط الزمني للعملية — قسم إدارة المشروعات (Presentation.pptx).
  *
- *   «يجب عمل مراكز تكلفة + خط زمنى لكل مشروع بالعميل (العملية في المصنع، او
- *    العملية تم تركيبها، او العملية مازلت فى المكتب الفنى لانشاء امر التشغيل،
- *    وهكذا)»
+ *   «عبارة عن خدمة للعملاء ومعرفة الخط الزمنى لكل عملية بحيث عند طلب اى عميل
+ *    لميعاد التسليم او معرفة باقى قد ايه على التسليم نكون عارفين العملية فى انى
+ *    مرحلة»
  *
- * The cost centre half already exists — the operation IS the cost centre. This
- * service adds the other half: where the operation stands, and when it got
- * there.
+ * Nineteen stages in three groups, in the deck's order (سلايد 4, 6–8):
  *
- * Deliberately DERIVED, with no new table and no new column. Every stage is
- * read from a record the operation already produces, so the timeline can never
- * drift out of step with reality the way a manually maintained "current stage"
- * field always eventually does. Add a work order and the timeline moves by
- * itself.
+ *   preliminary  المبيعات → التواصل مع العميل → رسومات من العميل → رسم مبدئي →
+ *                اعتماد الرسم المبدئي → طلب تصنيع → البدء → الانتهاء
+ *   executive    جاهزية الموقع → رفع مقاسات → رسم تنفيذي → اعتماد الرسم
+ *                التنفيذي → طلب التصنيع → البدء → الانتهاء
+ *   handover     التسليم → بدء التركيب → انتهاء التركيب
+ *
+ * Deliberately DERIVED, with no stage column: each stage is reached when the
+ * record that proves it exists (سلايد 5: «عند وجود فايل الرسم المبدئى داخل
+ * المرفقات ده معناه ان تم الانتهاء من الرسم المبدئى»). Upload the file, log the
+ * contact, start the order — the timeline moves by itself; delete the file and
+ * the stage goes back to not reached.
+ *
+ * Every signal is loaded in grouped queries keyed by project, so forMany()
+ * builds the timeline of a whole list in a fixed number of queries.
  */
 class OperationTimelineService
 {
+    public const GROUPS = ['preliminary', 'executive', 'handover'];
+
+    /** Attachment categories that are timeline signals, keyed by stage. */
+    private const ATTACHMENT_STAGES = [
+        'customer_drawings' => AttachmentCategory::CustomerDrawings,
+        'preliminary_drawing' => AttachmentCategory::PreliminaryDrawing,
+        'preliminary_approval' => AttachmentCategory::PreliminaryApproval,
+        'site_measurement' => AttachmentCategory::SiteMeasurement,
+        'executive_drawing' => AttachmentCategory::ExecutiveDrawing,
+        'executive_approval' => AttachmentCategory::ExecutiveApproval,
+    ];
+
     /**
-     * The full timeline of one operation, oldest stage first. Every stage is
-     * returned whether reached or not, so the screen shows what is still ahead
-     * as well as what is done.
+     * The full timeline of one operation, in order. Every stage is returned
+     * whether reached or not, so the screen shows what is still ahead.
      *
-     * @return Collection<int, array{key: string, label: string, at: ?Carbon, reached: bool, detail: ?string, days_from_start: ?int}>
+     * @return Collection<int, array{key: string, label: string, group: string, at: ?Carbon, reached: bool, skipped: bool, detail: ?string, days_from_start: ?int}>
      */
     public function for(Project $project): Collection
     {
-        $stages = collect($this->stages($project))
-            ->map(fn (array $stage): array => $stage + [
-                'reached' => $stage['at'] !== null,
-                'detail' => $stage['detail'] ?? null,
-            ]);
+        return $this->forMany(collect([$project]))[$project->getKey()];
+    }
 
-        $start = $stages->firstWhere('at', '!=', null)['at'] ?? null;
+    /**
+     * Timelines for many operations at once, keyed by project id.
+     *
+     * @param  Collection<int, Project>  $projects
+     * @return array<int, Collection<int, array<string, mixed>>>
+     */
+    public function forMany(Collection $projects): array
+    {
+        $signals = $this->loadSignals($projects->map(fn (Project $p) => $p->getKey())->values()->all());
 
-        return $stages->map(function (array $stage) use ($start): array {
-            $stage['days_from_start'] = ($start && $stage['at'])
-                ? (int) $start->diffInDays($stage['at'])
-                : null;
+        $timelines = [];
+        foreach ($projects as $project) {
+            $timelines[$project->getKey()] = $this->build($project, $signals);
+        }
+
+        return $timelines;
+    }
+
+    /**
+     * The furthest stage the operation has actually reached — the answer to
+     * «العملية فى انى مرحلة».
+     *
+     * @param  Collection<int, array<string, mixed>>|null  $timeline  pass a prebuilt timeline to skip the queries
+     * @return array{key: string, label: string, group: ?string, group_label: ?string, at: ?Carbon}
+     */
+    public function currentStage(Project $project, ?Collection $timeline = null): array
+    {
+        $reached = ($timeline ?? $this->for($project))->filter(fn (array $s): bool => $s['reached']);
+
+        if ($reached->isEmpty()) {
+            return [
+                'key' => 'not_started',
+                'label' => __('resources.operation_timeline.stages.not_started'),
+                'group' => null,
+                'group_label' => null,
+                'at' => null,
+            ];
+        }
+
+        $last = $reached->last();
+
+        return [
+            'key' => $last['key'],
+            'label' => $last['label'],
+            'group' => $last['group'],
+            'group_label' => __("resources.operation_timeline.groups.{$last['group']}"),
+            'at' => $last['at'],
+        ];
+    }
+
+    /**
+     * Everything customer service needs in one answer: where the operation is,
+     * how far along, and how long is left until the promised delivery
+     * (`Project.end_date`).
+     *
+     * @param  Collection<int, array<string, mixed>>|null  $timeline
+     * @return array{current_stage: array<string, mixed>, progress_percent: int, expected_delivery: ?Carbon, delivered_at: ?Carbon, days_remaining: ?int, days_overdue: ?int}
+     */
+    public function summary(Project $project, ?Collection $timeline = null): array
+    {
+        $timeline ??= $this->for($project);
+
+        $done = $timeline->filter(fn (array $s): bool => $s['reached'] || $s['skipped'])->count();
+        $deliveredAt = $timeline->firstWhere('key', 'delivered')['at'] ?? null;
+        $expected = $this->toCarbon($project->end_date)?->startOfDay();
+
+        $daysRemaining = null;
+        $daysOverdue = null;
+        if ($expected !== null && $deliveredAt === null) {
+            $today = now()->startOfDay();
+            if ($today->lessThanOrEqualTo($expected)) {
+                $daysRemaining = (int) $today->diffInDays($expected);
+            } else {
+                $daysOverdue = (int) $expected->diffInDays($today);
+            }
+        }
+
+        return [
+            'current_stage' => $this->currentStage($project, $timeline),
+            'progress_percent' => $timeline->isEmpty() ? 0 : (int) round($done * 100 / $timeline->count()),
+            'expected_delivery' => $expected,
+            'delivered_at' => $deliveredAt,
+            'days_remaining' => $daysRemaining,
+            'days_overdue' => $daysOverdue,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $signals
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function build(Project $project, array $signals): Collection
+    {
+        $id = $project->getKey();
+        $attachment = fn (AttachmentCategory $c): ?Carbon => $this->toCarbon($signals['attachments'][$id][$c->value] ?? null);
+
+        /** @var Collection<int, WorkOrder> $orders */
+        $orders = $signals['work_orders'][$id] ?? collect();
+        $preliminary = $orders->filter(fn (WorkOrder $wo): bool => $wo->timeline_phase === WorkOrderPhase::Preliminary);
+        $executive = $orders->filter(fn (WorkOrder $wo): bool => $wo->timeline_phase === WorkOrderPhase::Executive);
+
+        $installation = $signals['installations'][$id] ?? null;
+
+        $stages = [
+            // ── المرحلة المبدئية (سلايد 6) ──
+            $this->stage('sales', 'preliminary', $this->toCarbon($project->created_at), $project->customer?->name ?? $project->client_name),
+            $this->stage('customer_contact', 'preliminary', $this->toCarbon($signals['contact'][$id] ?? null)),
+            $this->stage('customer_drawings', 'preliminary', $attachment(AttachmentCategory::CustomerDrawings)),
+            $this->stage('preliminary_drawing', 'preliminary', $attachment(AttachmentCategory::PreliminaryDrawing)),
+            $this->stage('preliminary_approval', 'preliminary', $attachment(AttachmentCategory::PreliminaryApproval)),
+            ...$this->manufacturingStages('preliminary', $preliminary),
+
+            // ── المرحلة التنفيذية (سلايد 7) ──
+            $this->stage('site_readiness', 'executive', $this->toCarbon($signals['site_ready'][$id] ?? null)),
+            // رفع مقاسات: the measurement file, or a recorded site survey.
+            $this->stage('site_measurement', 'executive', $this->earliest(
+                $attachment(AttachmentCategory::SiteMeasurement),
+                $this->toCarbon($signals['site_surveys'][$id] ?? null),
+            )),
+            $this->stage('executive_drawing', 'executive', $attachment(AttachmentCategory::ExecutiveDrawing)),
+            $this->stage('executive_approval', 'executive', $attachment(AttachmentCategory::ExecutiveApproval)),
+            ...$this->manufacturingStages('executive', $executive),
+
+            // ── التسليم والتركيب (سلايد 8) ──
+            $this->stage('delivered', 'handover', $this->toCarbon($signals['delivered'][$id] ?? null)),
+            $this->stage('installation_started', 'handover', $this->toCarbon($installation['started'] ?? null)),
+            // «انتهاء التركيب (عن طريق محاضر تسليم الاعمال)» — completing an
+            // installation requires the minutes, and uploading them completes
+            // it; an upload with no installation record still counts.
+            $this->stage('installation_finished', 'handover', $this->earliest(
+                $this->toCarbon($installation['completed'] ?? null),
+                $attachment(AttachmentCategory::HandoverMinutes),
+            )),
+        ];
+
+        // The preliminary manufacturing order is optional: an operation that
+        // went straight to the executive phase without one has skipped it, not
+        // fallen behind on it.
+        $executiveStarted = collect($stages)->contains(fn (array $s): bool => $s['group'] !== 'preliminary' && $s['at'] !== null);
+        if ($preliminary->isEmpty() && $executiveStarted) {
+            foreach ($stages as &$stage) {
+                if (str_starts_with($stage['key'], 'preliminary_mo_')) {
+                    $stage['skipped'] = true;
+                }
+            }
+            unset($stage);
+        }
+
+        $start = collect($stages)->firstWhere('at', '!=', null)['at'] ?? null;
+
+        return collect($stages)->map(function (array $stage) use ($start): array {
+            $stage['days_from_start'] = ($start && $stage['at']) ? (int) $start->diffInDays($stage['at']) : null;
 
             return $stage;
         })->values();
     }
 
     /**
-     * The single label سلايد 7 asks for — the furthest stage the operation has
-     * actually reached ("العملية في المصنع", "العملية تم تركيبها"…).
+     * طلب تصنيع → البدء → الانتهاء for one phase's orders. Requested when the
+     * first order is created, started when the first one starts on the floor,
+     * finished only once EVERY order of the phase has finished.
      *
-     * @return array{key: string, label: string, at: ?Carbon}
+     * @param  Collection<int, WorkOrder>  $orders
+     * @return array<int, array<string, mixed>>
      */
-    public function currentStage(Project $project): array
+    private function manufacturingStages(string $phase, Collection $orders): array
     {
-        $reached = $this->for($project)->filter(fn (array $s): bool => $s['reached']);
-
-        if ($reached->isEmpty()) {
-            return ['key' => 'not_started', 'label' => __('resources.operation_timeline.stages.not_started'), 'at' => null];
-        }
-
-        $last = $reached->last();
-
-        return ['key' => $last['key'], 'label' => $last['label'], 'at' => $last['at']];
-    }
-
-    /**
-     * Raw stage definitions in chronological order. `at` is null for a stage
-     * the operation has not reached.
-     *
-     * @return array<int, array{key: string, label: string, at: ?Carbon, detail?: ?string}>
-     */
-    private function stages(Project $project): array
-    {
-        $workOrders = $project->workOrders()->get();
-        $issued = $this->firstIssueVoucherDate($workOrders);
-        $delivery = $this->firstDeliveryDate($project);
-        $installation = Installation::query()->where('project_id', $project->getKey())->get();
+        $finished = ($orders->isNotEmpty() && $orders->whereNull('manufacturing_finished_at')->isEmpty())
+            ? $this->toCarbon($orders->max('manufacturing_finished_at'))
+            : null;
 
         return [
-            [
-                'key' => 'sales',
-                'label' => __('resources.operation_timeline.stages.sales'),
-                'at' => $this->toCarbon($project->created_at),
-                'detail' => $project->customer?->name ?? $project->client_name,
-            ],
-            [
-                'key' => 'activated',
-                'label' => __('resources.operation_timeline.stages.activated'),
-                'at' => $this->activationDate($project),
-            ],
-            [
-                // "العملية مازلت فى المكتب الفنى لانشاء امر التشغيل"
-                'key' => 'technical_office',
-                'label' => __('resources.operation_timeline.stages.technical_office'),
-                'at' => $this->toCarbon($workOrders->min('created_at')),
-                'detail' => $workOrders->isNotEmpty()
-                    ? __('resources.operation_timeline.details.work_orders', ['count' => $workOrders->count()])
-                    : null,
-            ],
-            [
-                'key' => 'order_approved',
-                'label' => __('resources.operation_timeline.stages.order_approved'),
-                'at' => $this->toCarbon($workOrders->min('order_approved_at')),
-            ],
-            [
-                // "العملية في المصنع" — material actually left the store for it.
-                'key' => 'in_factory',
-                'label' => __('resources.operation_timeline.stages.in_factory'),
-                'at' => $issued,
-            ],
-            [
-                'key' => 'manufacturing_finished',
-                'label' => __('resources.operation_timeline.stages.manufacturing_finished'),
-                'at' => $this->allReached($workOrders, 'manufacturing_finished_at'),
-            ],
-            [
-                'key' => 'qa_approved',
-                'label' => __('resources.operation_timeline.stages.qa_approved'),
-                'at' => $this->allReached($workOrders, 'qa_approved_at'),
-            ],
-            [
-                'key' => 'delivered',
-                'label' => __('resources.operation_timeline.stages.delivered'),
-                'at' => $delivery,
-            ],
-            [
-                // "العملية تم تركيبها"
-                'key' => 'installed',
-                'label' => __('resources.operation_timeline.stages.installed'),
-                'at' => $this->toCarbon($installation->max('completed_at')),
-            ],
-            [
-                'key' => 'completed',
-                'label' => __('resources.operation_timeline.stages.completed'),
-                'at' => $project->status === ProjectStatus::Completed
-                    ? ($this->toCarbon($project->end_date) ?? $this->toCarbon($project->updated_at))
-                    : null,
-            ],
+            $this->stage("{$phase}_mo_created", $phase, $this->toCarbon($orders->min('created_at')), $orders->isNotEmpty()
+                ? __('resources.operation_timeline.details.work_orders', ['count' => $orders->count()])
+                : null),
+            $this->stage("{$phase}_mo_started", $phase, $this->toCarbon($orders->min('actual_start_date'))),
+            $this->stage("{$phase}_mo_finished", $phase, $finished),
         ];
     }
 
     /**
-     * When the operation became active. `start_date` is the intended date the
-     * sales team entered; falling back to it keeps the timeline useful for
-     * operations activated before the status was tracked.
+     * @return array{key: string, label: string, group: string, at: ?Carbon, reached: bool, skipped: bool, detail: ?string}
      */
-    private function activationDate(Project $project): ?Carbon
+    private function stage(string $key, string $group, ?Carbon $at, ?string $detail = null): array
     {
-        if (in_array($project->status, [ProjectStatus::Tender, ProjectStatus::InHand, ProjectStatus::Lost], true)) {
-            return null;
-        }
-
-        return $this->toCarbon($project->start_date) ?? $this->toCarbon($project->created_at);
-    }
-
-    /** First posted issue voucher across the operation's work orders. */
-    private function firstIssueVoucherDate(Collection $workOrders): ?Carbon
-    {
-        if ($workOrders->isEmpty()) {
-            return null;
-        }
-
-        return $this->toCarbon(
-            IssueVoucher::query()
-                ->whereIn('work_order_id', $workOrders->pluck('id')->all())
-                ->where('status', VoucherStatus::Posted->value)
-                ->min('voucher_date')
-        );
-    }
-
-    /** First delivery voucher that actually went active. */
-    private function firstDeliveryDate(Project $project): ?Carbon
-    {
-        return $this->toCarbon(
-            DeliveryVoucher::query()
-                ->where('project_id', $project->getKey())
-                ->whereNotNull('activated_at')
-                ->min('activated_at')
-        );
+        return [
+            'key' => $key,
+            'label' => __("resources.operation_timeline.stages.{$key}"),
+            'group' => $group,
+            'at' => $at,
+            'reached' => $at !== null,
+            'skipped' => false,
+            'detail' => $at !== null ? $detail : null,
+        ];
     }
 
     /**
-     * A stage that only counts once EVERY work order has reached it — the
-     * operation is not "manufactured" while one of its orders is still on the
-     * line. Returns the date the last one landed.
+     * Every signal for the given operations, one grouped query per source.
      *
-     * @param  Collection<int, WorkOrder>  $workOrders
+     * @param  array<int, int>  $ids
+     * @return array<string, mixed>
      */
-    private function allReached(Collection $workOrders, string $column): ?Carbon
+    private function loadSignals(array $ids): array
     {
-        if ($workOrders->isEmpty() || $workOrders->whereNull($column)->isNotEmpty()) {
-            return null;
+        if ($ids === []) {
+            return [];
         }
 
-        return $this->toCarbon($workOrders->max($column));
+        $categories = array_map(
+            fn (AttachmentCategory $c): string => $c->value,
+            [...array_values(self::ATTACHMENT_STAGES), AttachmentCategory::HandoverMinutes],
+        );
+
+        $attachments = [];
+        Attachment::query()
+            ->whereIn('project_id', $ids)
+            ->whereIn('category', $categories)
+            ->groupBy('project_id', 'category')
+            ->selectRaw('project_id, category, MIN(created_at) as first_at')
+            ->toBase()
+            ->get()
+            ->each(function (object $row) use (&$attachments): void {
+                $attachments[$row->project_id][$row->category] = $row->first_at;
+            });
+
+        $installations = Installation::query()
+            ->whereIn('project_id', $ids)
+            ->groupBy('project_id')
+            ->selectRaw('project_id, MIN(started_at) as started, MIN(completed_at) as completed')
+            ->toBase()
+            ->get()
+            ->mapWithKeys(fn (object $row): array => [$row->project_id => ['started' => $row->started, 'completed' => $row->completed]])
+            ->all();
+
+        return [
+            'attachments' => $attachments,
+            'contact' => $this->firstInteraction($ids, InteractionType::Contact),
+            'site_ready' => $this->firstInteraction($ids, InteractionType::SiteReadiness, siteReady: true),
+            'site_surveys' => SiteSurvey::query()->whereIn('project_id', $ids)
+                ->groupBy('project_id')->pluck(DB::raw('MIN(survey_date)'), 'project_id')->all(),
+            // A cancelled order never runs, so it neither starts nor blocks
+            // "finished" for its phase.
+            'work_orders' => WorkOrder::query()
+                ->whereIn('project_id', $ids)
+                ->where('status', '!=', WorkOrderStatus::Cancelled->value)
+                ->get(['id', 'project_id', 'timeline_phase', 'created_at', 'actual_start_date', 'manufacturing_finished_at'])
+                ->groupBy('project_id')
+                ->all(),
+            'delivered' => DeliveryVoucher::query()->whereIn('project_id', $ids)->whereNotNull('activated_at')
+                ->groupBy('project_id')->pluck(DB::raw('MIN(activated_at)'), 'project_id')->all(),
+            'installations' => $installations,
+        ];
+    }
+
+    /**
+     * @param  array<int, int>  $ids
+     * @return array<int, string>
+     */
+    private function firstInteraction(array $ids, InteractionType $type, bool $siteReady = false): array
+    {
+        return CustomerInteraction::query()
+            ->whereIn('project_id', $ids)
+            ->where('type', $type->value)
+            ->when($siteReady, fn ($q) => $q->where('site_ready', true))
+            ->groupBy('project_id')
+            ->pluck(DB::raw('MIN(interacted_at)'), 'project_id')
+            ->all();
+    }
+
+    private function earliest(?Carbon ...$dates): ?Carbon
+    {
+        $dates = array_filter($dates);
+
+        return $dates === [] ? null : min($dates);
     }
 
     private function toCarbon(mixed $value): ?Carbon

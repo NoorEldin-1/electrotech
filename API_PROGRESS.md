@@ -1244,6 +1244,27 @@ API's scope, so it is left for an explicit decision.
 
 ---
 
+## Project-management round (Presentation.pptx, 2026-10-12, uncommitted)
+
+The قسم إدارة المشروعات deck: an operation timeline for customer service. The API
+changes, and the **one breaking change** the Flutter app must handle:
+
+| Endpoint | Change |
+|---|---|
+| `GET /projects/{project}/timeline` | **Breaking — stage keys changed.** 18 stages in 3 groups (`preliminary`, `executive`, `handover`) replace the old 10 (`technical_office`, `in_factory`, `qa_approved`, `installed`, `completed` … are gone). Each stage gains `group` and `skipped`; the response gains `summary` (`progress_percent`, `expected_delivery`, `delivered_at`, `days_remaining`, `days_overdue`); `current_stage` gains `group` / `group_label`. Now opens for `operations.timeline` **or** the old `operations.overview`. |
+| `GET /operations-timeline` | New. Every active / on-hold operation with its current stage and countdown (`?group=`, `?overdue=1`). `operations.timeline`. |
+| `GET/POST/PATCH/DELETE /customer-interactions` | New (`ability:sales`). متابعة العملاء — `type` contact / site_readiness / follow_up; the customer is taken from the operation. `customer_interactions.view` / `.manage`. |
+| `GET /projects`, `GET /projects/{id}` | Additive: `current_stage` per row, built for the whole page in one batch. |
+| `POST/PATCH /work-orders` | Additive: `timeline_phase` (`preliminary` / `executive`); omitted, it is derived from whether the shop drawing is approved. Returned on the resource. |
+| `POST /installations/{id}/complete` | **Behaviour change**: needs the works-handover minutes — send `handover_minutes` (multipart) or have them on the operation already, else 422 `validation_failed`. Stored under a server-chosen name like `POST /attachments`. |
+| `POST /attachments` | Seven new project categories (`customer_drawings`, `preliminary_approval`, `executive_drawing`, `executive_approval`, `consultant_notes`, `consultant_approval`, `handover_minutes`); `upload` now means *preliminary drawing* (value unchanged). Uploading `handover_minutes` completes the operation's running installation. |
+| `GET /meta/enums` | `interaction_type`, `interaction_channel`, `work_order_phase` appear automatically (discovery). |
+
+Tests: `tests/Feature/Api/V1/Sales/ProjectManagementApiTest.php` + the updated
+installation walk in `DeliveryApiTest`.
+
+---
+
 ## Open questions / deferred decisions
 
 | Item | Decision | Revisit when |

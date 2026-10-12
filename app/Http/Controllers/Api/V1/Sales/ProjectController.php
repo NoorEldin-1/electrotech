@@ -6,14 +6,17 @@ namespace App\Http\Controllers\Api\V1\Sales;
 
 use App\Enums\AttachmentCategory;
 use App\Http\Api\ApiQuery;
+use App\Http\Api\ReportSerializer;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Api\V1\Sales\StoreProjectRequest;
 use App\Http\Requests\Api\V1\Sales\UpdateProjectRequest;
 use App\Http\Resources\Api\V1\Sales\ProjectResource;
 use App\Models\Project;
+use App\Services\OperationTimelineService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -85,6 +88,10 @@ class ProjectController extends ApiController
             ->defaultSort('-created_at')
             ->paginate();
 
+        // قسم إدارة المشروعات — each row's current timeline stage, built for
+        // the whole page in one batch rather than per row.
+        $this->attachCurrentStages(collect($projects->items()));
+
         return $this->respondPaginated(ProjectResource::collection($projects));
     }
 
@@ -101,9 +108,28 @@ class ProjectController extends ApiController
     {
         $this->authorize('view', $project);
 
-        return $this->respond(new ProjectResource(
-            $project->load(['customer', 'createdBy', 'latestOffer'])->loadCount('offers'),
-        ));
+        $project->load(['customer', 'createdBy', 'latestOffer'])->loadCount('offers');
+        $this->attachCurrentStages(collect([$project]));
+
+        return $this->respond(new ProjectResource($project));
+    }
+
+    /**
+     * Stamp each operation with its current timeline stage (read back by
+     * ProjectResource as `current_stage`). Transient — never saved.
+     *
+     * @param  Collection<int, Project>  $projects
+     */
+    private function attachCurrentStages(Collection $projects): void
+    {
+        $service = app(OperationTimelineService::class);
+        $timelines = $service->forMany($projects);
+
+        foreach ($projects as $project) {
+            $project->setAttribute('timeline_current_stage', ReportSerializer::normalize(
+                $service->currentStage($project, $timelines[$project->getKey()]),
+            ));
+        }
     }
 
     /**
@@ -159,6 +185,7 @@ class ProjectController extends ApiController
      * @authenticated
      *
      * @urlParam project integer required The operation id. Example: 1
+     *
      * @bodyParam name string optional Example: Substation A — Phase 2
      * @bodyParam client_name string optional Example: Delta Contracting
      * @bodyParam customer_id integer optional Example: 3

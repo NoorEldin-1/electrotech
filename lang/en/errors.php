@@ -180,4 +180,8 @@ return [
         'reserve_exceeds_available' => "Cannot reserve :quantity of ':item'. Only :available available in :warehouse.",
         'facility_exceeds_available' => "Cannot allocate :amount from ':facility'. Only :available available on the facility.",
     ],
+
+    'installations' => [
+        'handover_minutes_required' => 'An installation can only be finished with the works handover minutes. Upload the minutes first.',
+    ],
 ];

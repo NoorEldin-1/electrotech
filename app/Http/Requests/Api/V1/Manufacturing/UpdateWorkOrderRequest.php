@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Manufacturing;
 
+use App\Enums\WorkOrderPhase;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -34,6 +35,7 @@ class UpdateWorkOrderRequest extends FormRequest
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'priority' => ['sometimes', 'string', Rule::in(['low', 'normal', 'high', 'urgent'])],
+            'timeline_phase' => ['sometimes', 'nullable', Rule::enum(WorkOrderPhase::class)],
 
             'planned_quantity' => ['sometimes', 'numeric', 'min:0'],
             'estimated_cost' => ['sometimes', 'numeric', 'min:0'],

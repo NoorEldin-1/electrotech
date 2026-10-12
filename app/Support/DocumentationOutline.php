@@ -80,6 +80,7 @@ final class DocumentationOutline
                     ['id' => 'active-projects', 'label' => 'العمليات النشطة', 'kw' => 'active projects نشطة تنفيذ'],
                     ['id' => 'lost-projects', 'label' => 'قائمة المفقودة', 'kw' => 'lost خسارة منافس'],
                     ['id' => 'customers', 'label' => 'العملاء', 'kw' => 'customers عميل كشف حساب'],
+                    ['id' => 'customer-interactions', 'label' => 'متابعة العملاء', 'kw' => 'customer follow up تواصل جاهزية الموقع مكالمة زيارة'],
                 ],
             ],
             [
@@ -89,6 +90,7 @@ final class DocumentationOutline
                 'icon' => 'blueprint',
                 'dept' => 'var(--dept-pmo)',
                 'items' => [
+                    ['id' => 'projects-timeline', 'label' => 'الخط الزمني للعمليات', 'kw' => 'timeline خط زمني مرحلة ميعاد التسليم متبقي متأخر خدمة العملاء'],
                     ['id' => 'boms', 'label' => 'قوائم المواد', 'kw' => 'bom قائمة مواد هالك تركيبة قياسية'],
                     ['id' => 'work-orders', 'label' => 'أوامر التصنيع', 'kw' => 'work order أمر تشغيل تصنيع جودة اعتماد'],
                 ],

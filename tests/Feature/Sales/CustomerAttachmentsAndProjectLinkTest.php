@@ -95,13 +95,19 @@ class CustomerAttachmentsAndProjectLinkTest extends TestCase
         $method = new \ReflectionMethod(ProjectResource::class, 'attachmentCategorySchema');
         $method->setAccessible(true);
 
-        $names = array_map(
-            fn ($component) => $component->getName(),
-            $method->invoke(null),
-        );
+        // The uploads are grouped into fieldsets (Presentation.pptx سلايد 2).
+        $names = collect($method->invoke(null))
+            ->flatMap(fn ($fieldset) => $fieldset->getChildComponents())
+            ->map(fn ($component) => $component->getName())
+            ->all();
 
         $this->assertContains('attachments_customer_acceptance', $names);
         $this->assertNotContains('attachments_customer_document', $names);
+
+        // سلايد 2 — the new operation-file categories are all on the form.
+        foreach (['customer_drawings', 'upload', 'preliminary_approval', 'executive_drawing', 'executive_approval', 'consultant_notes', 'consultant_approval', 'handover_minutes'] as $category) {
+            $this->assertContains("attachments_{$category}", $names);
+        }
     }
 
     public function test_project_created_via_form_links_customer_and_mirrors_client_name(): void

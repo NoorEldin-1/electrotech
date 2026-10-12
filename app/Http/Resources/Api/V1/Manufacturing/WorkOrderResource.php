@@ -52,6 +52,9 @@ class WorkOrderResource extends JsonResource
             'description' => $this->description,
             'status' => EnumPresenter::present($this->status),
             'priority' => $this->priority,
+            // Which of the operation's two manufacturing orders this is on the
+            // timeline (Presentation.pptx سلايد 4): preliminary or executive.
+            'timeline_phase' => EnumPresenter::present($this->timeline_phase),
 
             'project_id' => $this->project_id,
             'bom_id' => $this->bom_id,
