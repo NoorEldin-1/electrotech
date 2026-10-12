@@ -200,7 +200,12 @@ class InstallationController extends ApiController
         $request->validate([
             // Same extension allow-list as POST /attachments: this lands on the
             // public disk, so it must never accept something a server executes.
-            'handover_minutes' => ['nullable', 'file', 'max:40960', 'mimes:pdf,jpg,jpeg,png,webp,heic,doc,docx,xls,xlsx,csv,txt'],
+            // `mimes` checks the content, `extensions` the name it is stored under.
+            'handover_minutes' => [
+                'nullable', 'file', 'max:40960',
+                'mimes:pdf,jpg,jpeg,png,webp,heic,doc,docx,xls,xlsx,csv,txt',
+                'extensions:pdf,jpg,jpeg,png,webp,heic,doc,docx,xls,xlsx,csv,txt',
+            ],
         ]);
 
         $file = $request->file('handover_minutes');

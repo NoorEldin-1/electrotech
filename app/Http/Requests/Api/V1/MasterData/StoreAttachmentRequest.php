@@ -51,6 +51,11 @@ class StoreAttachmentRequest extends FormRequest
                 // web server learns a new handler; an allow-list is a
                 // statement about what this feature is for.
                 'mimes:pdf,jpg,jpeg,png,webp,heic,doc,docx,xls,xlsx,csv,txt',
+
+                // `mimes` judges the content only; the file is stored under the
+                // client's extension, so that has to be on the list too — or a
+                // valid JPEG named shell.php lands on the public disk as .php.
+                'extensions:pdf,jpg,jpeg,png,webp,heic,doc,docx,xls,xlsx,csv,txt',
             ],
         ];
     }
