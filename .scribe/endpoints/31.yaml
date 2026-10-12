@@ -1,42 +1,48 @@
-name: '35. Credit facilities'
+name: '34. Financial claims'
 description: |-
 
-  التسهيلات الائتمانية — a credit line, and how much of it is already
-  committed to operations.
+  المطالبات المالية — what the company is asking a customer to pay, for a
+  given operation.
 
-  The rule the whole resource exists for: **a facility cannot be promised
-  twice.** An allocation is refused when it would take the committed total
-  past the limit, so read `utilization.available` on the detail endpoint and
-  show it before anyone types an amount — it is cheaper to stop a user than to
-  refuse them.
+  Draft → **submit** → Submitted → **collect** → Collected. Three permissions,
+  because raising a claim, sending it to the customer and declaring it paid
+  are three different acts by three different people.
 
-  Releasing an allocation gives the room back. Nothing here touches the
-  ledger: a facility is a commitment, not a movement.
+  Submission is gated on the work being deliverable: the operation is
+  Completed, or at least one delivery to the customer is active. Claiming for
+  work that has not been delivered is how a receivable becomes a dispute.
+
+  A claim also **collects itself** when payments allocated to it add up to its
+  amount, which is why `collect` is normally only called by hand for cash that
+  arrived outside the platform.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/credit-facilities
+    uri: api/v1/financial-claims
     metadata:
       custom: []
-      groupName: '35. Credit facilities'
+      groupName: '34. Financial claims'
       groupDescription: |-
 
-        التسهيلات الائتمانية — a credit line, and how much of it is already
-        committed to operations.
+        المطالبات المالية — what the company is asking a customer to pay, for a
+        given operation.
 
-        The rule the whole resource exists for: **a facility cannot be promised
-        twice.** An allocation is refused when it would take the committed total
-        past the limit, so read `utilization.available` on the detail endpoint and
-        show it before anyone types an amount — it is cheaper to stop a user than to
-        refuse them.
+        Draft → **submit** → Submitted → **collect** → Collected. Three permissions,
+        because raising a claim, sending it to the customer and declaring it paid
+        are three different acts by three different people.
 
-        Releasing an allocation gives the room back. Nothing here touches the
-        ledger: a facility is a commitment, not a movement.
+        Submission is gated on the work being deliverable: the operation is
+        Completed, or at least one delivery to the customer is active. Claiming for
+        work that has not been delivered is how a receivable becomes a dispute.
+
+        A claim also **collects itself** when payments allocated to it add up to its
+        amount, which is why `collect` is normally only called by hand for cash that
+        arrived outside the platform.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List credit facilities'
+      title: 'List financial claims'
       description: ''
       authenticated: true
       deprecated: false
@@ -72,9 +78,9 @@ endpoints:
       search:
         custom: []
         name: search
-        description: 'Matches the facility name.'
+        description: 'Matches the claim number or description.'
         required: false
-        example: CIB
+        example: CLM-2026
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -83,10 +89,21 @@ endpoints:
       'filter[status]':
         custom: []
         name: 'filter[status]'
-        description: 'active, expired or closed.'
+        description: 'draft, submitted, collected or cancelled.'
         required: false
-        example: active
+        example: submitted
         type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[project]':
+        custom: []
+        name: 'filter[project]'
+        description: 'Operation id.'
+        required: false
+        example: 4
+        type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
@@ -102,13 +119,13 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      'filter[account]':
+      'filter[claim_date]':
         custom: []
-        name: 'filter[account]'
-        description: 'Account id.'
+        name: 'filter[claim_date]'
+        description: 'Inclusive date range from,until.'
         required: false
-        example: 1100
-        type: integer
+        example: '2026-01-01,2026-06-30'
+        type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
@@ -116,9 +133,20 @@ endpoints:
       sort:
         custom: []
         name: sort
-        description: 'Allowed: name, limit_amount, start_date, end_date, created_at.'
+        description: 'Allowed: claim_number, claim_date, amount, created_at.'
         required: false
-        example: '-limit_amount'
+        example: '-claim_date'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      include:
+        custom: []
+        name: include
+        description: 'Allowed: project, customer.'
+        required: false
+        example: customer
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -127,11 +155,13 @@ endpoints:
     cleanQueryParameters:
       page: 1
       per_page: 25
-      search: CIB
-      'filter[status]': active
+      search: CLM-2026
+      'filter[status]': submitted
+      'filter[project]': 4
       'filter[customer]': 7
-      'filter[account]': 1100
-      sort: '-limit_amount'
+      'filter[claim_date]': '2026-01-01,2026-06-30'
+      sort: '-claim_date'
+      include: customer
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
@@ -139,7 +169,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":[{"id":2,"type":"credit_facility","name":"CIB overdraft","status":{"value":"active","label":"Active","color":"success"},"limit_amount":"5000000.00"}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        content: '{"data":[{"id":9,"type":"financial_claim","claim_number":"CLM-202609-0003","status":{"value":"submitted","label":"Submitted","color":"warning"},"amount":"250000.00"}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
         headers: []
         description: Success
     responseFields: []
@@ -154,30 +184,32 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/credit-facilities/{credit_facility_id}'
+    uri: 'api/v1/financial-claims/{financial_claim_id}'
     metadata:
       custom: []
-      groupName: '35. Credit facilities'
+      groupName: '34. Financial claims'
       groupDescription: |-
 
-        التسهيلات الائتمانية — a credit line, and how much of it is already
-        committed to operations.
+        المطالبات المالية — what the company is asking a customer to pay, for a
+        given operation.
 
-        The rule the whole resource exists for: **a facility cannot be promised
-        twice.** An allocation is refused when it would take the committed total
-        past the limit, so read `utilization.available` on the detail endpoint and
-        show it before anyone types an amount — it is cheaper to stop a user than to
-        refuse them.
+        Draft → **submit** → Submitted → **collect** → Collected. Three permissions,
+        because raising a claim, sending it to the customer and declaring it paid
+        are three different acts by three different people.
 
-        Releasing an allocation gives the room back. Nothing here touches the
-        ledger: a facility is a commitment, not a movement.
+        Submission is gated on the work being deliverable: the operation is
+        Completed, or at least one delivery to the customer is active. Claiming for
+        work that has not been delivered is how a receivable becomes a dispute.
+
+        A claim also **collects itself** when payments allocated to it add up to its
+        amount, which is why `collect` is normally only called by hand for cash that
+        arrived outside the platform.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Show a facility'
+      title: 'Show a claim'
       description: |-
-        Carries `utilization` — the limit, what is committed, and what is left.
-        The list deliberately does not: working it out means summing the
-        facility's live allocations.
+        Carries `paid_amount` — what the payments allocated to this claim add up
+        to. Summed here and not on the list, where it would cost a query per row.
       authenticated: true
       deprecated: false
     headers:
@@ -185,10 +217,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      credit_facility_id:
+      financial_claim_id:
         custom: []
-        name: credit_facility_id
-        description: 'The ID of the credit facility.'
+        name: financial_claim_id
+        description: 'The ID of the financial claim.'
         required: true
         example: 17
         type: integer
@@ -196,20 +228,20 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      credit_facility:
+      financial_claim:
         custom: []
-        name: credit_facility
-        description: 'The facility id.'
+        name: financial_claim
+        description: 'The claim id.'
         required: true
-        example: 2
+        example: 9
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      credit_facility_id: 17
-      credit_facility: 2
+      financial_claim_id: 17
+      financial_claim: 9
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -219,7 +251,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":2,"type":"credit_facility","name":"CIB overdraft","utilization":{"limit":"5000000.00","used":"1200000.00","available":"3800000.00","percent":"24.00"},"allocations":[{"project_id":4,"allocated_amount":"1200000.00"}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":9,"type":"financial_claim","claim_number":"CLM-202609-0003","amount":"250000.00","paid_amount":"150000.00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Success
     responseFields: []
@@ -234,27 +266,30 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/credit-facilities
+    uri: api/v1/financial-claims
     metadata:
       custom: []
-      groupName: '35. Credit facilities'
+      groupName: '34. Financial claims'
       groupDescription: |-
 
-        التسهيلات الائتمانية — a credit line, and how much of it is already
-        committed to operations.
+        المطالبات المالية — what the company is asking a customer to pay, for a
+        given operation.
 
-        The rule the whole resource exists for: **a facility cannot be promised
-        twice.** An allocation is refused when it would take the committed total
-        past the limit, so read `utilization.available` on the detail endpoint and
-        show it before anyone types an amount — it is cheaper to stop a user than to
-        refuse them.
+        Draft → **submit** → Submitted → **collect** → Collected. Three permissions,
+        because raising a claim, sending it to the customer and declaring it paid
+        are three different acts by three different people.
 
-        Releasing an allocation gives the room back. Nothing here touches the
-        ledger: a facility is a commitment, not a movement.
+        Submission is gated on the work being deliverable: the operation is
+        Completed, or at least one delivery to the customer is active. Claiming for
+        work that has not been delivered is how a receivable becomes a dispute.
+
+        A claim also **collects itself** when payments allocated to it add up to its
+        amount, which is why `collect` is normally only called by hand for cash that
+        arrived outside the platform.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Open a credit facility'
-      description: ''
+      title: 'Raise a claim'
+      description: 'Always a Draft. It reaches the customer through `submit`.'
       authenticated: true
       deprecated: false
     headers:
@@ -266,121 +301,73 @@ endpoints:
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      name:
+      project_id:
         custom: []
-        name: name
-        description: ''
+        name: project_id
+        description: 'The operation being claimed for.'
         required: true
-        example: 'CIB overdraft'
-        type: string
+        example: 4
+        type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      account_id:
-        custom: []
-        name: account_id
-        description: 'optional The bank account behind it.'
-        required: false
-        example: 1100
-        type: integer
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
       customer_id:
         custom: []
         name: customer_id
-        description: 'optional When the facility is customer-specific.'
-        required: false
+        description: ''
+        required: true
         example: 7
         type: integer
         enumValues: []
         exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      claim_date:
+        custom: []
+        name: claim_date
+        description: 'optional Defaults to today.'
+        required: false
+        example: '2026-09-16'
+        type: date
+        enumValues: []
+        exampleWasSpecified: true
         nullable: true
         deprecated: false
-      limit_amount:
+      amount:
         custom: []
-        name: limit_amount
-        description: 'The ceiling that allocations are checked against.'
+        name: amount
+        description: ''
         required: true
-        example: 5000000.0
+        example: 250000.0
         type: number
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      currency:
+      description:
         custom: []
-        name: currency
-        description: 'optional Three letters, defaults to EGP.'
-        required: false
-        example: EGP
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      start_date:
-        custom: []
-        name: start_date
+        name: description
         description: optional
         required: false
-        example: '2026-01-01'
-        type: date
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      end_date:
-        custom: []
-        name: end_date
-        description: optional
-        required: false
-        example: '2026-12-31'
-        type: date
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      status:
-        custom: []
-        name: status
-        description: 'optional active, expired or closed. Defaults to active.'
-        required: false
-        example: active
+        example: 'Supply and installation, first milestone'
         type: string
         enumValues: []
         exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      notes:
-        custom: []
-        name: notes
-        description: 'Must not be greater than 5000 characters.'
-        required: false
-        example: mqeopfuudtdsufvyvddqa
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
         nullable: true
         deprecated: false
     cleanBodyParameters:
-      name: 'CIB overdraft'
-      account_id: 1100
+      project_id: 4
       customer_id: 7
-      limit_amount: 5000000.0
-      currency: EGP
-      start_date: '2026-01-01'
-      end_date: '2026-12-31'
-      status: active
-      notes: mqeopfuudtdsufvyvddqa
+      claim_date: '2026-09-16'
+      amount: 250000.0
+      description: 'Supply and installation, first milestone'
     fileParameters: []
     responses:
       -
         custom: []
         status: 201
-        content: '{"data":{"id":2,"type":"credit_facility","name":"CIB overdraft","limit_amount":"5000000.00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":9,"type":"financial_claim","claim_number":"CLM-202609-0003","status":{"value":"draft","label":"Draft","color":"gray"}},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Created
     responseFields: []
@@ -395,27 +382,32 @@ endpoints:
     custom: []
     httpMethods:
       - PATCH
-    uri: 'api/v1/credit-facilities/{credit_facility_id}'
+    uri: 'api/v1/financial-claims/{financial_claim_id}'
     metadata:
       custom: []
-      groupName: '35. Credit facilities'
+      groupName: '34. Financial claims'
       groupDescription: |-
 
-        التسهيلات الائتمانية — a credit line, and how much of it is already
-        committed to operations.
+        المطالبات المالية — what the company is asking a customer to pay, for a
+        given operation.
 
-        The rule the whole resource exists for: **a facility cannot be promised
-        twice.** An allocation is refused when it would take the committed total
-        past the limit, so read `utilization.available` on the detail endpoint and
-        show it before anyone types an amount — it is cheaper to stop a user than to
-        refuse them.
+        Draft → **submit** → Submitted → **collect** → Collected. Three permissions,
+        because raising a claim, sending it to the customer and declaring it paid
+        are three different acts by three different people.
 
-        Releasing an allocation gives the room back. Nothing here touches the
-        ledger: a facility is a commitment, not a movement.
+        Submission is gated on the work being deliverable: the operation is
+        Completed, or at least one delivery to the customer is active. Claiming for
+        work that has not been delivered is how a receivable becomes a dispute.
+
+        A claim also **collects itself** when payments allocated to it add up to its
+        amount, which is why `collect` is normally only called by hand for cash that
+        arrived outside the platform.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Update a facility'
-      description: ''
+      title: 'Update a draft claim'
+      description: |-
+        Drafts only — the policy answers **403** once the claim has been
+        submitted, because the customer is already holding a copy.
       authenticated: true
       deprecated: false
     headers:
@@ -423,10 +415,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      credit_facility_id:
+      financial_claim_id:
         custom: []
-        name: credit_facility_id
-        description: 'The ID of the credit facility.'
+        name: financial_claim_id
+        description: 'The ID of the financial claim.'
         required: true
         example: 17
         type: integer
@@ -434,45 +426,23 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      credit_facility:
+      financial_claim:
         custom: []
-        name: credit_facility
-        description: 'The facility id.'
+        name: financial_claim
+        description: 'The claim id.'
         required: true
-        example: 2
+        example: 9
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      credit_facility_id: 17
-      credit_facility: 2
+      financial_claim_id: 17
+      financial_claim: 9
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      name:
-        custom: []
-        name: name
-        description: 'Must not be greater than 255 characters.'
-        required: false
-        example: vmqeopfuudtdsufvyvddq
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      account_id:
-        custom: []
-        name: account_id
-        description: 'Must match an existing stored value.'
-        required: false
-        example: 17
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
       customer_id:
         custom: []
         name: customer_id
@@ -482,90 +452,52 @@ endpoints:
         type: integer
         enumValues: []
         exampleWasSpecified: false
-        nullable: true
+        nullable: false
         deprecated: false
-      limit_amount:
+      claim_date:
         custom: []
-        name: limit_amount
+        name: claim_date
+        description: 'Must be a valid date.'
+        required: false
+        example: '2026-10-12T17:10:51'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      amount:
+        custom: []
+        name: amount
         description: optional
         required: false
-        example: 6000000.0
+        example: 260000.0
         type: number
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      currency:
+      description:
         custom: []
-        name: currency
-        description: 'Must be 3 characters.'
-        required: false
-        example: opf
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      start_date:
-        custom: []
-        name: start_date
-        description: 'Must be a valid date.'
-        required: false
-        example: '2026-09-12T12:40:14'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      end_date:
-        custom: []
-        name: end_date
-        description: 'Must be a valid date. Must be a date after or equal to <code>start_date</code>.'
-        required: false
-        example: '2107-10-12'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      status:
-        custom: []
-        name: status
+        name: description
         description: optional
         required: false
-        example: closed
+        example: 'Supply and installation, revised scope'
         type: string
         enumValues: []
         exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      notes:
-        custom: []
-        name: notes
-        description: 'Must not be greater than 5000 characters.'
-        required: false
-        example: mqeopfuudtdsufvyvddqa
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
         nullable: true
         deprecated: false
     cleanBodyParameters:
-      name: vmqeopfuudtdsufvyvddq
-      account_id: 17
       customer_id: 17
-      limit_amount: 6000000.0
-      currency: opf
-      start_date: '2026-09-12T12:40:14'
-      end_date: '2107-10-12'
-      status: closed
-      notes: mqeopfuudtdsufvyvddqa
+      claim_date: '2026-10-12T17:10:51'
+      amount: 260000.0
+      description: 'Supply and installation, revised scope'
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":2,"type":"credit_facility","limit_amount":"6000000.00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":9,"type":"financial_claim","amount":"260000.00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Updated
     responseFields: []
@@ -580,29 +512,34 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: 'api/v1/credit-facilities/{credit_facility_id}/allocate'
+    uri: 'api/v1/financial-claims/{financial_claim_id}/submit'
     metadata:
       custom: []
-      groupName: '35. Credit facilities'
+      groupName: '34. Financial claims'
       groupDescription: |-
 
-        التسهيلات الائتمانية — a credit line, and how much of it is already
-        committed to operations.
+        المطالبات المالية — what the company is asking a customer to pay, for a
+        given operation.
 
-        The rule the whole resource exists for: **a facility cannot be promised
-        twice.** An allocation is refused when it would take the committed total
-        past the limit, so read `utilization.available` on the detail endpoint and
-        show it before anyone types an amount — it is cheaper to stop a user than to
-        refuse them.
+        Draft → **submit** → Submitted → **collect** → Collected. Three permissions,
+        because raising a claim, sending it to the customer and declaring it paid
+        are three different acts by three different people.
 
-        Releasing an allocation gives the room back. Nothing here touches the
-        ledger: a facility is a commitment, not a movement.
+        Submission is gated on the work being deliverable: the operation is
+        Completed, or at least one delivery to the customer is active. Claiming for
+        work that has not been delivered is how a receivable becomes a dispute.
+
+        A claim also **collects itself** when payments allocated to it add up to its
+        amount, which is why `collect` is normally only called by hand for cash that
+        arrived outside the platform.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Commit part of a facility to an operation'
+      title: 'Submit a claim'
       description: |-
-        Refused when the amount would take the committed total past the limit —
-        that is the whole point of the record.
+        Refused unless the operation is deliverable — Completed, or carrying at
+        least one active delivery. Claiming for work that has not been delivered
+        is how a receivable becomes a dispute, so the gate is here rather than
+        in anyone's judgement.
       authenticated: true
       deprecated: false
     headers:
@@ -610,10 +547,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      credit_facility_id:
+      financial_claim_id:
         custom: []
-        name: credit_facility_id
-        description: 'The ID of the credit facility.'
+        name: financial_claim_id
+        description: 'The ID of the financial claim.'
         required: true
         example: 17
         type: integer
@@ -621,74 +558,38 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      credit_facility:
+      financial_claim:
         custom: []
-        name: credit_facility
-        description: 'The facility id.'
+        name: financial_claim
+        description: 'The claim id.'
         required: true
-        example: 2
+        example: 9
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      credit_facility_id: 17
-      credit_facility: 2
+      financial_claim_id: 17
+      financial_claim: 9
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters:
-      project_id:
-        custom: []
-        name: project_id
-        description: 'The operation the room is for.'
-        required: true
-        example: 4
-        type: integer
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      amount:
-        custom: []
-        name: amount
-        description: ''
-        required: true
-        example: 1200000.0
-        type: number
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      notes:
-        custom: []
-        name: notes
-        description: optional
-        required: false
-        example: 'Letter of credit for the imported switchgear'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-    cleanBodyParameters:
-      project_id: 4
-      amount: 1200000.0
-      notes: 'Letter of credit for the imported switchgear'
+    bodyParameters: []
+    cleanBodyParameters: []
     fileParameters: []
     responses:
       -
         custom: []
-        status: 201
-        content: '{"data":{"id":2,"type":"credit_facility","utilization":{"used":"1200000.00","available":"3800000.00"}},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        status: 200
+        content: '{"data":{"id":9,"type":"financial_claim","status":{"value":"submitted","label":"Submitted","color":"warning"},"submitted_at":"2026-09-16T10:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
-        description: Allocated
+        description: Submitted
       -
         custom: []
         status: 422
-        content: '{"error":{"code":"business_rule_violated","message":"Allocation exceeds the facility''s available limit."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"error":{"code":"business_rule_violated","message":"A claim cannot be raised before supply or installation is complete."},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
-        description: 'Over the limit'
+        description: 'Nothing delivered yet'
     responseFields: []
     auth:
       - headers
@@ -701,29 +602,33 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: 'api/v1/facility-allocations/{facility_allocation_id}/release'
+    uri: 'api/v1/financial-claims/{financial_claim_id}/collect'
     metadata:
       custom: []
-      groupName: '35. Credit facilities'
+      groupName: '34. Financial claims'
       groupDescription: |-
 
-        التسهيلات الائتمانية — a credit line, and how much of it is already
-        committed to operations.
+        المطالبات المالية — what the company is asking a customer to pay, for a
+        given operation.
 
-        The rule the whole resource exists for: **a facility cannot be promised
-        twice.** An allocation is refused when it would take the committed total
-        past the limit, so read `utilization.available` on the detail endpoint and
-        show it before anyone types an amount — it is cheaper to stop a user than to
-        refuse them.
+        Draft → **submit** → Submitted → **collect** → Collected. Three permissions,
+        because raising a claim, sending it to the customer and declaring it paid
+        are three different acts by three different people.
 
-        Releasing an allocation gives the room back. Nothing here touches the
-        ledger: a facility is a commitment, not a movement.
+        Submission is gated on the work being deliverable: the operation is
+        Completed, or at least one delivery to the customer is active. Claiming for
+        work that has not been delivered is how a receivable becomes a dispute.
+
+        A claim also **collects itself** when payments allocated to it add up to its
+        amount, which is why `collect` is normally only called by hand for cash that
+        arrived outside the platform.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Release an allocation'
+      title: 'Mark a claim collected'
       description: |-
-        Gives the room back to the facility. The allocation row stays, marked
-        released, so the history of what was committed and when survives.
+        Submitted claims only. A claim usually collects itself once the payments
+        allocated to it cover its amount, so this is mainly for cash that
+        arrived outside the platform.
       authenticated: true
       deprecated: false
     headers:
@@ -731,10 +636,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      facility_allocation_id:
+      financial_claim_id:
         custom: []
-        name: facility_allocation_id
-        description: 'The ID of the facility allocation.'
+        name: financial_claim_id
+        description: 'The ID of the financial claim.'
         required: true
         example: 17
         type: integer
@@ -742,20 +647,20 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      facility_allocation:
+      financial_claim:
         custom: []
-        name: facility_allocation
-        description: 'The allocation id.'
+        name: financial_claim
+        description: 'The claim id.'
         required: true
-        example: 14
+        example: 9
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      facility_allocation_id: 17
-      facility_allocation: 14
+      financial_claim_id: 17
+      financial_claim: 9
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -765,9 +670,9 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":2,"type":"credit_facility","utilization":{"used":"0.00","available":"5000000.00"}},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":9,"type":"financial_claim","status":{"value":"collected","label":"Collected","color":"success"},"collected_at":"2026-09-30T10:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
-        description: Released
+        description: Collected
     responseFields: []
     auth:
       - headers
@@ -780,30 +685,30 @@ endpoints:
     custom: []
     httpMethods:
       - DELETE
-    uri: 'api/v1/credit-facilities/{credit_facility_id}'
+    uri: 'api/v1/financial-claims/{financial_claim_id}'
     metadata:
       custom: []
-      groupName: '35. Credit facilities'
+      groupName: '34. Financial claims'
       groupDescription: |-
 
-        التسهيلات الائتمانية — a credit line, and how much of it is already
-        committed to operations.
+        المطالبات المالية — what the company is asking a customer to pay, for a
+        given operation.
 
-        The rule the whole resource exists for: **a facility cannot be promised
-        twice.** An allocation is refused when it would take the committed total
-        past the limit, so read `utilization.available` on the detail endpoint and
-        show it before anyone types an amount — it is cheaper to stop a user than to
-        refuse them.
+        Draft → **submit** → Submitted → **collect** → Collected. Three permissions,
+        because raising a claim, sending it to the customer and declaring it paid
+        are three different acts by three different people.
 
-        Releasing an allocation gives the room back. Nothing here touches the
-        ledger: a facility is a commitment, not a movement.
+        Submission is gated on the work being deliverable: the operation is
+        Completed, or at least one delivery to the customer is active. Claiming for
+        work that has not been delivered is how a receivable becomes a dispute.
+
+        A claim also **collects itself** when payments allocated to it add up to its
+        amount, which is why `collect` is normally only called by hand for cash that
+        arrived outside the platform.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Delete a facility'
-      description: |-
-        Refused while it still has allocations — releasing them first is the
-        point, because a deleted facility would leave operations believing they
-        hold room that no longer exists anywhere.
+      title: 'Delete a draft claim'
+      description: 'Drafts only — the policy answers **403** afterwards.'
       authenticated: true
       deprecated: false
     headers:
@@ -811,10 +716,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      credit_facility_id:
+      financial_claim_id:
         custom: []
-        name: credit_facility_id
-        description: 'The ID of the credit facility.'
+        name: financial_claim_id
+        description: 'The ID of the financial claim.'
         required: true
         example: 17
         type: integer
@@ -822,20 +727,20 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      credit_facility:
+      financial_claim:
         custom: []
-        name: credit_facility
-        description: 'The facility id.'
+        name: financial_claim
+        description: 'The claim id.'
         required: true
-        example: 2
+        example: 9
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      credit_facility_id: 17
-      credit_facility: 2
+      financial_claim_id: 17
+      financial_claim: 9
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -848,12 +753,6 @@ endpoints:
         content: '{}'
         headers: []
         description: Deleted
-      -
-        custom: []
-        status: 422
-        content: '{"error":{"code":"business_rule_violated","message":"Cannot delete a credit facility that still has allocations. Release them first."},"meta":{"request_id":"9f1c","api_version":"1"}}'
-        headers: []
-        description: 'Still allocated'
     responseFields: []
     auth:
       - headers

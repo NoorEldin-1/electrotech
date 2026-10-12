@@ -29,6 +29,9 @@ tags:
     name: '6. Permissions'
     description: "\nThe read-only permission catalog, grouped exactly as the panel's Roles\nscreen groups it. A Flutter role-editing screen renders this directly.\n\nPermissions are defined in code (RoleAndPermissionSeeder) and synced on\nevery deploy, so there is deliberately no create/update/delete here — a\npermission invented at runtime would be one nothing ever checks."
   -
+    name: '7. Customer follow-up'
+    description: "\nمتابعة العملاء — قسم إدارة العملاء (Presentation.pptx slides 6–7). The log\nof touchpoints with the customer on each operation.\n\nTwo entries move the operation timeline: the first `contact` reaches\n\"Customer Contact\", and the first `site_readiness` with `site_ready: true`\nreaches \"Site Readiness\". `follow_up` is a plain log entry. The customer is\nalways the operation's customer — it is never sent."
+  -
     name: '7. Items'
     description: "\nThe material catalogue (الأصناف): raw materials, semi-finished parts,\nfinished goods and consumables. Every BOM line, purchase-order line, voucher\nline and stock balance in the platform points at one of these, so this is\nusually the first list a client caches after logging in."
   -
@@ -1490,7 +1493,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the user.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -1889,7 +1892,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the role.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -1985,6 +1988,530 @@ paths:
                         example: 1
       tags:
         - '6. Permissions'
+  /api/v1/customer-interactions:
+    get:
+      summary: 'List customer interactions'
+      operationId: listCustomerInteractions
+      description: ''
+      parameters:
+        -
+          in: query
+          name: page
+          description: 'The page number.'
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: 'The page number.'
+            example: 1
+        -
+          in: query
+          name: per_page
+          description: 'Rows per page, max 100.'
+          example: 25
+          required: false
+          schema:
+            type: integer
+            description: 'Rows per page, max 100.'
+            example: 25
+        -
+          in: query
+          name: search
+          description: 'Matches the notes.'
+          example: drawings
+          required: false
+          schema:
+            type: string
+            description: 'Matches the notes.'
+            example: drawings
+        -
+          in: query
+          name: 'filter[project]'
+          description: 'Operation id.'
+          example: 4
+          required: false
+          schema:
+            type: integer
+            description: 'Operation id.'
+            example: 4
+        -
+          in: query
+          name: 'filter[customer]'
+          description: 'Customer id.'
+          example: 2
+          required: false
+          schema:
+            type: integer
+            description: 'Customer id.'
+            example: 2
+        -
+          in: query
+          name: 'filter[type]'
+          description: 'contact, site_readiness or follow_up.'
+          example: contact
+          required: false
+          schema:
+            type: string
+            description: 'contact, site_readiness or follow_up.'
+            example: contact
+        -
+          in: query
+          name: 'filter[interacted_at]'
+          description: 'Inclusive date range from,until.'
+          example: '2026-01-01,2026-06-30'
+          required: false
+          schema:
+            type: string
+            description: 'Inclusive date range from,until.'
+            example: '2026-01-01,2026-06-30'
+        -
+          in: query
+          name: sort
+          description: 'Allowed: interacted_at, created_at.'
+          example: '-interacted_at'
+          required: false
+          schema:
+            type: string
+            description: 'Allowed: interacted_at, created_at.'
+            example: '-interacted_at'
+        -
+          in: query
+          name: include
+          description: 'Allowed: project.'
+          example: project
+          required: false
+          schema:
+            type: string
+            description: 'Allowed: project.'
+            example: project
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      id: 5
+                      type: customer_interaction
+                      project_id: 4
+                      customer_id: 2
+                      interaction_type:
+                        value: contact
+                        label: 'Customer Contact'
+                        color: info
+                      channel:
+                        value: call
+                        label: 'Phone Call'
+                        color: null
+                      interacted_at: '2026-09-01T10:00:00+00:00'
+                      site_ready: false
+                      notes: 'First call'
+                  meta:
+                    request_id: 9f1c
+                    api_version: '1'
+                    pagination:
+                      total: 1
+                      count: 1
+                      per_page: 25
+                      current_page: 1
+                      total_pages: 1
+                  links:
+                    first: ''
+                    prev: null
+                    next: null
+                    last: ''
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 5
+                        type: customer_interaction
+                        project_id: 4
+                        customer_id: 2
+                        interaction_type:
+                          value: contact
+                          label: 'Customer Contact'
+                          color: info
+                        channel:
+                          value: call
+                          label: 'Phone Call'
+                          color: null
+                        interacted_at: '2026-09-01T10:00:00+00:00'
+                        site_ready: false
+                        notes: 'First call'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 5
+                        type:
+                          type: string
+                          example: customer_interaction
+                        project_id:
+                          type: integer
+                          example: 4
+                        customer_id:
+                          type: integer
+                          example: 2
+                        interaction_type:
+                          type: object
+                          properties:
+                            value:
+                              type: string
+                              example: contact
+                            label:
+                              type: string
+                              example: 'Customer Contact'
+                            color:
+                              type: string
+                              example: info
+                        channel:
+                          type: object
+                          properties:
+                            value:
+                              type: string
+                              example: call
+                            label:
+                              type: string
+                              example: 'Phone Call'
+                            color:
+                              type: string
+                              example: null
+                              nullable: true
+                        interacted_at:
+                          type: string
+                          example: '2026-09-01T10:00:00+00:00'
+                        site_ready:
+                          type: boolean
+                          example: false
+                        notes:
+                          type: string
+                          example: 'First call'
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c
+                      api_version:
+                        type: string
+                        example: '1'
+                      pagination:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            example: 1
+                          count:
+                            type: integer
+                            example: 1
+                          per_page:
+                            type: integer
+                            example: 25
+                          current_page:
+                            type: integer
+                            example: 1
+                          total_pages:
+                            type: integer
+                            example: 1
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                        example: ''
+                      prev:
+                        type: string
+                        example: null
+                        nullable: true
+                      next:
+                        type: string
+                        example: null
+                        nullable: true
+                      last:
+                        type: string
+                        example: ''
+      tags:
+        - '7. Customer follow-up'
+    post:
+      summary: 'Log a customer interaction'
+      operationId: logACustomerInteraction
+      description: "`interacted_at` defaults to now. `site_ready` only sticks on a\n`site_readiness` entry."
+      parameters: []
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 5
+                    type: customer_interaction
+                    project_id: 4
+                    interaction_type:
+                      value: contact
+                      label: 'Customer Contact'
+                      color: info
+                  meta:
+                    request_id: 9f1c
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 5
+                      type:
+                        type: string
+                        example: customer_interaction
+                      project_id:
+                        type: integer
+                        example: 4
+                      interaction_type:
+                        type: object
+                        properties:
+                          value:
+                            type: string
+                            example: contact
+                          label:
+                            type: string
+                            example: 'Customer Contact'
+                          color:
+                            type: string
+                            example: info
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '7. Customer follow-up'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: integer
+                  description: 'The operation.'
+                  example: 4
+                type:
+                  type: string
+                  description: 'contact, site_readiness or follow_up.'
+                  example: contact
+                channel:
+                  type: string
+                  description: 'optional call, visit, whatsapp or email.'
+                  example: call
+                  nullable: true
+                interacted_at:
+                  type: datetime
+                  description: 'optional Defaults to now.'
+                  example: '2026-09-01 10:00:00'
+                  nullable: true
+                site_ready:
+                  type: boolean
+                  description: 'optional Only for site_readiness.'
+                  example: true
+                  nullable: true
+                notes:
+                  type: string
+                  description: optional
+                  example: 'Customer confirmed the site is ready'
+                  nullable: true
+              required:
+                - project_id
+                - type
+  '/api/v1/customer-interactions/{customer_interaction_id}':
+    get:
+      summary: 'Show a customer interaction'
+      operationId: showACustomerInteraction
+      description: ''
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 5
+                    type: customer_interaction
+                    project_id: 4
+                    interaction_type:
+                      value: site_readiness
+                      label: 'Site Readiness'
+                      color: success
+                    site_ready: true
+                  meta:
+                    request_id: 9f1c
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 5
+                      type:
+                        type: string
+                        example: customer_interaction
+                      project_id:
+                        type: integer
+                        example: 4
+                      interaction_type:
+                        type: object
+                        properties:
+                          value:
+                            type: string
+                            example: site_readiness
+                          label:
+                            type: string
+                            example: 'Site Readiness'
+                          color:
+                            type: string
+                            example: success
+                      site_ready:
+                        type: boolean
+                        example: true
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '7. Customer follow-up'
+    patch:
+      summary: 'Update a customer interaction'
+      operationId: updateACustomerInteraction
+      description: ''
+      parameters: []
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 5
+                    type: customer_interaction
+                    site_ready: true
+                  meta:
+                    request_id: 9f1c
+                    api_version: '1'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 5
+                      type:
+                        type: string
+                        example: customer_interaction
+                      site_ready:
+                        type: boolean
+                        example: true
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '7. Customer follow-up'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: optional
+                  example: site_readiness
+                channel:
+                  type: string
+                  description: ''
+                  example: whatsapp
+                  enum:
+                    - call
+                    - visit
+                    - whatsapp
+                    - email
+                  nullable: true
+                interacted_at:
+                  type: string
+                  description: 'Must be a valid date.'
+                  example: '2026-10-12T16:57:39'
+                site_ready:
+                  type: boolean
+                  description: optional
+                  example: true
+                notes:
+                  type: string
+                  description: optional
+                  example: 'Second call — site ready'
+                  nullable: true
+    delete:
+      summary: 'Delete a customer interaction'
+      operationId: deleteACustomerInteraction
+      description: "The timeline stage it proved goes back to \"not reached\" unless another\nentry still proves it."
+      parameters: []
+      responses:
+        204:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {  }
+                properties: {  }
+      tags:
+        - '7. Customer follow-up'
+    parameters:
+      -
+        in: path
+        name: customer_interaction_id
+        description: 'The ID of the customer interaction.'
+        example: 17
+        required: true
+        schema:
+          type: integer
+      -
+        in: path
+        name: customer_interaction
+        description: 'The interaction id.'
+        example: 5
+        required: true
+        schema:
+          type: integer
   /api/v1/items:
     get:
       summary: 'List items'
@@ -2599,7 +3126,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the item.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -3064,7 +3591,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the customer.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -3545,7 +4072,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the supplier.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -3859,7 +4386,7 @@ paths:
         in: path
         name: attachment_id
         description: 'The ID of the attachment.'
-        example: 7
+        example: 17
         required: true
         schema:
           type: integer
@@ -3893,7 +4420,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the attachment.'
-        example: 7
+        example: 17
         required: true
         schema:
           type: integer
@@ -4478,27 +5005,27 @@ paths:
                 electric_current:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: uydlsmsjuryvojcybzvrb
+                  example: xtxqbbyamuoeunwgyvzxh
                   nullable: true
                 model:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: yickznkygloigmkwxphlv
+                  example: rxeqdinrogtqnhfycvkoj
                   nullable: true
                 section_type:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: azjrcnfbaqywuxhgjjmzu
+                  example: xrivkthrpilfpeejvgizt
                   nullable: true
                 poles_count:
                   type: integer
                   description: 'Must be at least 0.'
-                  example: 82
+                  example: 79
                   nullable: true
                 quantity:
                   type: integer
                   description: 'Must be at least 0.'
-                  example: 34
+                  example: 26
                   nullable: true
                 estimated_budget:
                   type: number
@@ -4578,7 +5105,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -4684,7 +5211,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -4766,7 +5293,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -4872,7 +5399,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -4934,7 +5461,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -5067,7 +5594,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -5201,7 +5728,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -5479,7 +6006,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -5800,7 +6327,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the offer.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -5993,7 +6520,7 @@ paths:
         in: path
         name: offer_id
         description: 'The ID of the offer.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -6540,7 +7067,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the bom.'
-        example: 2
+        example: 17
         required: true
         schema:
           type: integer
@@ -6658,7 +7185,7 @@ paths:
         in: path
         name: item_id
         description: 'The ID of the item.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -6792,7 +7319,7 @@ paths:
         in: path
         name: bom_id
         description: 'The ID of the bom.'
-        example: 2
+        example: 17
         required: true
         schema:
           type: integer
@@ -6898,7 +7425,7 @@ paths:
         in: path
         name: bom_id
         description: 'The ID of the bom.'
-        example: 2
+        example: 17
         required: true
         schema:
           type: integer
@@ -7008,7 +7535,7 @@ paths:
         in: path
         name: bom_id
         description: 'The ID of the bom.'
-        example: 2
+        example: 17
         required: true
         schema:
           type: integer
@@ -7600,7 +8127,7 @@ paths:
         in: path
         name: purchase_order_id
         description: 'The ID of the purchase order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -7707,7 +8234,7 @@ paths:
         in: path
         name: purchase_order_id
         description: 'The ID of the purchase order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -7817,7 +8344,7 @@ paths:
         in: path
         name: purchase_order_id
         description: 'The ID of the purchase order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -7975,7 +8502,7 @@ paths:
         in: path
         name: purchase_order_id
         description: 'The ID of the purchase order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -8416,7 +8943,7 @@ paths:
         in: path
         name: stock_reservation_id
         description: 'The ID of the stock reservation.'
-        example: 4
+        example: 17
         required: true
         schema:
           type: integer
@@ -8526,7 +9053,7 @@ paths:
         in: path
         name: stock_reservation_id
         description: 'The ID of the stock reservation.'
-        example: 4
+        example: 17
         required: true
         schema:
           type: integer
@@ -8657,7 +9184,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -9255,7 +9782,7 @@ paths:
         in: path
         name: item_id
         description: 'The ID of the item.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -9750,7 +10277,7 @@ paths:
         in: path
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -9860,7 +10387,7 @@ paths:
         in: path
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -9969,7 +10496,7 @@ paths:
         in: path
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -10092,7 +10619,7 @@ paths:
         in: path
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -10729,7 +11256,7 @@ paths:
         in: path
         name: depreciation_voucher_id
         description: 'The ID of the depreciation voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -10843,7 +11370,7 @@ paths:
         in: path
         name: depreciation_voucher_id
         description: 'The ID of the depreciation voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -11222,6 +11749,11 @@ paths:
                   description: 'optional low, normal, high or urgent. Defaults to normal.'
                   example: high
                   nullable: true
+                timeline_phase:
+                  type: string
+                  description: 'optional preliminary or executive — which manufacturing order this is on the operation timeline. Omitted, it is executive once the shop drawing is approved, otherwise preliminary.'
+                  example: executive
+                  nullable: true
                 planned_quantity:
                   type: number
                   description: 'optional Ignored when `outputs` is sent — the sum of the lines wins.'
@@ -11510,6 +12042,11 @@ paths:
                   type: string
                   description: 'optional low, normal, high or urgent.'
                   example: urgent
+                timeline_phase:
+                  type: string
+                  description: 'optional preliminary or executive; null re-derives it.'
+                  example: preliminary
+                  nullable: true
                 planned_quantity:
                   type: number
                   description: optional
@@ -11636,7 +12173,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -11721,7 +12258,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -11842,7 +12379,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -11960,7 +12497,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -12095,7 +12632,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -12209,7 +12746,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -12323,7 +12860,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -12437,7 +12974,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -12588,7 +13125,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -12702,7 +13239,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -12812,7 +13349,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -12926,7 +13463,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -13407,7 +13944,7 @@ paths:
         in: path
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -13497,7 +14034,7 @@ paths:
         in: path
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -13649,7 +14186,7 @@ paths:
         in: path
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -13860,7 +14397,7 @@ paths:
         in: path
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -14284,7 +14821,7 @@ paths:
         in: path
         name: return_voucher_id
         description: 'The ID of the return voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -14404,7 +14941,7 @@ paths:
         in: path
         name: return_voucher_id
         description: 'The ID of the return voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -14518,7 +15055,7 @@ paths:
         in: path
         name: return_voucher_id
         description: 'The ID of the return voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -14887,7 +15424,7 @@ paths:
         in: path
         name: quality_sheet_id
         description: 'The ID of the quality sheet.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -14969,7 +15506,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -15230,7 +15767,7 @@ paths:
         in: path
         name: quality_sheet_id
         description: 'The ID of the quality sheet.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -15320,7 +15857,7 @@ paths:
         in: path
         name: quality_sheet_id
         description: 'The ID of the quality sheet.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -15398,7 +15935,7 @@ paths:
         in: path
         name: quality_sheet_id
         description: 'The ID of the quality sheet.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -15708,7 +16245,7 @@ paths:
         in: path
         name: production_entry_id
         description: 'The ID of the production entry.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -16279,7 +16816,7 @@ paths:
                 voucher_date:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-09-12T12:40:14'
+                  example: '2026-10-12T17:06:05'
                 plates_count:
                   type: integer
                   description: 'Must be at least 0.'
@@ -16321,7 +16858,7 @@ paths:
         in: path
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -16435,7 +16972,7 @@ paths:
         in: path
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -16553,7 +17090,7 @@ paths:
         in: path
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -16675,7 +17212,7 @@ paths:
         in: path
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -16749,7 +17286,7 @@ paths:
         in: path
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -17798,7 +18335,7 @@ paths:
     post:
       summary: 'Complete the installation'
       operationId: completeTheInstallation
-      description: "In Progress only, and it stamps `completed_at`. An installation cannot\njump straight from Pending to Completed: the start time is what the\nduration on site is measured from, and an installation with no start has\nno duration."
+      description: "In Progress only, and it stamps `completed_at`. An installation cannot\njump straight from Pending to Completed: the start time is what the\nduration on site is measured from, and an installation with no start has\nno duration.\n\nAn installation is finished BY the works-handover minutes (محاضر تسليم\nالأعمال — Presentation.pptx slide 8). Send the signed minutes as\n`handover_minutes` (multipart) and they are filed on the operation under\nthe `handover_minutes` attachment category; without a file, the operation\nmust already have minutes on file or the call fails with 422. Uploading\nthe minutes through `POST /attachments` completes the running\ninstallation by itself."
       parameters: []
       responses:
         200:
@@ -17853,8 +18390,44 @@ paths:
                       api_version:
                         type: string
                         example: '1'
+        422:
+          description: 'No handover minutes'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'An installation can only be finished with the works handover minutes. Upload the minutes first.'
+                  errors:
+                    handover_minutes:
+                      - 'An installation can only be finished with the works handover minutes. Upload the minutes first.'
+                properties:
+                  message:
+                    type: string
+                    example: 'An installation can only be finished with the works handover minutes. Upload the minutes first.'
+                  errors:
+                    type: object
+                    properties:
+                      handover_minutes:
+                        type: array
+                        example:
+                          - 'An installation can only be finished with the works handover minutes. Upload the minutes first.'
+                        items:
+                          type: string
       tags:
         - '27. Installations'
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                handover_minutes:
+                  type: string
+                  format: binary
+                  description: 'optional The signed works-handover minutes (max 40 MB). Required unless the operation already has minutes on file.'
+                  nullable: true
     parameters:
       -
         in: path
@@ -18249,7 +18822,7 @@ paths:
                 survey_date:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-09-12T12:40:14'
+                  example: '2026-10-12T17:07:51'
                 measurements:
                   type: string
                   description: optional
@@ -18782,7 +19355,7 @@ paths:
                 type:
                   type: string
                   description: ''
-                  example: equity
+                  example: asset
                   enum:
                     - asset
                     - liability
@@ -18792,7 +19365,7 @@ paths:
                 nature:
                   type: string
                   description: ''
-                  example: debit
+                  example: credit
                   enum:
                     - debit
                     - credit
@@ -18828,7 +19401,7 @@ paths:
                 opening_balance_date:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-09-12T12:40:14'
+                  example: '2026-10-12T17:09:29'
                   nullable: true
                 is_active:
                   type: boolean
@@ -18892,7 +19465,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the account.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -19453,7 +20026,7 @@ paths:
                 document_type:
                   type: string
                   description: ''
-                  example: supply_receipt
+                  example: settlement
                   enum:
                     - payment_order
                     - supply_receipt
@@ -19497,7 +20070,7 @@ paths:
         in: path
         name: journal_entry_id
         description: 'The ID of the journal entry.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -19652,7 +20225,7 @@ paths:
         in: path
         name: journal_entry_id
         description: 'The ID of the journal entry.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -19762,7 +20335,7 @@ paths:
         in: path
         name: journal_entry_id
         description: 'The ID of the journal entry.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -20045,7 +20618,7 @@ paths:
         in: path
         name: sales_invoice_id
         description: 'The ID of the sales invoice.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -20171,7 +20744,7 @@ paths:
         in: path
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -20686,7 +21259,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -21089,7 +21662,7 @@ paths:
         in: path
         name: customer_id
         description: 'The ID of the customer.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -21195,7 +21768,7 @@ paths:
         in: path
         name: supplier_id
         description: 'The ID of the supplier.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -21625,7 +22198,7 @@ paths:
                 claim_date:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-09-12T12:40:14'
+                  example: '2026-10-12T17:10:51'
                 amount:
                   type: number
                   description: optional
@@ -22311,12 +22884,12 @@ paths:
                 start_date:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-09-12T12:40:14'
+                  example: '2026-10-12T17:11:24'
                   nullable: true
                 end_date:
                   type: string
                   description: 'Must be a valid date. Must be a date after or equal to <code>start_date</code>.'
-                  example: '2107-10-12'
+                  example: '2107-11-11'
                   nullable: true
                 status:
                   type: string
@@ -22845,7 +23418,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -22995,7 +23568,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -23109,7 +23682,7 @@ paths:
         in: path
         name: cost_center_closing_id
         description: 'The ID of the cost center closing.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -23985,7 +24558,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -24001,7 +24574,7 @@ paths:
     get:
       summary: "An operation's timeline"
       operationId: anOperationsTimeline
-      description: "الخط الزمنى للعملية — every stage the operation has reached and when,\nwith the ones it has not reached marked unreached rather than omitted.\n\nKeeping the unreached stages in the list is the point: a timeline that\nonly showed what happened could not show what is next, which is the\nquestion anyone opening it is actually asking."
+      description: "الخط الزمنى للعملية — every stage the operation has reached and when,\nwith the ones it has not reached marked unreached rather than omitted.\n\nKeeping the unreached stages in the list is the point: a timeline that\nonly showed what happened could not show what is next, which is the\nquestion anyone opening it is actually asking.\n\nEighteen stages in three groups (`preliminary`, `executive`, `handover`),\nin the order of the project-management deck. A stage is reached when the\nrecord proving it exists — an uploaded drawing/approval file, a logged\ncustomer contact, a started work order — so it moves on its own. A\n`skipped` stage is the optional preliminary manufacturing order of an\noperation that went straight to the executive phase. `summary` answers\nthe customer's question: where the operation is and how long is left\nuntil `expected_delivery` (the operation's end date)."
       parameters: []
       responses:
         200:
@@ -24013,21 +24586,37 @@ paths:
                 example:
                   data:
                     project_id: 4
+                    project_code: 2026-4
                     current_stage:
-                      key: delivered
-                      label: Delivered
+                      key: executive_drawing
+                      label: 'Shop Drawing'
+                      group: executive
+                      group_label: 'Executive Phase'
+                      at: '2026-09-02T10:00:00+00:00'
+                    summary:
+                      progress_percent: 44
+                      expected_delivery: '2026-10-30T00:00:00+00:00'
+                      delivered_at: null
+                      days_remaining: 19
+                      days_overdue: null
                     stages:
                       -
-                        key: offer
-                        label: Offer
-                        at: '2026-02-01'
+                        key: sales
+                        label: Sales
+                        group: preliminary
+                        at: '2026-08-01T09:00:00+00:00'
                         reached: true
+                        skipped: false
+                        detail: 'Nile Contracting'
                         days_from_start: 0
                       -
-                        key: installed
-                        label: Installed
+                        key: preliminary_mo_created
+                        label: 'Manufacturing Order'
+                        group: preliminary
                         at: null
                         reached: false
+                        skipped: true
+                        detail: null
                         days_from_start: null
                   meta:
                     request_id: 9f1c
@@ -24039,45 +24628,92 @@ paths:
                       project_id:
                         type: integer
                         example: 4
+                      project_code:
+                        type: string
+                        example: 2026-4
                       current_stage:
                         type: object
                         properties:
                           key:
                             type: string
-                            example: delivered
+                            example: executive_drawing
                           label:
                             type: string
-                            example: Delivered
+                            example: 'Shop Drawing'
+                          group:
+                            type: string
+                            example: executive
+                          group_label:
+                            type: string
+                            example: 'Executive Phase'
+                          at:
+                            type: string
+                            example: '2026-09-02T10:00:00+00:00'
+                      summary:
+                        type: object
+                        properties:
+                          progress_percent:
+                            type: integer
+                            example: 44
+                          expected_delivery:
+                            type: string
+                            example: '2026-10-30T00:00:00+00:00'
+                          delivered_at:
+                            type: string
+                            example: null
+                            nullable: true
+                          days_remaining:
+                            type: integer
+                            example: 19
+                          days_overdue:
+                            type: string
+                            example: null
+                            nullable: true
                       stages:
                         type: array
                         example:
                           -
-                            key: offer
-                            label: Offer
-                            at: '2026-02-01'
+                            key: sales
+                            label: Sales
+                            group: preliminary
+                            at: '2026-08-01T09:00:00+00:00'
                             reached: true
+                            skipped: false
+                            detail: 'Nile Contracting'
                             days_from_start: 0
                           -
-                            key: installed
-                            label: Installed
+                            key: preliminary_mo_created
+                            label: 'Manufacturing Order'
+                            group: preliminary
                             at: null
                             reached: false
+                            skipped: true
+                            detail: null
                             days_from_start: null
                         items:
                           type: object
                           properties:
                             key:
                               type: string
-                              example: offer
+                              example: sales
                             label:
                               type: string
-                              example: Offer
+                              example: Sales
+                            group:
+                              type: string
+                              example: preliminary
                             at:
                               type: string
-                              example: '2026-02-01'
+                              example: '2026-08-01T09:00:00+00:00'
                             reached:
                               type: boolean
                               example: true
+                            skipped:
+                              type: boolean
+                              example: false
+                            detail:
+                              type: string
+                              example: 'Nile Contracting'
                             days_from_start:
                               type: integer
                               example: 0
@@ -24097,7 +24733,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -24109,6 +24745,182 @@ paths:
         required: true
         schema:
           type: integer
+  /api/v1/operations-timeline:
+    get:
+      summary: 'Operations timeline (list)'
+      operationId: operationsTimelinelist
+      description: "قسم إدارة المشروعات — every active (or on-hold) operation with where it\nstands and how long is left until delivery: the same data as the web\npanel's Operations Timeline page. Built in a fixed number of queries\nhowever many operations are listed. Fetch one operation's full stage\nlist from `GET /projects/{project}/timeline`."
+      parameters:
+        -
+          in: query
+          name: group
+          description: 'Only operations whose current stage is in this group: preliminary, executive or handover.'
+          example: executive
+          required: false
+          schema:
+            type: string
+            description: 'Only operations whose current stage is in this group: preliminary, executive or handover.'
+            example: executive
+        -
+          in: query
+          name: overdue
+          description: 'Only operations past their expected delivery and not delivered.'
+          example: true
+          required: false
+          schema:
+            type: boolean
+            description: 'Only operations past their expected delivery and not delivered.'
+            example: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      project_id: 4
+                      project_code: 2026-4
+                      name: 'Substation A'
+                      customer: 'Nile Contracting'
+                      status:
+                        value: in_progress
+                        label: 'In Progress'
+                        color: primary
+                      current_stage:
+                        key: executive_drawing
+                        label: 'Shop Drawing'
+                        group: executive
+                        group_label: 'Executive Phase'
+                        at: '2026-09-02T10:00:00+00:00'
+                      progress_percent: 44
+                      expected_delivery: '2026-10-30T00:00:00+00:00'
+                      delivered_at: null
+                      days_remaining: 19
+                      days_overdue: null
+                  meta:
+                    request_id: 9f1c
+                    api_version: '1'
+                    count: 1
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        project_id: 4
+                        project_code: 2026-4
+                        name: 'Substation A'
+                        customer: 'Nile Contracting'
+                        status:
+                          value: in_progress
+                          label: 'In Progress'
+                          color: primary
+                        current_stage:
+                          key: executive_drawing
+                          label: 'Shop Drawing'
+                          group: executive
+                          group_label: 'Executive Phase'
+                          at: '2026-09-02T10:00:00+00:00'
+                        progress_percent: 44
+                        expected_delivery: '2026-10-30T00:00:00+00:00'
+                        delivered_at: null
+                        days_remaining: 19
+                        days_overdue: null
+                    items:
+                      type: object
+                      properties:
+                        project_id:
+                          type: integer
+                          example: 4
+                        project_code:
+                          type: string
+                          example: 2026-4
+                        name:
+                          type: string
+                          example: 'Substation A'
+                        customer:
+                          type: string
+                          example: 'Nile Contracting'
+                        status:
+                          type: object
+                          properties:
+                            value:
+                              type: string
+                              example: in_progress
+                            label:
+                              type: string
+                              example: 'In Progress'
+                            color:
+                              type: string
+                              example: primary
+                        current_stage:
+                          type: object
+                          properties:
+                            key:
+                              type: string
+                              example: executive_drawing
+                            label:
+                              type: string
+                              example: 'Shop Drawing'
+                            group:
+                              type: string
+                              example: executive
+                            group_label:
+                              type: string
+                              example: 'Executive Phase'
+                            at:
+                              type: string
+                              example: '2026-09-02T10:00:00+00:00'
+                        progress_percent:
+                          type: integer
+                          example: 44
+                        expected_delivery:
+                          type: string
+                          example: '2026-10-30T00:00:00+00:00'
+                        delivered_at:
+                          type: string
+                          example: null
+                          nullable: true
+                        days_remaining:
+                          type: integer
+                          example: 19
+                        days_overdue:
+                          type: string
+                          example: null
+                          nullable: true
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c
+                      api_version:
+                        type: string
+                        example: '1'
+                      count:
+                        type: integer
+                        example: 1
+      tags:
+        - '37. Reports'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group:
+                  type: string
+                  description: ''
+                  example: consequatur
+                  nullable: true
+                overdue:
+                  type: boolean
+                  description: ''
+                  example: false
+                  nullable: true
   '/api/v1/documents/offers/{offer_id}':
     get:
       summary: 'Offer PDF'
@@ -24172,7 +24984,7 @@ paths:
         in: path
         name: offer_id
         description: 'The ID of the offer.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -24215,7 +25027,7 @@ paths:
         in: path
         name: purchase_order_id
         description: 'The ID of the purchase order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -24258,7 +25070,7 @@ paths:
         in: path
         name: quality_sheet_id
         description: 'The ID of the quality sheet.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer
@@ -24291,7 +25103,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 1
+        example: 17
         required: true
         schema:
           type: integer

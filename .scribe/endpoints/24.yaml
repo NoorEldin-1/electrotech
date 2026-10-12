@@ -1,42 +1,44 @@
-name: '27. Installations'
+name: '26. Delivery minutes'
 description: |-
 
-  مرحلة التركيب — installing what was delivered, on the customer's site.
+  محضر التسليم — the record that a delivery was handed over, and the document
+  circulated to every department afterwards.
 
-  Pending → **start** → In Progress → **complete** → Completed. Each
-  transition stamps its own timestamp, which is why there is no writable
-  `status`: a status a client can set is a status that drifts from the times
-  beside it.
+  A minute is always raised **from a delivery voucher** and inherits that
+  voucher's operation and customer. Sending them separately would allow a
+  minute naming a different customer from the delivery it records — a
+  contradiction nobody could resolve months later.
 
-  Installation **expenses** are not modelled here. They reach the operation
-  through the general ledger, tagged to it like every other cost, so that the
-  operation's cost file has one source rather than a parallel field only this
-  screen knows about.
+  `distribute` is the one state it has, and it is one-way and idempotent:
+  calling it twice does not send a second round of notifications. After
+  distribution the minute freezes, because every department is already
+  holding the copy that went out.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/installations
+    uri: api/v1/delivery-minutes
     metadata:
       custom: []
-      groupName: '27. Installations'
+      groupName: '26. Delivery minutes'
       groupDescription: |-
 
-        مرحلة التركيب — installing what was delivered, on the customer's site.
+        محضر التسليم — the record that a delivery was handed over, and the document
+        circulated to every department afterwards.
 
-        Pending → **start** → In Progress → **complete** → Completed. Each
-        transition stamps its own timestamp, which is why there is no writable
-        `status`: a status a client can set is a status that drifts from the times
-        beside it.
+        A minute is always raised **from a delivery voucher** and inherits that
+        voucher's operation and customer. Sending them separately would allow a
+        minute naming a different customer from the delivery it records — a
+        contradiction nobody could resolve months later.
 
-        Installation **expenses** are not modelled here. They reach the operation
-        through the general ledger, tagged to it like every other cost, so that the
-        operation's cost file has one source rather than a parallel field only this
-        screen knows about.
+        `distribute` is the one state it has, and it is one-way and idempotent:
+        calling it twice does not send a second round of notifications. After
+        distribution the minute freezes, because every department is already
+        holding the copy that went out.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List installations'
+      title: 'List delivery minutes'
       description: ''
       authenticated: true
       deprecated: false
@@ -69,12 +71,12 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      'filter[status]':
+      search:
         custom: []
-        name: 'filter[status]'
-        description: 'pending, in_progress or completed.'
+        name: search
+        description: 'Matches the minute number.'
         required: false
-        example: in_progress
+        example: DM-2026
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -91,6 +93,17 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
+      'filter[customer]':
+        custom: []
+        name: 'filter[customer]'
+        description: 'Customer id.'
+        required: false
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
       'filter[delivery_voucher]':
         custom: []
         name: 'filter[delivery_voucher]'
@@ -102,12 +115,34 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
+      'filter[distributed]':
+        custom: []
+        name: 'filter[distributed]'
+        description: 'Whether it has gone out to the departments.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[minute_date]':
+        custom: []
+        name: 'filter[minute_date]'
+        description: 'Inclusive date range from,until.'
+        required: false
+        example: '2026-01-01,2026-06-30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
       sort:
         custom: []
         name: sort
-        description: 'Allowed: status, started_at, completed_at, created_at.'
+        description: 'Allowed: minute_number, minute_date, created_at.'
         required: false
-        example: '-created_at'
+        example: '-minute_date'
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -116,7 +151,7 @@ endpoints:
       include:
         custom: []
         name: include
-        description: 'Allowed: project, deliveryVoucher.'
+        description: 'Allowed: project, customer, deliveryVoucher.'
         required: false
         example: project
         type: string
@@ -127,10 +162,13 @@ endpoints:
     cleanQueryParameters:
       page: 1
       per_page: 25
-      'filter[status]': in_progress
+      search: DM-2026
       'filter[project]': 4
+      'filter[customer]': 7
       'filter[delivery_voucher]': 18
-      sort: '-created_at'
+      'filter[distributed]': false
+      'filter[minute_date]': '2026-01-01,2026-06-30'
+      sort: '-minute_date'
       include: project
     bodyParameters: []
     cleanBodyParameters: []
@@ -139,7 +177,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":[{"id":3,"type":"installation","status":{"value":"in_progress","label":"In Progress","color":"info"},"project_id":4,"started_at":"2026-09-13T08:00:00+00:00"}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        content: '{"data":[{"id":6,"type":"delivery_minute","minute_number":"DM-202609-0002","distributed":false,"delivery_voucher_id":18}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
         headers: []
         description: Success
     responseFields: []
@@ -154,26 +192,27 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/installations/{id}'
+    uri: 'api/v1/delivery-minutes/{delivery_minute_id}'
     metadata:
       custom: []
-      groupName: '27. Installations'
+      groupName: '26. Delivery minutes'
       groupDescription: |-
 
-        مرحلة التركيب — installing what was delivered, on the customer's site.
+        محضر التسليم — the record that a delivery was handed over, and the document
+        circulated to every department afterwards.
 
-        Pending → **start** → In Progress → **complete** → Completed. Each
-        transition stamps its own timestamp, which is why there is no writable
-        `status`: a status a client can set is a status that drifts from the times
-        beside it.
+        A minute is always raised **from a delivery voucher** and inherits that
+        voucher's operation and customer. Sending them separately would allow a
+        minute naming a different customer from the delivery it records — a
+        contradiction nobody could resolve months later.
 
-        Installation **expenses** are not modelled here. They reach the operation
-        through the general ledger, tagged to it like every other cost, so that the
-        operation's cost file has one source rather than a parallel field only this
-        screen knows about.
+        `distribute` is the one state it has, and it is one-way and idempotent:
+        calling it twice does not send a second round of notifications. After
+        distribution the minute freezes, because every department is already
+        holding the copy that went out.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Show an installation'
+      title: 'Show a delivery minute'
       description: ''
       authenticated: true
       deprecated: false
@@ -182,10 +221,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      id:
+      delivery_minute_id:
         custom: []
-        name: id
-        description: 'The ID of the installation.'
+        name: delivery_minute_id
+        description: 'The ID of the delivery minute.'
         required: true
         example: 17
         type: integer
@@ -193,20 +232,20 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      installation:
+      delivery_minute:
         custom: []
-        name: installation
-        description: 'The installation id.'
+        name: delivery_minute
+        description: 'The minute id.'
         required: true
-        example: 3
+        example: 6
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 17
-      installation: 3
+      delivery_minute_id: 17
+      delivery_minute: 6
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -216,7 +255,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":3,"type":"installation","status":{"value":"completed","label":"Completed","color":"success"},"started_at":"2026-09-13T08:00:00+00:00","completed_at":"2026-09-14T17:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":6,"type":"delivery_minute","minute_number":"DM-202609-0002","content":"Nine panels received in good order.","distributed":true,"distributed_at":"2026-09-12T16:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Success
     responseFields: []
@@ -231,27 +270,30 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/installations
+    uri: api/v1/delivery-minutes
     metadata:
       custom: []
-      groupName: '27. Installations'
+      groupName: '26. Delivery minutes'
       groupDescription: |-
 
-        مرحلة التركيب — installing what was delivered, on the customer's site.
+        محضر التسليم — the record that a delivery was handed over, and the document
+        circulated to every department afterwards.
 
-        Pending → **start** → In Progress → **complete** → Completed. Each
-        transition stamps its own timestamp, which is why there is no writable
-        `status`: a status a client can set is a status that drifts from the times
-        beside it.
+        A minute is always raised **from a delivery voucher** and inherits that
+        voucher's operation and customer. Sending them separately would allow a
+        minute naming a different customer from the delivery it records — a
+        contradiction nobody could resolve months later.
 
-        Installation **expenses** are not modelled here. They reach the operation
-        through the general ledger, tagged to it like every other cost, so that the
-        operation's cost file has one source rather than a parallel field only this
-        screen knows about.
+        `distribute` is the one state it has, and it is one-way and idempotent:
+        calling it twice does not send a second round of notifications. After
+        distribution the minute freezes, because every department is already
+        holding the copy that went out.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Open an installation'
-      description: 'Always starts Pending. The timestamps belong to the transitions.'
+      title: 'Raise a minute from a delivery'
+      description: |-
+        The operation and the customer come from the voucher. The number is
+        generated by the server.
       authenticated: true
       deprecated: false
     headers:
@@ -263,49 +305,37 @@ endpoints:
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      project_id:
+      delivery_voucher_id:
         custom: []
-        name: project_id
-        description: 'The operation being installed.'
+        name: delivery_voucher_id
+        description: 'The delivery being recorded.'
         required: true
-        example: 4
+        example: 18
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      delivery_voucher_id:
+      content:
         custom: []
-        name: delivery_voucher_id
-        description: 'optional The delivery it follows.'
+        name: content
+        description: 'optional What was handed over and in what condition.'
         required: false
-        example: 18
-        type: integer
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      notes:
-        custom: []
-        name: notes
-        description: optional
-        required: false
-        example: 'Third floor, crane access needed'
+        example: 'Nine panels received in good order.'
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: true
         deprecated: false
     cleanBodyParameters:
-      project_id: 4
       delivery_voucher_id: 18
-      notes: 'Third floor, crane access needed'
+      content: 'Nine panels received in good order.'
     fileParameters: []
     responses:
       -
         custom: []
         status: 201
-        content: '{"data":{"id":3,"type":"installation","status":{"value":"pending","label":"Pending","color":"gray"}},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":6,"type":"delivery_minute","minute_number":"DM-202609-0002","distributed":false},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Created
     responseFields: []
@@ -320,27 +350,30 @@ endpoints:
     custom: []
     httpMethods:
       - PATCH
-    uri: 'api/v1/installations/{id}'
+    uri: 'api/v1/delivery-minutes/{delivery_minute_id}'
     metadata:
       custom: []
-      groupName: '27. Installations'
+      groupName: '26. Delivery minutes'
       groupDescription: |-
 
-        مرحلة التركيب — installing what was delivered, on the customer's site.
+        محضر التسليم — the record that a delivery was handed over, and the document
+        circulated to every department afterwards.
 
-        Pending → **start** → In Progress → **complete** → Completed. Each
-        transition stamps its own timestamp, which is why there is no writable
-        `status`: a status a client can set is a status that drifts from the times
-        beside it.
+        A minute is always raised **from a delivery voucher** and inherits that
+        voucher's operation and customer. Sending them separately would allow a
+        minute naming a different customer from the delivery it records — a
+        contradiction nobody could resolve months later.
 
-        Installation **expenses** are not modelled here. They reach the operation
-        through the general ledger, tagged to it like every other cost, so that the
-        operation's cost file has one source rather than a parallel field only this
-        screen knows about.
+        `distribute` is the one state it has, and it is one-way and idempotent:
+        calling it twice does not send a second round of notifications. After
+        distribution the minute freezes, because every department is already
+        holding the copy that went out.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Update an installation'
-      description: 'Notes and links only — see the class note on why there is no `status`.'
+      title: 'Edit a minute'
+      description: |-
+        Only before distribution — the policy gates on that, so a circulated
+        minute answers **403**.
       authenticated: true
       deprecated: false
     headers:
@@ -348,10 +381,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      id:
+      delivery_minute_id:
         custom: []
-        name: id
-        description: 'The ID of the installation.'
+        name: delivery_minute_id
+        description: 'The ID of the delivery minute.'
         required: true
         example: 17
         type: integer
@@ -359,54 +392,54 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      installation:
+      delivery_minute:
         custom: []
-        name: installation
-        description: 'The installation id.'
+        name: delivery_minute
+        description: 'The minute id.'
         required: true
-        example: 3
+        example: 6
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 17
-      installation: 3
+      delivery_minute_id: 17
+      delivery_minute: 6
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      delivery_voucher_id:
+      content:
         custom: []
-        name: delivery_voucher_id
+        name: content
         description: optional
         required: false
-        example: 18
-        type: integer
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      notes:
-        custom: []
-        name: notes
-        description: optional
-        required: false
-        example: 'Crane booked for Thursday'
+        example: 'Nine panels received; one crate opened for inspection.'
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: true
         deprecated: false
+      minute_date:
+        custom: []
+        name: minute_date
+        description: optional
+        required: false
+        example: '2026-09-12'
+        type: date
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
     cleanBodyParameters:
-      delivery_voucher_id: 18
-      notes: 'Crane booked for Thursday'
+      content: 'Nine panels received; one crate opened for inspection.'
+      minute_date: '2026-09-12'
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":3,"type":"installation","notes":"Crane booked for Thursday"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":6,"type":"delivery_minute","content":"Nine panels received; one crate opened for inspection."},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Updated
     responseFields: []
@@ -421,114 +454,34 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: 'api/v1/installations/{installation_id}/start'
+    uri: 'api/v1/delivery-minutes/{delivery_minute_id}/distribute'
     metadata:
       custom: []
-      groupName: '27. Installations'
+      groupName: '26. Delivery minutes'
       groupDescription: |-
 
-        مرحلة التركيب — installing what was delivered, on the customer's site.
+        محضر التسليم — the record that a delivery was handed over, and the document
+        circulated to every department afterwards.
 
-        Pending → **start** → In Progress → **complete** → Completed. Each
-        transition stamps its own timestamp, which is why there is no writable
-        `status`: a status a client can set is a status that drifts from the times
-        beside it.
+        A minute is always raised **from a delivery voucher** and inherits that
+        voucher's operation and customer. Sending them separately would allow a
+        minute naming a different customer from the delivery it records — a
+        contradiction nobody could resolve months later.
 
-        Installation **expenses** are not modelled here. They reach the operation
-        through the general ledger, tagged to it like every other cost, so that the
-        operation's cost file has one source rather than a parallel field only this
-        screen knows about.
+        `distribute` is the one state it has, and it is one-way and idempotent:
+        calling it twice does not send a second round of notifications. After
+        distribution the minute freezes, because every department is already
+        holding the copy that went out.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Start the installation'
-      description: 'Pending only, and it stamps `started_at`.'
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {ACCESS_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      installation_id:
-        custom: []
-        name: installation_id
-        description: 'The ID of the installation.'
-        required: true
-        example: 17
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      installation:
-        custom: []
-        name: installation
-        description: 'The installation id.'
-        required: true
-        example: 3
-        type: integer
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      installation_id: 17
-      installation: 3
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: '{"data":{"id":3,"type":"installation","status":{"value":"in_progress","label":"In Progress","color":"info"},"started_at":"2026-09-13T08:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
-        headers: []
-        description: Started
-      -
-        custom: []
-        status: 422
-        content: '{"error":{"code":"business_rule_violated","message":"Cannot move from completed; expected pending."},"meta":{"request_id":"9f1c","api_version":"1"}}'
-        headers: []
-        description: 'Wrong stage'
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: 'api/v1/installations/{installation_id}/complete'
-    metadata:
-      custom: []
-      groupName: '27. Installations'
-      groupDescription: |-
-
-        مرحلة التركيب — installing what was delivered, on the customer's site.
-
-        Pending → **start** → In Progress → **complete** → Completed. Each
-        transition stamps its own timestamp, which is why there is no writable
-        `status`: a status a client can set is a status that drifts from the times
-        beside it.
-
-        Installation **expenses** are not modelled here. They reach the operation
-        through the general ledger, tagged to it like every other cost, so that the
-        operation's cost file has one source rather than a parallel field only this
-        screen knows about.
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Complete the installation'
+      title: 'Distribute to all departments'
       description: |-
-        In Progress only, and it stamps `completed_at`. An installation cannot
-        jump straight from Pending to Completed: the start time is what the
-        duration on site is measured from, and an installation with no start has
-        no duration.
+        ارسالها لجميع الأقسام — stamps the minute as distributed and notifies
+        every configured department role.
+
+        Idempotent: a retry after the first distribution is a silent success and
+        sends nothing again, which matters on a weak link where the client
+        cannot tell a lost response from a lost request.
       authenticated: true
       deprecated: false
     headers:
@@ -536,10 +489,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      installation_id:
+      delivery_minute_id:
         custom: []
-        name: installation_id
-        description: 'The ID of the installation.'
+        name: delivery_minute_id
+        description: 'The ID of the delivery minute.'
         required: true
         example: 17
         type: integer
@@ -547,20 +500,20 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      installation:
+      delivery_minute:
         custom: []
-        name: installation
-        description: 'The installation id.'
+        name: delivery_minute
+        description: 'The minute id.'
         required: true
-        example: 3
+        example: 6
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      installation_id: 17
-      installation: 3
+      delivery_minute_id: 17
+      delivery_minute: 6
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -570,9 +523,9 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":3,"type":"installation","status":{"value":"completed","label":"Completed","color":"success"},"completed_at":"2026-09-14T17:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":6,"type":"delivery_minute","distributed":true,"distributed_at":"2026-09-12T16:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
-        description: Completed
+        description: Distributed
     responseFields: []
     auth:
       - headers
@@ -585,27 +538,28 @@ endpoints:
     custom: []
     httpMethods:
       - DELETE
-    uri: 'api/v1/installations/{id}'
+    uri: 'api/v1/delivery-minutes/{delivery_minute_id}'
     metadata:
       custom: []
-      groupName: '27. Installations'
+      groupName: '26. Delivery minutes'
       groupDescription: |-
 
-        مرحلة التركيب — installing what was delivered, on the customer's site.
+        محضر التسليم — the record that a delivery was handed over, and the document
+        circulated to every department afterwards.
 
-        Pending → **start** → In Progress → **complete** → Completed. Each
-        transition stamps its own timestamp, which is why there is no writable
-        `status`: a status a client can set is a status that drifts from the times
-        beside it.
+        A minute is always raised **from a delivery voucher** and inherits that
+        voucher's operation and customer. Sending them separately would allow a
+        minute naming a different customer from the delivery it records — a
+        contradiction nobody could resolve months later.
 
-        Installation **expenses** are not modelled here. They reach the operation
-        through the general ledger, tagged to it like every other cost, so that the
-        operation's cost file has one source rather than a parallel field only this
-        screen knows about.
+        `distribute` is the one state it has, and it is one-way and idempotent:
+        calling it twice does not send a second round of notifications. After
+        distribution the minute freezes, because every department is already
+        holding the copy that went out.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Delete an installation'
-      description: ''
+      title: 'Delete a minute'
+      description: 'Only before distribution.'
       authenticated: true
       deprecated: false
     headers:
@@ -613,10 +567,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      id:
+      delivery_minute_id:
         custom: []
-        name: id
-        description: 'The ID of the installation.'
+        name: delivery_minute_id
+        description: 'The ID of the delivery minute.'
         required: true
         example: 17
         type: integer
@@ -624,20 +578,20 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      installation:
+      delivery_minute:
         custom: []
-        name: installation
-        description: 'The installation id.'
+        name: delivery_minute
+        description: 'The minute id.'
         required: true
-        example: 3
+        example: 6
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 17
-      installation: 3
+      delivery_minute_id: 17
+      delivery_minute: 6
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []

@@ -1,32 +1,26 @@
-name: '5. Roles'
+name: '4. Users'
 description: |-
 
-  Roles and their attached permissions. Gated by `roles.manage` through the
-  existing RolePolicy — the same gate the panel's Roles screen uses.
-
-  The Admin role is protected: RolePolicy refuses to delete it, and the
-  deploy-time seeder force-syncs it to every permission in the catalog. Do not
-  try to trim it through this API; the next deploy would undo it.
+  Administration of user accounts. Every endpoint is gated by the same
+  `users.*` permissions and the same UserPolicy the admin panel uses — the API
+  introduces no parallel authorization.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/roles
+    uri: api/v1/users
     metadata:
       custom: []
-      groupName: '5. Roles'
+      groupName: '4. Users'
       groupDescription: |-
 
-        Roles and their attached permissions. Gated by `roles.manage` through the
-        existing RolePolicy — the same gate the panel's Roles screen uses.
-
-        The Admin role is protected: RolePolicy refuses to delete it, and the
-        deploy-time seeder force-syncs it to every permission in the catalog. Do not
-        try to trim it through this API; the next deploy would undo it.
+        Administration of user accounts. Every endpoint is gated by the same
+        `users.*` permissions and the same UserPolicy the admin panel uses — the API
+        introduces no parallel authorization.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List roles'
+      title: 'List users'
       description: ''
       authenticated: true
       deprecated: false
@@ -37,35 +31,13 @@ endpoints:
     urlParameters: []
     cleanUrlParameters: []
     queryParameters:
-      search:
+      page:
         custom: []
-        name: search
-        description: 'Matches the role name.'
+        name: page
+        description: 'The page number.'
         required: false
-        example: sales
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      sort:
-        custom: []
-        name: sort
-        description: 'Allowed: name, created_at. Prefix `-` for descending.'
-        required: false
-        example: name
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      include:
-        custom: []
-        name: include
-        description: 'Allowed: permissions.'
-        required: false
-        example: permissions
-        type: string
+        example: 1
+        type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
@@ -81,11 +53,69 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
+      search:
+        custom: []
+        name: search
+        description: 'Matches name or email.'
+        required: false
+        example: ahmed
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[role]':
+        custom: []
+        name: 'filter[role]'
+        description: 'Filter by role name; comma-separate for OR.'
+        required: false
+        example: 'Sales,Sales_Manager'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'filter[created]':
+        custom: []
+        name: 'filter[created]'
+        description: 'Inclusive date range `from,until`; either side may be omitted.'
+        required: false
+        example: '2026-01-01,2026-06-30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Comma-separated; prefix with `-` for descending. Allowed: name, email, created_at.'
+        required: false
+        example: '-created_at'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      include:
+        custom: []
+        name: include
+        description: 'Comma-separated relations. Allowed: roles.'
+        required: false
+        example: roles
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
     cleanQueryParameters:
-      search: sales
-      sort: name
-      include: permissions
+      page: 1
       per_page: 25
+      search: ahmed
+      'filter[role]': 'Sales,Sales_Manager'
+      'filter[created]': '2026-01-01,2026-06-30'
+      sort: '-created_at'
+      include: roles
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
@@ -93,7 +123,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":[{"id":1,"type":"role","name":"Admin","guard_name":"web","users_count":1}],"meta":{"request_id":"9f1c...","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"...","prev":null,"next":null,"last":"..."}}'
+        content: '{"data":[{"id":1,"type":"user","name":"System Administrator","email":"admin@example.com","roles":[{"id":1,"name":"Admin"}]}],"meta":{"request_id":"9f1c...","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"...","prev":null,"next":null,"last":"..."}}'
         headers: []
         description: Success
     responseFields: []
@@ -108,22 +138,21 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/roles/{id}'
+    uri: 'api/v1/users/{id}'
     metadata:
       custom: []
-      groupName: '5. Roles'
+      groupName: '4. Users'
       groupDescription: |-
 
-        Roles and their attached permissions. Gated by `roles.manage` through the
-        existing RolePolicy — the same gate the panel's Roles screen uses.
-
-        The Admin role is protected: RolePolicy refuses to delete it, and the
-        deploy-time seeder force-syncs it to every permission in the catalog. Do not
-        try to trim it through this API; the next deploy would undo it.
+        Administration of user accounts. Every endpoint is gated by the same
+        `users.*` permissions and the same UserPolicy the admin panel uses — the API
+        introduces no parallel authorization.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Show a role'
-      description: 'Always includes the full permission list attached to the role.'
+      title: 'Show a user'
+      description: |-
+        Includes the target's full resolved permission list, so an administrator
+        screen can show exactly what this account can do.
       authenticated: true
       deprecated: false
     headers:
@@ -134,28 +163,28 @@ endpoints:
       id:
         custom: []
         name: id
-        description: 'The ID of the role.'
+        description: 'The ID of the user.'
         required: true
-        example: 1
+        example: 17
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      role:
+      user:
         custom: []
-        name: role
-        description: 'The role id.'
+        name: user
+        description: 'The user id.'
         required: true
-        example: 2
+        example: 3
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 1
-      role: 2
+      id: 17
+      user: 3
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -165,7 +194,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":2,"type":"role","name":"Sales","guard_name":"web","users_count":4,"permissions":["projects.view","projects.create"]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        content: '{"data":{"id":3,"type":"user","name":"Ahmed Hassan","email":"ahmed@example.com","roles":[{"id":2,"name":"Sales"}],"permissions":["projects.view"]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
         headers: []
         description: Success
     responseFields: []
@@ -180,22 +209,21 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/roles
+    uri: api/v1/users
     metadata:
       custom: []
-      groupName: '5. Roles'
+      groupName: '4. Users'
       groupDescription: |-
 
-        Roles and their attached permissions. Gated by `roles.manage` through the
-        existing RolePolicy — the same gate the panel's Roles screen uses.
-
-        The Admin role is protected: RolePolicy refuses to delete it, and the
-        deploy-time seeder force-syncs it to every permission in the catalog. Do not
-        try to trim it through this API; the next deploy would undo it.
+        Administration of user accounts. Every endpoint is gated by the same
+        `users.*` permissions and the same UserPolicy the admin panel uses — the API
+        introduces no parallel authorization.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Create a role'
-      description: ''
+      title: 'Create a user'
+      description: |-
+        At least one role is required: an account with no role cannot sign in
+        at all, so creating one would silently produce a dead account.
       authenticated: true
       deprecated: false
     headers:
@@ -210,38 +238,60 @@ endpoints:
       name:
         custom: []
         name: name
-        description: 'Unique role name; letters, digits, spaces, `_` and `-`.'
+        description: 'Display name.'
         required: true
-        example: Warehouse_Lead
+        example: 'Ahmed Hassan'
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      permissions:
+      email:
         custom: []
-        name: permissions
-        description: 'Permission names from `GET /permissions`.'
+        name: email
+        description: 'Unique email address.'
+        required: true
+        example: ahmed@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: 'At least 8 characters with letters and numbers.'
+        required: true
+        example: secret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      roles:
+        custom: []
+        name: roles
+        description: 'One or more existing role names.'
         required: true
         example:
-          - inventory.view
-          - issue_vouchers.create
+          - Sales
         type: 'string[]'
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      name: Warehouse_Lead
-      permissions:
-        - inventory.view
-        - issue_vouchers.create
+      name: 'Ahmed Hassan'
+      email: ahmed@example.com
+      password: secret123
+      roles:
+        - Sales
     fileParameters: []
     responses:
       -
         custom: []
         status: 201
-        content: '{"data":{"id":9,"type":"role","name":"Warehouse_Lead","guard_name":"web","permissions":["inventory.view","issue_vouchers.create"]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        content: '{"data":{"id":4,"type":"user","name":"Ahmed Hassan","email":"ahmed@example.com","roles":[{"id":2,"name":"Sales"}]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
         headers: []
         description: Created
     responseFields: []
@@ -256,25 +306,22 @@ endpoints:
     custom: []
     httpMethods:
       - PATCH
-    uri: 'api/v1/roles/{id}'
+    uri: 'api/v1/users/{id}'
     metadata:
       custom: []
-      groupName: '5. Roles'
+      groupName: '4. Users'
       groupDescription: |-
 
-        Roles and their attached permissions. Gated by `roles.manage` through the
-        existing RolePolicy — the same gate the panel's Roles screen uses.
-
-        The Admin role is protected: RolePolicy refuses to delete it, and the
-        deploy-time seeder force-syncs it to every permission in the catalog. Do not
-        try to trim it through this API; the next deploy would undo it.
+        Administration of user accounts. Every endpoint is gated by the same
+        `users.*` permissions and the same UserPolicy the admin panel uses — the API
+        introduces no parallel authorization.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Update a role'
+      title: 'Update a user'
       description: |-
-        `permissions` **replaces** the role's whole set — send the complete list,
-        not a delta. That mirrors the panel's checkbox grid, where saving writes
-        whatever is ticked.
+        Send only the fields you want changed. Setting `password` revokes every
+        API session belonging to that user — an administrator resetting a
+        password expects the old credentials to stop working immediately.
       authenticated: true
       deprecated: false
     headers:
@@ -285,64 +332,88 @@ endpoints:
       id:
         custom: []
         name: id
-        description: 'The ID of the role.'
+        description: 'The ID of the user.'
         required: true
-        example: 1
+        example: 17
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      role:
+      user:
         custom: []
-        name: role
-        description: 'The role id.'
+        name: user
+        description: 'The user id.'
         required: true
-        example: 9
+        example: 3
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 1
-      role: 9
+      id: 17
+      user: 3
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
       name:
         custom: []
         name: name
-        description: 'optional New unique role name.'
+        description: 'optional New display name.'
         required: false
-        example: Warehouse_Supervisor
+        example: 'Ahmed H.'
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      permissions:
+      email:
         custom: []
-        name: permissions
-        description: 'optional The complete replacement permission set.'
+        name: email
+        description: 'optional New unique email.'
+        required: false
+        example: ahmed.h@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: "optional New password; revokes the user's sessions."
+        required: false
+        example: newsecret1
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      roles:
+        custom: []
+        name: roles
+        description: "optional Replaces the user's roles entirely."
         required: false
         example:
-          - inventory.view
+          - Sales_Manager
         type: 'string[]'
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      name: Warehouse_Supervisor
-      permissions:
-        - inventory.view
+      name: 'Ahmed H.'
+      email: ahmed.h@example.com
+      password: newsecret1
+      roles:
+        - Sales_Manager
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":9,"type":"role","name":"Warehouse_Supervisor","guard_name":"web","permissions":["inventory.view"]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
+        content: '{"data":{"id":3,"type":"user","name":"Ahmed H.","email":"ahmed.h@example.com","roles":[{"id":3,"name":"Sales_Manager"}]},"meta":{"request_id":"9f1c...","api_version":"1"}}'
         headers: []
         description: Success
     responseFields: []
@@ -357,25 +428,21 @@ endpoints:
     custom: []
     httpMethods:
       - DELETE
-    uri: 'api/v1/roles/{id}'
+    uri: 'api/v1/users/{id}'
     metadata:
       custom: []
-      groupName: '5. Roles'
+      groupName: '4. Users'
       groupDescription: |-
 
-        Roles and their attached permissions. Gated by `roles.manage` through the
-        existing RolePolicy — the same gate the panel's Roles screen uses.
-
-        The Admin role is protected: RolePolicy refuses to delete it, and the
-        deploy-time seeder force-syncs it to every permission in the catalog. Do not
-        try to trim it through this API; the next deploy would undo it.
+        Administration of user accounts. Every endpoint is gated by the same
+        `users.*` permissions and the same UserPolicy the admin panel uses — the API
+        introduces no parallel authorization.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Delete a role'
+      title: 'Delete a user'
       description: |-
-        RolePolicy refuses to delete the Admin role, so that always returns 403.
-        Users who held the deleted role lose its permissions immediately; a user
-        left with no role at all can no longer sign in.
+        Also revokes all of the target's API tokens. UserPolicy forbids deleting
+        your own account, so this always returns 403 when `user` is the caller.
       authenticated: true
       deprecated: false
     headers:
@@ -386,28 +453,28 @@ endpoints:
       id:
         custom: []
         name: id
-        description: 'The ID of the role.'
+        description: 'The ID of the user.'
         required: true
-        example: 1
+        example: 17
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      role:
+      user:
         custom: []
-        name: role
-        description: 'The role id.'
+        name: user
+        description: 'The user id.'
         required: true
-        example: 9
+        example: 3
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 1
-      role: 9
+      id: 17
+      user: 3
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []

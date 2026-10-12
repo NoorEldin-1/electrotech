@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "Electrotech API \u2014 \u062a\u0648\u062b\u064a\u0642 \u0648\u0627\u062c\u0647\u0627\u062a \u0627\u0644\u0646\u0638\u0627\u0645",
-        "_postman_id": "0aa32981-2c7a-48c9-bbf5-58ef9a262c0e",
+        "_postman_id": "cfe94a49-28a7-4e3e-9ef8-fcfacd436385",
         "description": "REST API for the Electrotech ERP platform: sales pipeline, technical office, procurement, warehouse, manufacturing, delivery and accounting.",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -524,7 +524,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the user."
                                 },
                                 {
@@ -605,7 +605,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the user."
                                 },
                                 {
@@ -654,7 +654,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the user."
                                 },
                                 {
@@ -763,7 +763,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the role."
                                 },
                                 {
@@ -844,7 +844,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the role."
                                 },
                                 {
@@ -893,7 +893,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the role."
                                 },
                                 {
@@ -962,6 +962,275 @@
                             "code": 200,
                             "body": "{\"data\":[{\"group\":\"projects\",\"group_label\":\"Project Management\",\"permissions\":[{\"name\":\"projects.view\",\"label\":\"View Projects\"},{\"name\":\"projects.create\",\"label\":\"Create Project\"}]}],\"meta\":{\"request_id\":\"9f1c...\",\"api_version\":\"1\",\"count\":1}}",
                             "name": "Success"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "7. Customer follow-up",
+            "description": "\n\u0645\u062a\u0627\u0628\u0639\u0629 \u0627\u0644\u0639\u0645\u0644\u0627\u0621 \u2014 \u0642\u0633\u0645 \u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0639\u0645\u0644\u0627\u0621 (Presentation.pptx slides 6\u20137). The log\nof touchpoints with the customer on each operation.\n\nTwo entries move the operation timeline: the first `contact` reaches\n\"Customer Contact\", and the first `site_readiness` with `site_ready: true`\nreaches \"Site Readiness\". `follow_up` is a plain log entry. The customer is\nalways the operation's customer \u2014 it is never sent.",
+            "item": [
+                {
+                    "name": "List customer interactions",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/customer-interactions",
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "The page number.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "25",
+                                    "description": "Rows per page, max 100.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "drawings",
+                                    "description": "Matches the notes.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "filter[project]",
+                                    "value": "4",
+                                    "description": "Operation id.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "filter[customer]",
+                                    "value": "2",
+                                    "description": "Customer id.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "filter[type]",
+                                    "value": "contact",
+                                    "description": "contact, site_readiness or follow_up.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "filter[interacted_at]",
+                                    "value": "2026-01-01,2026-06-30",
+                                    "description": "Inclusive date range from,until.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "-interacted_at",
+                                    "description": "Allowed: interacted_at, created_at.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "include",
+                                    "value": "project",
+                                    "description": "Allowed: project.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/customer-interactions?page=1&per_page=25&search=drawings&filter%5Bproject%5D=4&filter%5Bcustomer%5D=2&filter%5Btype%5D=contact&filter%5Binteracted_at%5D=2026-01-01%2C2026-06-30&sort=-interacted_at&include=project"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"id\":5,\"type\":\"customer_interaction\",\"project_id\":4,\"customer_id\":2,\"interaction_type\":{\"value\":\"contact\",\"label\":\"Customer Contact\",\"color\":\"info\"},\"channel\":{\"value\":\"call\",\"label\":\"Phone Call\",\"color\":null},\"interacted_at\":\"2026-09-01T10:00:00+00:00\",\"site_ready\":false,\"notes\":\"First call\"}],\"meta\":{\"request_id\":\"9f1c\",\"api_version\":\"1\",\"pagination\":{\"total\":1,\"count\":1,\"per_page\":25,\"current_page\":1,\"total_pages\":1}},\"links\":{\"first\":\"\",\"prev\":null,\"next\":null,\"last\":\"\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Show a customer interaction",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/customer-interactions\/:customer_interaction_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/customer-interactions\/:customer_interaction_id",
+                            "variable": [
+                                {
+                                    "id": "customer_interaction_id",
+                                    "key": "customer_interaction_id",
+                                    "value": 17,
+                                    "description": "The ID of the customer interaction."
+                                },
+                                {
+                                    "id": "customer_interaction",
+                                    "key": "customer_interaction",
+                                    "value": 5,
+                                    "description": "The interaction id."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"id\":5,\"type\":\"customer_interaction\",\"project_id\":4,\"interaction_type\":{\"value\":\"site_readiness\",\"label\":\"Site Readiness\",\"color\":\"success\"},\"site_ready\":true},\"meta\":{\"request_id\":\"9f1c\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Log a customer interaction",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/customer-interactions",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/customer-interactions"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"project_id\":4,\"type\":\"contact\",\"channel\":\"call\",\"interacted_at\":\"2026-09-01 10:00:00\",\"site_ready\":true,\"notes\":\"Customer confirmed the site is ready\"}"
+                        },
+                        "description": "`interacted_at` defaults to now. `site_ready` only sticks on a\n`site_readiness` entry."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"data\":{\"id\":5,\"type\":\"customer_interaction\",\"project_id\":4,\"interaction_type\":{\"value\":\"contact\",\"label\":\"Customer Contact\",\"color\":\"info\"}},\"meta\":{\"request_id\":\"9f1c\",\"api_version\":\"1\"}}",
+                            "name": "Created"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update a customer interaction",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/customer-interactions\/:customer_interaction_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/customer-interactions\/:customer_interaction_id",
+                            "variable": [
+                                {
+                                    "id": "customer_interaction_id",
+                                    "key": "customer_interaction_id",
+                                    "value": 17,
+                                    "description": "The ID of the customer interaction."
+                                },
+                                {
+                                    "id": "customer_interaction",
+                                    "key": "customer_interaction",
+                                    "value": 5,
+                                    "description": "The interaction id."
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"type\":\"site_readiness\",\"channel\":\"whatsapp\",\"interacted_at\":\"2026-10-12T16:57:39\",\"site_ready\":true,\"notes\":\"Second call \u2014 site ready\"}"
+                        },
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"id\":5,\"type\":\"customer_interaction\",\"site_ready\":true},\"meta\":{\"request_id\":\"9f1c\",\"api_version\":\"1\"}}",
+                            "name": "Updated"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete a customer interaction",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/customer-interactions\/:customer_interaction_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/customer-interactions\/:customer_interaction_id",
+                            "variable": [
+                                {
+                                    "id": "customer_interaction_id",
+                                    "key": "customer_interaction_id",
+                                    "value": 17,
+                                    "description": "The ID of the customer interaction."
+                                },
+                                {
+                                    "id": "customer_interaction",
+                                    "key": "customer_interaction",
+                                    "value": 5,
+                                    "description": "The interaction id."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "The timeline stage it proved goes back to \"not reached\" unless another\nentry still proves it."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Deleted"
                         }
                     ]
                 }
@@ -1082,7 +1351,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the item."
                                 },
                                 {
@@ -1163,7 +1432,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the item."
                                 },
                                 {
@@ -1212,7 +1481,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the item."
                                 },
                                 {
@@ -1339,7 +1608,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the customer."
                                 },
                                 {
@@ -1420,7 +1689,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the customer."
                                 },
                                 {
@@ -1469,7 +1738,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the customer."
                                 },
                                 {
@@ -1602,7 +1871,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the supplier."
                                 },
                                 {
@@ -1683,7 +1952,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the supplier."
                                 },
                                 {
@@ -1732,7 +2001,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the supplier."
                                 },
                                 {
@@ -1844,7 +2113,7 @@
                                 {
                                     "id": "attachment_id",
                                     "key": "attachment_id",
-                                    "value": 7,
+                                    "value": 17,
                                     "description": "The ID of the attachment."
                                 },
                                 {
@@ -1955,7 +2224,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 7,
+                                    "value": 17,
                                     "description": "The ID of the attachment."
                                 },
                                 {
@@ -2106,7 +2375,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -2187,7 +2456,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -2211,7 +2480,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"name\":\"Substation A \u2014 Phase 2\",\"client_name\":\"Delta Contracting\",\"customer_id\":3,\"consultant_name\":\"ECG\",\"engineer_name\":\"Eng. Mona Said\",\"project_location\":\"6th of October City\",\"arrival_method\":\"email\",\"electric_current\":\"uydlsmsjuryvojcybzvrb\",\"model\":\"yickznkygloigmkwxphlv\",\"section_type\":\"azjrcnfbaqywuxhgjjmzu\",\"poles_count\":82,\"quantity\":34,\"estimated_budget\":1300000,\"start_date\":\"2026-09-01\",\"end_date\":\"2026-12-15\",\"acceptance_email_at\":\"2026-09-20\",\"description\":\"Revised scope\"}"
+                            "raw": "{\"name\":\"Substation A \u2014 Phase 2\",\"client_name\":\"Delta Contracting\",\"customer_id\":3,\"consultant_name\":\"ECG\",\"engineer_name\":\"Eng. Mona Said\",\"project_location\":\"6th of October City\",\"arrival_method\":\"email\",\"electric_current\":\"xtxqbbyamuoeunwgyvzxh\",\"model\":\"rxeqdinrogtqnhfycvkoj\",\"section_type\":\"xrivkthrpilfpeejvgizt\",\"poles_count\":79,\"quantity\":26,\"estimated_budget\":1300000,\"start_date\":\"2026-09-01\",\"end_date\":\"2026-12-15\",\"acceptance_email_at\":\"2026-09-20\",\"description\":\"Revised scope\"}"
                         },
                         "description": "Field edits only. `status` is **not** accepted here: moving between\npipeline stages has pre-conditions and separate permissions, so it goes\nthrough the transition endpoints. `code` is immutable once assigned."
                     },
@@ -2236,7 +2505,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -2294,7 +2563,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -2346,7 +2615,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -2392,7 +2661,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -2444,7 +2713,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -2490,7 +2759,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -2545,7 +2814,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -2594,7 +2863,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -2671,7 +2940,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -2717,7 +2986,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the offer."
                                 },
                                 {
@@ -2763,7 +3032,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -2812,7 +3081,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the offer."
                                 },
                                 {
@@ -2861,7 +3130,7 @@
                                 {
                                     "id": "offer_id",
                                     "key": "offer_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the offer."
                                 },
                                 {
@@ -2910,7 +3179,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the offer."
                                 },
                                 {
@@ -3055,7 +3324,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 2,
+                                    "value": 17,
                                     "description": "The ID of the bom."
                                 },
                                 {
@@ -3101,7 +3370,7 @@
                                 {
                                     "id": "item_id",
                                     "key": "item_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the item."
                                 },
                                 {
@@ -3188,7 +3457,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 2,
+                                    "value": 17,
                                     "description": "The ID of the bom."
                                 },
                                 {
@@ -3243,7 +3512,7 @@
                                 {
                                     "id": "bom_id",
                                     "key": "bom_id",
-                                    "value": 2,
+                                    "value": 17,
                                     "description": "The ID of the bom."
                                 },
                                 {
@@ -3292,7 +3561,7 @@
                                 {
                                     "id": "bom_id",
                                     "key": "bom_id",
-                                    "value": 2,
+                                    "value": 17,
                                     "description": "The ID of the bom."
                                 },
                                 {
@@ -3344,7 +3613,7 @@
                                 {
                                     "id": "bom_id",
                                     "key": "bom_id",
-                                    "value": 2,
+                                    "value": 17,
                                     "description": "The ID of the bom."
                                 },
                                 {
@@ -3396,7 +3665,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 2,
+                                    "value": 17,
                                     "description": "The ID of the bom."
                                 },
                                 {
@@ -3547,7 +3816,7 @@
                                 {
                                     "id": "purchase_order_id",
                                     "key": "purchase_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the purchase order."
                                 },
                                 {
@@ -3628,7 +3897,7 @@
                                 {
                                     "id": "purchase_order_id",
                                     "key": "purchase_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the purchase order."
                                 },
                                 {
@@ -3683,7 +3952,7 @@
                                 {
                                     "id": "purchase_order_id",
                                     "key": "purchase_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the purchase order."
                                 },
                                 {
@@ -3732,7 +4001,7 @@
                                 {
                                     "id": "purchase_order_id",
                                     "key": "purchase_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the purchase order."
                                 },
                                 {
@@ -3784,7 +4053,7 @@
                                 {
                                     "id": "purchase_order_id",
                                     "key": "purchase_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the purchase order."
                                 },
                                 {
@@ -3839,7 +4108,7 @@
                                 {
                                     "id": "purchase_order_id",
                                     "key": "purchase_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the purchase order."
                                 },
                                 {
@@ -3972,7 +4241,7 @@
                                 {
                                     "id": "stock_reservation_id",
                                     "key": "stock_reservation_id",
-                                    "value": 4,
+                                    "value": 17,
                                     "description": "The ID of the stock reservation."
                                 },
                                 {
@@ -4059,7 +4328,7 @@
                                 {
                                     "id": "stock_reservation_id",
                                     "key": "stock_reservation_id",
-                                    "value": 4,
+                                    "value": 17,
                                     "description": "The ID of the stock reservation."
                                 },
                                 {
@@ -4111,7 +4380,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -4332,7 +4601,7 @@
                                 {
                                     "id": "item_id",
                                     "key": "item_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the item."
                                 },
                                 {
@@ -4477,7 +4746,7 @@
                                 {
                                     "id": "addition_voucher_id",
                                     "key": "addition_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the addition voucher."
                                 },
                                 {
@@ -4558,7 +4827,7 @@
                                 {
                                     "id": "addition_voucher_id",
                                     "key": "addition_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the addition voucher."
                                 },
                                 {
@@ -4610,7 +4879,7 @@
                                 {
                                     "id": "addition_voucher_id",
                                     "key": "addition_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the addition voucher."
                                 },
                                 {
@@ -4659,7 +4928,7 @@
                                 {
                                     "id": "addition_voucher_id",
                                     "key": "addition_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the addition voucher."
                                 },
                                 {
@@ -4714,7 +4983,7 @@
                                 {
                                     "id": "addition_voucher_id",
                                     "key": "addition_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the addition voucher."
                                 },
                                 {
@@ -4853,7 +5122,7 @@
                                 {
                                     "id": "depreciation_voucher_id",
                                     "key": "depreciation_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the depreciation voucher."
                                 },
                                 {
@@ -4934,7 +5203,7 @@
                                 {
                                     "id": "depreciation_voucher_id",
                                     "key": "depreciation_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the depreciation voucher."
                                 },
                                 {
@@ -4989,7 +5258,7 @@
                                 {
                                     "id": "depreciation_voucher_id",
                                     "key": "depreciation_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the depreciation voucher."
                                 },
                                 {
@@ -5041,7 +5310,7 @@
                                 {
                                     "id": "depreciation_voucher_id",
                                     "key": "depreciation_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the depreciation voucher."
                                 },
                                 {
@@ -5198,7 +5467,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5244,7 +5513,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5290,7 +5559,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5346,7 +5615,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"project_id\":4,\"bom_id\":12,\"title\":\"Main distribution panel\",\"description\":\"Three-phase, outdoor\",\"priority\":\"high\",\"planned_quantity\":10,\"estimated_cost\":250000,\"planned_start_date\":\"2026-09-15\",\"planned_end_date\":\"2026-09-30\",\"assigned_to\":9,\"specs\":{\"conductor_type\":\"Copper\",\"cross_section\":\"mniihfqcoynlazghdtqtq\",\"cross_section_e\":\"xbajwbpilpmufinllwloa\",\"external_body\":\"uydlsmsjuryvojcybzvrb\",\"protection_degree\":\"IP54\",\"paint\":\"azjrcnfbaqywuxhgjjmzu\",\"model\":\"xjubqouzswiwxtrkimfca\",\"ampere\":\"tbxspzmrazsroyjpxmqes\",\"poles_count\":4},\"outputs\":[{\"item_id\":21,\"planned_quantity\":10,\"notes\":\"Blue paint\"}]}"
+                            "raw": "{\"project_id\":4,\"bom_id\":12,\"title\":\"Main distribution panel\",\"description\":\"Three-phase, outdoor\",\"priority\":\"high\",\"timeline_phase\":\"executive\",\"planned_quantity\":10,\"estimated_cost\":250000,\"planned_start_date\":\"2026-09-15\",\"planned_end_date\":\"2026-09-30\",\"assigned_to\":9,\"specs\":{\"conductor_type\":\"Copper\",\"cross_section\":\"mniihfqcoynlazghdtqtq\",\"cross_section_e\":\"xbajwbpilpmufinllwloa\",\"external_body\":\"uydlsmsjuryvojcybzvrb\",\"protection_degree\":\"IP54\",\"paint\":\"azjrcnfbaqywuxhgjjmzu\",\"model\":\"xjubqouzswiwxtrkimfca\",\"ampere\":\"tbxspzmrazsroyjpxmqes\",\"poles_count\":4},\"outputs\":[{\"item_id\":21,\"planned_quantity\":10,\"notes\":\"Blue paint\"}]}"
                         },
                         "description": "The order starts as a **Draft** and its number is generated by the\nserver. The plan may be incomplete at this point \u2014 a positive quantity\nand both planned dates are required by `approve-order`, not here, so the\ntechnical office can open an order while the dates are still being\nagreed.\n\nSending `outputs` also sets the order's total planned quantity and its\nprimary product, both derived from the lines."
                     },
@@ -5371,7 +5640,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5395,7 +5664,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"project_id\":17,\"bom_id\":17,\"title\":\"Main distribution panel \u2014 rev B\",\"description\":\"Molestias ipsam sit veniam sed fuga aspernatur.\",\"priority\":\"urgent\",\"planned_quantity\":12,\"estimated_cost\":85,\"planned_start_date\":\"2026-09-16\",\"planned_end_date\":\"2026-10-02\",\"assigned_to\":17,\"specs\":{\"conductor_type\":\"mqeopfuudtdsufvyvddqa\",\"cross_section\":\"mniihfqcoynlazghdtqtq\",\"cross_section_e\":\"xbajwbpilpmufinllwloa\",\"external_body\":\"uydlsmsjuryvojcybzvrb\",\"protection_degree\":\"yickznkygloigmkwxphlv\",\"paint\":\"azjrcnfbaqywuxhgjjmzu\",\"model\":\"xjubqouzswiwxtrkimfca\",\"ampere\":\"tbxspzmrazsroyjpxmqes\",\"poles_count\":14}}"
+                            "raw": "{\"project_id\":17,\"bom_id\":17,\"title\":\"Main distribution panel \u2014 rev B\",\"description\":\"Molestias ipsam sit veniam sed fuga aspernatur.\",\"priority\":\"urgent\",\"timeline_phase\":\"preliminary\",\"planned_quantity\":12,\"estimated_cost\":85,\"planned_start_date\":\"2026-09-16\",\"planned_end_date\":\"2026-10-02\",\"assigned_to\":17,\"specs\":{\"conductor_type\":\"mqeopfuudtdsufvyvddqa\",\"cross_section\":\"mniihfqcoynlazghdtqtq\",\"cross_section_e\":\"xbajwbpilpmufinllwloa\",\"external_body\":\"uydlsmsjuryvojcybzvrb\",\"protection_degree\":\"yickznkygloigmkwxphlv\",\"paint\":\"azjrcnfbaqywuxhgjjmzu\",\"model\":\"xjubqouzswiwxtrkimfca\",\"ampere\":\"tbxspzmrazsroyjpxmqes\",\"poles_count\":14}}"
                         },
                         "description": "Plan fields only. The status is moved by the transition endpoints, and\nproduced\/waste quantities are declared at `submit-qa` \u2014 neither can be\nwritten here at all."
                     },
@@ -5420,7 +5689,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5472,7 +5741,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5521,7 +5790,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5570,7 +5839,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5622,7 +5891,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5674,7 +5943,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5726,7 +5995,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5781,7 +6050,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5836,7 +6105,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -5888,7 +6157,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -6033,7 +6302,7 @@
                                 {
                                     "id": "issue_voucher_id",
                                     "key": "issue_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the issue voucher."
                                 },
                                 {
@@ -6079,7 +6348,7 @@
                                 {
                                     "id": "issue_voucher_id",
                                     "key": "issue_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the issue voucher."
                                 },
                                 {
@@ -6166,7 +6435,7 @@
                                 {
                                     "id": "issue_voucher_id",
                                     "key": "issue_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the issue voucher."
                                 },
                                 {
@@ -6221,7 +6490,7 @@
                                 {
                                     "id": "issue_voucher_id",
                                     "key": "issue_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the issue voucher."
                                 },
                                 {
@@ -6282,7 +6551,7 @@
                                 {
                                     "id": "issue_voucher_id",
                                     "key": "issue_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the issue voucher."
                                 },
                                 {
@@ -6415,7 +6684,7 @@
                                 {
                                     "id": "return_voucher_id",
                                     "key": "return_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the return voucher."
                                 },
                                 {
@@ -6496,7 +6765,7 @@
                                 {
                                     "id": "return_voucher_id",
                                     "key": "return_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the return voucher."
                                 },
                                 {
@@ -6545,7 +6814,7 @@
                                 {
                                     "id": "return_voucher_id",
                                     "key": "return_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the return voucher."
                                 },
                                 {
@@ -6597,7 +6866,7 @@
                                 {
                                     "id": "return_voucher_id",
                                     "key": "return_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the return voucher."
                                 },
                                 {
@@ -6730,7 +6999,7 @@
                                 {
                                     "id": "quality_sheet_id",
                                     "key": "quality_sheet_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the quality sheet."
                                 },
                                 {
@@ -6776,7 +7045,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {
@@ -6822,7 +7091,7 @@
                                 {
                                     "id": "quality_sheet_id",
                                     "key": "quality_sheet_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the quality sheet."
                                 },
                                 {
@@ -6871,7 +7140,7 @@
                                 {
                                     "id": "quality_sheet_id",
                                     "key": "quality_sheet_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the quality sheet."
                                 },
                                 {
@@ -6920,7 +7189,7 @@
                                 {
                                     "id": "quality_sheet_id",
                                     "key": "quality_sheet_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the quality sheet."
                                 },
                                 {
@@ -6966,7 +7235,7 @@
                                 {
                                     "id": "quality_sheet_id",
                                     "key": "quality_sheet_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the quality sheet."
                                 },
                                 {
@@ -7099,7 +7368,7 @@
                                 {
                                     "id": "production_entry_id",
                                     "key": "production_entry_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the production entry."
                                 },
                                 {
@@ -7244,7 +7513,7 @@
                                 {
                                     "id": "delivery_voucher_id",
                                     "key": "delivery_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the delivery voucher."
                                 },
                                 {
@@ -7325,7 +7594,7 @@
                                 {
                                     "id": "delivery_voucher_id",
                                     "key": "delivery_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the delivery voucher."
                                 },
                                 {
@@ -7349,7 +7618,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"customer_id\":17,\"project_id\":17,\"supply_order_number\":\"SO-2026-91\",\"voucher_date\":\"2026-09-12T12:40:14\",\"plates_count\":45,\"protection_degree\":\"niihfqcoynlazghdtqtqx\",\"insulation_voltage\":\"bajwbpilpmufinllwloau\",\"notes\":\"Second attempt, gate was closed\"}"
+                            "raw": "{\"customer_id\":17,\"project_id\":17,\"supply_order_number\":\"SO-2026-91\",\"voucher_date\":\"2026-10-12T17:06:05\",\"plates_count\":45,\"protection_degree\":\"niihfqcoynlazghdtqtqx\",\"insulation_voltage\":\"bajwbpilpmufinllwloau\",\"notes\":\"Second attempt, gate was closed\"}"
                         },
                         "description": "Header fields only, and only while the voucher is not yet active \u2014 the\npolicy enforces that, so an active voucher answers **403**."
                     },
@@ -7374,7 +7643,7 @@
                                 {
                                     "id": "delivery_voucher_id",
                                     "key": "delivery_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the delivery voucher."
                                 },
                                 {
@@ -7423,7 +7692,7 @@
                                 {
                                     "id": "delivery_voucher_id",
                                     "key": "delivery_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the delivery voucher."
                                 },
                                 {
@@ -7469,7 +7738,7 @@
                                 {
                                     "id": "delivery_voucher_id",
                                     "key": "delivery_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the delivery voucher."
                                 },
                                 {
@@ -7521,7 +7790,7 @@
                                 {
                                     "id": "delivery_voucher_id",
                                     "key": "delivery_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the delivery voucher."
                                 },
                                 {
@@ -7573,7 +7842,7 @@
                                 {
                                     "id": "delivery_voucher_id",
                                     "key": "delivery_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the delivery voucher."
                                 },
                                 {
@@ -8218,15 +8487,24 @@
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application\/json"
+                                "value": "multipart\/form-data"
                             },
                             {
                                 "key": "Accept",
                                 "value": "application\/json"
                             }
                         ],
-                        "body": null,
-                        "description": "In Progress only, and it stamps `completed_at`. An installation cannot\njump straight from Pending to Completed: the start time is what the\nduration on site is measured from, and an installation with no start has\nno duration."
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "handover_minutes",
+                                    "src": [],
+                                    "type": "file"
+                                }
+                            ]
+                        },
+                        "description": "In Progress only, and it stamps `completed_at`. An installation cannot\njump straight from Pending to Completed: the start time is what the\nduration on site is measured from, and an installation with no start has\nno duration.\n\nAn installation is finished BY the works-handover minutes (\u0645\u062d\u0627\u0636\u0631 \u062a\u0633\u0644\u064a\u0645\n\u0627\u0644\u0623\u0639\u0645\u0627\u0644 \u2014 Presentation.pptx slide 8). Send the signed minutes as\n`handover_minutes` (multipart) and they are filed on the operation under\nthe `handover_minutes` attachment category; without a file, the operation\nmust already have minutes on file or the call fails with 422. Uploading\nthe minutes through `POST \/attachments` completes the running\ninstallation by itself."
                     },
                     "response": [
                         {
@@ -8234,6 +8512,12 @@
                             "code": 200,
                             "body": "{\"data\":{\"id\":3,\"type\":\"installation\",\"status\":{\"value\":\"completed\",\"label\":\"Completed\",\"color\":\"success\"},\"completed_at\":\"2026-09-14T17:00:00+00:00\"},\"meta\":{\"request_id\":\"9f1c\",\"api_version\":\"1\"}}",
                             "name": "Completed"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"An installation can only be finished with the works handover minutes. Upload the minutes first.\",\"errors\":{\"handover_minutes\":[\"An installation can only be finished with the works handover minutes. Upload the minutes first.\"]}}",
+                            "name": "No handover minutes"
                         }
                     ]
                 },
@@ -8487,7 +8771,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"survey_date\":\"2026-09-12T12:40:14\",\"measurements\":\"Riser 4.2m, clearance 750mm (re-measured)\",\"notes\":\"Second visit\",\"surveyed_by\":17}"
+                            "raw": "{\"survey_date\":\"2026-10-12T17:07:51\",\"measurements\":\"Riser 4.2m, clearance 750mm (re-measured)\",\"notes\":\"Second visit\",\"surveyed_by\":17}"
                         },
                         "description": ""
                     },
@@ -8657,7 +8941,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the account."
                                 },
                                 {
@@ -8738,7 +9022,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the account."
                                 },
                                 {
@@ -8762,7 +9046,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"code\":\"vmqeopfuudtdsufvyvddq\",\"name\":\"\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a \u0648\u0627\u0644\u062e\u062f\u0645\u0627\u062a\",\"name_en\":\"qxbajwbpilpmufinllwlo\",\"type\":\"equity\",\"nature\":\"debit\",\"statement_section\":\"cost_of_sales\",\"currency\":\"auy\",\"parent_id\":17,\"contra_of_account_id\":17,\"party_control\":\"mqeopfuudtdsufvyvddqa\",\"opening_balance\":11613.31890586,\"opening_balance_date\":\"2026-09-12T12:40:14\",\"is_active\":false,\"notes\":\"opfuudtdsufvyvddqamni\"}"
+                            "raw": "{\"code\":\"vmqeopfuudtdsufvyvddq\",\"name\":\"\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a \u0648\u0627\u0644\u062e\u062f\u0645\u0627\u062a\",\"name_en\":\"qxbajwbpilpmufinllwlo\",\"type\":\"asset\",\"nature\":\"credit\",\"statement_section\":\"cost_of_sales\",\"currency\":\"auy\",\"parent_id\":17,\"contra_of_account_id\":17,\"party_control\":\"mqeopfuudtdsufvyvddqa\",\"opening_balance\":11613.31890586,\"opening_balance_date\":\"2026-10-12T17:09:29\",\"is_active\":false,\"notes\":\"opfuudtdsufvyvddqamni\"}"
                         },
                         "description": ""
                     },
@@ -8787,7 +9071,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the account."
                                 },
                                 {
@@ -8926,7 +9210,7 @@
                                 {
                                     "id": "journal_entry_id",
                                     "key": "journal_entry_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the journal entry."
                                 },
                                 {
@@ -9007,7 +9291,7 @@
                                 {
                                     "id": "journal_entry_id",
                                     "key": "journal_entry_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the journal entry."
                                 },
                                 {
@@ -9031,7 +9315,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"document_type\":\"supply_receipt\",\"entry_date\":\"2026-09-13\",\"description\":\"Corrected description\",\"currency\":\"dtd\",\"notes\":\"sufvyvddqamniihfqcoyn\"}"
+                            "raw": "{\"document_type\":\"settlement\",\"entry_date\":\"2026-09-13\",\"description\":\"Corrected description\",\"currency\":\"dtd\",\"notes\":\"sufvyvddqamniihfqcoyn\"}"
                         },
                         "description": "Drafts only \u2014 the policy answers **403** on a posted entry."
                     },
@@ -9056,7 +9340,7 @@
                                 {
                                     "id": "journal_entry_id",
                                     "key": "journal_entry_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the journal entry."
                                 },
                                 {
@@ -9105,7 +9389,7 @@
                                 {
                                     "id": "journal_entry_id",
                                     "key": "journal_entry_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the journal entry."
                                 },
                                 {
@@ -9157,7 +9441,7 @@
                                 {
                                     "id": "journal_entry_id",
                                     "key": "journal_entry_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the journal entry."
                                 },
                                 {
@@ -9290,7 +9574,7 @@
                                 {
                                     "id": "sales_invoice_id",
                                     "key": "sales_invoice_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the sales invoice."
                                 },
                                 {
@@ -9336,7 +9620,7 @@
                                 {
                                     "id": "delivery_voucher_id",
                                     "key": "delivery_voucher_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the delivery voucher."
                                 },
                                 {
@@ -9391,7 +9675,7 @@
                                 {
                                     "id": "sales_invoice_id",
                                     "key": "sales_invoice_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the sales invoice."
                                 },
                                 {
@@ -9588,7 +9872,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -9866,7 +10150,7 @@
                                 {
                                     "id": "customer_id",
                                     "key": "customer_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the customer."
                                 },
                                 {
@@ -9912,7 +10196,7 @@
                                 {
                                     "id": "supplier_id",
                                     "key": "supplier_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the supplier."
                                 },
                                 {
@@ -10156,7 +10440,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"customer_id\":17,\"claim_date\":\"2026-09-12T12:40:14\",\"amount\":260000,\"description\":\"Supply and installation, revised scope\"}"
+                            "raw": "{\"customer_id\":17,\"claim_date\":\"2026-10-12T17:10:51\",\"amount\":260000,\"description\":\"Supply and installation, revised scope\"}"
                         },
                         "description": "Drafts only \u2014 the policy answers **403** once the claim has been\nsubmitted, because the customer is already holding a copy."
                     },
@@ -10511,7 +10795,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"name\":\"vmqeopfuudtdsufvyvddq\",\"account_id\":17,\"customer_id\":17,\"limit_amount\":6000000,\"currency\":\"opf\",\"start_date\":\"2026-09-12T12:40:14\",\"end_date\":\"2107-10-12\",\"status\":\"closed\",\"notes\":\"mqeopfuudtdsufvyvddqa\"}"
+                            "raw": "{\"name\":\"vmqeopfuudtdsufvyvddq\",\"account_id\":17,\"customer_id\":17,\"limit_amount\":6000000,\"currency\":\"opf\",\"start_date\":\"2026-10-12T17:11:24\",\"end_date\":\"2107-11-11\",\"status\":\"closed\",\"notes\":\"mqeopfuudtdsufvyvddqa\"}"
                         },
                         "description": ""
                     },
@@ -10770,7 +11054,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -10816,7 +11100,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -10877,7 +11161,7 @@
                                 {
                                     "id": "cost_center_closing_id",
                                     "key": "cost_center_closing_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the cost center closing."
                                 },
                                 {
@@ -11265,7 +11549,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -11311,7 +11595,7 @@
                                 {
                                     "id": "project_id",
                                     "key": "project_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the project."
                                 },
                                 {
@@ -11334,13 +11618,61 @@
                             }
                         ],
                         "body": null,
-                        "description": "\u0627\u0644\u062e\u0637 \u0627\u0644\u0632\u0645\u0646\u0649 \u0644\u0644\u0639\u0645\u0644\u064a\u0629 \u2014 every stage the operation has reached and when,\nwith the ones it has not reached marked unreached rather than omitted.\n\nKeeping the unreached stages in the list is the point: a timeline that\nonly showed what happened could not show what is next, which is the\nquestion anyone opening it is actually asking."
+                        "description": "\u0627\u0644\u062e\u0637 \u0627\u0644\u0632\u0645\u0646\u0649 \u0644\u0644\u0639\u0645\u0644\u064a\u0629 \u2014 every stage the operation has reached and when,\nwith the ones it has not reached marked unreached rather than omitted.\n\nKeeping the unreached stages in the list is the point: a timeline that\nonly showed what happened could not show what is next, which is the\nquestion anyone opening it is actually asking.\n\nEighteen stages in three groups (`preliminary`, `executive`, `handover`),\nin the order of the project-management deck. A stage is reached when the\nrecord proving it exists \u2014 an uploaded drawing\/approval file, a logged\ncustomer contact, a started work order \u2014 so it moves on its own. A\n`skipped` stage is the optional preliminary manufacturing order of an\noperation that went straight to the executive phase. `summary` answers\nthe customer's question: where the operation is and how long is left\nuntil `expected_delivery` (the operation's end date)."
                     },
                     "response": [
                         {
                             "header": [],
                             "code": 200,
-                            "body": "{\"data\":{\"project_id\":4,\"current_stage\":{\"key\":\"delivered\",\"label\":\"Delivered\"},\"stages\":[{\"key\":\"offer\",\"label\":\"Offer\",\"at\":\"2026-02-01\",\"reached\":true,\"days_from_start\":0},{\"key\":\"installed\",\"label\":\"Installed\",\"at\":null,\"reached\":false,\"days_from_start\":null}]},\"meta\":{\"request_id\":\"9f1c\",\"api_version\":\"1\"}}",
+                            "body": "{\"data\":{\"project_id\":4,\"project_code\":\"2026-4\",\"current_stage\":{\"key\":\"executive_drawing\",\"label\":\"Shop Drawing\",\"group\":\"executive\",\"group_label\":\"Executive Phase\",\"at\":\"2026-09-02T10:00:00+00:00\"},\"summary\":{\"progress_percent\":44,\"expected_delivery\":\"2026-10-30T00:00:00+00:00\",\"delivered_at\":null,\"days_remaining\":19,\"days_overdue\":null},\"stages\":[{\"key\":\"sales\",\"label\":\"Sales\",\"group\":\"preliminary\",\"at\":\"2026-08-01T09:00:00+00:00\",\"reached\":true,\"skipped\":false,\"detail\":\"Nile Contracting\",\"days_from_start\":0},{\"key\":\"preliminary_mo_created\",\"label\":\"Manufacturing Order\",\"group\":\"preliminary\",\"at\":null,\"reached\":false,\"skipped\":true,\"detail\":null,\"days_from_start\":null}]},\"meta\":{\"request_id\":\"9f1c\",\"api_version\":\"1\"}}",
+                            "name": "Success"
+                        }
+                    ]
+                },
+                {
+                    "name": "Operations timeline (list)",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/operations-timeline",
+                            "query": [
+                                {
+                                    "key": "group",
+                                    "value": "executive",
+                                    "description": "Only operations whose current stage is in this group: preliminary, executive or handover.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "overdue",
+                                    "value": "1",
+                                    "description": "Only operations past their expected delivery and not delivered.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/operations-timeline?group=executive&overdue=1"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"group\":\"consequatur\",\"overdue\":false}"
+                        },
+                        "description": "\u0642\u0633\u0645 \u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u0634\u0631\u0648\u0639\u0627\u062a \u2014 every active (or on-hold) operation with where it\nstands and how long is left until delivery: the same data as the web\npanel's Operations Timeline page. Built in a fixed number of queries\nhowever many operations are listed. Fetch one operation's full stage\nlist from `GET \/projects\/{project}\/timeline`."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":[{\"project_id\":4,\"project_code\":\"2026-4\",\"name\":\"Substation A\",\"customer\":\"Nile Contracting\",\"status\":{\"value\":\"in_progress\",\"label\":\"In Progress\",\"color\":\"primary\"},\"current_stage\":{\"key\":\"executive_drawing\",\"label\":\"Shop Drawing\",\"group\":\"executive\",\"group_label\":\"Executive Phase\",\"at\":\"2026-09-02T10:00:00+00:00\"},\"progress_percent\":44,\"expected_delivery\":\"2026-10-30T00:00:00+00:00\",\"delivered_at\":null,\"days_remaining\":19,\"days_overdue\":null}],\"meta\":{\"request_id\":\"9f1c\",\"api_version\":\"1\",\"count\":1}}",
                             "name": "Success"
                         }
                     ]
@@ -11370,7 +11702,7 @@
                                 {
                                     "id": "offer_id",
                                     "key": "offer_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the offer."
                                 },
                                 {
@@ -11429,7 +11761,7 @@
                                 {
                                     "id": "purchase_order_id",
                                     "key": "purchase_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the purchase order."
                                 },
                                 {
@@ -11482,7 +11814,7 @@
                                 {
                                     "id": "quality_sheet_id",
                                     "key": "quality_sheet_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the quality sheet."
                                 },
                                 {
@@ -11528,7 +11860,7 @@
                                 {
                                     "id": "work_order_id",
                                     "key": "work_order_id",
-                                    "value": 1,
+                                    "value": 17,
                                     "description": "The ID of the work order."
                                 },
                                 {

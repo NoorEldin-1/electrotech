@@ -1,54 +1,52 @@
-name: '23. Quality sheets'
+name: '22. Return vouchers'
 description: |-
 
-  ورقة الجودة — the test record and the certificate printed from it.
+  إذن ارتداد — unconsumed material going back from the floor to the store.
 
-  A draft sheet is opened **automatically** when a work order's manufacturing
-  is declared finished, seeded with ten blank test rows and a snapshot of the
-  order's technical specification. `POST /work-orders/{id}/quality-sheet` is
-  idempotent and returns the existing sheet rather than a second one, so a
-  client may call it freely.
+  The exact inverse of an issue voucher: posting transfers each line out of
+  work-in-progress and back into the SAME item's raw stock, and reverses its
+  value off the operation and the work order. The material re-enters under its
+  own code (there is no separate scrap item), so it can simply be issued
+  again.
 
-  Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
-  factory manager's final sign-off, which announces to every department that
-  the operation has finished manufacturing). Approval is final: an approved
-  sheet can no longer be edited, which is what makes the printed certificate
-  worth anything.
+  A draft is pre-filled with one line per material the order was issued, each
+  at **quantity zero**, and the warehouse raises only the lines that actually
+  came back. Posting ignores the zeros. That is why the write endpoint allows
+  a zero quantity where an issue voucher would not: deleting a hundred lines
+  to return two is not a workflow anyone completes correctly on a tablet.
 
-  Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
-  the signature, so an inspector can save a partly-filled grid all afternoon
-  and sign once.
+  Scrap items are left out of the pre-fill — scrap does not go back into raw
+  stock.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/quality-sheets
+    uri: api/v1/return-vouchers
     metadata:
       custom: []
-      groupName: '23. Quality sheets'
+      groupName: '22. Return vouchers'
       groupDescription: |-
 
-        ورقة الجودة — the test record and the certificate printed from it.
+        إذن ارتداد — unconsumed material going back from the floor to the store.
 
-        A draft sheet is opened **automatically** when a work order's manufacturing
-        is declared finished, seeded with ten blank test rows and a snapshot of the
-        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
-        idempotent and returns the existing sheet rather than a second one, so a
-        client may call it freely.
+        The exact inverse of an issue voucher: posting transfers each line out of
+        work-in-progress and back into the SAME item's raw stock, and reverses its
+        value off the operation and the work order. The material re-enters under its
+        own code (there is no separate scrap item), so it can simply be issued
+        again.
 
-        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
-        factory manager's final sign-off, which announces to every department that
-        the operation has finished manufacturing). Approval is final: an approved
-        sheet can no longer be edited, which is what makes the printed certificate
-        worth anything.
+        A draft is pre-filled with one line per material the order was issued, each
+        at **quantity zero**, and the warehouse raises only the lines that actually
+        came back. Posting ignores the zeros. That is why the write endpoint allows
+        a zero quantity where an issue voucher would not: deleting a hundred lines
+        to return two is not a workflow anyone completes correctly on a tablet.
 
-        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
-        the signature, so an inspector can save a partly-filled grid all afternoon
-        and sign once.
+        Scrap items are left out of the pre-fill — scrap does not go back into raw
+        stock.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List quality sheets'
+      title: 'List return vouchers'
       description: ''
       authenticated: true
       deprecated: false
@@ -84,9 +82,9 @@ endpoints:
       search:
         custom: []
         name: search
-        description: 'Matches the sheet number or operation name.'
+        description: 'Matches the voucher number.'
         required: false
-        example: QS-2026
+        example: RV-2026
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -95,9 +93,9 @@ endpoints:
       'filter[status]':
         custom: []
         name: 'filter[status]'
-        description: 'draft, qa_filled or approved.'
+        description: 'draft or posted.'
         required: false
-        example: qa_filled
+        example: posted
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -114,9 +112,9 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      'filter[test_date]':
+      'filter[voucher_date]':
         custom: []
-        name: 'filter[test_date]'
+        name: 'filter[voucher_date]'
         description: 'Inclusive date range from,until.'
         required: false
         example: '2026-01-01,2026-06-30'
@@ -128,9 +126,9 @@ endpoints:
       sort:
         custom: []
         name: sort
-        description: 'Allowed: sheet_number, test_date, status, created_at.'
+        description: 'Allowed: voucher_number, voucher_date, total_value, created_at.'
         required: false
-        example: '-test_date'
+        example: '-voucher_date'
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -150,11 +148,11 @@ endpoints:
     cleanQueryParameters:
       page: 1
       per_page: 25
-      search: QS-2026
-      'filter[status]': qa_filled
+      search: RV-2026
+      'filter[status]': posted
       'filter[work_order]': 31
-      'filter[test_date]': '2026-01-01,2026-06-30'
-      sort: '-test_date'
+      'filter[voucher_date]': '2026-01-01,2026-06-30'
+      sort: '-voucher_date'
       include: workOrder
     bodyParameters: []
     cleanBodyParameters: []
@@ -163,7 +161,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":[{"id":12,"type":"quality_sheet","sheet_number":"QS-202609-0007","status":{"value":"qa_filled","label":"QA Filled","color":"warning"},"work_order_id":31,"lines_count":10}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        content: '{"data":[{"id":9,"type":"return_voucher","voucher_number":"RV-202609-0003","status":{"value":"posted","label":"Posted","color":"success"},"total_value":"2000.00","lines_count":4}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
         headers: []
         description: Success
     responseFields: []
@@ -178,33 +176,32 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/quality-sheets/{quality_sheet_id}'
+    uri: 'api/v1/return-vouchers/{return_voucher_id}'
     metadata:
       custom: []
-      groupName: '23. Quality sheets'
+      groupName: '22. Return vouchers'
       groupDescription: |-
 
-        ورقة الجودة — the test record and the certificate printed from it.
+        إذن ارتداد — unconsumed material going back from the floor to the store.
 
-        A draft sheet is opened **automatically** when a work order's manufacturing
-        is declared finished, seeded with ten blank test rows and a snapshot of the
-        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
-        idempotent and returns the existing sheet rather than a second one, so a
-        client may call it freely.
+        The exact inverse of an issue voucher: posting transfers each line out of
+        work-in-progress and back into the SAME item's raw stock, and reverses its
+        value off the operation and the work order. The material re-enters under its
+        own code (there is no separate scrap item), so it can simply be issued
+        again.
 
-        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
-        factory manager's final sign-off, which announces to every department that
-        the operation has finished manufacturing). Approval is final: an approved
-        sheet can no longer be edited, which is what makes the printed certificate
-        worth anything.
+        A draft is pre-filled with one line per material the order was issued, each
+        at **quantity zero**, and the warehouse raises only the lines that actually
+        came back. Posting ignores the zeros. That is why the write endpoint allows
+        a zero quantity where an issue voucher would not: deleting a hundred lines
+        to return two is not a workflow anyone completes correctly on a tablet.
 
-        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
-        the signature, so an inspector can save a partly-filled grid all afternoon
-        and sign once.
+        Scrap items are left out of the pre-fill — scrap does not go back into raw
+        stock.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Show a quality sheet'
-      description: 'Returns the header, the specification snapshot and the full test grid.'
+      title: 'Show a return voucher'
+      description: ''
       authenticated: true
       deprecated: false
     headers:
@@ -212,31 +209,31 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      quality_sheet_id:
+      return_voucher_id:
         custom: []
-        name: quality_sheet_id
-        description: 'The ID of the quality sheet.'
+        name: return_voucher_id
+        description: 'The ID of the return voucher.'
         required: true
-        example: 1
+        example: 17
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      quality_sheet:
+      return_voucher:
         custom: []
-        name: quality_sheet
-        description: 'The sheet id.'
+        name: return_voucher
+        description: 'The voucher id.'
         required: true
-        example: 12
+        example: 9
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      quality_sheet_id: 1
-      quality_sheet: 12
+      return_voucher_id: 17
+      return_voucher: 9
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -246,7 +243,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":12,"type":"quality_sheet","sheet_number":"QS-202609-0007","status":{"value":"draft","label":"Draft","color":"gray"},"specs":{"protection_degree":"IP54","poles_count":4},"lines":[{"line_no":1,"checks":{"visual_quality":true,"assembly":true,"earth_bond_pe_fe":false},"tests":{"pe_l123n":{"r1":"0.12","r2":"0.13"}}}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":9,"type":"return_voucher","voucher_number":"RV-202609-0003","status":{"value":"draft","label":"Draft","color":"gray"},"lines":[{"item_id":7,"quantity":"0.0000","unit_cost":"1000.00"}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Success
     responseFields: []
@@ -261,63 +258,49 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: 'api/v1/work-orders/{work_order_id}/quality-sheet'
+    uri: api/v1/return-vouchers
     metadata:
       custom: []
-      groupName: '23. Quality sheets'
+      groupName: '22. Return vouchers'
       groupDescription: |-
 
-        ورقة الجودة — the test record and the certificate printed from it.
+        إذن ارتداد — unconsumed material going back from the floor to the store.
 
-        A draft sheet is opened **automatically** when a work order's manufacturing
-        is declared finished, seeded with ten blank test rows and a snapshot of the
-        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
-        idempotent and returns the existing sheet rather than a second one, so a
-        client may call it freely.
+        The exact inverse of an issue voucher: posting transfers each line out of
+        work-in-progress and back into the SAME item's raw stock, and reverses its
+        value off the operation and the work order. The material re-enters under its
+        own code (there is no separate scrap item), so it can simply be issued
+        again.
 
-        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
-        factory manager's final sign-off, which announces to every department that
-        the operation has finished manufacturing). Approval is final: an approved
-        sheet can no longer be edited, which is what makes the printed certificate
-        worth anything.
+        A draft is pre-filled with one line per material the order was issued, each
+        at **quantity zero**, and the warehouse raises only the lines that actually
+        came back. Posting ignores the zeros. That is why the write endpoint allows
+        a zero quantity where an issue voucher would not: deleting a hundred lines
+        to return two is not a workflow anyone completes correctly on a tablet.
 
-        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
-        the signature, so an inspector can save a partly-filled grid all afternoon
-        and sign once.
+        Scrap items are left out of the pre-fill — scrap does not go back into raw
+        stock.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Open (or fetch) the sheet for a work order'
+      title: 'Open a draft return voucher'
       description: |-
-        Idempotent and race-safe: an order never has two sheets. If one already
-        exists this returns it unchanged — including a sheet that is already
-        approved — so a client can call it without checking first.
-
-        A new sheet is seeded with ten blank rows and a **snapshot** of the
-        order's technical specification. The snapshot is taken once: editing the
-        order afterwards does not change a sheet that already exists, because a
-        certificate must keep saying what was actually tested.
+        Pre-filled with every material the order was actually issued, at quantity
+        zero. Raise the lines that came back and post; the rest are ignored.
       authenticated: true
       deprecated: false
     headers:
       Authorization: 'Bearer {ACCESS_TOKEN}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters:
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
       work_order_id:
         custom: []
         name: work_order_id
-        description: 'The ID of the work order.'
-        required: true
-        example: 1
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      work_order:
-        custom: []
-        name: work_order
-        description: 'The order id.'
+        description: 'The order the material was issued to.'
         required: true
         example: 31
         type: integer
@@ -325,21 +308,16 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-    cleanUrlParameters:
-      work_order_id: 1
-      work_order: 31
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
+    cleanBodyParameters:
+      work_order_id: 31
     fileParameters: []
     responses:
       -
         custom: []
-        status: 200
-        content: '{"data":{"id":12,"type":"quality_sheet","sheet_number":"QS-202609-0007","status":{"value":"draft","label":"Draft","color":"gray"},"lines_count":10},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        status: 201
+        content: '{"data":{"id":9,"type":"return_voucher","voucher_number":"RV-202609-0003","status":{"value":"draft","label":"Draft","color":"gray"},"lines":[{"item_id":7,"quantity":"0.0000","unit_cost":"1000.00"}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
-        description: 'Existing sheet returned'
+        description: Created
     responseFields: []
     auth:
       - headers
@@ -352,43 +330,34 @@ endpoints:
     custom: []
     httpMethods:
       - PUT
-    uri: 'api/v1/quality-sheets/{quality_sheet_id}/lines'
+    uri: 'api/v1/return-vouchers/{return_voucher_id}/lines'
     metadata:
       custom: []
-      groupName: '23. Quality sheets'
+      groupName: '22. Return vouchers'
       groupDescription: |-
 
-        ورقة الجودة — the test record and the certificate printed from it.
+        إذن ارتداد — unconsumed material going back from the floor to the store.
 
-        A draft sheet is opened **automatically** when a work order's manufacturing
-        is declared finished, seeded with ten blank test rows and a snapshot of the
-        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
-        idempotent and returns the existing sheet rather than a second one, so a
-        client may call it freely.
+        The exact inverse of an issue voucher: posting transfers each line out of
+        work-in-progress and back into the SAME item's raw stock, and reverses its
+        value off the operation and the work order. The material re-enters under its
+        own code (there is no separate scrap item), so it can simply be issued
+        again.
 
-        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
-        factory manager's final sign-off, which announces to every department that
-        the operation has finished manufacturing). Approval is final: an approved
-        sheet can no longer be edited, which is what makes the printed certificate
-        worth anything.
+        A draft is pre-filled with one line per material the order was issued, each
+        at **quantity zero**, and the warehouse raises only the lines that actually
+        came back. Posting ignores the zeros. That is why the write endpoint allows
+        a zero quantity where an issue voucher would not: deleting a hundred lines
+        to return two is not a workflow anyone completes correctly on a tablet.
 
-        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
-        the signature, so an inspector can save a partly-filled grid all afternoon
-        and sign once.
+        Scrap items are left out of the pre-fill — scrap does not go back into raw
+        stock.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Write the test grid'
+      title: 'Replace the lines of a draft voucher'
       description: |-
-        Replaces every row in one request. The payload mirrors the read shape
-        exactly, so a client can fetch a sheet, edit it and send it back
-        unchanged in structure.
-
-        Readings are **strings**, not numbers: the sheet records what the meter
-        showed, and the paper form it replaces legitimately carries entries like
-        "OK" or a dash.
-
-        Refused once the sheet is approved — the policy stops it, so the answer
-        there is 403 rather than 422.
+        The whole list in one atomic request. Zero quantities are legal and are
+        simply skipped at posting.
       authenticated: true
       deprecated: false
     headers:
@@ -396,38 +365,38 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      quality_sheet_id:
+      return_voucher_id:
         custom: []
-        name: quality_sheet_id
-        description: 'The ID of the quality sheet.'
+        name: return_voucher_id
+        description: 'The ID of the return voucher.'
         required: true
-        example: 1
+        example: 17
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      quality_sheet:
+      return_voucher:
         custom: []
-        name: quality_sheet
-        description: 'The sheet id.'
+        name: return_voucher
+        description: 'The voucher id.'
         required: true
-        example: 12
+        example: 9
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      quality_sheet_id: 1
-      quality_sheet: 12
+      return_voucher_id: 17
+      return_voucher: 9
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
       lines:
         custom: []
         name: lines
-        description: 'The complete grid. Send `[]` to clear it.'
+        description: 'The complete list. Send `[]` to clear it.'
         required: true
         example:
           - []
@@ -436,317 +405,53 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      'lines[].line_no':
+      'lines[].item_id':
         custom: []
-        name: 'lines[].line_no'
-        description: 'optional Row number on the paper form; defaults to its position.'
-        required: false
-        example: 1
+        name: 'lines[].item_id'
+        description: ''
+        required: true
+        example: 7
         type: integer
         enumValues: []
         exampleWasSpecified: true
-        nullable: true
+        nullable: false
         deprecated: false
-      'lines[].label':
+      'lines[].quantity':
         custom: []
-        name: 'lines[].label'
-        description: optional
-        required: false
-        example: 'Panel section A'
-        type: string
+        name: 'lines[].quantity'
+        description: 'Zero means "nothing of this came back".'
+        required: true
+        example: 2.0
+        type: number
         enumValues: []
         exampleWasSpecified: true
-        nullable: true
+        nullable: false
         deprecated: false
-      'lines[].piece_number':
+      'lines[].unit_cost':
         custom: []
-        name: 'lines[].piece_number'
-        description: optional
+        name: 'lines[].unit_cost'
+        description: "optional Defaults to the item's current cost."
         required: false
-        example: '4'
-        type: string
+        example: 1000.0
+        type: number
         enumValues: []
         exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      'lines[].required_size':
-        custom: []
-        name: 'lines[].required_size'
-        description: optional
-        required: false
-        example: 16mm
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      'lines[].notes':
-        custom: []
-        name: 'lines[].notes'
-        description: optional
-        required: false
-        example: 'Retested after rework'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      'lines[].checks':
-        custom: []
-        name: 'lines[].checks'
-        description: 'optional The three pass/fail marks.'
-        required: false
-        example: []
-        type: object
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].checks.visual_quality':
-        custom: []
-        name: 'lines[].checks.visual_quality'
-        description: optional
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      'lines[].checks.assembly':
-        custom: []
-        name: 'lines[].checks.assembly'
-        description: optional
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      'lines[].checks.earth_bond_pe_fe':
-        custom: []
-        name: 'lines[].checks.earth_bond_pe_fe'
-        description: optional
-        required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      'lines[].tests':
-        custom: []
-        name: 'lines[].tests'
-        description: 'optional Keys: pe_l123n, fe_l123n, n_l12l3, l1_l2l3, l2_l3 — each with two readings.'
-        required: false
-        example: []
-        type: object
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.pe_l123n':
-        custom: []
-        name: 'lines[].tests.pe_l123n'
-        description: ''
-        required: false
-        example: null
-        type: object
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.pe_l123n.r1':
-        custom: []
-        name: 'lines[].tests.pe_l123n.r1'
-        description: 'optional First reading.'
-        required: false
-        example: '0.12'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      'lines[].tests.pe_l123n.r2':
-        custom: []
-        name: 'lines[].tests.pe_l123n.r2'
-        description: 'optional Second reading.'
-        required: false
-        example: '0.13'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      'lines[].tests.fe_l123n':
-        custom: []
-        name: 'lines[].tests.fe_l123n'
-        description: ''
-        required: false
-        example: null
-        type: object
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.fe_l123n.r1':
-        custom: []
-        name: 'lines[].tests.fe_l123n.r1'
-        description: 'Must not be greater than 100 characters.'
-        required: false
-        example: xjubqouzswiwxtrkimfca
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.fe_l123n.r2':
-        custom: []
-        name: 'lines[].tests.fe_l123n.r2'
-        description: 'Must not be greater than 100 characters.'
-        required: false
-        example: tbxspzmrazsroyjpxmqes
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.n_l12l3':
-        custom: []
-        name: 'lines[].tests.n_l12l3'
-        description: ''
-        required: false
-        example: null
-        type: object
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.n_l12l3.r1':
-        custom: []
-        name: 'lines[].tests.n_l12l3.r1'
-        description: 'Must not be greater than 100 characters.'
-        required: false
-        example: edyghenqcopwvownkbaml
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.n_l12l3.r2':
-        custom: []
-        name: 'lines[].tests.n_l12l3.r2'
-        description: 'Must not be greater than 100 characters.'
-        required: false
-        example: nfngefbeilfzsyuxoezbd
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.l1_l2l3':
-        custom: []
-        name: 'lines[].tests.l1_l2l3'
-        description: ''
-        required: false
-        example: null
-        type: object
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.l1_l2l3.r1':
-        custom: []
-        name: 'lines[].tests.l1_l2l3.r1'
-        description: 'Must not be greater than 100 characters.'
-        required: false
-        example: tabptcyyerevrljcbwkth
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.l1_l2l3.r2':
-        custom: []
-        name: 'lines[].tests.l1_l2l3.r2'
-        description: 'Must not be greater than 100 characters.'
-        required: false
-        example: jnescwsestcouxpqsydki
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.l2_l3':
-        custom: []
-        name: 'lines[].tests.l2_l3'
-        description: ''
-        required: false
-        example: null
-        type: object
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.l2_l3.r1':
-        custom: []
-        name: 'lines[].tests.l2_l3.r1'
-        description: 'Must not be greater than 100 characters.'
-        required: false
-        example: gioyoyprjkfdjsneawgaa
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      'lines[].tests.l2_l3.r2':
-        custom: []
-        name: 'lines[].tests.l2_l3.r2'
-        description: 'Must not be greater than 100 characters.'
-        required: false
-        example: vuiwlezlcraoooxrrjhbd
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
         nullable: true
         deprecated: false
     cleanBodyParameters:
       lines:
         -
-          line_no: 1
-          label: 'Panel section A'
-          piece_number: '4'
-          required_size: 16mm
-          notes: 'Retested after rework'
-          checks:
-            visual_quality: true
-            assembly: true
-            earth_bond_pe_fe: true
-          tests:
-            pe_l123n:
-              r1: '0.12'
-              r2: '0.13'
-            fe_l123n:
-              r1: xjubqouzswiwxtrkimfca
-              r2: tbxspzmrazsroyjpxmqes
-            n_l12l3:
-              r1: edyghenqcopwvownkbaml
-              r2: nfngefbeilfzsyuxoezbd
-            l1_l2l3:
-              r1: tabptcyyerevrljcbwkth
-              r2: jnescwsestcouxpqsydki
-            l2_l3:
-              r1: gioyoyprjkfdjsneawgaa
-              r2: vuiwlezlcraoooxrrjhbd
+          item_id: 7
+          quantity: 2.0
+          unit_cost: 1000.0
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":12,"type":"quality_sheet","lines":[{"line_no":1,"checks":{"visual_quality":true,"assembly":true,"earth_bond_pe_fe":true},"tests":{"pe_l123n":{"r1":"0.12","r2":"0.13"}}}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":9,"type":"return_voucher","lines":[{"item_id":7,"quantity":"2.0000","unit_cost":"1000.00","line_value":"2000.00"}]},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
-        description: Written
+        description: Replaced
     responseFields: []
     auth:
       - headers
@@ -759,36 +464,39 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: 'api/v1/quality-sheets/{quality_sheet_id}/fill'
+    uri: 'api/v1/return-vouchers/{return_voucher_id}/post'
     metadata:
       custom: []
-      groupName: '23. Quality sheets'
+      groupName: '22. Return vouchers'
       groupDescription: |-
 
-        ورقة الجودة — the test record and the certificate printed from it.
+        إذن ارتداد — unconsumed material going back from the floor to the store.
 
-        A draft sheet is opened **automatically** when a work order's manufacturing
-        is declared finished, seeded with ten blank test rows and a snapshot of the
-        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
-        idempotent and returns the existing sheet rather than a second one, so a
-        client may call it freely.
+        The exact inverse of an issue voucher: posting transfers each line out of
+        work-in-progress and back into the SAME item's raw stock, and reverses its
+        value off the operation and the work order. The material re-enters under its
+        own code (there is no separate scrap item), so it can simply be issued
+        again.
 
-        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
-        factory manager's final sign-off, which announces to every department that
-        the operation has finished manufacturing). Approval is final: an approved
-        sheet can no longer be edited, which is what makes the printed certificate
-        worth anything.
+        A draft is pre-filled with one line per material the order was issued, each
+        at **quantity zero**, and the warehouse raises only the lines that actually
+        came back. Posting ignores the zeros. That is why the write endpoint allows
+        a zero quantity where an issue voucher would not: deleting a hundred lines
+        to return two is not a workflow anyone completes correctly on a tablet.
 
-        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
-        the signature, so an inspector can save a partly-filled grid all afternoon
-        and sign once.
+        Scrap items are left out of the pre-fill — scrap does not go back into raw
+        stock.
       subgroup: ''
       subgroupDescription: ''
-      title: 'QA signs the sheet'
+      title: 'Post a return voucher'
       description: |-
-        Moves the sheet to QA Filled and records who signed it and when. A sheet
-        may be re-signed after a re-test, right up until the factory manager
-        gives final approval — which is the point at which it freezes.
+        Every line with a positive quantity is transferred out of
+        work-in-progress back into raw stock, and its value is reversed off the
+        operation and the work order. Lines left at zero are ignored.
+
+        Refused when nothing on the voucher carries a quantity — posting an
+        all-zero voucher would sign a document that did nothing — and refused
+        when work-in-progress does not hold what the voucher claims came back.
       authenticated: true
       deprecated: false
     headers:
@@ -796,134 +504,31 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      quality_sheet_id:
+      return_voucher_id:
         custom: []
-        name: quality_sheet_id
-        description: 'The ID of the quality sheet.'
+        name: return_voucher_id
+        description: 'The ID of the return voucher.'
         required: true
-        example: 1
+        example: 17
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      quality_sheet:
+      return_voucher:
         custom: []
-        name: quality_sheet
-        description: 'The sheet id.'
+        name: return_voucher
+        description: 'The voucher id.'
         required: true
-        example: 12
+        example: 9
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      quality_sheet_id: 1
-      quality_sheet: 12
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      qa_inspector_notes:
-        custom: []
-        name: qa_inspector_notes
-        description: optional
-        required: false
-        example: 'Earth bond re-measured after rework'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-    cleanBodyParameters:
-      qa_inspector_notes: 'Earth bond re-measured after rework'
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: '{"data":{"id":12,"type":"quality_sheet","status":{"value":"qa_filled","label":"QA Filled","color":"warning"},"qa_filled_at":"2026-09-12T13:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
-        headers: []
-        description: Signed
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: 'api/v1/quality-sheets/{quality_sheet_id}/approve'
-    metadata:
-      custom: []
-      groupName: '23. Quality sheets'
-      groupDescription: |-
-
-        ورقة الجودة — the test record and the certificate printed from it.
-
-        A draft sheet is opened **automatically** when a work order's manufacturing
-        is declared finished, seeded with ten blank test rows and a snapshot of the
-        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
-        idempotent and returns the existing sheet rather than a second one, so a
-        client may call it freely.
-
-        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
-        factory manager's final sign-off, which announces to every department that
-        the operation has finished manufacturing). Approval is final: an approved
-        sheet can no longer be edited, which is what makes the printed certificate
-        worth anything.
-
-        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
-        the signature, so an inspector can save a partly-filled grid all afternoon
-        and sign once.
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Factory manager approval'
-      description: |-
-        اعتماد نهائي من مدير المصنع — the final sign-off. It requires the QA
-        department to have signed first, freezes the sheet, and announces to
-        every department that the operation has finished manufacturing.
-
-        Retrying after the first approval is a silent success. Note the policy
-        gates on the sheet already being QA-filled, so approving a Draft answers
-        **403**, not 422 — the same order the panel applies, where the action is
-        simply not offered.
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {ACCESS_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      quality_sheet_id:
-        custom: []
-        name: quality_sheet_id
-        description: 'The ID of the quality sheet.'
-        required: true
-        example: 1
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      quality_sheet:
-        custom: []
-        name: quality_sheet
-        description: 'The sheet id.'
-        required: true
-        example: 12
-        type: integer
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      quality_sheet_id: 1
-      quality_sheet: 12
+      return_voucher_id: 17
+      return_voucher: 9
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -933,9 +538,15 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":12,"type":"quality_sheet","status":{"value":"approved","label":"Approved","color":"success"},"factory_approved_at":"2026-09-12T14:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":9,"type":"return_voucher","status":{"value":"posted","label":"Posted","color":"success"},"total_value":"2000.00","signed_at":"2026-09-12T11:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
-        description: Approved
+        description: Posted
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"Voucher RV-202609-0003 has no lines to post."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Nothing to return'
     responseFields: []
     auth:
       - headers
@@ -948,35 +559,34 @@ endpoints:
     custom: []
     httpMethods:
       - DELETE
-    uri: 'api/v1/quality-sheets/{quality_sheet_id}'
+    uri: 'api/v1/return-vouchers/{return_voucher_id}'
     metadata:
       custom: []
-      groupName: '23. Quality sheets'
+      groupName: '22. Return vouchers'
       groupDescription: |-
 
-        ورقة الجودة — the test record and the certificate printed from it.
+        إذن ارتداد — unconsumed material going back from the floor to the store.
 
-        A draft sheet is opened **automatically** when a work order's manufacturing
-        is declared finished, seeded with ten blank test rows and a snapshot of the
-        order's technical specification. `POST /work-orders/{id}/quality-sheet` is
-        idempotent and returns the existing sheet rather than a second one, so a
-        client may call it freely.
+        The exact inverse of an issue voucher: posting transfers each line out of
+        work-in-progress and back into the SAME item's raw stock, and reverses its
+        value off the operation and the work order. The material re-enters under its
+        own code (there is no separate scrap item), so it can simply be issued
+        again.
 
-        Lifecycle: Draft → **fill** (QA signs the readings) → **approve** (the
-        factory manager's final sign-off, which announces to every department that
-        the operation has finished manufacturing). Approval is final: an approved
-        sheet can no longer be edited, which is what makes the printed certificate
-        worth anything.
+        A draft is pre-filled with one line per material the order was issued, each
+        at **quantity zero**, and the warehouse raises only the lines that actually
+        came back. Posting ignores the zeros. That is why the write endpoint allows
+        a zero quantity where an issue voucher would not: deleting a hundred lines
+        to return two is not a workflow anyone completes correctly on a tablet.
 
-        Readings are written with `PUT /quality-sheets/{id}/lines`, separately from
-        the signature, so an inspector can save a partly-filled grid all afternoon
-        and sign once.
+        Scrap items are left out of the pre-fill — scrap does not go back into raw
+        stock.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Delete a quality sheet'
+      title: 'Delete a draft return voucher'
       description: |-
-        Only before final approval. An approved sheet is the evidence behind a
-        certificate that has already left the building.
+        Draft only, for the same reason as every other posted document: the stock
+        has already moved.
       authenticated: true
       deprecated: false
     headers:
@@ -984,31 +594,31 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      quality_sheet_id:
+      return_voucher_id:
         custom: []
-        name: quality_sheet_id
-        description: 'The ID of the quality sheet.'
+        name: return_voucher_id
+        description: 'The ID of the return voucher.'
         required: true
-        example: 1
+        example: 17
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      quality_sheet:
+      return_voucher:
         custom: []
-        name: quality_sheet
-        description: 'The sheet id.'
+        name: return_voucher
+        description: 'The voucher id.'
         required: true
-        example: 12
+        example: 9
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      quality_sheet_id: 1
-      quality_sheet: 12
+      return_voucher_id: 17
+      return_voucher: 9
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []

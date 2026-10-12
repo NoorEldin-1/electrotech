@@ -1,34 +1,42 @@
-name: '28. Site surveys'
+name: '27. Installations'
 description: |-
 
-  معاينة الموقع — the visit that precedes an installation.
+  مرحلة التركيب — installing what was delivered, on the customer's site.
 
-  The one thing worth knowing: `measurements` is free text, not a structured
-  field. What a surveyor needs to write down differs by site and by product,
-  and a schema that fitted the last ten sites would silently lose the
-  eleventh. Attach photographs through the generic attachments endpoint with
-  `owner_type=project`.
+  Pending → **start** → In Progress → **complete** → Completed. Each
+  transition stamps its own timestamp, which is why there is no writable
+  `status`: a status a client can set is a status that drifts from the times
+  beside it.
+
+  Installation **expenses** are not modelled here. They reach the operation
+  through the general ledger, tagged to it like every other cost, so that the
+  operation's cost file has one source rather than a parallel field only this
+  screen knows about.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/site-surveys
+    uri: api/v1/installations
     metadata:
       custom: []
-      groupName: '28. Site surveys'
+      groupName: '27. Installations'
       groupDescription: |-
 
-        معاينة الموقع — the visit that precedes an installation.
+        مرحلة التركيب — installing what was delivered, on the customer's site.
 
-        The one thing worth knowing: `measurements` is free text, not a structured
-        field. What a surveyor needs to write down differs by site and by product,
-        and a schema that fitted the last ten sites would silently lose the
-        eleventh. Attach photographs through the generic attachments endpoint with
-        `owner_type=project`.
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List site surveys'
+      title: 'List installations'
       description: ''
       authenticated: true
       deprecated: false
@@ -61,12 +69,12 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      search:
+      'filter[status]':
         custom: []
-        name: search
-        description: 'Matches the measurements text.'
+        name: 'filter[status]'
+        description: 'pending, in_progress or completed.'
         required: false
-        example: busbar
+        example: in_progress
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -83,24 +91,13 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      'filter[surveyed_by]':
+      'filter[delivery_voucher]':
         custom: []
-        name: 'filter[surveyed_by]'
-        description: 'User id.'
+        name: 'filter[delivery_voucher]'
+        description: 'Delivery voucher id.'
         required: false
-        example: 9
+        example: 18
         type: integer
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      'filter[survey_date]':
-        custom: []
-        name: 'filter[survey_date]'
-        description: 'Inclusive date range from,until.'
-        required: false
-        example: '2026-01-01,2026-06-30'
-        type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
@@ -108,9 +105,9 @@ endpoints:
       sort:
         custom: []
         name: sort
-        description: 'Allowed: survey_date, created_at.'
+        description: 'Allowed: status, started_at, completed_at, created_at.'
         required: false
-        example: '-survey_date'
+        example: '-created_at'
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -119,7 +116,7 @@ endpoints:
       include:
         custom: []
         name: include
-        description: 'Allowed: project.'
+        description: 'Allowed: project, deliveryVoucher.'
         required: false
         example: project
         type: string
@@ -130,11 +127,10 @@ endpoints:
     cleanQueryParameters:
       page: 1
       per_page: 25
-      search: busbar
+      'filter[status]': in_progress
       'filter[project]': 4
-      'filter[surveyed_by]': 9
-      'filter[survey_date]': '2026-01-01,2026-06-30'
-      sort: '-survey_date'
+      'filter[delivery_voucher]': 18
+      sort: '-created_at'
       include: project
     bodyParameters: []
     cleanBodyParameters: []
@@ -143,7 +139,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":[{"id":11,"type":"site_survey","project_id":4,"survey_date":"2026-09-01","measurements":"Riser 4.2m, clearance 800mm"}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
+        content: '{"data":[{"id":3,"type":"installation","status":{"value":"in_progress","label":"In Progress","color":"info"},"project_id":4,"started_at":"2026-09-13T08:00:00+00:00"}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}'
         headers: []
         description: Success
     responseFields: []
@@ -158,22 +154,26 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/site-surveys/{site_survey_id}'
+    uri: 'api/v1/installations/{id}'
     metadata:
       custom: []
-      groupName: '28. Site surveys'
+      groupName: '27. Installations'
       groupDescription: |-
 
-        معاينة الموقع — the visit that precedes an installation.
+        مرحلة التركيب — installing what was delivered, on the customer's site.
 
-        The one thing worth knowing: `measurements` is free text, not a structured
-        field. What a surveyor needs to write down differs by site and by product,
-        and a schema that fitted the last ten sites would silently lose the
-        eleventh. Attach photographs through the generic attachments endpoint with
-        `owner_type=project`.
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Show a site survey'
+      title: 'Show an installation'
       description: ''
       authenticated: true
       deprecated: false
@@ -182,10 +182,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      site_survey_id:
+      id:
         custom: []
-        name: site_survey_id
-        description: 'The ID of the site survey.'
+        name: id
+        description: 'The ID of the installation.'
         required: true
         example: 17
         type: integer
@@ -193,20 +193,20 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      site_survey:
+      installation:
         custom: []
-        name: site_survey
-        description: 'The survey id.'
+        name: installation
+        description: 'The installation id.'
         required: true
-        example: 11
+        example: 3
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      site_survey_id: 17
-      site_survey: 11
+      id: 17
+      installation: 3
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -216,7 +216,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":11,"type":"site_survey","survey_date":"2026-09-01","measurements":"Riser 4.2m, clearance 800mm","notes":"Access via the service lift only"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":3,"type":"installation","status":{"value":"completed","label":"Completed","color":"success"},"started_at":"2026-09-13T08:00:00+00:00","completed_at":"2026-09-14T17:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Success
     responseFields: []
@@ -231,25 +231,27 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/site-surveys
+    uri: api/v1/installations
     metadata:
       custom: []
-      groupName: '28. Site surveys'
+      groupName: '27. Installations'
       groupDescription: |-
 
-        معاينة الموقع — the visit that precedes an installation.
+        مرحلة التركيب — installing what was delivered, on the customer's site.
 
-        The one thing worth knowing: `measurements` is free text, not a structured
-        field. What a surveyor needs to write down differs by site and by product,
-        and a schema that fitted the last ten sites would silently lose the
-        eleventh. Attach photographs through the generic attachments endpoint with
-        `owner_type=project`.
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Record a site survey'
-      description: |-
-        The surveyor defaults to the authenticated user, which is the common
-        case: the person filing the survey is the person who did it.
+      title: 'Open an installation'
+      description: 'Always starts Pending. The timestamps belong to the transitions.'
       authenticated: true
       deprecated: false
     headers:
@@ -264,7 +266,7 @@ endpoints:
       project_id:
         custom: []
         name: project_id
-        description: 'The operation surveyed.'
+        description: 'The operation being installed.'
         required: true
         example: 4
         type: integer
@@ -272,24 +274,13 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      survey_date:
+      delivery_voucher_id:
         custom: []
-        name: survey_date
-        description: 'optional Defaults to today.'
+        name: delivery_voucher_id
+        description: 'optional The delivery it follows.'
         required: false
-        example: '2026-09-01'
-        type: date
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      measurements:
-        custom: []
-        name: measurements
-        description: 'optional Free text — see the group note.'
-        required: false
-        example: 'Riser 4.2m, clearance 800mm'
-        type: string
+        example: 18
+        type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: true
@@ -299,35 +290,22 @@ endpoints:
         name: notes
         description: optional
         required: false
-        example: 'Access via the service lift only'
+        example: 'Third floor, crane access needed'
         type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      surveyed_by:
-        custom: []
-        name: surveyed_by
-        description: 'optional Defaults to the caller.'
-        required: false
-        example: 9
-        type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: true
         deprecated: false
     cleanBodyParameters:
       project_id: 4
-      survey_date: '2026-09-01'
-      measurements: 'Riser 4.2m, clearance 800mm'
-      notes: 'Access via the service lift only'
-      surveyed_by: 9
+      delivery_voucher_id: 18
+      notes: 'Third floor, crane access needed'
     fileParameters: []
     responses:
       -
         custom: []
         status: 201
-        content: '{"data":{"id":11,"type":"site_survey","project_id":4,"survey_date":"2026-09-01"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":3,"type":"installation","status":{"value":"pending","label":"Pending","color":"gray"}},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Created
     responseFields: []
@@ -342,23 +320,27 @@ endpoints:
     custom: []
     httpMethods:
       - PATCH
-    uri: 'api/v1/site-surveys/{site_survey_id}'
+    uri: 'api/v1/installations/{id}'
     metadata:
       custom: []
-      groupName: '28. Site surveys'
+      groupName: '27. Installations'
       groupDescription: |-
 
-        معاينة الموقع — the visit that precedes an installation.
+        مرحلة التركيب — installing what was delivered, on the customer's site.
 
-        The one thing worth knowing: `measurements` is free text, not a structured
-        field. What a surveyor needs to write down differs by site and by product,
-        and a schema that fitted the last ten sites would silently lose the
-        eleventh. Attach photographs through the generic attachments endpoint with
-        `owner_type=project`.
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Update a site survey'
-      description: ''
+      title: 'Update an installation'
+      description: 'Notes and links only — see the class note on why there is no `status`.'
       authenticated: true
       deprecated: false
     headers:
@@ -366,10 +348,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      site_survey_id:
+      id:
         custom: []
-        name: site_survey_id
-        description: 'The ID of the site survey.'
+        name: id
+        description: 'The ID of the installation.'
         required: true
         example: 17
         type: integer
@@ -377,41 +359,30 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      site_survey:
+      installation:
         custom: []
-        name: site_survey
-        description: 'The survey id.'
+        name: installation
+        description: 'The installation id.'
         required: true
-        example: 11
+        example: 3
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      site_survey_id: 17
-      site_survey: 11
+      id: 17
+      installation: 3
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      survey_date:
+      delivery_voucher_id:
         custom: []
-        name: survey_date
-        description: 'Must be a valid date.'
-        required: false
-        example: '2026-09-12T12:40:14'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      measurements:
-        custom: []
-        name: measurements
+        name: delivery_voucher_id
         description: optional
         required: false
-        example: 'Riser 4.2m, clearance 750mm (re-measured)'
-        type: string
+        example: 18
+        type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: true
@@ -421,34 +392,21 @@ endpoints:
         name: notes
         description: optional
         required: false
-        example: 'Second visit'
+        example: 'Crane booked for Thursday'
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: true
         deprecated: false
-      surveyed_by:
-        custom: []
-        name: surveyed_by
-        description: 'Must match an existing stored value.'
-        required: false
-        example: 17
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
     cleanBodyParameters:
-      survey_date: '2026-09-12T12:40:14'
-      measurements: 'Riser 4.2m, clearance 750mm (re-measured)'
-      notes: 'Second visit'
-      surveyed_by: 17
+      delivery_voucher_id: 18
+      notes: 'Crane booked for Thursday'
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"data":{"id":11,"type":"site_survey","measurements":"Riser 4.2m, clearance 750mm (re-measured)"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        content: '{"data":{"id":3,"type":"installation","notes":"Crane booked for Thursday"},"meta":{"request_id":"9f1c","api_version":"1"}}'
         headers: []
         description: Updated
     responseFields: []
@@ -462,23 +420,217 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - DELETE
-    uri: 'api/v1/site-surveys/{site_survey_id}'
+      - POST
+    uri: 'api/v1/installations/{installation_id}/start'
     metadata:
       custom: []
-      groupName: '28. Site surveys'
+      groupName: '27. Installations'
       groupDescription: |-
 
-        معاينة الموقع — the visit that precedes an installation.
+        مرحلة التركيب — installing what was delivered, on the customer's site.
 
-        The one thing worth knowing: `measurements` is free text, not a structured
-        field. What a surveyor needs to write down differs by site and by product,
-        and a schema that fitted the last ten sites would silently lose the
-        eleventh. Attach photographs through the generic attachments endpoint with
-        `owner_type=project`.
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Delete a site survey'
+      title: 'Start the installation'
+      description: 'Pending only, and it stamps `started_at`.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      installation_id:
+        custom: []
+        name: installation_id
+        description: 'The ID of the installation.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      installation:
+        custom: []
+        name: installation
+        description: 'The installation id.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      installation_id: 17
+      installation: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":3,"type":"installation","status":{"value":"in_progress","label":"In Progress","color":"info"},"started_at":"2026-09-13T08:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Started
+      -
+        custom: []
+        status: 422
+        content: '{"error":{"code":"business_rule_violated","message":"Cannot move from completed; expected pending."},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: 'Wrong stage'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/installations/{installation_id}/complete'
+    metadata:
+      custom: []
+      groupName: '27. Installations'
+      groupDescription: |-
+
+        مرحلة التركيب — installing what was delivered, on the customer's site.
+
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Complete the installation'
+      description: |-
+        In Progress only, and it stamps `completed_at`. An installation cannot
+        jump straight from Pending to Completed: the start time is what the
+        duration on site is measured from, and an installation with no start has
+        no duration.
+
+        An installation is finished BY the works-handover minutes (محاضر تسليم
+        الأعمال — Presentation.pptx slide 8). Send the signed minutes as
+        `handover_minutes` (multipart) and they are filed on the operation under
+        the `handover_minutes` attachment category; without a file, the operation
+        must already have minutes on file or the call fails with 422. Uploading
+        the minutes through `POST /attachments` completes the running
+        installation by itself.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {ACCESS_TOKEN}'
+      Content-Type: multipart/form-data
+      Accept: application/json
+    urlParameters:
+      installation_id:
+        custom: []
+        name: installation_id
+        description: 'The ID of the installation.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      installation:
+        custom: []
+        name: installation
+        description: 'The installation id.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      installation_id: 17
+      installation: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      handover_minutes:
+        custom: []
+        name: handover_minutes
+        description: 'optional The signed works-handover minutes (max 40 MB). Required unless the operation already has minutes on file.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters: []
+    fileParameters:
+      handover_minutes: null
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":3,"type":"installation","status":{"value":"completed","label":"Completed","color":"success"},"completed_at":"2026-09-14T17:00:00+00:00"},"meta":{"request_id":"9f1c","api_version":"1"}}'
+        headers: []
+        description: Completed
+      -
+        custom: []
+        status: 422
+        content: '{"message":"An installation can only be finished with the works handover minutes. Upload the minutes first.","errors":{"handover_minutes":["An installation can only be finished with the works handover minutes. Upload the minutes first."]}}'
+        headers: []
+        description: 'No handover minutes'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/installations/{id}'
+    metadata:
+      custom: []
+      groupName: '27. Installations'
+      groupDescription: |-
+
+        مرحلة التركيب — installing what was delivered, on the customer's site.
+
+        Pending → **start** → In Progress → **complete** → Completed. Each
+        transition stamps its own timestamp, which is why there is no writable
+        `status`: a status a client can set is a status that drifts from the times
+        beside it.
+
+        Installation **expenses** are not modelled here. They reach the operation
+        through the general ledger, tagged to it like every other cost, so that the
+        operation's cost file has one source rather than a parallel field only this
+        screen knows about.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete an installation'
       description: ''
       authenticated: true
       deprecated: false
@@ -487,10 +639,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      site_survey_id:
+      id:
         custom: []
-        name: site_survey_id
-        description: 'The ID of the site survey.'
+        name: id
+        description: 'The ID of the installation.'
         required: true
         example: 17
         type: integer
@@ -498,20 +650,20 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      site_survey:
+      installation:
         custom: []
-        name: site_survey
-        description: 'The survey id.'
+        name: installation
+        description: 'The installation id.'
         required: true
-        example: 11
+        example: 3
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      site_survey_id: 17
-      site_survey: 11
+      id: 17
+      installation: 3
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []

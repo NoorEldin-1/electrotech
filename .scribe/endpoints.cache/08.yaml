@@ -230,7 +230,7 @@ endpoints:
         name: id
         description: 'The ID of the project.'
         required: true
-        example: 1
+        example: 17
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -248,7 +248,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 1
+      id: 17
       project: 1
     queryParameters: []
     cleanQueryParameters: []
@@ -555,7 +555,7 @@ endpoints:
         name: id
         description: 'The ID of the project.'
         required: true
-        example: 1
+        example: 17
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -573,7 +573,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 1
+      id: 17
       project: 1
     queryParameters: []
     cleanQueryParameters: []
@@ -660,7 +660,7 @@ endpoints:
         name: electric_current
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: uydlsmsjuryvojcybzvrb
+        example: xtxqbbyamuoeunwgyvzxh
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -671,7 +671,7 @@ endpoints:
         name: model
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: yickznkygloigmkwxphlv
+        example: rxeqdinrogtqnhfycvkoj
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -682,7 +682,7 @@ endpoints:
         name: section_type
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: azjrcnfbaqywuxhgjjmzu
+        example: xrivkthrpilfpeejvgizt
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -693,7 +693,7 @@ endpoints:
         name: poles_count
         description: 'Must be at least 0.'
         required: false
-        example: 82
+        example: 79
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -704,7 +704,7 @@ endpoints:
         name: quantity
         description: 'Must be at least 0.'
         required: false
-        example: 34
+        example: 26
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -773,11 +773,11 @@ endpoints:
       engineer_name: 'Eng. Mona Said'
       project_location: '6th of October City'
       arrival_method: email
-      electric_current: uydlsmsjuryvojcybzvrb
-      model: yickznkygloigmkwxphlv
-      section_type: azjrcnfbaqywuxhgjjmzu
-      poles_count: 82
-      quantity: 34
+      electric_current: xtxqbbyamuoeunwgyvzxh
+      model: rxeqdinrogtqnhfycvkoj
+      section_type: xrivkthrpilfpeejvgizt
+      poles_count: 79
+      quantity: 26
       estimated_budget: 1300000.0
       start_date: '2026-09-01'
       end_date: '2026-12-15'
@@ -837,7 +837,7 @@ endpoints:
         name: id
         description: 'The ID of the project.'
         required: true
-        example: 1
+        example: 17
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -855,7 +855,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 1
+      id: 17
       project: 1
     queryParameters: []
     cleanQueryParameters: []
