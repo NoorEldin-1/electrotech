@@ -1501,6 +1501,9 @@ return [
         'actions' => [
             'view_timeline' => 'عرض الخط الزمني',
             'open_operation' => 'فتح ملف العملية',
+            'refresh' => 'تحديث',
+            'previous' => 'العملية السابقة',
+            'next' => 'العملية التالية',
         ],
     ],
 

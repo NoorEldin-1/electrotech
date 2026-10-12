@@ -1498,6 +1498,9 @@ return [
         'actions' => [
             'view_timeline' => 'View Timeline',
             'open_operation' => 'Open Operation File',
+            'refresh' => 'Refresh',
+            'previous' => 'Previous Operation',
+            'next' => 'Next Operation',
         ],
     ],
 

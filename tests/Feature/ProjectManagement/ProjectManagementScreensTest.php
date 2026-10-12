@@ -27,8 +27,10 @@ use App\Models\User;
 use App\Models\WorkOrder;
 use App\Services\OperationTimelineService;
 use Database\Seeders\RoleAndPermissionSeeder;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -81,13 +83,77 @@ class ProjectManagementScreensTest extends TestCase
         $late = Project::factory()->create(['status' => ProjectStatus::InProgress]);
         Attachment::factory()->create(['project_id' => $late->id, 'category' => AttachmentCategory::ExecutiveDrawing->value]);
 
-        Livewire::test(ProjectsTimeline::class)
+        $component = Livewire::test(ProjectsTimeline::class)
             ->filterTable('current_group', 'executive')
             ->assertCanSeeTableRecords([$late])
             ->assertCanNotSeeTableRecords([$early])
-            ->mountTableAction('timeline', $late)
+            // The full timeline ships with the page and opens in the browser.
             ->assertSee(__('resources.operation_timeline.groups.handover'))
             ->assertSee(__('resources.operation_timeline.skipped'));
+
+        $payload = $component->instance()->timelinePayload();
+        $this->assertSame([$late->id], array_column($payload, 'id'));
+
+        $stages = collect($payload[0]['groups'])->flatMap(fn (array $g): array => $g['stages'])->keyBy('key');
+        $this->assertSame('skipped', $stages['preliminary_mo_created']['state']);
+        $this->assertSame([__('resources.operation_timeline.skipped')], $stages['preliminary_mo_created']['meta']);
+        $this->assertSame('reached', $stages['executive_drawing']['state']);
+        $this->assertSame(now()->format('Y-m-d'), $stages['executive_drawing']['meta'][0]);
+        $this->assertSame('ahead', $stages['delivered']['state']);
+        $this->assertSame(__('resources.operation_timeline.groups.handover'), $payload[0]['groups'][2]['label']);
+    }
+
+    public function test_the_timeline_payload_matches_the_service_and_covers_only_the_visible_page(): void
+    {
+        $this->as('Admin');
+
+        $projects = Project::factory()->count(12)->create(['status' => ProjectStatus::InProgress]);
+        Project::factory()->create(['status' => ProjectStatus::Tender]);
+        $one = $projects->first();
+        $one->update(['end_date' => now()->addDays(9)]);
+        Attachment::factory()->create(['project_id' => $one->id, 'category' => AttachmentCategory::PreliminaryDrawing->value]);
+
+        $component = Livewire::test(ProjectsTimeline::class);
+        $page = $component->instance();
+
+        $records = $page->getTableRecords();
+        $visible = collect($records instanceof Paginator ? $records->items() : $records)
+            ->map(fn (Project $p): int => $p->getKey())->all();
+        $payload = $page->timelinePayload();
+        $this->assertSame($visible, array_column($payload, 'id'), 'payload follows the table page and its order');
+        $this->assertCount(10, $payload);
+
+        // Built from the timelines the columns already computed: no queries.
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $page->timelinePayload();
+        $this->assertSame([], array_filter(DB::getQueryLog(), fn (array $q): bool => ! str_contains($q['query'], 'permission') && ! str_contains($q['query'], 'role')));
+        DB::disableQueryLog();
+
+        // Same answer as the service the operation file uses.
+        $entry = collect($payload)->firstWhere('id', $one->id) ?? collect($component->call('gotoPage', 2)->instance()->timelinePayload())->firstWhere('id', $one->id);
+        $service = app(OperationTimelineService::class);
+        $summary = $service->summary($one->fresh(), $service->for($one->fresh()));
+        $this->assertSame($summary['progress_percent'], $entry['summary']['progress']);
+        $this->assertSame($summary['current_stage']['label'], $entry['summary']['stage']);
+        $this->assertSame(now()->addDays(9)->format('Y-m-d'), $entry['summary']['expected']);
+        $this->assertSame(__('resources.operation_timeline.summary.days_remaining', ['days' => 9]), $entry['summary']['remaining']['text']);
+        $this->assertSame(
+            $service->for($one->fresh())->pluck('label')->all(),
+            collect($entry['groups'])->flatMap(fn (array $g): array => $g['stages'])->pluck('label')->all(),
+        );
+        $this->assertStringContainsString("/projects/{$one->id}/edit", (string) $entry['url']);
+    }
+
+    public function test_the_timeline_opens_without_a_server_round_trip(): void
+    {
+        $this->as('Admin');
+        $project = Project::factory()->create(['status' => ProjectStatus::InProgress]);
+
+        Livewire::test(ProjectsTimeline::class)
+            ->assertSeeHtml('data-payload=')
+            ->assertSeeHtml(e("\$dispatch('et-open-timeline', { id: {$project->id} })"))
+            ->assertDontSeeHtml("mountTableAction('timeline'");
     }
 
     public function test_the_timeline_page_is_gated_by_the_timeline_permission(): void
