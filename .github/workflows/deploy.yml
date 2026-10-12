@@ -14,6 +14,8 @@ jobs:
   deploy:
     name: Deploy to CyberPanel server
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Configure SSH client
@@ -38,9 +40,15 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          # The repository is private and the server holds no GitHub
+          # credentials. The job's own token (read-only, expires when the job
+          # ends) is used for this one fetch and never written to the server's
+          # git config — so the fetch targets a URL, not the `origin` remote.
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
           ssh -i ~/.ssh/deploy_key \
               -o StrictHostKeyChecking=no \
               -p "$SSH_PORT" \
               "$SSH_USER@$SSH_HOST" \
-              "set -e; cd '$DEPLOY_PATH' && git fetch origin main && git checkout main && git reset --hard origin/main && bash deploy.sh"
+              "set -e; cd '$DEPLOY_PATH' && git fetch 'https://x-access-token:$GH_TOKEN@github.com/$REPO.git' +refs/heads/main:refs/remotes/origin/main && git checkout main && git reset --hard origin/main && SKIP_GIT_FETCH=1 bash deploy.sh"

@@ -22,8 +22,12 @@ cleanup() {
 }
 trap cleanup EXIT
 
-log "Fetching latest code from origin/main"
-git fetch --all --prune
+# The workflow fetches origin/main itself (the repository is private and the
+# server has no GitHub credentials) and sets SKIP_GIT_FETCH.
+if [ -z "${SKIP_GIT_FETCH:-}" ]; then
+  log "Fetching latest code from origin/main"
+  git fetch --all --prune
+fi
 git reset --hard origin/main
 
 log "Installing Composer dependencies (production)"
