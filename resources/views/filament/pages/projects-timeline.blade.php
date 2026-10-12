@@ -98,7 +98,7 @@
                             x-on:click="step(-1)"
                             x-bind:disabled="index <= 0"
                         />
-                        <span class="min-w-12 text-center text-xs tabular-nums text-gray-500 dark:text-[var(--dark-text-muted)]" x-text="list.length ? `${index + 1} / ${list.length}` : ''"></span>
+                        <span dir="ltr" class="min-w-12 text-center text-xs tabular-nums text-gray-500 dark:text-[var(--dark-text-muted)]" x-text="list.length ? `${index + 1} / ${list.length}` : ''"></span>
                         <x-filament::icon-button
                             icon="heroicon-o-chevron-left"
                             color="gray"
