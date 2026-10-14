@@ -13,6 +13,7 @@ use App\Models\Item;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @group 7. Items
@@ -31,14 +32,19 @@ class ItemController extends ApiController
      *
      * @queryParam page integer The page number. Example: 1
      * @queryParam per_page integer Rows per page, max 100. Example: 25
-     * @queryParam search string Matches name, SKU or description. Example: copper
+     * @queryParam search string Every word must match the SKU, original code (part_number), name, size, busway size, brand or description, so "شريط 100" finds the 100 mm busbars. Example: copper 100
+     * @queryParam filter[category] integer Item category id; comma-separate for OR. Example: 3
+     * @queryParam filter[product_line] string pt, dt or lt. Example: pt
+     * @queryParam filter[material] string cu, al or fe. Example: cu
+     * @queryParam filter[origin] string imported or local. Example: imported
+     * @queryParam filter[has_image] boolean Only items with (true) or without (false) a photo. Example: true
      * @queryParam filter[type] string Item type; comma-separate for OR. Example: raw_material,consumable
      * @queryParam filter[unit] string Unit of measure. Example: kg
      * @queryParam filter[is_scrap] boolean Only scrap variants (true) or only real items (false). Example: false
      * @queryParam filter[below_minimum] boolean Only items whose total available quantity is under minimum_stock. Example: true
      * @queryParam filter[created] string Inclusive date range from,until. Example: 2026-01-01,2026-06-30
      * @queryParam sort string Comma-separated; prefix with - for descending. Allowed: name, sku, unit_cost, created_at. Example: name
-     * @queryParam include string Comma-separated relations. Allowed: inventories, scrapSource. Example: inventories
+     * @queryParam include string Comma-separated relations. Allowed: inventories, scrapSource, category. Example: inventories,category
      * @queryParam updated_after string ISO-8601 timestamp; returns only rows changed since then. Example: 2026-08-01T10:00:00Z
      *
      * @response 200 scenario="Success" {"data":[{"id":1,"type":"item","name":"Copper Busbar 100x10","sku":"CU-BB-10010","item_type":{"value":"raw_material","label":"Raw Material","color":"info"},"unit":{"value":"kg","label":"Kilogram","color":null},"unit_cost":"412.50","minimum_stock":"50.0000","is_scrap":false,"home_warehouse":{"value":"raw_materials","label":"Raw Materials","color":null}}],"meta":{"request_id":"9f1c","api_version":"1","pagination":{"total":1,"count":1,"per_page":25,"current_page":1,"total_pages":1}},"links":{"first":"","prev":null,"next":null,"last":""}}
@@ -47,10 +53,21 @@ class ItemController extends ApiController
     {
         $this->authorize('viewAny', Item::class);
 
-        $items = ApiQuery::for(Item::query(), $request)
+        // The multi-word item search runs here instead of ApiQuery's
+        // single-phrase LIKE, which cannot tell «شريط» × 80 apart.
+        $query = Item::query()->search((string) $request->query('search', ''));
+
+        $items = ApiQuery::for($query, $request)
             ->allowFilters([
                 'type' => ApiQuery::exact('type'),
                 'unit' => ApiQuery::exact('unit'),
+                'category' => ApiQuery::exact('item_category_id'),
+                'product_line' => ApiQuery::exact('product_line'),
+                'material' => ApiQuery::exact('material'),
+                'origin' => ApiQuery::exact('origin'),
+                'has_image' => fn ($query, $value) => filter_var($value, FILTER_VALIDATE_BOOLEAN)
+                    ? $query->whereNotNull('image_path')
+                    : $query->whereNull('image_path'),
                 'is_scrap' => ApiQuery::boolean('is_scrap'),
 
                 // "Below minimum" is answered in SQL against the summed
@@ -63,9 +80,8 @@ class ItemController extends ApiController
                 ),
                 'created' => ApiQuery::dateBetween('created_at'),
             ])
-            ->allowSearch(['name', 'sku', 'description'])
             ->allowSorts(['name', 'sku', 'unit_cost', 'created_at'])
-            ->allowIncludes(['inventories', 'scrapSource'])
+            ->allowIncludes(['inventories', 'scrapSource', 'category'])
             ->defaultSort('name')
             ->paginate();
 
@@ -88,7 +104,7 @@ class ItemController extends ApiController
     {
         $this->authorize('view', $item);
 
-        return $this->respond(new ItemResource($item->load(['inventories', 'scrapSource'])));
+        return $this->respond(new ItemResource($item->load(['inventories', 'scrapSource', 'category'])));
     }
 
     /**
@@ -103,6 +119,25 @@ class ItemController extends ApiController
      * @bodyParam unit_cost number required Standard cost per unit, in EGP. Example: 412.50
      * @bodyParam minimum_stock number optional Re-order threshold; 0 disables the low-stock alert. Example: 50
      * @bodyParam description string optional Free text. Example: Electrolytic copper
+     * @bodyParam item_category_id integer optional Category id (see GET /item-categories). Example: 3
+     * @bodyParam part_number string optional The supplier/sheet code; may repeat across items. Example: BST 16C
+     * @bodyParam product_line string optional pt, dt or lt. Example: pt
+     * @bodyParam material string optional cu, al or fe. Example: cu
+     * @bodyParam thickness_mm number optional Example: 5.75
+     * @bodyParam width_mm number optional Example: 100
+     * @bodyParam size_code string optional Busway size. Example: B100
+     * @bodyParam length_m number optional Example: 3
+     * @bodyParam edge string optional rounded or flat. Example: rounded
+     * @bodyParam treatment string optional none, painted, copper_coated or tinned. Example: tinned
+     * @bodyParam origin string optional imported or local. Example: imported
+     * @bodyParam brand string optional Source / brand. Example: DKC
+     * @bodyParam usage string optional Example: B100
+     * @bodyParam ampere_rating string optional Free text, e.g. 1600, ALL or 63/160. Example: 1600
+     * @bodyParam poles integer optional Example: 4
+     * @bodyParam size string optional Free-text size. Example: 100*5.75
+     * @bodyParam color string optional Example: black
+     * @bodyParam image file optional Photo (jpg, png, webp; max 5 MB), sent as multipart/form-data. No-example
+     * @bodyParam remove_image boolean optional true clears the current photo. Example: false
      *
      * @response 201 scenario="Created" {"data":{"id":9,"type":"item","name":"Copper Busbar 100x10","sku":"CU-BB-10010"},"meta":{"request_id":"9f1c","api_version":"1"}}
      */
@@ -111,8 +146,9 @@ class ItemController extends ApiController
         $this->authorize('create', Item::class);
 
         $item = Item::create($request->validated());
+        $this->syncImage($request, $item);
 
-        return $this->respondCreated(new ItemResource($item));
+        return $this->respondCreated(new ItemResource($item->load('category')));
     }
 
     /**
@@ -132,6 +168,28 @@ class ItemController extends ApiController
      * @bodyParam unit_cost number optional Example: 430.00
      * @bodyParam minimum_stock number optional Example: 60
      * @bodyParam description string optional Example: Electrolytic copper
+     * @bodyParam item_category_id integer optional Category id (see GET /item-categories). Example: 3
+     * @bodyParam part_number string optional The supplier/sheet code; may repeat across items. Example: BST 16C
+     * @bodyParam product_line string optional pt, dt or lt. Example: pt
+     * @bodyParam material string optional cu, al or fe. Example: cu
+     * @bodyParam thickness_mm number optional Example: 5.75
+     * @bodyParam width_mm number optional Example: 100
+     * @bodyParam size_code string optional Busway size. Example: B100
+     * @bodyParam length_m number optional Example: 3
+     * @bodyParam edge string optional rounded or flat. Example: rounded
+     * @bodyParam treatment string optional none, painted, copper_coated or tinned. Example: tinned
+     * @bodyParam origin string optional imported or local. Example: imported
+     * @bodyParam brand string optional Source / brand. Example: DKC
+     * @bodyParam usage string optional Example: B100
+     * @bodyParam ampere_rating string optional Free text, e.g. 1600, ALL or 63/160. Example: 1600
+     * @bodyParam poles integer optional Example: 4
+     * @bodyParam size string optional Free-text size. Example: 100*5.75
+     * @bodyParam color string optional Example: black
+     * @bodyParam image file optional Photo (jpg, png, webp; max 5 MB), sent as multipart/form-data. No-example
+     * @bodyParam remove_image boolean optional true clears the current photo. Example: false
+     *
+     * A photo upload must be multipart/form-data, which PHP only parses on
+     * POST: send `POST /items/{item}` with `_method=PATCH` in the body.
      *
      * @response 200 scenario="Success" {"data":{"id":1,"type":"item","name":"Copper Busbar 100x12"},"meta":{"request_id":"9f1c","api_version":"1"}}
      */
@@ -140,8 +198,32 @@ class ItemController extends ApiController
         $this->authorize('update', $item);
 
         $item->update($request->validated());
+        $this->syncImage($request, $item);
 
-        return $this->respond(new ItemResource($item->fresh()));
+        return $this->respond(new ItemResource($item->fresh()->load('category')));
+    }
+
+    /**
+     * Store an uploaded photo (replacing the old one) or clear it when
+     * `remove_image` is true.
+     */
+    private function syncImage(Request $request, Item $item): void
+    {
+        $previous = $item->image_path;
+
+        if ($request->hasFile('image')) {
+            $item->update(['image_path' => $request->file('image')->store('items', 'public')]);
+        } elseif ($request->boolean('remove_image')) {
+            $item->update(['image_path' => null]);
+        } else {
+            return;
+        }
+
+        // Imported photos are content-addressed and may be shared by several
+        // items, so the old file is deleted only when nothing else uses it.
+        if ($previous && ! Item::withTrashed()->where('image_path', $previous)->exists()) {
+            Storage::disk('public')->delete($previous);
+        }
     }
 
     /**

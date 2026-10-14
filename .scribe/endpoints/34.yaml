@@ -218,7 +218,7 @@ endpoints:
         name: project_id
         description: 'The ID of the project.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -236,7 +236,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      project_id: 17
+      project_id: 1
       project: 4
     queryParameters: []
     cleanQueryParameters: []
@@ -309,7 +309,7 @@ endpoints:
         name: project_id
         description: 'The ID of the project.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -327,7 +327,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      project_id: 17
+      project_id: 1
       project: 4
     queryParameters: []
     cleanQueryParameters: []
@@ -425,7 +425,7 @@ endpoints:
         name: cost_center_closing_id
         description: 'The ID of the cost center closing.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -443,7 +443,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      cost_center_closing_id: 17
+      cost_center_closing_id: 1
       cost_center_closing: 5
     queryParameters: []
     cleanQueryParameters: []

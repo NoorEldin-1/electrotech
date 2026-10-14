@@ -196,7 +196,7 @@ endpoints:
         name: attachment_id
         description: 'The ID of the attachment.'
         required: true
-        example: 17
+        example: 7
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -214,7 +214,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      attachment_id: 17
+      attachment_id: 7
       attachment: 12
     queryParameters: []
     cleanQueryParameters: []
@@ -393,7 +393,7 @@ endpoints:
         name: id
         description: 'The ID of the attachment.'
         required: true
-        example: 17
+        example: 7
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -411,7 +411,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 17
+      id: 7
       attachment: 12
     queryParameters: []
     cleanQueryParameters: []

@@ -32,6 +32,36 @@ class ItemResource extends JsonResource
             'minimum_stock' => $this->quantity($this->minimum_stock),
             'description' => $this->description,
 
+            // What every picker should show: many catalog items share a
+            // generic name («شريط»), so `label` (code — name (specs)) is the
+            // distinguishing text and `spec_summary` the short spec line.
+            'label' => $this->display_label,
+            'spec_summary' => $this->spec_summary,
+            'image_url' => $this->image_url,
+            'category' => $this->whenLoaded('category', fn () => $this->category === null ? null : [
+                'id' => $this->category->id,
+                'name' => $this->category->name,
+            ]),
+            'item_category_id' => $this->item_category_id,
+            'specifications' => [
+                'part_number' => $this->part_number,
+                'product_line' => EnumPresenter::present($this->product_line),
+                'material' => EnumPresenter::present($this->material),
+                'thickness_mm' => $this->thickness_mm,
+                'width_mm' => $this->width_mm,
+                'size_code' => $this->size_code,
+                'length_m' => $this->length_m,
+                'edge' => EnumPresenter::present($this->edge),
+                'treatment' => EnumPresenter::present($this->treatment),
+                'origin' => EnumPresenter::present($this->origin),
+                'brand' => $this->brand,
+                'usage' => $this->usage,
+                'ampere_rating' => $this->ampere_rating,
+                'poles' => $this->poles,
+                'size' => $this->size,
+                'color' => $this->color,
+            ],
+
             // Scrap variants (إذن ارتداد) are ordinary items pointing back at
             // the raw material they came from. The client needs the flag to
             // keep them out of pickers that should only offer real materials.

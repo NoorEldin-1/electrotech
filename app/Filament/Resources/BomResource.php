@@ -6,6 +6,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\BomStatus;
 use App\Filament\Resources\BomResource\Pages;
+use App\Filament\Support\ItemSelect;
 use App\Models\Bom;
 use App\Services\BomService;
 use Filament\Forms;
@@ -66,14 +67,11 @@ class BomResource extends Resource
 
                         Forms\Components\Select::make('output_item_id')
                             ->label(__('resources.boms.fields.output_item'))
-                            ->relationship(
+                            ->tap(fn (Forms\Components\Select $select) => ItemSelect::configure(
+                                $select,
                                 'outputItem',
-                                'name',
                                 fn (Builder $query) => $query->whereIn('type', ['finished_good', 'semi_finished']),
-                            )
-                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->sku} — {$record->name}")
-                            ->searchable()
-                            ->preload()
+                            ))
                             ->helperText(__('resources.boms.fields.output_item_helper'))
                             ->requiredWithout('project_id'),
 
@@ -108,9 +106,7 @@ class BomResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('item_id')
                                     ->label(__('resources.boms.fields.item'))
-                                    ->relationship('item', 'name')
-                                    ->searchable()
-                                    ->preload()
+                                    ->tap(fn (Forms\Components\Select $select) => ItemSelect::configure($select))
                                     ->required()
                                     // ->live() so the quick-view suffix action
                                     // re-renders (becomes visible) once an item

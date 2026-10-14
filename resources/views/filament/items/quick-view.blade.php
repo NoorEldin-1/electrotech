@@ -27,7 +27,37 @@
         $value = $onHand * (float) $item->unit_cost;
     @endphp
 
+    @php
+        $number = static fn ($value): string => rtrim(rtrim(number_format((float) $value, 3, '.', ''), '0'), '.');
+        $specs = array_filter([
+            __('resources.items.specs.fields.category') => $item->category?->name,
+            __('resources.items.specs.fields.part_number') => $item->part_number,
+            __('resources.items.specs.fields.product_line') => $item->product_line?->getLabel(),
+            __('resources.items.specs.fields.material') => $item->material?->getLabel(),
+            __('resources.items.specs.fields.thickness_mm') => filled($item->thickness_mm) ? $number($item->thickness_mm) : null,
+            __('resources.items.specs.fields.width_mm') => filled($item->width_mm) ? $number($item->width_mm) : null,
+            __('resources.items.specs.fields.size_code') => $item->size_code,
+            __('resources.items.specs.fields.length_m') => filled($item->length_m) ? $number($item->length_m) : null,
+            __('resources.items.specs.fields.size') => $item->size,
+            __('resources.items.specs.fields.edge') => $item->edge?->getLabel(),
+            __('resources.items.specs.fields.treatment') => $item->treatment?->getLabel(),
+            __('resources.items.specs.fields.origin') => $item->origin?->getLabel(),
+            __('resources.items.specs.fields.brand') => $item->brand,
+            __('resources.items.specs.fields.usage') => $item->usage,
+            __('resources.items.specs.fields.ampere_rating') => $item->ampere_rating,
+            __('resources.items.specs.fields.poles') => $item->poles,
+            __('resources.items.specs.fields.color') => $item->color,
+        ], 'filled');
+    @endphp
+
     <div class="et-quickview space-y-6 text-sm">
+        @if ($item->image_url)
+            <a href="{{ $item->image_url }}" target="_blank" rel="noopener" class="block">
+                <img src="{{ $item->image_url }}" alt="{{ $item->name }}" loading="lazy"
+                     class="mx-auto max-h-64 rounded-lg bg-gray-50 object-contain dark:bg-[var(--surface-2)]">
+            </a>
+        @endif
+
         {{-- Identity / catalog data --}}
         <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
             <div>
@@ -64,6 +94,23 @@
                 </div>
             @endif
         </div>
+
+        @if ($specs !== [])
+            <div>
+                <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-[var(--dark-text-muted)]">
+                    {{ __('resources.items.specs.section') }}
+                </div>
+
+                <dl class="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+                    @foreach ($specs as $specLabel => $specValue)
+                        <div>
+                            <dt class="text-xs text-gray-500 dark:text-[var(--dark-text-muted)]">{{ $specLabel }}</dt>
+                            <dd class="mt-0.5 text-gray-950 dark:text-[var(--dark-text)]">{{ $specValue }}</dd>
+                        </div>
+                    @endforeach
+                </dl>
+            </div>
+        @endif
 
         {{-- Live stock --}}
         <div>

@@ -6,6 +6,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\VoucherStatus;
 use App\Filament\Resources\ReturnVoucherResource\Pages;
+use App\Filament\Support\ItemSelect;
 use App\Models\ReturnVoucher;
 use App\Services\ReturnVoucherService;
 use Filament\Forms;
@@ -97,9 +98,11 @@ class ReturnVoucherResource extends Resource
                                     ->label(__('resources.return_vouchers.fields.item'))
                                     // Only original items can be returned; scrap
                                     // variants are excluded from the picker.
-                                    ->relationship('item', 'name', fn (Builder $query) => $query->where('is_scrap', false))
-                                    ->searchable()
-                                    ->preload()
+                                    ->tap(fn (Forms\Components\Select $select) => ItemSelect::configure(
+                                        $select,
+                                        'item',
+                                        fn (Builder $query) => $query->where('is_scrap', false),
+                                    ))
                                     ->required()
                                     ->live()
                                     ->suffixAction(ItemResource::quickViewAction())

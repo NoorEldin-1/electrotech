@@ -7,6 +7,7 @@ namespace App\Filament\Resources;
 use App\Enums\DeliveryVoucherStatus;
 use App\Enums\InvoicingStatus;
 use App\Filament\Resources\DeliveryVoucherResource\Pages;
+use App\Filament\Support\ItemSelect;
 use App\Models\DeliveryVoucher;
 use App\Services\DeliveryVoucherService;
 use App\Services\SalesInvoicingService;
@@ -125,9 +126,7 @@ class DeliveryVoucherResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('item_id')
                                     ->label(__('resources.delivery_vouchers.fields.item'))
-                                    ->relationship('item', 'name')
-                                    ->searchable()
-                                    ->preload()
+                                    ->tap(fn (Forms\Components\Select $select) => ItemSelect::configure($select))
                                     ->required()
                                     // ->live() so the quick-view suffix action
                                     // re-renders (becomes visible) once an item

@@ -451,6 +451,7 @@ class WorkOrderController extends ApiController
                 ->map(fn (array $row) => [
                     'item_id' => $row['item']?->id,
                     'item_name' => $row['item']?->name,
+                    'item_label' => $row['item']?->display_label,
                     'planned' => number_format($row['planned'], 4, '.', ''),
                     'issued' => number_format($row['issued'], 4, '.', ''),
                     'returned' => number_format($row['returned'], 4, '.', ''),

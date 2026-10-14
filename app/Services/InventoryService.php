@@ -79,7 +79,7 @@ class InventoryService
 
             if ($available < $quantity) {
                 throw new \RuntimeException(__('errors.inventory.insufficient_stock', [
-                    'item' => $item->name,
+                    'item' => $item->display_label,
                     'warehouse' => $warehouse->getLabel(),
                     'available' => $available,
                     'requested' => $quantity,
@@ -135,7 +135,7 @@ class InventoryService
 
             if ($available < $quantity) {
                 throw new \RuntimeException(__('errors.inventory.insufficient_transfer', [
-                    'item' => $item->name,
+                    'item' => $item->display_label,
                     'warehouse' => $from->getLabel(),
                     'available' => $available,
                     'requested' => $quantity,
@@ -197,7 +197,7 @@ class InventoryService
 
             if ($available < $quantity) {
                 throw new \RuntimeException(__('errors.inventory.insufficient_hold', [
-                    'item' => $item->name,
+                    'item' => $item->display_label,
                     'warehouse' => $warehouse->getLabel(),
                     'available' => $available,
                     'requested' => $quantity,
@@ -240,7 +240,7 @@ class InventoryService
 
             if ((float) $inventory->on_hold_quantity < $quantity) {
                 throw new \RuntimeException(__('errors.inventory.cannot_release', [
-                    'item' => $item->name,
+                    'item' => $item->display_label,
                     'warehouse' => $warehouse->getLabel(),
                     'requested' => $quantity,
                     'held' => $inventory->on_hold_quantity,

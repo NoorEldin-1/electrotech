@@ -399,7 +399,7 @@ endpoints:
         name: survey_date
         description: 'Must be a valid date.'
         required: false
-        example: '2026-10-12T17:07:51'
+        example: '2026-10-12T19:41:33'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -439,7 +439,7 @@ endpoints:
         nullable: true
         deprecated: false
     cleanBodyParameters:
-      survey_date: '2026-10-12T17:07:51'
+      survey_date: '2026-10-12T19:41:33'
       measurements: 'Riser 4.2m, clearance 750mm (re-measured)'
       notes: 'Second visit'
       surveyed_by: 17

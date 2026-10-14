@@ -7,6 +7,7 @@ namespace App\Filament\Resources;
 use App\Enums\VoucherStatus;
 use App\Exceptions\ExcessIssueException;
 use App\Filament\Resources\IssueVoucherResource\Pages;
+use App\Filament\Support\ItemSelect;
 use App\Models\IssueVoucher;
 use App\Services\IssueVoucherService;
 use Filament\Forms;
@@ -164,7 +165,7 @@ class IssueVoucherResource extends Resource
                 $row = $requirement[$itemId] ?? null;
 
                 return [
-                    'item_name' => $row['item_name'] ?? (\App\Models\Item::find($itemId)?->name ?? '—'),
+                    'item_name' => $row['item_name'] ?? (\App\Models\Item::find($itemId)?->display_label ?? '—'),
                     'excess' => round($quantity - (float) ($row['remaining'] ?? 0), 4),
                 ];
             })
@@ -298,9 +299,7 @@ class IssueVoucherResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('item_id')
                                     ->label(__('resources.issue_vouchers.fields.item'))
-                                    ->relationship('item', 'name')
-                                    ->searchable()
-                                    ->preload()
+                                    ->tap(fn (Forms\Components\Select $select) => ItemSelect::configure($select))
                                     ->required()
                                     // ->live() so the quick-view suffix action
                                     // re-renders (becomes visible) once an item

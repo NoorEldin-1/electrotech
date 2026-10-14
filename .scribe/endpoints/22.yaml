@@ -208,7 +208,7 @@ endpoints:
         name: production_entry_id
         description: 'The ID of the production entry.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -226,7 +226,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      production_entry_id: 17
+      production_entry_id: 1
       production_entry: 77
     queryParameters: []
     cleanQueryParameters: []

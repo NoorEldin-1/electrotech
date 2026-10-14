@@ -85,7 +85,12 @@
             @foreach ($po->items as $i => $line)
                 <tr>
                     <td class="center">{{ $i + 1 }}</td>
-                    <td>{{ $line->item?->name }}</td>
+                    <td>
+                        {{ $line->item?->name }}
+                        @if (filled($line->item?->spec_summary) || filled($line->item?->part_number))
+                            <div style="font-size: 9px; color: #555;">{{ implode(' · ', array_filter([$line->item->part_number, $line->item->spec_summary], 'filled')) }}</div>
+                        @endif
+                    </td>
                     <td class="num">{{ rtrim(rtrim(number_format((float) $line->quantity, 4), '0'), '.') }}</td>
                     <td class="num">{{ $money($line->unit_price) }}</td>
                     <td class="num">{{ $money($line->line_total) }}</td>

@@ -439,6 +439,68 @@ return [
 
         // Suffix appended to an auto-created scrap variant's name.
         'scrap_label' => 'Scrap',
+
+        'units' => [
+            'mm' => 'mm',
+            'm' => 'm',
+        ],
+
+        // Technical specifications (factory-warehouse import round)
+        'specs' => [
+            'section' => 'Technical Specifications',
+            'section_description' => 'Tell apart items that share a generic name (e.g. "busbar") on every screen.',
+            'image_section' => 'Item Photo',
+            'fields' => [
+                'category' => 'Category',
+                'product_line' => 'Product Line',
+                'part_number' => 'Original Code',
+                'material' => 'Material',
+                'thickness_mm' => 'Thickness (mm)',
+                'width_mm' => 'Width (mm)',
+                'size_code' => 'Busway Size',
+                'length_m' => 'Length (m)',
+                'edge' => 'Edge',
+                'treatment' => 'Treatment',
+                'origin' => 'Origin',
+                'brand' => 'Source / Brand',
+                'usage' => 'Usage',
+                'ampere_rating' => 'Ampere Rating',
+                'poles' => 'Poles',
+                'size' => 'Size',
+                'color' => 'Color',
+                'image' => 'Photo',
+                'spec_summary' => 'Specifications',
+            ],
+            'helpers' => [
+                'part_number' => 'The code as in the supplier catalog or the stock sheet — may repeat across items.',
+                'size_code' => 'Busway size such as B100 or 2B200.',
+            ],
+        ],
+
+        'filters' => [
+            'has_image' => 'Has photo',
+            'zero_stock' => 'Zero stock',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Item Categories - Item Category Resource
+    |--------------------------------------------------------------------------
+    */
+    'item_categories' => [
+        'label' => 'Item Category',
+        'plural_label' => 'Item Categories',
+        'navigation_label' => 'Item Categories',
+        'fields' => [
+            'name' => 'Category Name',
+            'sort' => 'Sort Order',
+        ],
+        'columns' => [
+            'name' => 'Category',
+            'items_count' => 'Items',
+            'sort' => 'Sort Order',
+        ],
     ],
 
     /*
@@ -3098,6 +3160,35 @@ return [
             'sheet' => 'Sheets',
             'box' => 'Boxes',
             'ton' => 'Tons',
+        ],
+
+        'product_line' => [
+            'pt' => 'PT',
+            'dt' => 'DT',
+            'lt' => 'LT',
+        ],
+
+        'item_material' => [
+            'cu' => 'Copper (Cu)',
+            'al' => 'Aluminium (Al)',
+            'fe' => 'Iron (Fe)',
+        ],
+
+        'item_edge' => [
+            'rounded' => 'Rounded (R)',
+            'flat' => 'Flat (F)',
+        ],
+
+        'item_treatment' => [
+            'none' => 'None',
+            'painted' => 'Painted',
+            'copper_coated' => 'Copper-coated',
+            'tinned' => 'Tinned',
+        ],
+
+        'item_origin' => [
+            'imported' => 'Imported',
+            'local' => 'Local',
         ],
     ],
 

@@ -54,6 +54,7 @@ class StockReservationResource extends JsonResource
                 fn () => $this->item === null ? null : [
                     'id' => $this->item->id,
                     'name' => $this->item->name,
+                    'label' => $this->item->display_label,
                     'sku' => $this->item->sku,
                     'unit' => EnumPresenter::present($this->item->unit),
                 ],

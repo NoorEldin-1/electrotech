@@ -64,7 +64,7 @@ endpoints:
         name: project_id
         description: 'The ID of the project.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -82,7 +82,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      project_id: 17
+      project_id: 1
       project: 1
     queryParameters: []
     cleanQueryParameters: []
@@ -156,7 +156,7 @@ endpoints:
         name: project_id
         description: 'The ID of the project.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -174,7 +174,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      project_id: 17
+      project_id: 1
       project: 1
     queryParameters: []
     cleanQueryParameters: []
@@ -243,7 +243,7 @@ endpoints:
         name: project_id
         description: 'The ID of the project.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -261,7 +261,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      project_id: 17
+      project_id: 1
       project: 1
     queryParameters: []
     cleanQueryParameters: []
@@ -335,7 +335,7 @@ endpoints:
         name: project_id
         description: 'The ID of the project.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -353,7 +353,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      project_id: 17
+      project_id: 1
       project: 1
     queryParameters: []
     cleanQueryParameters: []
@@ -421,7 +421,7 @@ endpoints:
         name: project_id
         description: 'The ID of the project.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -439,7 +439,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      project_id: 17
+      project_id: 1
       project: 1
     queryParameters: []
     cleanQueryParameters: []
@@ -547,7 +547,7 @@ endpoints:
         name: project_id
         description: 'The ID of the project.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -565,7 +565,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      project_id: 17
+      project_id: 1
       project: 1
     queryParameters: []
     cleanQueryParameters: []
@@ -653,7 +653,7 @@ endpoints:
         name: project_id
         description: 'The ID of the project.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -671,7 +671,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      project_id: 17
+      project_id: 1
       project: 1
     queryParameters: []
     cleanQueryParameters: []

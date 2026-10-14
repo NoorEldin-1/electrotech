@@ -42,7 +42,7 @@
                 @forelse ($variance['rows'] as $row)
                     @php($over = $row['variance'] > 0)
                     <tr class="text-gray-950 dark:text-[var(--dark-text)]">
-                        <td class="px-3 py-2 text-start">{{ $row['item']?->name ?? '—' }}</td>
+                        <td class="px-3 py-2 text-start">{{ $row['item']?->display_label ?? '—' }}</td>
                         <td class="px-3 py-2 text-end tabular-nums">{{ number_format($row['planned'], 2) }}</td>
                         <td class="px-3 py-2 text-end tabular-nums">{{ number_format($row['issued'], 2) }}</td>
                         <td class="px-3 py-2 text-end tabular-nums">{{ number_format($row['returned'], 2) }}</td>

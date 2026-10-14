@@ -56,6 +56,7 @@ class InventoryTransactionResource extends Resource
 
                 Tables\Columns\TextColumn::make('item.name')
                     ->label(__('resources.inventory_transactions.columns.item'))
+                    ->description(fn ($record): ?string => $record->item?->spec_summary ?: null)
                     ->searchable()
                     ->sortable(),
 

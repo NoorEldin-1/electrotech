@@ -204,7 +204,7 @@ endpoints:
         name: sales_invoice_id
         description: 'The ID of the sales invoice.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -222,7 +222,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      sales_invoice_id: 17
+      sales_invoice_id: 1
       sales_invoice: 22
     queryParameters: []
     cleanQueryParameters: []
@@ -288,7 +288,7 @@ endpoints:
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -306,7 +306,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      delivery_voucher_id: 17
+      delivery_voucher_id: 1
       delivery_voucher: 18
     queryParameters: []
     cleanQueryParameters: []
@@ -423,7 +423,7 @@ endpoints:
         name: sales_invoice_id
         description: 'The ID of the sales invoice.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -441,7 +441,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      sales_invoice_id: 17
+      sales_invoice_id: 1
       sales_invoice: 22
     queryParameters: []
     cleanQueryParameters: []

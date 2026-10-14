@@ -6,6 +6,7 @@ namespace App\Http\Requests\Api\V1\MasterData;
 
 use App\Enums\ItemType;
 use App\Enums\UnitOfMeasure;
+use App\Http\Requests\Api\V1\MasterData\Concerns\ItemSpecificationRules;
 use App\Models\Item;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -18,6 +19,8 @@ use Illuminate\Validation\Rule;
  */
 class StoreItemRequest extends FormRequest
 {
+    use ItemSpecificationRules;
+
     public function authorize(): bool
     {
         return $this->user()?->can('create', Item::class) ?? false;
@@ -39,6 +42,8 @@ class StoreItemRequest extends FormRequest
             'unit_cost' => ['required', 'numeric', 'min:0'],
             'minimum_stock' => ['nullable', 'numeric', 'min:0'],
             'description' => ['nullable', 'string', 'max:2000'],
+
+            ...$this->specificationRules(),
         ];
     }
 }

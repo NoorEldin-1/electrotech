@@ -220,6 +220,7 @@ class WorkOrderResource extends JsonResource
         return $item === null ? null : [
             'id' => $item->id,
             'name' => $item->name,
+            'label' => $item->display_label,
             'sku' => $item->sku,
             'unit' => EnumPresenter::present($item->unit),
         ];

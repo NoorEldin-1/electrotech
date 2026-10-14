@@ -151,7 +151,7 @@ class PurchaseOrderService
                 if ($quantity > (float) $poItem->remaining_quantity) {
                     throw new \RuntimeException(__('errors.purchase_order.exceeds_ordered', [
                         'quantity' => $quantity,
-                        'item' => $poItem->item->name,
+                        'item' => $poItem->item->display_label,
                         'ordered' => $poItem->quantity,
                         'received' => $poItem->received_quantity,
                     ]));

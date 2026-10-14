@@ -252,7 +252,7 @@ endpoints:
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -270,7 +270,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      delivery_voucher_id: 17
+      delivery_voucher_id: 1
       delivery_voucher: 18
     queryParameters: []
     cleanQueryParameters: []
@@ -555,7 +555,7 @@ endpoints:
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -573,7 +573,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      delivery_voucher_id: 17
+      delivery_voucher_id: 1
       delivery_voucher: 18
     queryParameters: []
     cleanQueryParameters: []
@@ -616,7 +616,7 @@ endpoints:
         name: voucher_date
         description: 'Must be a valid date.'
         required: false
-        example: '2026-10-12T17:06:05'
+        example: '2026-10-12T19:41:32'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -670,7 +670,7 @@ endpoints:
       customer_id: 17
       project_id: 17
       supply_order_number: SO-2026-91
-      voucher_date: '2026-10-12T17:06:05'
+      voucher_date: '2026-10-12T19:41:32'
       plates_count: 45
       protection_degree: niihfqcoynlazghdtqtqx
       insulation_voltage: bajwbpilpmufinllwloau
@@ -740,7 +740,7 @@ endpoints:
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -758,7 +758,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      delivery_voucher_id: 17
+      delivery_voucher_id: 1
       delivery_voucher: 18
     queryParameters: []
     cleanQueryParameters: []
@@ -876,7 +876,7 @@ endpoints:
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -894,7 +894,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      delivery_voucher_id: 17
+      delivery_voucher_id: 1
       delivery_voucher: 18
     queryParameters: []
     cleanQueryParameters: []
@@ -970,7 +970,7 @@ endpoints:
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -988,7 +988,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      delivery_voucher_id: 17
+      delivery_voucher_id: 1
       delivery_voucher: 18
     queryParameters: []
     cleanQueryParameters: []
@@ -1066,7 +1066,7 @@ endpoints:
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -1084,7 +1084,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      delivery_voucher_id: 17
+      delivery_voucher_id: 1
       delivery_voucher: 18
     queryParameters: []
     cleanQueryParameters: []
@@ -1162,7 +1162,7 @@ endpoints:
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -1180,7 +1180,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      delivery_voucher_id: 17
+      delivery_voucher_id: 1
       delivery_voucher: 18
     queryParameters: []
     cleanQueryParameters: []

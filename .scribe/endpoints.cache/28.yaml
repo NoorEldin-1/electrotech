@@ -224,7 +224,7 @@ endpoints:
         name: journal_entry_id
         description: 'The ID of the journal entry.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -242,7 +242,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      journal_entry_id: 17
+      journal_entry_id: 1
       journal_entry: 77
     queryParameters: []
     cleanQueryParameters: []
@@ -580,7 +580,7 @@ endpoints:
         name: journal_entry_id
         description: 'The ID of the journal entry.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -598,7 +598,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      journal_entry_id: 17
+      journal_entry_id: 1
       journal_entry: 77
     queryParameters: []
     cleanQueryParameters: []
@@ -608,7 +608,7 @@ endpoints:
         name: document_type
         description: ''
         required: false
-        example: settlement
+        example: payment_order
         type: string
         enumValues:
           - payment_order
@@ -662,7 +662,7 @@ endpoints:
         nullable: true
         deprecated: false
     cleanBodyParameters:
-      document_type: settlement
+      document_type: payment_order
       entry_date: '2026-09-13'
       description: 'Corrected description'
       currency: dtd
@@ -735,7 +735,7 @@ endpoints:
         name: journal_entry_id
         description: 'The ID of the journal entry.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -753,7 +753,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      journal_entry_id: 17
+      journal_entry_id: 1
       journal_entry: 77
     queryParameters: []
     cleanQueryParameters: []
@@ -973,7 +973,7 @@ endpoints:
         name: journal_entry_id
         description: 'The ID of the journal entry.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -991,7 +991,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      journal_entry_id: 17
+      journal_entry_id: 1
       journal_entry: 77
     queryParameters: []
     cleanQueryParameters: []
@@ -1066,7 +1066,7 @@ endpoints:
         name: journal_entry_id
         description: 'The ID of the journal entry.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -1084,7 +1084,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      journal_entry_id: 17
+      journal_entry_id: 1
       journal_entry: 77
     queryParameters: []
     cleanQueryParameters: []

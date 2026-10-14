@@ -87,7 +87,7 @@ class WorkOrderService
 
         $unplannedProducts = $workOrder->outputs
             ->filter(fn ($output) => (float) $output->planned_quantity <= 0.0)
-            ->map(fn ($output) => $output->item?->name ?? '—');
+            ->map(fn ($output) => $output->item?->display_label ?? '—');
 
         if ($unplannedProducts->isNotEmpty()) {
             $missing[] = __('resources.work_orders.fields.output_planned_quantity')

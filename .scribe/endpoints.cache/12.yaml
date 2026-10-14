@@ -218,7 +218,7 @@ endpoints:
         name: id
         description: 'The ID of the bom.'
         required: true
-        example: 17
+        example: 2
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -236,7 +236,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 17
+      id: 2
       bom: 3
     queryParameters: []
     cleanQueryParameters: []
@@ -301,7 +301,7 @@ endpoints:
         name: item_id
         description: 'The ID of the item.'
         required: true
-        example: 17
+        example: 12
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -319,7 +319,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      item_id: 17
+      item_id: 12
       item: 12
     queryParameters: []
     cleanQueryParameters: []
@@ -497,7 +497,7 @@ endpoints:
         name: id
         description: 'The ID of the bom.'
         required: true
-        example: 17
+        example: 2
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -515,7 +515,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 17
+      id: 2
       bom: 3
     queryParameters: []
     cleanQueryParameters: []
@@ -611,7 +611,7 @@ endpoints:
         name: bom_id
         description: 'The ID of the bom.'
         required: true
-        example: 17
+        example: 2
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -629,7 +629,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      bom_id: 17
+      bom_id: 2
       bom: 3
     queryParameters: []
     cleanQueryParameters: []
@@ -753,7 +753,7 @@ endpoints:
         name: bom_id
         description: 'The ID of the bom.'
         required: true
-        example: 17
+        example: 2
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -771,7 +771,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      bom_id: 17
+      bom_id: 2
       bom: 3
     queryParameters: []
     cleanQueryParameters: []
@@ -840,7 +840,7 @@ endpoints:
         name: bom_id
         description: 'The ID of the bom.'
         required: true
-        example: 17
+        example: 2
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -858,7 +858,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      bom_id: 17
+      bom_id: 2
       bom: 3
     queryParameters: []
     cleanQueryParameters: []
@@ -924,7 +924,7 @@ endpoints:
         name: id
         description: 'The ID of the bom.'
         required: true
-        example: 17
+        example: 2
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -942,7 +942,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 17
+      id: 2
       bom: 3
     queryParameters: []
     cleanQueryParameters: []

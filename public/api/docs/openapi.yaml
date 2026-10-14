@@ -1493,7 +1493,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the user.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -1892,7 +1892,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the role.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -2459,7 +2459,7 @@ paths:
                 channel:
                   type: string
                   description: ''
-                  example: whatsapp
+                  example: visit
                   enum:
                     - call
                     - visit
@@ -2469,7 +2469,7 @@ paths:
                 interacted_at:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-12T16:57:39'
+                  example: '2026-10-12T19:41:31'
                 site_ready:
                   type: boolean
                   description: optional
@@ -2541,13 +2541,63 @@ paths:
         -
           in: query
           name: search
-          description: 'Matches name, SKU or description.'
-          example: copper
+          description: 'Every word must match the SKU, original code (part_number), name, size, busway size, brand or description, so "شريط 100" finds the 100 mm busbars.'
+          example: 'copper 100'
           required: false
           schema:
             type: string
-            description: 'Matches name, SKU or description.'
-            example: copper
+            description: 'Every word must match the SKU, original code (part_number), name, size, busway size, brand or description, so "شريط 100" finds the 100 mm busbars.'
+            example: 'copper 100'
+        -
+          in: query
+          name: 'filter[category]'
+          description: 'Item category id; comma-separate for OR.'
+          example: 3
+          required: false
+          schema:
+            type: integer
+            description: 'Item category id; comma-separate for OR.'
+            example: 3
+        -
+          in: query
+          name: 'filter[product_line]'
+          description: 'pt, dt or lt.'
+          example: pt
+          required: false
+          schema:
+            type: string
+            description: 'pt, dt or lt.'
+            example: pt
+        -
+          in: query
+          name: 'filter[material]'
+          description: 'cu, al or fe.'
+          example: cu
+          required: false
+          schema:
+            type: string
+            description: 'cu, al or fe.'
+            example: cu
+        -
+          in: query
+          name: 'filter[origin]'
+          description: 'imported or local.'
+          example: imported
+          required: false
+          schema:
+            type: string
+            description: 'imported or local.'
+            example: imported
+        -
+          in: query
+          name: 'filter[has_image]'
+          description: 'Only items with (true) or without (false) a photo.'
+          example: true
+          required: false
+          schema:
+            type: boolean
+            description: 'Only items with (true) or without (false) a photo.'
+            example: true
         -
           in: query
           name: 'filter[type]'
@@ -2611,13 +2661,13 @@ paths:
         -
           in: query
           name: include
-          description: 'Comma-separated relations. Allowed: inventories, scrapSource.'
-          example: inventories
+          description: 'Comma-separated relations. Allowed: inventories, scrapSource, category.'
+          example: 'inventories,category'
           required: false
           schema:
             type: string
-            description: 'Comma-separated relations. Allowed: inventories, scrapSource.'
-            example: inventories
+            description: 'Comma-separated relations. Allowed: inventories, scrapSource, category.'
+            example: 'inventories,category'
         -
           in: query
           name: updated_after
@@ -2854,7 +2904,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -2888,12 +2938,170 @@ paths:
                   description: 'optional Free text.'
                   example: 'Electrolytic copper'
                   nullable: true
+                item_category_id:
+                  type: integer
+                  description: 'optional Category id (see GET /item-categories).'
+                  example: 3
+                  nullable: true
+                product_line:
+                  type: string
+                  description: 'optional pt, dt or lt.'
+                  example: pt
+                  nullable: true
+                part_number:
+                  type: string
+                  description: 'optional The supplier/sheet code; may repeat across items.'
+                  example: 'BST 16C'
+                  nullable: true
+                material:
+                  type: string
+                  description: 'optional cu, al or fe.'
+                  example: cu
+                  nullable: true
+                thickness_mm:
+                  type: number
+                  description: optional
+                  example: 5.75
+                  nullable: true
+                width_mm:
+                  type: number
+                  description: optional
+                  example: 100.0
+                  nullable: true
+                size_code:
+                  type: string
+                  description: 'optional Busway size.'
+                  example: B100
+                  nullable: true
+                length_m:
+                  type: number
+                  description: optional
+                  example: 3.0
+                  nullable: true
+                edge:
+                  type: string
+                  description: 'optional rounded or flat.'
+                  example: rounded
+                  nullable: true
+                treatment:
+                  type: string
+                  description: 'optional none, painted, copper_coated or tinned.'
+                  example: tinned
+                  nullable: true
+                origin:
+                  type: string
+                  description: 'optional imported or local.'
+                  example: imported
+                  nullable: true
+                brand:
+                  type: string
+                  description: 'optional Source / brand.'
+                  example: DKC
+                  nullable: true
+                usage:
+                  type: string
+                  description: optional
+                  example: B100
+                  nullable: true
+                ampere_rating:
+                  type: string
+                  description: 'optional Free text, e.g. 1600, ALL or 63/160.'
+                  example: '1600'
+                  nullable: true
+                poles:
+                  type: integer
+                  description: optional
+                  example: 4
+                  nullable: true
+                size:
+                  type: string
+                  description: 'optional Free-text size.'
+                  example: '100*5.75'
+                  nullable: true
+                color:
+                  type: string
+                  description: optional
+                  example: black
+                  nullable: true
+                image:
+                  type: string
+                  format: binary
+                  description: 'optional Photo (jpg, png, webp; max 5 MB), sent as multipart/form-data.'
+                  nullable: true
+                remove_image:
+                  type: boolean
+                  description: 'optional true clears the current photo.'
+                  example: false
+                  nullable: true
               required:
                 - name
                 - sku
                 - type
                 - unit
                 - unit_cost
+  /api/v1/item-categories:
+    get:
+      summary: 'List item categories'
+      operationId: listItemCategories
+      description: "The catalog groups (فئات الأصناف) items are filed under, in display\norder, with how many items each holds. A short, unpaginated list meant\nfor filter chips and the item form's category picker; filter the item\nlist with `filter[category]={id}`."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      id: 1
+                      type: item_category
+                      name: 'شرائط نحاس'
+                      sort: 1
+                      items_count: 49
+                  meta:
+                    request_id: 9f1c
+                    api_version: '1'
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        type: item_category
+                        name: 'شرائط نحاس'
+                        sort: 1
+                        items_count: 49
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        type:
+                          type: string
+                          example: item_category
+                        name:
+                          type: string
+                          example: 'شرائط نحاس'
+                        sort:
+                          type: integer
+                          example: 1
+                        items_count:
+                          type: integer
+                          example: 49
+                  meta:
+                    type: object
+                    properties:
+                      request_id:
+                        type: string
+                        example: 9f1c
+                      api_version:
+                        type: string
+                        example: '1'
+      tags:
+        - '7. Items'
   '/api/v1/items/{id}':
     get:
       summary: 'Show an item'
@@ -3039,7 +3247,7 @@ paths:
       requestBody:
         required: false
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -3072,6 +3280,101 @@ paths:
                   type: string
                   description: optional
                   example: 'Electrolytic copper'
+                  nullable: true
+                item_category_id:
+                  type: integer
+                  description: 'optional Category id (see GET /item-categories).'
+                  example: 3
+                  nullable: true
+                product_line:
+                  type: string
+                  description: 'optional pt, dt or lt.'
+                  example: pt
+                  nullable: true
+                part_number:
+                  type: string
+                  description: 'optional The supplier/sheet code; may repeat across items.'
+                  example: 'BST 16C'
+                  nullable: true
+                material:
+                  type: string
+                  description: 'optional cu, al or fe.'
+                  example: cu
+                  nullable: true
+                thickness_mm:
+                  type: number
+                  description: optional
+                  example: 5.75
+                  nullable: true
+                width_mm:
+                  type: number
+                  description: optional
+                  example: 100.0
+                  nullable: true
+                size_code:
+                  type: string
+                  description: 'optional Busway size.'
+                  example: B100
+                  nullable: true
+                length_m:
+                  type: number
+                  description: optional
+                  example: 3.0
+                  nullable: true
+                edge:
+                  type: string
+                  description: 'optional rounded or flat.'
+                  example: rounded
+                  nullable: true
+                treatment:
+                  type: string
+                  description: 'optional none, painted, copper_coated or tinned.'
+                  example: tinned
+                  nullable: true
+                origin:
+                  type: string
+                  description: 'optional imported or local.'
+                  example: imported
+                  nullable: true
+                brand:
+                  type: string
+                  description: 'optional Source / brand.'
+                  example: DKC
+                  nullable: true
+                usage:
+                  type: string
+                  description: optional
+                  example: B100
+                  nullable: true
+                ampere_rating:
+                  type: string
+                  description: 'optional Free text, e.g. 1600, ALL or 63/160.'
+                  example: '1600'
+                  nullable: true
+                poles:
+                  type: integer
+                  description: optional
+                  example: 4
+                  nullable: true
+                size:
+                  type: string
+                  description: 'optional Free-text size.'
+                  example: '100*5.75'
+                  nullable: true
+                color:
+                  type: string
+                  description: optional
+                  example: black
+                  nullable: true
+                image:
+                  type: string
+                  format: binary
+                  description: 'optional Photo (jpg, png, webp; max 5 MB), sent as multipart/form-data.'
+                  nullable: true
+                remove_image:
+                  type: boolean
+                  description: 'optional true clears the current photo.'
+                  example: true
                   nullable: true
     delete:
       summary: 'Delete an item'
@@ -3126,7 +3429,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the item.'
-        example: 17
+        example: 12
         required: true
         schema:
           type: integer
@@ -3591,7 +3894,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the customer.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -4072,7 +4375,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the supplier.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -4386,7 +4689,7 @@ paths:
         in: path
         name: attachment_id
         description: 'The ID of the attachment.'
-        example: 17
+        example: 7
         required: true
         schema:
           type: integer
@@ -4420,7 +4723,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the attachment.'
-        example: 17
+        example: 7
         required: true
         schema:
           type: integer
@@ -5005,27 +5308,27 @@ paths:
                 electric_current:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: xtxqbbyamuoeunwgyvzxh
+                  example: uydlsmsjuryvojcybzvrb
                   nullable: true
                 model:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: rxeqdinrogtqnhfycvkoj
+                  example: yickznkygloigmkwxphlv
                   nullable: true
                 section_type:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: xrivkthrpilfpeejvgizt
+                  example: azjrcnfbaqywuxhgjjmzu
                   nullable: true
                 poles_count:
                   type: integer
                   description: 'Must be at least 0.'
-                  example: 79
+                  example: 82
                   nullable: true
                 quantity:
                   type: integer
                   description: 'Must be at least 0.'
-                  example: 26
+                  example: 34
                   nullable: true
                 estimated_budget:
                   type: number
@@ -5105,7 +5408,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -5211,7 +5514,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -5293,7 +5596,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -5399,7 +5702,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -5461,7 +5764,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -5594,7 +5897,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -5728,7 +6031,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -6006,7 +6309,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -6327,7 +6630,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the offer.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -6520,7 +6823,7 @@ paths:
         in: path
         name: offer_id
         description: 'The ID of the offer.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -7067,7 +7370,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the bom.'
-        example: 17
+        example: 2
         required: true
         schema:
           type: integer
@@ -7185,7 +7488,7 @@ paths:
         in: path
         name: item_id
         description: 'The ID of the item.'
-        example: 17
+        example: 12
         required: true
         schema:
           type: integer
@@ -7319,7 +7622,7 @@ paths:
         in: path
         name: bom_id
         description: 'The ID of the bom.'
-        example: 17
+        example: 2
         required: true
         schema:
           type: integer
@@ -7425,7 +7728,7 @@ paths:
         in: path
         name: bom_id
         description: 'The ID of the bom.'
-        example: 17
+        example: 2
         required: true
         schema:
           type: integer
@@ -7535,7 +7838,7 @@ paths:
         in: path
         name: bom_id
         description: 'The ID of the bom.'
-        example: 17
+        example: 2
         required: true
         schema:
           type: integer
@@ -8127,7 +8430,7 @@ paths:
         in: path
         name: purchase_order_id
         description: 'The ID of the purchase order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -8234,7 +8537,7 @@ paths:
         in: path
         name: purchase_order_id
         description: 'The ID of the purchase order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -8344,7 +8647,7 @@ paths:
         in: path
         name: purchase_order_id
         description: 'The ID of the purchase order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -8502,7 +8805,7 @@ paths:
         in: path
         name: purchase_order_id
         description: 'The ID of the purchase order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -8943,7 +9246,7 @@ paths:
         in: path
         name: stock_reservation_id
         description: 'The ID of the stock reservation.'
-        example: 17
+        example: 4
         required: true
         schema:
           type: integer
@@ -9053,7 +9356,7 @@ paths:
         in: path
         name: stock_reservation_id
         description: 'The ID of the stock reservation.'
-        example: 17
+        example: 4
         required: true
         schema:
           type: integer
@@ -9184,7 +9487,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -9782,7 +10085,7 @@ paths:
         in: path
         name: item_id
         description: 'The ID of the item.'
-        example: 17
+        example: 12
         required: true
         schema:
           type: integer
@@ -10277,7 +10580,7 @@ paths:
         in: path
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -10387,7 +10690,7 @@ paths:
         in: path
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -10496,7 +10799,7 @@ paths:
         in: path
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -10619,7 +10922,7 @@ paths:
         in: path
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -11256,7 +11559,7 @@ paths:
         in: path
         name: depreciation_voucher_id
         description: 'The ID of the depreciation voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -11370,7 +11673,7 @@ paths:
         in: path
         name: depreciation_voucher_id
         description: 'The ID of the depreciation voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -12173,7 +12476,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -12258,7 +12561,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -12379,7 +12682,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -12497,7 +12800,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -12632,7 +12935,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -12746,7 +13049,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -12860,7 +13163,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -12974,7 +13277,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -13125,7 +13428,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -13239,7 +13542,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -13349,7 +13652,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -13463,7 +13766,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -13944,7 +14247,7 @@ paths:
         in: path
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -14034,7 +14337,7 @@ paths:
         in: path
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -14186,7 +14489,7 @@ paths:
         in: path
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -14397,7 +14700,7 @@ paths:
         in: path
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -14821,7 +15124,7 @@ paths:
         in: path
         name: return_voucher_id
         description: 'The ID of the return voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -14941,7 +15244,7 @@ paths:
         in: path
         name: return_voucher_id
         description: 'The ID of the return voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -15055,7 +15358,7 @@ paths:
         in: path
         name: return_voucher_id
         description: 'The ID of the return voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -15424,7 +15727,7 @@ paths:
         in: path
         name: quality_sheet_id
         description: 'The ID of the quality sheet.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -15506,7 +15809,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -15767,7 +16070,7 @@ paths:
         in: path
         name: quality_sheet_id
         description: 'The ID of the quality sheet.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -15857,7 +16160,7 @@ paths:
         in: path
         name: quality_sheet_id
         description: 'The ID of the quality sheet.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -15935,7 +16238,7 @@ paths:
         in: path
         name: quality_sheet_id
         description: 'The ID of the quality sheet.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -16245,7 +16548,7 @@ paths:
         in: path
         name: production_entry_id
         description: 'The ID of the production entry.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -16816,7 +17119,7 @@ paths:
                 voucher_date:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-12T17:06:05'
+                  example: '2026-10-12T19:41:32'
                 plates_count:
                   type: integer
                   description: 'Must be at least 0.'
@@ -16858,7 +17161,7 @@ paths:
         in: path
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -16972,7 +17275,7 @@ paths:
         in: path
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -17090,7 +17393,7 @@ paths:
         in: path
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -17212,7 +17515,7 @@ paths:
         in: path
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -17286,7 +17589,7 @@ paths:
         in: path
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -18822,7 +19125,7 @@ paths:
                 survey_date:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-12T17:07:51'
+                  example: '2026-10-12T19:41:33'
                 measurements:
                   type: string
                   description: optional
@@ -19401,7 +19704,7 @@ paths:
                 opening_balance_date:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-12T17:09:29'
+                  example: '2026-10-12T19:41:33'
                   nullable: true
                 is_active:
                   type: boolean
@@ -19465,7 +19768,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the account.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -20026,7 +20329,7 @@ paths:
                 document_type:
                   type: string
                   description: ''
-                  example: settlement
+                  example: payment_order
                   enum:
                     - payment_order
                     - supply_receipt
@@ -20070,7 +20373,7 @@ paths:
         in: path
         name: journal_entry_id
         description: 'The ID of the journal entry.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -20225,7 +20528,7 @@ paths:
         in: path
         name: journal_entry_id
         description: 'The ID of the journal entry.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -20335,7 +20638,7 @@ paths:
         in: path
         name: journal_entry_id
         description: 'The ID of the journal entry.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -20618,7 +20921,7 @@ paths:
         in: path
         name: sales_invoice_id
         description: 'The ID of the sales invoice.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -20744,7 +21047,7 @@ paths:
         in: path
         name: delivery_voucher_id
         description: 'The ID of the delivery voucher.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -21259,7 +21562,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -21662,7 +21965,7 @@ paths:
         in: path
         name: customer_id
         description: 'The ID of the customer.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -21768,7 +22071,7 @@ paths:
         in: path
         name: supplier_id
         description: 'The ID of the supplier.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -22198,7 +22501,7 @@ paths:
                 claim_date:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-12T17:10:51'
+                  example: '2026-10-12T19:41:33'
                 amount:
                   type: number
                   description: optional
@@ -22884,7 +23187,7 @@ paths:
                 start_date:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-12T17:11:24'
+                  example: '2026-10-12T19:41:33'
                   nullable: true
                 end_date:
                   type: string
@@ -23418,7 +23721,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -23568,7 +23871,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -23682,7 +23985,7 @@ paths:
         in: path
         name: cost_center_closing_id
         description: 'The ID of the cost center closing.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -24558,7 +24861,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -24733,7 +25036,7 @@ paths:
         in: path
         name: project_id
         description: 'The ID of the project.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -24984,7 +25287,7 @@ paths:
         in: path
         name: offer_id
         description: 'The ID of the offer.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -25027,7 +25330,7 @@ paths:
         in: path
         name: purchase_order_id
         description: 'The ID of the purchase order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -25070,7 +25373,7 @@ paths:
         in: path
         name: quality_sheet_id
         description: 'The ID of the quality sheet.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -25103,7 +25406,7 @@ paths:
         in: path
         name: work_order_id
         description: 'The ID of the work order.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer

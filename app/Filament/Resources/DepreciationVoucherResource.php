@@ -7,6 +7,7 @@ namespace App\Filament\Resources;
 use App\Enums\LossType;
 use App\Enums\VoucherStatus;
 use App\Filament\Resources\DepreciationVoucherResource\Pages;
+use App\Filament\Support\ItemSelect;
 use App\Models\DepreciationVoucher;
 use App\Services\DepreciationVoucherService;
 use Filament\Forms;
@@ -103,9 +104,11 @@ class DepreciationVoucherResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('item_id')
                                     ->label(__('resources.depreciation_vouchers.fields.item'))
-                                    ->relationship('item', 'name', fn (Builder $query) => $query->where('is_scrap', false))
-                                    ->searchable()
-                                    ->preload()
+                                    ->tap(fn (Forms\Components\Select $select) => ItemSelect::configure(
+                                        $select,
+                                        'item',
+                                        fn (Builder $query) => $query->where('is_scrap', false),
+                                    ))
                                     ->required()
                                     ->live()
                                     ->suffixAction(ItemResource::quickViewAction())

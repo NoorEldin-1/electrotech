@@ -164,6 +164,7 @@ class InventoryController extends ApiController
             'item' => [
                 'id' => $item->id,
                 'name' => $item->name,
+                'label' => $item->display_label,
                 'sku' => $item->sku,
                 'unit' => \App\Http\Api\EnumPresenter::present($item->unit),
             ],

@@ -124,7 +124,7 @@ class IssueVoucherService
             return [$itemId => [
                 'item_id' => (int) $itemId,
                 'item' => $item,
-                'item_name' => $item?->name ?? '—',
+                'item_name' => $item?->display_label ?? '—',
                 'required' => round($required, 4),
                 'previously_issued' => round(max(0, $net), 4),
                 'remaining' => round(max(0, $required - $net), 4),
@@ -179,7 +179,7 @@ class IssueVoucherService
             $rows[] = [
                 'item_id' => (int) $itemId,
                 'item_name' => $row['item_name']
-                    ?? $voucher->lines->firstWhere('item_id', $itemId)?->item?->name
+                    ?? $voucher->lines->firstWhere('item_id', $itemId)?->item?->display_label
                     ?? '—',
                 'required' => (float) ($row['required'] ?? 0),
                 'previously_issued' => (float) ($row['previously_issued'] ?? 0),

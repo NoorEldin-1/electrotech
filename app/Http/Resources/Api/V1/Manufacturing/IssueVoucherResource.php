@@ -79,6 +79,7 @@ class IssueVoucherResource extends JsonResource
                         ? [
                             'id' => $line->item->id,
                             'name' => $line->item->name,
+                            'label' => $line->item->display_label,
                             'sku' => $line->item->sku,
                             'unit' => EnumPresenter::present($line->item->unit),
                         ]

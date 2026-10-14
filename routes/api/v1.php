@@ -47,6 +47,7 @@ use App\Http\Controllers\Api\V1\Manufacturing\ReturnVoucherController;
 use App\Http\Controllers\Api\V1\Manufacturing\WorkOrderController;
 use App\Http\Controllers\Api\V1\MasterData\AttachmentController;
 use App\Http\Controllers\Api\V1\MasterData\CustomerController;
+use App\Http\Controllers\Api\V1\MasterData\ItemCategoryController;
 use App\Http\Controllers\Api\V1\MasterData\ItemController;
 use App\Http\Controllers\Api\V1\MasterData\SupplierController;
 use App\Http\Controllers\Api\V1\Meta\MetaController;
@@ -139,6 +140,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
         Route::middleware('throttle:api-read')->group(function (): void {
             Route::get('items', [ItemController::class, 'index'])->name('items.index');
+            Route::get('item-categories', [ItemCategoryController::class, 'index'])->name('item-categories.index');
             Route::get('items/{item}', [ItemController::class, 'show'])
                 ->whereNumber('item')
                 ->name('items.show');

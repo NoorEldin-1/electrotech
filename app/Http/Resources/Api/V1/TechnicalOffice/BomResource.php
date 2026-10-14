@@ -63,6 +63,7 @@ class BomResource extends JsonResource
                 fn () => $this->outputItem === null ? null : [
                     'id' => $this->outputItem->id,
                     'name' => $this->outputItem->name,
+                    'label' => $this->outputItem->display_label,
                     'sku' => $this->outputItem->sku,
                 ],
             ),
@@ -91,6 +92,7 @@ class BomResource extends JsonResource
                         ? [
                             'id' => $line->item->id,
                             'name' => $line->item->name,
+                            'label' => $line->item->display_label,
                             'sku' => $line->item->sku,
                             'unit' => EnumPresenter::present($line->item->unit),
                             'unit_cost' => $this->money($line->item->unit_cost),

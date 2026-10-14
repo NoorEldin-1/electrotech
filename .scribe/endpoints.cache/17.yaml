@@ -231,7 +231,7 @@ endpoints:
         name: depreciation_voucher_id
         description: 'The ID of the depreciation voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -249,7 +249,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      depreciation_voucher_id: 17
+      depreciation_voucher_id: 1
       depreciation_voucher: 6
     queryParameters: []
     cleanQueryParameters: []
@@ -399,7 +399,7 @@ endpoints:
         name: depreciation_voucher_id
         description: 'The ID of the depreciation voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -417,7 +417,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      depreciation_voucher_id: 17
+      depreciation_voucher_id: 1
       depreciation_voucher: 7
     queryParameters: []
     cleanQueryParameters: []
@@ -584,7 +584,7 @@ endpoints:
         name: depreciation_voucher_id
         description: 'The ID of the depreciation voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -602,7 +602,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      depreciation_voucher_id: 17
+      depreciation_voucher_id: 1
       depreciation_voucher: 7
     queryParameters: []
     cleanQueryParameters: []
@@ -673,7 +673,7 @@ endpoints:
         name: depreciation_voucher_id
         description: 'The ID of the depreciation voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -691,7 +691,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      depreciation_voucher_id: 17
+      depreciation_voucher_id: 1
       depreciation_voucher: 7
     queryParameters: []
     cleanQueryParameters: []

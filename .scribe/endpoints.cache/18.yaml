@@ -288,7 +288,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -306,7 +306,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -388,7 +388,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -406,7 +406,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -483,7 +483,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -501,7 +501,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -952,7 +952,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -970,7 +970,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -1299,7 +1299,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -1317,7 +1317,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -1398,7 +1398,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -1416,7 +1416,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -1549,7 +1549,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -1567,7 +1567,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -1721,7 +1721,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -1739,7 +1739,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -1827,7 +1827,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -1845,7 +1845,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -1929,7 +1929,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -1947,7 +1947,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -2032,7 +2032,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -2050,7 +2050,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -2180,7 +2180,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -2198,7 +2198,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -2299,7 +2299,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -2317,7 +2317,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []
@@ -2406,7 +2406,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -2424,7 +2424,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []

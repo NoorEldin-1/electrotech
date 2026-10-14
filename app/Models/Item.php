@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ItemEdge;
+use App\Enums\ItemMaterial;
+use App\Enums\ItemOrigin;
+use App\Enums\ItemTreatment;
 use App\Enums\ItemType;
+use App\Enums\ProductLine;
 use App\Enums\UnitOfMeasure;
 use App\Enums\WarehouseType;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -33,7 +40,32 @@ class Item extends Model
         'unit_cost',
         'description',
         'minimum_stock',
+        'item_category_id',
+        'product_line',
+        'part_number',
+        'material',
+        'thickness_mm',
+        'width_mm',
+        'size_code',
+        'length_m',
+        'edge',
+        'treatment',
+        'origin',
+        'brand',
+        'usage',
+        'ampere_rating',
+        'poles',
+        'size',
+        'color',
+        'image_path',
     ];
+
+    /**
+     * Columns a free-text item search matches against (pickers, the items
+     * table, the API). Many catalog items share a generic name («شريط»), so
+     * the codes and the size columns are what actually tell them apart.
+     */
+    public const SEARCH_COLUMNS = ['sku', 'part_number', 'name', 'size', 'size_code', 'brand', 'description'];
 
     protected function casts(): array
     {
@@ -43,15 +75,106 @@ class Item extends Model
             'unit' => UnitOfMeasure::class,
             'unit_cost' => 'decimal:2',
             'minimum_stock' => 'decimal:4',
+            'product_line' => ProductLine::class,
+            'material' => ItemMaterial::class,
+            'thickness_mm' => 'decimal:3',
+            'width_mm' => 'decimal:2',
+            'length_m' => 'decimal:3',
+            'edge' => ItemEdge::class,
+            'treatment' => ItemTreatment::class,
+            'origin' => ItemOrigin::class,
+            'poles' => 'integer',
         ];
     }
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'sku', 'type', 'unit_cost', 'minimum_stock'])
+            ->logOnly(['name', 'sku', 'part_number', 'type', 'item_category_id', 'unit_cost', 'minimum_stock'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(ItemCategory::class, 'item_category_id');
+    }
+
+    /**
+     * A short spec line built from whichever specifications the item has,
+     * e.g. «Cu · 100×5.75 مم · 3م · مقصدر» or «B100 · 1600A». Empty for
+     * items without specifications.
+     */
+    protected function specSummary(): Attribute
+    {
+        return Attribute::get(function (): string {
+            $number = static fn ($value): string => rtrim(rtrim(number_format((float) $value, 3, '.', ''), '0'), '.');
+            $mm = __('resources.items.units.mm');
+
+            $dimensions = match (true) {
+                filled($this->width_mm) && filled($this->thickness_mm) => $number($this->width_mm) . '×' . $number($this->thickness_mm) . ' ' . $mm,
+                filled($this->thickness_mm) => $number($this->thickness_mm) . ' ' . $mm,
+                filled($this->width_mm) => $number($this->width_mm) . ' ' . $mm,
+                default => $this->size,
+            };
+
+            $parts = [
+                $this->material ? ucfirst($this->material->value) : null,
+                $this->size_code,
+                $dimensions,
+                (float) $this->length_m > 0 ? $number($this->length_m) . __('resources.items.units.m') : null,
+                $this->treatment && $this->treatment !== ItemTreatment::None ? $this->treatment->getLabel() : null,
+                filled($this->ampere_rating) ? $this->ampere_rating . 'A' : null,
+                $this->poles ? $this->poles . 'P' : null,
+                $this->color,
+            ];
+
+            return implode(' · ', array_filter($parts, 'filled'));
+        });
+    }
+
+    /**
+     * The label every item picker, table and document shows: code + name +
+     * spec line, so items sharing a generic name stay distinguishable.
+     */
+    protected function displayLabel(): Attribute
+    {
+        return Attribute::get(function (): string {
+            $label = "{$this->sku} — {$this->name}";
+
+            return filled($this->spec_summary) ? "{$label} ({$this->spec_summary})" : $label;
+        });
+    }
+
+    /**
+     * Public URL of the item photo, or null when it has none.
+     */
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::get(fn (): ?string => filled($this->image_path)
+            ? Storage::disk('public')->url($this->image_path)
+            : null);
+    }
+
+    /**
+     * Free-text search: every whitespace-separated word must match at least
+     * one of SEARCH_COLUMNS, so «شريط 100» finds the 100 mm busbars.
+     */
+    public function scopeSearch(Builder $query, ?string $term): Builder
+    {
+        $words = preg_split('/\s+/u', trim((string) $term), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        foreach ($words as $word) {
+            $like = '%' . addcslashes($word, '%_\\') . '%';
+
+            $query->where(function (Builder $inner) use ($like): void {
+                foreach (self::SEARCH_COLUMNS as $column) {
+                    $inner->orWhere($inner->qualifyColumn($column), 'like', $like);
+                }
+            });
+        }
+
+        return $query;
     }
 
     /**

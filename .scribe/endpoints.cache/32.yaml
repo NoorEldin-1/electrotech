@@ -513,7 +513,7 @@ endpoints:
         name: start_date
         description: 'Must be a valid date.'
         required: false
-        example: '2026-10-12T17:11:24'
+        example: '2026-10-12T19:41:33'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -558,7 +558,7 @@ endpoints:
       customer_id: 17
       limit_amount: 6000000.0
       currency: opf
-      start_date: '2026-10-12T17:11:24'
+      start_date: '2026-10-12T19:41:33'
       end_date: '2107-11-11'
       status: closed
       notes: mqeopfuudtdsufvyvddqa

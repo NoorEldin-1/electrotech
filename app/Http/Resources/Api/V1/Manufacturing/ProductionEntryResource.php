@@ -76,6 +76,7 @@ class ProductionEntryResource extends JsonResource
             'output_item' => $this->whenLoaded('outputItem', fn () => $this->outputItem === null ? null : [
                 'id' => $this->outputItem->id,
                 'name' => $this->outputItem->name,
+                'label' => $this->outputItem->display_label,
                 'sku' => $this->outputItem->sku,
                 'unit' => EnumPresenter::present($this->outputItem->unit),
             ]),

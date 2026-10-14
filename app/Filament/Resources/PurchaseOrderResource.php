@@ -8,6 +8,7 @@ use App\Enums\ProjectStatus;
 use App\Enums\PurchaseOrderStatus;
 use App\Filament\Resources\PurchaseOrderResource\Pages;
 use App\Filament\Support\PhoneInput;
+use App\Filament\Support\ItemSelect;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
@@ -143,9 +144,7 @@ class PurchaseOrderResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('item_id')
                                     ->label(__('resources.purchase_orders.fields.item'))
-                                    ->relationship('item', 'name')
-                                    ->searchable()
-                                    ->preload()
+                                    ->tap(fn (Forms\Components\Select $select) => ItemSelect::configure($select))
                                     ->required()
                                     ->live()
                                     // Slide 10: review the item "card" in a modal
@@ -299,7 +298,7 @@ class PurchaseOrderResource extends Resource
                                 ->get()
                                 ->map(
                                     fn (PurchaseOrderItem $poItem) => Forms\Components\TextInput::make("items.{$poItem->id}")
-                                        ->label("{$poItem->item->name} (Ordered: {$poItem->quantity}, Received: {$poItem->received_quantity})")
+                                        ->label("{$poItem->item->display_label} (Ordered: {$poItem->quantity}, Received: {$poItem->received_quantity})")
                                         ->numeric()
                                         ->default(0)
                                         ->minValue(0)

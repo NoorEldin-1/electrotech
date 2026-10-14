@@ -227,7 +227,7 @@ endpoints:
         name: customer_id
         description: 'The ID of the customer.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -245,7 +245,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      customer_id: 17
+      customer_id: 1
       customer: 7
     queryParameters: []
     cleanQueryParameters: []
@@ -310,7 +310,7 @@ endpoints:
         name: supplier_id
         description: 'The ID of the supplier.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -328,7 +328,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      supplier_id: 17
+      supplier_id: 1
       supplier: 3
     queryParameters: []
     cleanQueryParameters: []

@@ -93,7 +93,7 @@ class WorkOrderMultiOutputTest extends TestCase
 
         $this->assertCount(1, $result['lines']);
         $this->assertEqualsWithDelta(6.0, $result['lines'][0]['quantity'], 0.0001);
-        $this->assertSame([$withoutRecipe->name], $result['missing']);
+        $this->assertSame([$withoutRecipe->display_label], $result['missing']);
     }
 
     public function test_a_product_line_with_no_quantity_yet_contributes_nothing(): void

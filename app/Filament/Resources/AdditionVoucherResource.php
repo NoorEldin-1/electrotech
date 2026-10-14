@@ -7,6 +7,7 @@ namespace App\Filament\Resources;
 use App\Enums\PurchaseInvoicingStatus;
 use App\Enums\VoucherStatus;
 use App\Filament\Resources\AdditionVoucherResource\Pages;
+use App\Filament\Support\ItemSelect;
 use App\Models\AdditionVoucher;
 use App\Services\AdditionVoucherService;
 use App\Services\PurchaseInvoicingService;
@@ -127,9 +128,7 @@ class AdditionVoucherResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('item_id')
                                     ->label(__('resources.addition_vouchers.fields.item'))
-                                    ->relationship('item', 'name')
-                                    ->searchable()
-                                    ->preload()
+                                    ->tap(fn (Forms\Components\Select $select) => ItemSelect::configure($select))
                                     ->required()
                                     // ->live() so the quick-view suffix action
                                     // re-renders (becomes visible) once an item

@@ -7,6 +7,7 @@ namespace App\Filament\Resources;
 use App\Enums\WorkOrderPhase;
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource\Pages;
+use App\Filament\Support\ItemSelect;
 use App\Models\Item;
 use App\Models\WorkOrder;
 use App\Services\DepreciationVoucherService;
@@ -220,19 +221,16 @@ class WorkOrderResource extends Resource
                             ->reorderable(false)
                             ->addActionLabel(__('resources.work_orders.actions.add_output'))
                             ->itemLabel(fn (array $state): ?string => filled($state['item_id'] ?? null)
-                                ? Item::find($state['item_id'])?->name
+                                ? Item::find($state['item_id'])?->display_label
                                 : null)
                             ->schema([
                                 Forms\Components\Select::make('item_id')
                                     ->label(__('resources.work_orders.fields.output_item'))
-                                    ->relationship(
+                                    ->tap(fn (Forms\Components\Select $select) => ItemSelect::configure(
+                                        $select,
                                         'item',
-                                        'name',
                                         fn (Builder $query) => $query->whereIn('type', ['finished_good', 'semi_finished']),
-                                    )
-                                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->sku} — {$record->name}")
-                                    ->searchable()
-                                    ->preload()
+                                    ))
                                     ->required()
                                     // The same product twice would double-count
                                     // the plan and the recipe.
@@ -384,15 +382,11 @@ class WorkOrderResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('item_id')
                                     ->label(__('resources.work_orders.fields.material_item'))
-                                    ->relationship(
+                                    ->tap(fn (Forms\Components\Select $select) => ItemSelect::configure(
+                                        $select,
                                         'item',
-                                        'name',
-                                        fn (Builder $query) => $query->where('is_scrap', false)
-                                            ->whereIn('type', ['raw_material', 'consumable', 'semi_finished']),
-                                    )
-                                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->sku} — {$record->name}")
-                                    ->searchable()
-                                    ->preload()
+                                        fn (Builder $query) => $query->where('is_scrap', false)->whereIn('type', ['raw_material', 'consumable', 'semi_finished']),
+                                    ))
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(function ($state, Forms\Set $set): void {
@@ -769,7 +763,7 @@ class WorkOrderResource extends Resource
                             'results' => $record->outputs()->with('item')->get()
                                 ->map(fn ($output) => [
                                     'output_id' => $output->id,
-                                    'product' => $output->item?->name ?? '—',
+                                    'product' => $output->item?->display_label ?? '—',
                                     'planned_quantity' => (float) $output->planned_quantity,
                                     'produced_quantity' => (float) $output->produced_quantity,
                                     'waste_quantity' => (float) $output->waste_quantity,

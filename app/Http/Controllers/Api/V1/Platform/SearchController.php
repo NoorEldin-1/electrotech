@@ -150,9 +150,11 @@ class SearchController extends ApiController
                     Project::query(), ['code', 'name', 'client_name'], $term, $limit,
                     fn (Project $p) => ['label' => $p->code, 'description' => $p->name],
                 ),
+                // Items run the catalog's multi-word search (codes, name, sizes)
+                // so «شريط 100» narrows the many same-named busbars.
                 'items' => fn () => $this->hits(
-                    Item::query(), ['sku', 'name'], $term, $limit,
-                    fn (Item $i) => ['label' => $i->sku, 'description' => $i->name],
+                    Item::query()->search($term), [], $term, $limit,
+                    fn (Item $i) => ['label' => $i->sku, 'description' => implode(' — ', array_filter([$i->name, $i->spec_summary], 'filled'))],
                 ),
                 'customers' => fn () => $this->hits(
                     Customer::query(), ['name', 'phone', 'email'], $term, $limit,

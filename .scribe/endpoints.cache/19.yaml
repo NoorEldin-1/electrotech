@@ -240,7 +240,7 @@ endpoints:
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -258,7 +258,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      issue_voucher_id: 17
+      issue_voucher_id: 1
       issue_voucher: 48
     queryParameters: []
     cleanQueryParameters: []
@@ -332,7 +332,7 @@ endpoints:
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -350,7 +350,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      issue_voucher_id: 17
+      issue_voucher_id: 1
       issue_voucher: 48
     queryParameters: []
     cleanQueryParameters: []
@@ -513,7 +513,7 @@ endpoints:
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -531,7 +531,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      issue_voucher_id: 17
+      issue_voucher_id: 1
       issue_voucher: 48
     queryParameters: []
     cleanQueryParameters: []
@@ -671,7 +671,7 @@ endpoints:
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -689,7 +689,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      issue_voucher_id: 17
+      issue_voucher_id: 1
       issue_voucher: 48
     queryParameters: []
     cleanQueryParameters: []
@@ -796,7 +796,7 @@ endpoints:
         name: issue_voucher_id
         description: 'The ID of the issue voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -814,7 +814,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      issue_voucher_id: 17
+      issue_voucher_id: 1
       issue_voucher: 48
     queryParameters: []
     cleanQueryParameters: []

@@ -102,7 +102,7 @@ final class DocumentationOutline
                 'icon' => 'cart',
                 'dept' => 'var(--dept-procurement)',
                 'items' => [
-                    ['id' => 'items', 'label' => 'الأصناف', 'kw' => 'items صنف sku وحدة حد أدنى'],
+                    ['id' => 'items', 'label' => 'الأصناف', 'kw' => 'items صنف sku وحدة حد أدنى فئة مواصفات صورة كود أصلي مقاس'],
                     ['id' => 'suppliers', 'label' => 'الموردون', 'kw' => 'suppliers مورد ضريبة إعفاء'],
                     ['id' => 'purchase-orders', 'label' => 'أوامر الشراء', 'kw' => 'purchase order po استلام اعتماد طباعة'],
                     ['id' => 'stock-reservations', 'label' => 'حجوزات المخزون', 'kw' => 'reservation حجز تحرير متاح'],

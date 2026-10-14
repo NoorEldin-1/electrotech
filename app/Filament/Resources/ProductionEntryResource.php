@@ -75,6 +75,7 @@ class ProductionEntryResource extends Resource
 
                 Tables\Columns\TextColumn::make('outputItem.name')
                     ->label(__('resources.production_entries.columns.output_item'))
+                    ->description(fn ($record): ?string => $record->outputItem?->sku)
                     ->default(__('resources.common.no_data'))
                     ->toggleable(isToggledHiddenByDefault: true),
 

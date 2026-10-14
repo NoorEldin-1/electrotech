@@ -8,6 +8,7 @@ use App\Enums\ProjectStatus;
 use App\Enums\ReservationStatus;
 use App\Enums\WarehouseType;
 use App\Filament\Resources\StockReservationResource\Pages;
+use App\Filament\Support\ItemSelect;
 use App\Models\Item;
 use App\Models\Project;
 use App\Models\StockReservation;
@@ -70,6 +71,9 @@ class StockReservationResource extends Resource
                     ->limit(30),
                 Tables\Columns\TextColumn::make('item.name')
                     ->label(__('resources.stock_reservations.columns.item'))
+                    ->description(fn (StockReservation $record): ?string => $record->item
+                        ? implode(' · ', array_filter([$record->item->sku, $record->item->spec_summary], 'filled'))
+                        : null)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('warehouse_type')
                     ->label(__('resources.stock_reservations.columns.warehouse'))
@@ -116,10 +120,8 @@ class StockReservationResource extends Resource
                             ->label(__('resources.stock_reservations.fields.item'))
                             // Only items with free stock in the raw-materials store
                             // can be reserved, so zero/fully-held items never appear.
-                            ->options(fn () => Item::query()
-                                ->withAvailableStockIn(WarehouseType::RawMaterials)
-                                ->orderBy('name')
-                                ->pluck('name', 'id'))
+                            ->options(fn () => ItemSelect::options(Item::query()
+                                ->withAvailableStockIn(WarehouseType::RawMaterials)))
                             ->searchable()
                             ->required()
                             // ->live() so the quick-view suffix action re-renders

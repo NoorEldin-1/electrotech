@@ -46,7 +46,7 @@ endpoints:
         name: project_id
         description: 'The ID of the project.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -64,7 +64,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      project_id: 17
+      project_id: 1
       project: 1
     queryParameters:
       page:
@@ -169,7 +169,7 @@ endpoints:
         name: id
         description: 'The ID of the offer.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -187,7 +187,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 17
+      id: 1
       offer: 4
     queryParameters: []
     cleanQueryParameters: []
@@ -250,7 +250,7 @@ endpoints:
         name: project_id
         description: 'The ID of the project.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -268,7 +268,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      project_id: 17
+      project_id: 1
       project: 1
     queryParameters: []
     cleanQueryParameters: []
@@ -450,7 +450,7 @@ endpoints:
         name: id
         description: 'The ID of the offer.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -468,7 +468,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 17
+      id: 1
       offer: 4
     queryParameters: []
     cleanQueryParameters: []
@@ -658,7 +658,7 @@ endpoints:
         name: offer_id
         description: 'The ID of the offer.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -676,7 +676,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      offer_id: 17
+      offer_id: 1
       offer: 4
     queryParameters: []
     cleanQueryParameters: []
@@ -833,7 +833,7 @@ endpoints:
         name: id
         description: 'The ID of the offer.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -851,7 +851,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 17
+      id: 1
       offer: 4
     queryParameters: []
     cleanQueryParameters: []

@@ -234,7 +234,7 @@ endpoints:
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -252,7 +252,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      addition_voucher_id: 17
+      addition_voucher_id: 1
       addition_voucher: 15
     queryParameters: []
     cleanQueryParameters: []
@@ -513,7 +513,7 @@ endpoints:
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -531,7 +531,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      addition_voucher_id: 17
+      addition_voucher_id: 1
       addition_voucher: 16
     queryParameters: []
     cleanQueryParameters: []
@@ -606,7 +606,7 @@ endpoints:
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -624,7 +624,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      addition_voucher_id: 17
+      addition_voucher_id: 1
       addition_voucher: 16
     queryParameters: []
     cleanQueryParameters: []
@@ -726,7 +726,7 @@ endpoints:
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -744,7 +744,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      addition_voucher_id: 17
+      addition_voucher_id: 1
       addition_voucher: 16
     queryParameters: []
     cleanQueryParameters: []
@@ -827,7 +827,7 @@ endpoints:
         name: addition_voucher_id
         description: 'The ID of the addition voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -845,7 +845,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      addition_voucher_id: 17
+      addition_voucher_id: 1
       addition_voucher: 16
     queryParameters: []
     cleanQueryParameters: []

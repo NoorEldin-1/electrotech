@@ -214,7 +214,7 @@ endpoints:
         name: return_voucher_id
         description: 'The ID of the return voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -232,7 +232,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      return_voucher_id: 17
+      return_voucher_id: 1
       return_voucher: 9
     queryParameters: []
     cleanQueryParameters: []
@@ -370,7 +370,7 @@ endpoints:
         name: return_voucher_id
         description: 'The ID of the return voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -388,7 +388,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      return_voucher_id: 17
+      return_voucher_id: 1
       return_voucher: 9
     queryParameters: []
     cleanQueryParameters: []
@@ -509,7 +509,7 @@ endpoints:
         name: return_voucher_id
         description: 'The ID of the return voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -527,7 +527,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      return_voucher_id: 17
+      return_voucher_id: 1
       return_voucher: 9
     queryParameters: []
     cleanQueryParameters: []
@@ -599,7 +599,7 @@ endpoints:
         name: return_voucher_id
         description: 'The ID of the return voucher.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -617,7 +617,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      return_voucher_id: 17
+      return_voucher_id: 1
       return_voucher: 9
     queryParameters: []
     cleanQueryParameters: []

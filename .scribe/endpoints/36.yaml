@@ -86,7 +86,7 @@ endpoints:
         name: offer_id
         description: 'The ID of the offer.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -104,7 +104,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      offer_id: 17
+      offer_id: 1
       offer: 25
     queryParameters:
       lang:
@@ -198,7 +198,7 @@ endpoints:
         name: purchase_order_id
         description: 'The ID of the purchase order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -216,7 +216,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      purchase_order_id: 17
+      purchase_order_id: 1
       purchase_order: 14
     queryParameters:
       lang:
@@ -306,7 +306,7 @@ endpoints:
         name: quality_sheet_id
         description: 'The ID of the quality sheet.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -324,7 +324,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      quality_sheet_id: 17
+      quality_sheet_id: 1
       quality_sheet: 12
     queryParameters:
       lang:
@@ -414,7 +414,7 @@ endpoints:
         name: work_order_id
         description: 'The ID of the work order.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -432,7 +432,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      work_order_id: 17
+      work_order_id: 1
       work_order: 31
     queryParameters: []
     cleanQueryParameters: []

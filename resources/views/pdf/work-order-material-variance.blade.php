@@ -46,7 +46,7 @@
             <td class="k">{{ __('resources.work_orders.fields.project') }}</td>
             <td>{{ $workOrder->project?->name ?? '—' }}</td>
             <td class="k">{{ __('resources.work_orders.fields.output_item') }}</td>
-            <td>{{ $workOrder->outputItem?->name ?? '—' }}</td>
+            <td>{{ $workOrder->outputItem?->display_label ?? '—' }}</td>
             <td class="k">{{ __('resources.work_orders.fields.planned_quantity') }}</td>
             <td>{{ number_format((float) $workOrder->planned_quantity, 2) }}</td>
         </tr>
@@ -69,7 +69,7 @@
             @forelse ($variance['rows'] as $row)
                 @php($class = $row['variance'] > 0 ? 'over' : 'under')
                 <tr>
-                    <td>{{ $row['item']?->name ?? '—' }}</td>
+                    <td>{{ $row['item']?->display_label ?? '—' }}</td>
                     <td class="num">{{ number_format($row['planned'], 2) }}</td>
                     <td class="num">{{ number_format($row['issued'], 2) }}</td>
                     <td class="num">{{ number_format($row['returned'], 2) }}</td>

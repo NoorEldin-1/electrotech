@@ -434,7 +434,7 @@ endpoints:
         name: channel
         description: ''
         required: false
-        example: whatsapp
+        example: visit
         type: string
         enumValues:
           - call
@@ -449,7 +449,7 @@ endpoints:
         name: interacted_at
         description: 'Must be a valid date.'
         required: false
-        example: '2026-10-12T16:57:39'
+        example: '2026-10-12T19:41:31'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -479,8 +479,8 @@ endpoints:
         deprecated: false
     cleanBodyParameters:
       type: site_readiness
-      channel: whatsapp
-      interacted_at: '2026-10-12T16:57:39'
+      channel: visit
+      interacted_at: '2026-10-12T19:41:31'
       site_ready: true
       notes: 'Second call — site ready'
     fileParameters: []

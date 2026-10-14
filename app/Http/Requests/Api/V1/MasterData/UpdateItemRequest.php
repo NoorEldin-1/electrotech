@@ -6,11 +6,14 @@ namespace App\Http\Requests\Api\V1\MasterData;
 
 use App\Enums\ItemType;
 use App\Enums\UnitOfMeasure;
+use App\Http\Requests\Api\V1\MasterData\Concerns\ItemSpecificationRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateItemRequest extends FormRequest
 {
+    use ItemSpecificationRules;
+
     public function authorize(): bool
     {
         return $this->user()?->can('update', $this->route('item')) ?? false;
@@ -38,6 +41,11 @@ class UpdateItemRequest extends FormRequest
             'unit_cost' => ['sometimes', 'required', 'numeric', 'min:0'],
             'minimum_stock' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
+
+            ...array_map(
+                fn (array $rules): array => ['sometimes', ...$rules],
+                $this->specificationRules(),
+            ),
         ];
     }
 }

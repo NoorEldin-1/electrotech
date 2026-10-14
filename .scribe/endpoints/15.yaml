@@ -340,7 +340,7 @@ endpoints:
         name: item_id
         description: 'The ID of the item.'
         required: true
-        example: 17
+        example: 12
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -358,7 +358,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      item_id: 17
+      item_id: 12
       item: 7
     queryParameters:
       warehouse:

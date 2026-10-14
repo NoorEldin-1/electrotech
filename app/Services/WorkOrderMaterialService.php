@@ -97,7 +97,7 @@ class WorkOrderMaterialService
             try {
                 $lines = $this->standardMaterialsFor($item, $quantity);
             } catch (\RuntimeException) {
-                $missing[] = $item->name;
+                $missing[] = $item->display_label;
 
                 continue;
             }
