@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -17,9 +18,16 @@ class ProjectPolicy
         return $user->can('projects.view');
     }
 
+    /**
+     * Staff outside sales open single operations without the sales lists:
+     * the PMO timeline covers every running operation, and the active
+     * operations screen only the ones in progress.
+     */
     public function view(User $user, Project $project): bool
     {
-        return $user->can('projects.view');
+        return $user->can('projects.view')
+            || $user->can('operations.timeline')
+            || ($user->can('active_operations.view') && $project->status === ProjectStatus::InProgress);
     }
 
     public function create(User $user): bool

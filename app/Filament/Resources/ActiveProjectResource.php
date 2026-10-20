@@ -49,6 +49,17 @@ class ActiveProjectResource extends Resource
         return (string) Project::query()->where('status', ProjectStatus::InProgress)->count();
     }
 
+    /**
+     * The screen also serves staff who follow running operations without
+     * the rest of sales (active_operations.view, no projects.view).
+     */
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+
+        return ($user?->can('projects.view') ?? false) || ($user?->can('active_operations.view') ?? false);
+    }
+
     public static function canCreate(): bool
     {
         return false;
@@ -88,7 +99,7 @@ class ActiveProjectResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make()
-                        ->url(fn (Project $r) => ProjectResource::getUrl('edit', ['record' => $r])),
+                        ->url(fn (Project $r) => ProjectResource::recordUrl($r)),
 
                     Tables\Actions\Action::make('hold')
                         ->label(__('resources.operations.actions.hold'))

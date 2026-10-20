@@ -153,8 +153,8 @@ class ProjectsTimeline extends Page implements HasTable
                     Tables\Actions\Action::make('open')
                         ->label(__('resources.projects_timeline.actions.open_operation'))
                         ->icon('heroicon-o-arrow-top-right-on-square')
-                        ->url(fn (Project $record): string => ProjectResource::getUrl('edit', ['record' => $record]))
-                        ->visible(fn (Project $record): bool => auth()->user()?->can('update', $record) ?? false),
+                        ->url(fn (Project $record): ?string => ProjectResource::recordUrl($record))
+                        ->visible(fn (Project $record): bool => ProjectResource::recordUrl($record) !== null),
                 ])
                     ->tooltip(__('resources.common.actions')),
             ])
@@ -208,9 +208,7 @@ class ProjectsTimeline extends Page implements HasTable
             $payload[] = [
                 'id' => $record->getKey(),
                 'heading' => "{$record->code} — {$record->name}",
-                'url' => auth()->user()?->can('update', $record)
-                    ? ProjectResource::getUrl('edit', ['record' => $record])
-                    : null,
+                'url' => ProjectResource::recordUrl($record),
                 'summary' => [
                     'stage' => $summary['current_stage']['label'],
                     'group' => $summary['current_stage']['group_label'],

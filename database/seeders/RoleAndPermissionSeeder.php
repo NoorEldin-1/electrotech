@@ -108,6 +108,10 @@ class RoleAndPermissionSeeder extends Seeder
             'attachments.upload',
             'attachments.download',
             'attachments.delete',
+            // Staff who follow running operations without the rest of sales:
+            // opens the active operations screen and each operation's file
+            // while it is in progress, read-only.
+            'active_operations.view',
 
             // Project Offers (Sales pipeline)
             'project_offers.view',
@@ -637,6 +641,180 @@ class RoleAndPermissionSeeder extends Seeder
                 'installations.manage',
                 'site_surveys.view',
                 'site_surveys.manage',
+                'dashboard.view',
+            ],
+
+            // ── Job-function roles (staff sheet, 2026-10-20) ─────────────
+            // One role per screen set on the sheet, combined per person, so
+            // each user sees only their own part of the system. Unlike the
+            // department roles above, none of these reaches outside its
+            // screens (no projects.view, no timeline, no finance).
+
+            // Sales staff: every sales screen except the approvals
+            // (رغدة، مريم — "كل المبيعات ما عدا الاعتمادات").
+            'Sales_Officer' => [
+                'projects.view',
+                'projects.create',
+                'projects.edit',
+                'projects.change_status',
+                'projects.move_to_tender',
+                'projects.move_to_inhand',
+                'projects.move_to_active',
+                'projects.cancel_to_lost',
+                'projects.set_alarm',
+                'projects.view_history',
+                'project_offers.view',
+                'project_offers.create',
+                'project_offers.edit',
+                'project_offers.print',
+                'customers.view',
+                'customers.create',
+                'customers.edit',
+                'customer_interactions.view',
+                'customer_interactions.manage',
+                'attachments.upload',
+                'attachments.download',
+                'dashboard.view',
+            ],
+
+            // Sales head: every sales screen including the manager approval
+            // (م. عفاف — "كل المبيعات").
+            'Sales_Head' => [
+                'projects.view',
+                'projects.create',
+                'projects.edit',
+                'projects.change_status',
+                'projects.move_to_tender',
+                'projects.move_to_inhand',
+                'projects.move_to_active',
+                'projects.cancel_to_lost',
+                'projects.set_alarm',
+                'projects.manager_approve',
+                'projects.view_history',
+                'project_offers.view',
+                'project_offers.create',
+                'project_offers.edit',
+                'project_offers.delete',
+                'project_offers.print',
+                'customers.view',
+                'customers.create',
+                'customers.edit',
+                'customers.delete',
+                'customer_interactions.view',
+                'customer_interactions.manage',
+                'attachments.upload',
+                'attachments.download',
+                'attachments.delete',
+                'dashboard.view',
+            ],
+
+            // PMO operations timeline, read-only.
+            'Timeline_Viewer' => [
+                'operations.timeline',
+                'attachments.download',
+                'dashboard.view',
+            ],
+
+            // PMO timeline coordinator (أسماء): follows every running
+            // operation on the timeline and files its papers and
+            // attachments — without editing the project itself.
+            'Timeline_Coordinator' => [
+                'operations.timeline',
+                'active_operations.view',
+                'attachments.upload',
+                'attachments.download',
+                'dashboard.view',
+            ],
+
+            // Active operations screen, read-only.
+            'Active_Operations_Viewer' => [
+                'active_operations.view',
+                'attachments.download',
+                'dashboard.view',
+            ],
+
+            // Purchasing officer (ياسين): purchase orders, suppliers, items,
+            // item categories and stock reservations. Approving a purchase
+            // order stays with the PMO manager.
+            'Purchasing_Officer' => [
+                'purchase_orders.view',
+                'purchase_orders.create',
+                'purchase_orders.edit',
+                'purchase_orders.receive',
+                'purchase_orders.print',
+                'suppliers.view',
+                'suppliers.create',
+                'suppliers.edit',
+                'items.view',
+                'items.create',
+                'items.edit',
+                'operations.reserve',
+                'dashboard.view',
+            ],
+
+            // Item catalogue: items + item categories.
+            'Items_Editor' => [
+                'items.view',
+                'items.create',
+                'items.edit',
+                'dashboard.view',
+            ],
+
+            'Purchase_Orders_Viewer' => [
+                'purchase_orders.view',
+                'dashboard.view',
+            ],
+
+            // Every warehouse screen, nothing outside it. Prices stay hidden
+            // from store keepers, as with Warehouse_Manager.
+            'Warehouse_Keeper' => [
+                'transactions.view',
+                'addition_vouchers.view',
+                'addition_vouchers.create',
+                'issue_vouchers.view',
+                'issue_vouchers.create',
+                'issue_vouchers.post',
+                'issue_vouchers.approve_excess',
+                'return_vouchers.view',
+                'return_vouchers.create',
+                'return_vouchers.post',
+                'depreciation_vouchers.view',
+                'depreciation_vouchers.create',
+                'depreciation_vouchers.post',
+                'delivery_vouchers.view',
+                'delivery_vouchers.create',
+                'inventory.manage',
+                'inventory.hold',
+                'inventory.release',
+                'inventory.transfer',
+                'dashboard.view',
+            ],
+
+            // Ledger reports, read-only: chart of accounts, analytical
+            // daybook, account statement and trial balance.
+            'Ledger_Viewer' => [
+                'accounts.view',
+                'journal_daybook.view',
+                'general_ledger.view',
+                'trial_balance.view',
+                'dashboard.view',
+            ],
+
+            // Quality inspector (محمد عبد الرحيم): creates and fills the
+            // quality sheet; the final approval stays with the factory
+            // manager (التصنيع سلايد 3).
+            'Quality_Inspector' => [
+                'quality_sheets.view',
+                'quality_sheets.create',
+                'quality_sheets.fill',
+                'quality_sheets.print',
+                'dashboard.view',
+            ],
+
+            // Production & scrap report, read-only.
+            'Production_Viewer' => [
+                'production_entries.view',
+                'scrap.view',
                 'dashboard.view',
             ],
         ];

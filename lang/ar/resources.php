@@ -92,9 +92,11 @@ return [
             'change_status' => 'تغيير الحالة',
             'change_status_modal_heading' => 'تغيير حالة المشروع',
             'change_status_modal_description' => 'تجاوز إداري لمسار المبيعات الاعتيادي. يُسجَّل التغيير في سجل النشاط.',
+            'add_attachments' => 'إضافة الأوراق والمرفقات',
         ],
 
         'notifications' => [
+            'attachments_saved' => 'تم حفظ مرفقات العملية.',
             'moved_to_tender' => 'تم إرسال العملية إلى المناقصات.',
             'move_to_tender_needs_offer_title' => 'لا يوجد عرض مسجل',
             'move_to_tender_needs_offer_body' => 'ادخل تعديل المشروع وأضف عرضاً واحداً على الأقل في قسم العروض قبل الإرسال للمناقصات.',
@@ -2522,6 +2524,7 @@ return [
 
         'groups' => [
             'projects' => 'إدارة المشاريع',
+            'active_operations' => 'العمليات النشطة',
             'project_offers' => 'عروض المشاريع',
             'items' => 'الأصناف',
             'boms' => 'قوائم المواد',
@@ -2729,6 +2732,9 @@ return [
                 'hold' => 'تعليق العملية',
                 'reserve' => 'حجز مخزون للعملية',
                 'timeline' => 'عرض الخط الزمني للعمليات',
+            ],
+            'active_operations' => [
+                'view' => 'عرض العمليات النشطة فقط (بدون باقي شاشات المبيعات)',
             ],
             'delivery_minutes' => [
                 'view' => 'عرض محاضر التسليم',

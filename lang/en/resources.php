@@ -92,9 +92,11 @@ return [
             'change_status' => 'Change Status',
             'change_status_modal_heading' => 'Change project status',
             'change_status_modal_description' => 'Admin override — bypasses the standard sales pipeline transitions. The change is recorded in the activity log.',
+            'add_attachments' => 'Add papers & attachments',
         ],
 
         'notifications' => [
+            'attachments_saved' => 'Operation attachments saved.',
             'moved_to_tender' => 'Operation sent to Tender Projects.',
             'move_to_tender_needs_offer_title' => 'No offer recorded',
             'move_to_tender_needs_offer_body' => 'Edit the project and add at least one offer in the Offers section before sending to Tender.',
@@ -2518,6 +2520,7 @@ return [
 
         'groups' => [
             'projects' => 'Projects Management',
+            'active_operations' => 'Active Operations',
             'project_offers' => 'Project Offers',
             'items' => 'Items',
             'boms' => 'Bills of Materials',
@@ -2725,6 +2728,9 @@ return [
                 'hold' => 'Put Operation On Hold',
                 'reserve' => 'Reserve Stock for Operation',
                 'timeline' => 'View Operations Timeline',
+            ],
+            'active_operations' => [
+                'view' => 'View Active Operations only (without the other sales screens)',
             ],
             'delivery_minutes' => [
                 'view' => 'View Delivery Minutes',

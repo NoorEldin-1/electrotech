@@ -245,9 +245,10 @@ class ProjectResource extends Resource
     /**
      * One FileUpload per AttachmentCategory. Files are persisted as
      * Attachment rows through the saveRelationshipsUsing pipeline of
-     * the page's afterSave hook (see CreateProject / EditProject).
+     * the page's afterSave hook (see CreateProject / EditProject), or by the
+     * add-attachments action on ViewProject.
      */
-    protected static function attachmentCategorySchema(): array
+    public static function attachmentCategorySchema(): array
     {
         // Presentation.pptx سلايد 2 grew the list to 17 categories, so they are
         // grouped (sales documents / drawings & approvals / consultant /
@@ -412,8 +413,48 @@ class ProjectResource extends Resource
         return [
             'index' => Pages\ListProjects::route('/'),
             'create' => Pages\CreateProject::route('/create'),
+            'view' => Pages\ViewProject::route('/{record}'),
             'edit' => Pages\EditProject::route('/{record}/edit'),
         ];
+    }
+
+    /**
+     * Timeline and active-operations staff open single operation files (the
+     * policy decides which), but the projects list, its navigation entry and
+     * global search stay with whoever holds projects.view.
+     */
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return static::canViewAny()
+            || ($user?->can('operations.timeline') ?? false)
+            || ($user?->can('active_operations.view') ?? false);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canGloballySearch(): bool
+    {
+        return parent::canGloballySearch() && static::canViewAny();
+    }
+
+    /**
+     * Where a link to one operation should land: the edit form for whoever
+     * may change it, the read-only file for whoever may only open it.
+     */
+    public static function recordUrl(Project $record): ?string
+    {
+        $user = auth()->user();
+
+        return match (true) {
+            $user?->can('update', $record) ?? false => static::getUrl('edit', ['record' => $record]),
+            $user?->can('view', $record) ?? false => static::getUrl('view', ['record' => $record]),
+            default => null,
+        };
     }
 
     public static function getEloquentQuery(): Builder
