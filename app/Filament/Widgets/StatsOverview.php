@@ -105,31 +105,48 @@ class StatsOverview extends BaseWidget
                 ->count(),
         );
 
-        return [
-            Stat::make(__('Active Projects'), (string) $activeProjects)
-                ->description(__('Currently in progress'))
-                ->descriptionIcon('heroicon-m-play')
-                ->color('primary'),
+        // Each card belongs to a section; a user sees only the cards of the
+        // sections they can open.
+        return array_values(array_filter([
+            $this->allows('projects.view', 'active_operations.view', 'operations.timeline')
+                ? Stat::make(__('Active Projects'), (string) $activeProjects)
+                    ->description(__('Currently in progress'))
+                    ->descriptionIcon('heroicon-m-play')
+                    ->color('primary')
+                : null,
 
-            Stat::make(__('Pending Deliveries'), (string) $pendingDeliveries)
-                ->description(__('Awaiting dual approval'))
-                ->descriptionIcon('heroicon-m-truck')
-                ->color($pendingDeliveries > 0 ? 'warning' : 'success'),
+            $this->allows('delivery_vouchers.view')
+                ? Stat::make(__('Pending Deliveries'), (string) $pendingDeliveries)
+                    ->description(__('Awaiting dual approval'))
+                    ->descriptionIcon('heroicon-m-truck')
+                    ->color($pendingDeliveries > 0 ? 'warning' : 'success')
+                : null,
 
-            Stat::make(__('Pending Purchase Orders'), (string) $pendingPos)
-                ->description(__('Awaiting delivery/receipt'))
-                ->descriptionIcon('heroicon-m-paper-airplane')
-                ->color('warning'),
+            $this->allows('purchase_orders.view')
+                ? Stat::make(__('Pending Purchase Orders'), (string) $pendingPos)
+                    ->description(__('Awaiting delivery/receipt'))
+                    ->descriptionIcon('heroicon-m-paper-airplane')
+                    ->color('warning')
+                : null,
 
-            Stat::make(__('Active Manufacturing Orders'), (string) $activeWos)
-                ->description(__('Currently in production'))
-                ->descriptionIcon('heroicon-m-cog-6-tooth')
-                ->color('info'),
+            $this->allows('work_orders.view', 'quality_sheets.view', 'production_entries.view')
+                ? Stat::make(__('Active Manufacturing Orders'), (string) $activeWos)
+                    ->description(__('Currently in production'))
+                    ->descriptionIcon('heroicon-m-cog-6-tooth')
+                    ->color('info')
+                : null,
 
-            Stat::make(__('Low Stock Items'), (string) $lowStockCount)
-                ->description(__('Below minimum threshold'))
-                ->descriptionIcon('heroicon-m-exclamation-triangle')
-                ->color($lowStockCount > 0 ? 'danger' : 'success'),
-        ];
+            $this->allows('items.view', 'transactions.view')
+                ? Stat::make(__('Low Stock Items'), (string) $lowStockCount)
+                    ->description(__('Below minimum threshold'))
+                    ->descriptionIcon('heroicon-m-exclamation-triangle')
+                    ->color($lowStockCount > 0 ? 'danger' : 'success')
+                : null,
+        ]));
+    }
+
+    private function allows(string ...$permissions): bool
+    {
+        return auth()->user()?->canAny($permissions) ?? false;
     }
 }
