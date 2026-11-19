@@ -44,6 +44,7 @@ use Database\Seeders\ChartOfAccountsSeeder;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -147,7 +148,12 @@ class InventoryJournalTest extends TestCase
         $voucher = IssueVoucher::factory()->create(['work_order_id' => $wo->id]);
         $voucher->lines()->create(['item_id' => $item->id, 'quantity' => $quantity, 'unit_cost' => $unitCost]);
 
-        app(IssueVoucherService::class)->post($voucher->fresh('lines'));
+        // These tests are about the journals, not the material-plan gate. The
+        // order has no material plan, and once ONE voucher of it is posted the
+        // requirement is no longer empty (the issued item counts as "required 0"),
+        // so a second voucher on the same order — any item — would be refused as
+        // an excess. Take the supported approval path instead of seeding a plan.
+        app(IssueVoucherService::class)->post($voucher->fresh('lines'), allowExcess: true, excessReason: 'test fixture');
 
         return $voucher->fresh();
     }
@@ -522,6 +528,127 @@ class InventoryJournalTest extends TestCase
         $this->assertSame(40.0, $this->balance('1330'));
     }
 
+    // ------------------------------------- finish: only what was booked in WIP
+
+    public function test_the_finish_credits_wip_only_for_the_cost_that_was_booked_there(): void
+    {
+        $project = Project::factory()->active()->create(['actual_cost' => 0]);
+        $wo = $this->workOrder($project);
+        $item = $this->rawItem();
+        $this->receive([[$item, 50, 4]]);
+
+        // A voucher posted before the inventory journals existed (ruling R2):
+        // posted, 100 of value, but it never debited 1320.
+        IssueVoucher::factory()->posted()->create(['work_order_id' => $wo->id, 'total_value' => 100]);
+        // And one posted through the service: Dr 1320 40.
+        $this->issue($wo, $item, 10, 4);
+        $this->assertSame(40.0, $this->balance('1320'));
+
+        $service = app(InventoryJournalService::class);
+        $this->assertEqualsWithDelta(140.0, $service->costCarried($wo), 0.001);
+        $this->assertEqualsWithDelta(40.0, $service->costBookedInWip($wo), 0.001);
+
+        app(WorkOrderService::class)->finishManufacturing($wo);
+
+        $entry = $this->entryFor($wo->fresh(), InventoryJournalService::EVENT_FINISH);
+        $this->assertEqualsWithDelta(40.0, (float) $this->debitLine($entry)->amount, 0.001);
+        $this->assertEqualsWithDelta(40.0, (float) $this->creditLine($entry)->amount, 0.001);
+
+        // WIP is emptied exactly — never driven negative by the unbooked 100.
+        $this->assertSame(0.0, $this->balance('1320'));
+        $this->assertSame(40.0, $this->balance('1330'));
+    }
+
+    public function test_an_order_whose_whole_cost_predates_the_journals_posts_no_finish_entry(): void
+    {
+        $wo = $this->workOrder();
+        IssueVoucher::factory()->posted()->create(['work_order_id' => $wo->id, 'total_value' => 100]);
+
+        $service = app(InventoryJournalService::class);
+        app(WorkOrderService::class)->finishManufacturing($wo);
+
+        // The voucher view still says 100; the books hold none of it, so
+        // there is nothing in 1320 to move.
+        $this->assertEqualsWithDelta(100.0, $service->costCarried($wo), 0.001);
+        $this->assertEqualsWithDelta(0.0, $service->costBookedInWip($wo), 0.001);
+        $this->assertTrue($wo->fresh()->isManufacturingFinished());
+        $this->assertSame(0, JournalEntry::count());
+        $this->assertFalse($service->isFinishedInBooks($wo));
+        $this->assertSame(0.0, $this->balance('1320'));
+    }
+
+    public function test_a_voucher_whose_entry_was_skipped_is_ignored_by_the_finish(): void
+    {
+        $wo = $this->workOrder();
+        $item = $this->rawItem();
+        $this->receive([[$item, 50, 4]]);
+        $this->issue($wo, $item, 10, 4); // booked: 40
+
+        // 1310 drops out of the chart (an inactive account counts as missing),
+        // so the next issue goes through without an entry.
+        Account::where('code', '1310')->update(['is_active' => false]);
+        $skipped = $this->issue($wo, $item, 5, 4); // 20, no entry
+        $this->assertSame(0, JournalEntry::query()->forSource($skipped)->count());
+
+        $service = app(InventoryJournalService::class);
+        $this->assertEqualsWithDelta(60.0, $service->costCarried($wo), 0.001);
+        $this->assertEqualsWithDelta(40.0, $service->costBookedInWip($wo), 0.001);
+
+        app(WorkOrderService::class)->finishManufacturing($wo);
+
+        $entry = $this->entryFor($wo->fresh(), InventoryJournalService::EVENT_FINISH);
+        $this->assertEqualsWithDelta(40.0, (float) $this->debitLine($entry)->amount, 0.001);
+        $this->assertSame(0.0, $this->balance('1320'));
+        $this->assertSame(40.0, $this->balance('1330'));
+    }
+
+    public function test_a_reversed_voucher_entry_nets_out_of_the_booked_cost(): void
+    {
+        $wo = $this->workOrder();
+        $item = $this->rawItem();
+        $this->receive([[$item, 50, 4]]);
+        $this->issue($wo, $item, 10, 4);
+        $second = $this->issue($wo, $item, 5, 4);
+
+        $service = app(InventoryJournalService::class);
+        $this->assertEqualsWithDelta(60.0, $service->costBookedInWip($wo), 0.001);
+
+        // The reversal entry shares the voucher's source, so it nets the original.
+        $service->reverse($second);
+
+        $this->assertEqualsWithDelta(40.0, $service->costBookedInWip($wo), 0.001);
+
+        app(WorkOrderService::class)->finishManufacturing($wo);
+        $this->assertSame(0.0, $this->balance('1320'));
+        $this->assertSame(40.0, $this->balance('1330'));
+    }
+
+    public function test_unbooked_cost_is_what_the_operations_vouchers_carry_without_an_entry(): void
+    {
+        $project = Project::factory()->active()->create(['actual_cost' => 0]);
+        $wo = $this->workOrder($project);
+        $item = $this->rawItem();
+        $this->receive([[$item, 50, 4]]);
+
+        IssueVoucher::factory()->posted()->create(['work_order_id' => $wo->id, 'total_value' => 100]);
+        ReturnVoucher::factory()->posted()->create(['work_order_id' => $wo->id, 'total_value' => 30]);
+        DepreciationVoucher::factory()->posted()->create(['work_order_id' => $wo->id, 'total_value' => 10]);
+        // A draft never counts; neither does a voucher that has its entry.
+        IssueVoucher::factory()->create(['work_order_id' => $wo->id, 'total_value' => 999]);
+        $this->issue($wo, $item, 10, 4);
+        // Another operation's unbooked voucher is not this one's.
+        IssueVoucher::factory()->posted()->create([
+            'work_order_id' => $this->workOrder()->id,
+            'total_value' => 500,
+        ]);
+
+        $this->assertEqualsWithDelta(
+            60.0, // 100 − 30 − 10
+            app(InventoryJournalService::class)->unbookedCost($project),
+            0.001,
+        );
+    }
+
     // ------------------------------------------------------------ reversal
 
     public function test_a_reversal_posts_the_mirror_entry_once_and_restores_the_balances(): void
@@ -593,6 +720,97 @@ class InventoryJournalTest extends TestCase
         JournalEntry::factory()->count(3)->create();
 
         $this->assertSame(3, JournalEntry::whereNull('source_type')->count());
+    }
+
+    // ------------------------------------------------------- concurrent inserts
+
+    /** A posted issue voucher of 40 with no entry yet, ready for recordIssue(). */
+    private function unbookedIssueVoucher(): IssueVoucher
+    {
+        return IssueVoucher::factory()->posted()->create([
+            'work_order_id' => $this->workOrder()->id,
+            'total_value' => 40,
+        ]);
+    }
+
+    public function test_a_collision_on_the_source_hands_back_the_entry_that_won_the_race(): void
+    {
+        $voucher = $this->unbookedIssueVoucher();
+
+        // Another request books this very document between our look-up (which
+        // found nothing) and our insert.
+        $winner = null;
+        $armed = true;
+        JournalEntry::creating(function () use (&$armed, &$winner, $voucher): void {
+            if (! $armed) {
+                return;
+            }
+
+            $armed = false;
+            $winner = JournalEntry::factory()->posted()->create([
+                'source_type' => IssueVoucher::class,
+                'source_id' => $voucher->id,
+                'source_event' => InventoryJournalService::EVENT_POST,
+            ]);
+        });
+
+        $entry = app(InventoryJournalService::class)->recordIssue($voucher);
+
+        $this->assertNotNull($winner, 'The race was never staged.');
+        $this->assertNotNull($entry, 'The loser must get the winner back, not a ModelNotFoundException.');
+        $this->assertSame($winner->id, $entry->id);
+        $this->assertSame(1, JournalEntry::query()->forSource($voucher)->count());
+        $this->assertSame(0, JournalEntryLine::count(), 'The loser books nothing of its own.');
+    }
+
+    public function test_a_collision_on_the_entry_number_is_retried_with_a_fresh_number(): void
+    {
+        $voucher = $this->unbookedIssueVoucher();
+
+        // Two other requests take the very number this entry was about to use.
+        // (The racers carry no source, so they do not re-trigger the hook.)
+        $collisions = 0;
+        JournalEntry::creating(function (JournalEntry $entry) use (&$collisions): void {
+            if ($entry->source_type === null || $collisions >= 2) {
+                return;
+            }
+
+            $collisions++;
+            JournalEntry::factory()->posted()->create(['entry_number' => $entry->entry_number]);
+        });
+
+        $entry = app(InventoryJournalService::class)->recordIssue($voucher);
+
+        $this->assertSame(2, $collisions);
+        $this->assertNotNull($entry);
+        $this->assertSame(JournalStatus::Posted, $entry->status);
+        $this->assertTrue($entry->fresh('lines')->isBalanced());
+        $this->assertSame(1, JournalEntry::query()->forSource($voucher)->count());
+        $this->assertSame(1, JournalEntry::where('entry_number', $entry->entry_number)->count());
+    }
+
+    public function test_a_number_collision_that_never_clears_is_rethrown_after_three_attempts(): void
+    {
+        $voucher = $this->unbookedIssueVoucher();
+
+        $attempts = 0;
+        JournalEntry::creating(function (JournalEntry $entry) use (&$attempts): void {
+            if ($entry->source_type === null) {
+                return;
+            }
+
+            $attempts++;
+            JournalEntry::factory()->posted()->create(['entry_number' => $entry->entry_number]);
+        });
+
+        try {
+            app(InventoryJournalService::class)->recordIssue($voucher);
+            $this->fail('A collision that never clears must surface, not be swallowed.');
+        } catch (UniqueConstraintViolationException) {
+            $this->assertSame(3, $attempts);
+        }
+
+        $this->assertSame(0, JournalEntry::query()->forSource($voucher)->count());
     }
 
     public function test_the_api_resource_exposes_the_source_of_an_automatic_entry_only(): void

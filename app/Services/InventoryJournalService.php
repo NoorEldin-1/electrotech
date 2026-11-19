@@ -14,9 +14,11 @@ use App\Models\AdditionVoucher;
 use App\Models\DepreciationVoucher;
 use App\Models\IssueVoucher;
 use App\Models\JournalEntry;
+use App\Models\JournalEntryLine;
 use App\Models\Project;
 use App\Models\ReturnVoucher;
 use App\Models\WorkOrder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Auth;
@@ -69,6 +71,9 @@ class InventoryJournalService
 
     /** Amounts below this are float/rounding noise, never a real posting. */
     private const EPSILON = 0.005;
+
+    /** Tries at inserting an entry whose number collided with a concurrent one. */
+    private const MAX_INSERT_ATTEMPTS = 3;
 
     public function __construct(
         private readonly InventoryAccounts $accounts,
@@ -283,16 +288,22 @@ class InventoryJournalService
 
     /**
      * انتهاء التصنيع — the order's accumulated material cost moves from WIP to
-     * finished goods: Dr 1330 / Cr 1320 (tagged), at
-     * issues − returns − write-offs (both loss kinds), the very base the
-     * cost-centre closing later carries to COGS, so 1330 nets to zero once the
-     * goods are delivered.
+     * finished goods: Dr 1330 / Cr 1320 (tagged), at what the order's posted
+     * issues, returns and write-offs ACTUALLY booked in 1320 (see
+     * costBookedInWip()).
      *
-     * Idempotent per work order. A zero cost (nothing issued yet) posts nothing
-     * and leaves the order "not finished in the books", so the next call — the
-     * completion of the order, or the closing of its cost centre — settles it.
-     * From the moment the entry exists, later vouchers of the order are booked
-     * straight to 1330 (see costStore()) so nothing is ever left behind in WIP.
+     * It is deliberately not the voucher totals (costCarried()): a voucher
+     * posted before this feature was deployed — or one whose entry was skipped
+     * for a missing account — never debited 1320, so crediting 1320 for it
+     * would drive the store negative. That unbooked part is settled by the
+     * cost-centre closing against the legacy 1300 instead (unbookedCost()).
+     *
+     * Idempotent per work order. A zero amount (nothing booked in WIP yet)
+     * posts nothing and leaves the order "not finished in the books", so the
+     * next call — the completion of the order, or the closing of its cost
+     * centre — settles it. From the moment the entry exists, later vouchers of
+     * the order are booked straight to 1330 (see costStore()) so nothing is
+     * ever left behind in WIP.
      */
     public function recordManufacturingFinish(WorkOrder $workOrder): ?JournalEntry
     {
@@ -302,20 +313,26 @@ class InventoryJournalService
             return $existing;
         }
 
-        $amount = round($this->costCarried($workOrder), 2);
-
-        if ($amount <= self::EPSILON) {
-            return null;
-        }
-
         $wip = $this->accounts->wip();
         $finished = $this->accounts->finishedGoods();
 
         if ($wip === null || $finished === null) {
+            // Nothing can have been booked to a store that is not in the chart;
+            // only complain when the order does carry cost.
+            if (round($this->costCarried($workOrder), 2) <= self::EPSILON) {
+                return null;
+            }
+
             return $this->skipped($workOrder, self::EVENT_FINISH, array_filter([
                 $wip === null ? $this->accounts->codes()['wip'] : null,
                 $finished === null ? $this->accounts->codes()['finished_goods'] : null,
             ]));
+        }
+
+        $amount = round($this->costBookedInWip($workOrder, $wip), 2);
+
+        if ($amount <= self::EPSILON) {
+            return null;
         }
 
         return $this->record(
@@ -347,7 +364,10 @@ class InventoryJournalService
     /**
      * Net material cost an order has accumulated: posted issues − posted
      * returns − posted write-offs. Same basis as
-     * CostCenterClosingService::inventoryConsumed(), per work order.
+     * CostCenterClosingService::inventoryConsumed(), per work order. This is the
+     * VOUCHER view of the cost — it includes vouchers that were posted before
+     * the inventory journals existed and so never touched 1320; what the books
+     * actually hold is costBookedInWip().
      */
     public function costCarried(WorkOrder $workOrder): float
     {
@@ -359,6 +379,79 @@ class InventoryJournalService
         return $posted(IssueVoucher::class)
             - $posted(ReturnVoucher::class)
             - $posted(DepreciationVoucher::class);
+    }
+
+    /**
+     * What the order's posted vouchers have really put into work in progress:
+     * the net debit (debits +, credits −) of the POSTED journal lines on the
+     * WIP account whose entry points at one of the order's posted issue,
+     * return or depreciation vouchers. An issue debits 1320, a return and a
+     * write-off credit it, so this is "issues − returns − write-offs" restricted
+     * to the vouchers that were booked in 1320.
+     *
+     * The entry's source_event is not filtered: a reversal entry shares its
+     * voucher's source, so it nets the original off on its own. A voucher with
+     * no entry (posted before deploy — ruling R2 — or skipped for a missing
+     * account) contributes nothing, and neither does one booked to 1330 because
+     * the order had already been finished in the books.
+     *
+     * @param  Account|null  $wip  the WIP account when the caller already resolved it
+     */
+    public function costBookedInWip(WorkOrder $workOrder, ?Account $wip = null): float
+    {
+        $wip ??= $this->accounts->wip();
+
+        if ($wip === null) {
+            return 0.0;
+        }
+
+        $net = 0.0;
+
+        foreach ([IssueVoucher::class, ReturnVoucher::class, DepreciationVoucher::class] as $model) {
+            $postedVouchers = $model::query()
+                ->where('work_order_id', $workOrder->getKey())
+                ->where('status', VoucherStatus::Posted->value)
+                ->select('id');
+
+            $net += $this->netDebitOnVouchers($wip, (new $model)->getMorphClass(), $postedVouchers);
+        }
+
+        return round($net, 2);
+    }
+
+    /**
+     * The part of an operation's cost that never went through the inventory
+     * journals: posted vouchers of its work orders that have no entry with
+     * source_event 'post' — issues − returns − write-offs, the same basis as
+     * CostCenterClosingService::inventoryConsumed() restricted to those
+     * vouchers. These were stocked on the legacy 1300 (or never booked at all),
+     * so the cost-centre closing credits that share to 1300, not to 1330, which
+     * never received it (see CostCenterClosingService::close()).
+     */
+    public function unbookedCost(Project $project): float
+    {
+        $unbooked = function (string $model) use ($project): float {
+            $instance = new $model;
+            $table = $instance->getTable();
+
+            return (float) $model::query()
+                ->where('status', VoucherStatus::Posted->value)
+                ->whereHas('workOrder', fn ($q) => $q->where('project_id', $project->getKey()))
+                ->whereNotExists(fn ($q) => $q
+                    ->select(DB::raw(1))
+                    ->from('journal_entries')
+                    ->whereColumn('journal_entries.source_id', $table.'.'.$instance->getKeyName())
+                    ->where('journal_entries.source_type', $instance->getMorphClass())
+                    ->where('journal_entries.source_event', self::EVENT_POST))
+                ->sum('total_value');
+        };
+
+        return round(
+            $unbooked(IssueVoucher::class)
+            - $unbooked(ReturnVoucher::class)
+            - $unbooked(DepreciationVoucher::class),
+            2,
+        );
     }
 
     /**
@@ -447,6 +540,27 @@ class InventoryJournalService
     }
 
     /**
+     * Net debit (debits − credits) an account carries from the POSTED entries
+     * written for the given vouchers. Reversal entries share the source of the
+     * entry they undo, so they are part of the sum and net it off.
+     *
+     * @param  EloquentBuilder<Model>  $vouchers  query selecting the ids of the vouchers (of one class) to look at
+     */
+    private function netDebitOnVouchers(Account $account, string $sourceType, EloquentBuilder $vouchers): float
+    {
+        $sum = fn (AccountDirection $direction): float => (float) JournalEntryLine::query()
+            ->where('account_id', $account->id)
+            ->where('direction', $direction->value)
+            ->whereHas('journalEntry', fn ($q) => $q
+                ->where('status', JournalStatus::Posted->value)
+                ->where('source_type', $sourceType)
+                ->whereIn('source_id', $vouchers))
+            ->sum('amount');
+
+        return $sum(AccountDirection::Debit) - $sum(AccountDirection::Credit);
+    }
+
+    /**
      * @return array{account_id: int, direction: AccountDirection, amount: float, project_id: ?int}
      */
     private function line(Account $account, AccountDirection $direction, float $amount, ?int $projectId = null): array
@@ -480,23 +594,47 @@ class InventoryJournalService
         }
 
         return DB::transaction(function () use ($source, $event, $lines, $description, $documentNumber, $date): JournalEntry {
-            try {
-                $entry = JournalEntry::create([
-                    'entry_number' => JournalEntry::generateEntryNumber(DocumentType::Settlement),
-                    'document_type' => DocumentType::Settlement,
-                    'document_number' => $documentNumber,
-                    'source_type' => $source->getMorphClass(),
-                    'source_id' => $source->getKey(),
-                    'source_event' => $event,
-                    'entry_date' => $date ?? now(),
-                    'description' => $description,
-                    'status' => JournalStatus::Draft,
-                    'currency' => 'EGP',
-                    'created_by' => Auth::id(),
-                ]);
-            } catch (UniqueConstraintViolationException) {
-                // A concurrent request booked this very document an instant ago.
-                return JournalEntry::query()->forSource($source, $event)->firstOrFail();
+            // The unique index can refuse the insert for two different reasons,
+            // and only one of them means "already booked":
+            //  - the same (source, event) — a concurrent request booked this very
+            //    document an instant ago: hand back ITS entry;
+            //  - the entry number / serial — a concurrent request of ANOTHER
+            //    document took the same sequence value: the lookup finds nothing,
+            //    so the numbers are regenerated and the insert is retried.
+            // The loop stays inside the transaction on purpose: a refused insert
+            // aborts only its own statement, so the savepoint of an enclosing
+            // voucher transaction is left intact.
+            for ($attempt = 1; ; $attempt++) {
+                try {
+                    $entry = JournalEntry::create([
+                        'entry_number' => JournalEntry::generateEntryNumber(DocumentType::Settlement),
+                        'document_type' => DocumentType::Settlement,
+                        'document_number' => $documentNumber,
+                        'source_type' => $source->getMorphClass(),
+                        'source_id' => $source->getKey(),
+                        'source_event' => $event,
+                        'entry_date' => $date ?? now(),
+                        'description' => $description,
+                        'status' => JournalStatus::Draft,
+                        'currency' => 'EGP',
+                        'created_by' => Auth::id(),
+                    ]);
+
+                    break;
+                } catch (UniqueConstraintViolationException $e) {
+                    // A locking read: under REPEATABLE READ a plain select could
+                    // still be looking at the snapshot from before the winner
+                    // committed and miss the very row that just refused us.
+                    $winner = JournalEntry::query()->forSource($source, $event)->sharedLock()->first();
+
+                    if ($winner !== null) {
+                        return $winner;
+                    }
+
+                    if ($attempt >= self::MAX_INSERT_ATTEMPTS) {
+                        throw $e;
+                    }
+                }
             }
 
             foreach ($lines as $line) {

@@ -32,13 +32,18 @@ class PlatformApiTest extends ApiTestCase
     {
         Project::factory()->count(2)->create(['status' => ProjectStatus::InProgress]);
 
-        // Pinned to ONE draft operation: WorkOrderFactory creates a project
-        // per order, and ProjectFactory randomizes its status — left to
-        // itself this fixture would count a different number of "active
-        // operations" on different runs.
+        // Pinned to ONE draft operation. WorkOrderFactory spawns a project per
+        // order AND, through its default Bom::factory(), a second project per
+        // BOM (BomFactory has its own `project_id => Project::factory()`),
+        // and ProjectFactory randomizes the status of every one of them: left
+        // to itself each of the three orders would add a stray operation that
+        // is "in progress" one time in ten, so the count of active operations
+        // came out different (and wrong ~27% of the time) from run to run.
+        // `bom_id => null` stops the BOM — and its project — being created.
         $parked = Project::factory()->create(['status' => ProjectStatus::Draft]);
         WorkOrder::factory()->count(3)->create([
             'project_id' => $parked->id,
+            'bom_id' => null,
             'status' => WorkOrderStatus::InProgress,
         ]);
 

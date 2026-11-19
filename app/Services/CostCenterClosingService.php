@@ -16,6 +16,7 @@ use App\Models\DeliveryVoucher;
 use App\Models\DepreciationVoucher;
 use App\Models\IssueVoucher;
 use App\Models\JournalEntry;
+use App\Models\JournalEntryLine;
 use App\Models\Project;
 use App\Models\ReturnVoucher;
 use App\Models\User;
@@ -35,6 +36,12 @@ use Illuminate\Support\Facades\DB;
  * account, which is still the fallback on a chart that has not been seeded with
  * 1330 yet.) Orders still carrying cost in work in progress are settled to
  * finished goods first, so the credit always has the matching debit behind it.
+ *
+ * Cost that never went through the inventory journals — vouchers posted before
+ * they existed (ruling R2: no backfill) — never reached 1330, so that share of
+ * the closing is credited to the legacy 1300 it was stocked on instead:
+ * Dr COGS / Cr 1330 (the booked part) / Cr 1300 (the unbooked part). Reversing
+ * the closing mirrors every one of those credit lines.
  *
  * The closing base is deliberately NOT project.actual_cost. That figure is a
  * management number: natural manufacturing loss stays loaded on the operation
@@ -160,11 +167,26 @@ class CostCenterClosingService
             // leave 1330 short). A no-op for orders already finished.
             $this->inventoryJournals->settleOperation($project);
 
+            // Cost that was never booked through the inventory journals
+            // (vouchers posted before they existed) never reached 1330, so that
+            // share is credited to the legacy 1300 it was stocked on; the rest
+            // leaves finished goods.
+            $legacyAccount = $this->inventoryAccounts->legacy();
+            $legacy = $this->legacyShare($project, $amount, $inventory, $legacyAccount);
+            $credits = [];
+
+            if ($amount - $legacy > self::EPSILON) {
+                $credits[] = ['account_id' => $inventory->id, 'amount' => round($amount - $legacy, 2)];
+            }
+
+            if ($legacy > self::EPSILON) {
+                $credits[] = ['account_id' => $legacyAccount->id, 'amount' => $legacy];
+            }
+
             $entry = $this->postJournal(
                 project: $project,
-                amount: $amount,
-                debitAccountId: $cogs->id,
-                creditAccountId: $inventory->id,
+                debits: [['account_id' => $cogs->id, 'amount' => $amount]],
+                credits: $credits,
                 documentNumber: $voucher?->voucher_number,
                 description: __('resources.operations_cost.closing.journal_description', [
                     'operation' => $project->name,
@@ -235,15 +257,23 @@ class CostCenterClosingService
 
         [$cogs, $inventory] = $this->resolveAccounts();
 
-        $creditedId = $closing->journalEntry?->lines()
+        // Every credit the closing posted comes back as a debit on the very
+        // same account and amount — a closing split between 1330 and the legacy
+        // 1300 is undone on both, a pre-split one on 1300 alone.
+        $debits = ($closing->journalEntry?->lines()
             ->where('direction', AccountDirection::Credit->value)
-            ->value('account_id');
+            ->get(['account_id', 'amount']) ?? collect())
+            ->map(fn ($line): array => ['account_id' => (int) $line->account_id, 'amount' => (float) $line->amount])
+            ->values()
+            ->all();
 
-        if ($creditedId !== null) {
-            $inventory = Account::find($creditedId) ?? $inventory;
+        if ($debits === [] && $inventory !== null) {
+            // An entry that cannot be read back: fall back to the account the
+            // closing would credit today.
+            $debits = [['account_id' => $inventory->id, 'amount' => (float) $closing->amount]];
         }
 
-        if ($cogs === null || $inventory === null) {
+        if ($cogs === null || $debits === []) {
             throw new \RuntimeException(__('errors.cost_center.accounts_missing', [
                 'cogs' => config('operations.cogs_account_code', '5070'),
                 'inventory' => config('operations.finished_goods_account_code', '1330'),
@@ -253,13 +283,12 @@ class CostCenterClosingService
         $project = $closing->project;
         $amount = (float) $closing->amount;
 
-        return DB::transaction(function () use ($closing, $project, $amount, $cogs, $inventory, $user, $reason) {
+        return DB::transaction(function () use ($closing, $project, $amount, $cogs, $debits, $user, $reason) {
             // Mirror image of the closing entry: inventory takes the value back.
             $entry = $this->postJournal(
                 project: $project,
-                amount: $amount,
-                debitAccountId: $inventory->id,
-                creditAccountId: $cogs->id,
+                debits: $debits,
+                credits: [['account_id' => $cogs->id, 'amount' => $amount]],
                 documentNumber: null,
                 description: __('resources.operations_cost.closing.reversal_journal_description', [
                     'operation' => $project->name,
@@ -282,15 +311,67 @@ class CostCenterClosingService
     }
 
     /**
-     * Build and post the balanced entry. The cost-of-goods-sold side carries the
-     * project tag — analysing COGS by operation is the whole point of the cost
-     * centre — while inventory, a pooled control account, stays untagged.
+     * How much of a closing of `$amount` is cost that never went through the
+     * inventory journals and so must leave the legacy 1300 instead of 1330.
+     *
+     * unbookedCost() is what the operation's vouchers carry that was never
+     * booked (posted before deploy — ruling R2 — or skipped). Earlier closings
+     * of the same operation may already have used part of it, so what they
+     * credited to 1300 (net of their reversals) is deducted, and the share can
+     * never exceed the amount being closed. Zero when there is no separate 1330
+     * to split from (an un-migrated chart credits 1300 alone) or no 1300 to
+     * credit.
+     */
+    private function legacyShare(Project $project, float $amount, Account $inventory, ?Account $legacy): float
+    {
+        if ($legacy === null || $legacy->id === $inventory->id) {
+            return 0.0;
+        }
+
+        $available = $this->inventoryJournals->unbookedCost($project) - $this->legacyCredited($project, $legacy);
+
+        return round(min($amount, max(0.0, $available)), 2);
+    }
+
+    /**
+     * What the operation's closings have credited to the legacy account so far,
+     * net of reversals: a reversal entry debits exactly what it gives back, so
+     * credits − debits over every closing entry of the operation is the net.
+     */
+    private function legacyCredited(Project $project, Account $legacy): float
+    {
+        $entryIds = $project->costCenterClosings()
+            ->whereNotNull('journal_entry_id')
+            ->pluck('journal_entry_id')
+            ->all();
+
+        if ($entryIds === []) {
+            return 0.0;
+        }
+
+        $sum = fn (AccountDirection $direction): float => (float) JournalEntryLine::query()
+            ->whereIn('journal_entry_id', $entryIds)
+            ->where('account_id', $legacy->id)
+            ->where('direction', $direction->value)
+            ->sum('amount');
+
+        return round($sum(AccountDirection::Credit) - $sum(AccountDirection::Debit), 2);
+    }
+
+    /**
+     * Build and post the balanced entry from its debit and credit lines, each
+     * `['account_id' => int, 'amount' => float]`. The cost-of-goods-sold side
+     * carries the project tag — analysing COGS by operation is the whole point
+     * of the cost centre — while inventory, a pooled control account, stays
+     * untagged.
+     *
+     * @param  array<int, array{account_id: int, amount: float}>  $debits
+     * @param  array<int, array{account_id: int, amount: float}>  $credits
      */
     private function postJournal(
         Project $project,
-        float $amount,
-        int $debitAccountId,
-        int $creditAccountId,
+        array $debits,
+        array $credits,
         ?string $documentNumber,
         string $description,
         ?int $userId,
@@ -309,19 +390,23 @@ class CostCenterClosingService
 
         // On a reversal the project tag rides the credit (COGS) line instead,
         // so the operation's tagged COGS nets back to zero.
-        $entry->lines()->create([
-            'account_id' => $debitAccountId,
-            'project_id' => $tagProjectOnDebit ? $project->id : null,
-            'direction' => AccountDirection::Debit,
-            'amount' => $amount,
-        ]);
+        foreach ($debits as $line) {
+            $entry->lines()->create([
+                'account_id' => $line['account_id'],
+                'project_id' => $tagProjectOnDebit ? $project->id : null,
+                'direction' => AccountDirection::Debit,
+                'amount' => $line['amount'],
+            ]);
+        }
 
-        $entry->lines()->create([
-            'account_id' => $creditAccountId,
-            'project_id' => $tagProjectOnDebit ? null : $project->id,
-            'direction' => AccountDirection::Credit,
-            'amount' => $amount,
-        ]);
+        foreach ($credits as $line) {
+            $entry->lines()->create([
+                'account_id' => $line['account_id'],
+                'project_id' => $tagProjectOnDebit ? null : $project->id,
+                'direction' => AccountDirection::Credit,
+                'amount' => $line['amount'],
+            ]);
+        }
 
         $this->journals->post($entry->fresh('lines'));
 

@@ -28,6 +28,7 @@ use App\Models\WorkOrder;
 use App\Services\CostCenterClosingService;
 use App\Services\DeliveryVoucherService;
 use App\Services\InventoryService;
+use App\Services\IssueVoucherService;
 use App\Services\OperationCostService;
 use Database\Seeders\ChartOfAccountsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -63,10 +64,104 @@ class CostCenterClosingTest extends TestCase
         return Account::where('code', '5070')->firstOrFail();
     }
 
-    /** The finished-goods store (1330): the closing credits it since the inventory split. */
+    /**
+     * The legacy single inventory account (1300). The vouchers these tests make
+     * with the factories are "pre-deploy" ones — posted, but with no inventory
+     * journal behind them — so their cost never reached 1330 and the closing
+     * credits 1300 for it.
+     */
     private function inventoryAccount(): Account
     {
+        return Account::where('code', '1300')->firstOrFail();
+    }
+
+    /** The finished-goods store (1330): where cost booked through the inventory journals sits. */
+    private function finishedGoodsAccount(): Account
+    {
         return Account::where('code', '1330')->firstOrFail();
+    }
+
+    /** Net debit balance of an account over every POSTED entry. */
+    private function balance(string $code): float
+    {
+        $lines = JournalEntryLine::query()
+            ->where('account_id', Account::where('code', $code)->firstOrFail()->id)
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', JournalStatus::Posted->value))
+            ->get();
+
+        return round(
+            (float) $lines->where('direction', AccountDirection::Debit)->sum('amount')
+            - (float) $lines->where('direction', AccountDirection::Credit)->sum('amount'),
+            2,
+        );
+    }
+
+    /**
+     * An issue voucher posted through the real service: stock moves and the
+     * inventory journal books Dr 1320 / Cr 1310 — the post-deploy kind.
+     */
+    private function bookedIssue(WorkOrder $wo, float $quantity, float $unitCost): IssueVoucher
+    {
+        $item = Item::factory()->create(['type' => ItemType::RawMaterial, 'unit_cost' => $unitCost, 'is_scrap' => false]);
+        app(InventoryService::class)->addStock($item, $quantity, null, null, WarehouseType::RawMaterials);
+
+        $voucher = IssueVoucher::factory()->create(['work_order_id' => $wo->id]);
+        $voucher->lines()->create(['item_id' => $item->id, 'quantity' => $quantity, 'unit_cost' => $unitCost]);
+
+        // The order has no material plan, so a second voucher on it would be
+        // refused as an excess; these tests are about the closing, not that gate.
+        app(IssueVoucherService::class)->post($voucher->fresh('lines'), allowExcess: true, excessReason: 'test fixture');
+
+        return $voucher->fresh();
+    }
+
+    /** A completed order on a fresh operation, with no recipe to compare issues against. */
+    private function completedOrderOf(Project $project): WorkOrder
+    {
+        return WorkOrder::factory()->create([
+            'project_id' => $project->id,
+            'bom_id' => null,
+            'status' => WorkOrderStatus::Completed,
+        ]);
+    }
+
+    private function activeDeliveryFor(Project $project, float $value): DeliveryVoucher
+    {
+        return DeliveryVoucher::factory()->create([
+            'project_id' => $project->id,
+            'status' => DeliveryVoucherStatus::Active,
+            'total_value' => $value,
+        ]);
+    }
+
+    /**
+     * An operation carrying 140 of cost: 100 from a voucher posted before the
+     * inventory journals existed (no entry behind it) and 40 issued through the
+     * real service. Delivered and ready to close.
+     */
+    private function mixedOperation(): Project
+    {
+        $project = Project::factory()->active()->create(['actual_cost' => 0]);
+        $wo = $this->completedOrderOf($project);
+
+        IssueVoucher::factory()->posted()->create(['work_order_id' => $wo->id, 'total_value' => 100]);
+        $this->bookedIssue($wo, 10, 4);
+        $this->activeDeliveryFor($project, 140);
+
+        return $project;
+    }
+
+    /**
+     * Amount per account code of one side of an entry.
+     *
+     * @return array<string, float>
+     */
+    private function sideOf(JournalEntry $entry, AccountDirection $direction): array
+    {
+        return $entry->lines()->with('account')->get()
+            ->where('direction', $direction)
+            ->mapWithKeys(fn (JournalEntryLine $line) => [$line->account->code => (float) $line->amount])
+            ->all();
     }
 
     /** An operation with a delivered voucher and `$issued` of material on it. */
@@ -142,6 +237,8 @@ class CostCenterClosingTest extends TestCase
         $credit = $entry->lines()->where('direction', AccountDirection::Credit->value)->firstOrFail();
 
         $this->assertSame($this->cogs()->id, $debit->account_id);
+        // The factory voucher has no inventory journal behind it (a "pre-deploy"
+        // voucher): its cost never reached 1330, so the legacy 1300 is credited.
         $this->assertSame($this->inventoryAccount()->id, $credit->account_id);
         $this->assertEqualsWithDelta(1000.0, (float) $debit->amount, 0.001);
 
@@ -286,6 +383,136 @@ class CostCenterClosingTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
         $this->service()->reverse($reversal);
+    }
+
+    // ------------------------------------- booked vs pre-deploy (unbooked) cost
+
+    public function test_cost_booked_through_the_inventory_journals_leaves_finished_goods_alone(): void
+    {
+        $this->seedAccounts();
+        $project = Project::factory()->active()->create(['actual_cost' => 0]);
+        $wo = $this->completedOrderOf($project);
+        $this->bookedIssue($wo, 10, 4);
+        $this->activeDeliveryFor($project, 40);
+
+        $closing = $this->service()->close($project, null, User::factory()->create());
+
+        $this->assertEqualsWithDelta(40.0, (float) $closing->amount, 0.001);
+        // Dr 5070 / Cr 1330 only — there is nothing unbooked to take from 1300.
+        $this->assertSame(['1330' => 40.0], $this->sideOf($closing->journalEntry, AccountDirection::Credit));
+        $this->assertSame(0.0, $this->balance('1320'));
+        $this->assertSame(0.0, $this->balance('1330'));
+        $this->assertSame(0.0, $this->balance('1300'));
+    }
+
+    public function test_a_mixed_operation_splits_the_credit_between_finished_goods_and_the_legacy_account(): void
+    {
+        $this->seedAccounts();
+        $project = $this->mixedOperation();
+
+        $closing = $this->service()->close($project, null, User::factory()->create());
+
+        $this->assertEqualsWithDelta(140.0, (float) $closing->amount, 0.001);
+
+        $entry = $closing->journalEntry;
+        $this->assertSame(JournalStatus::Posted, $entry->status);
+        $this->assertTrue($entry->fresh('lines')->isBalanced());
+
+        // Dr 5070 140 (tagged) / Cr 1330 40 (the booked part) / Cr 1300 100 (the unbooked part).
+        $this->assertSame(['5070' => 140.0], $this->sideOf($entry, AccountDirection::Debit));
+        $this->assertEquals(['1330' => 40.0, '1300' => 100.0], $this->sideOf($entry, AccountDirection::Credit));
+
+        $debit = $entry->lines()->where('direction', AccountDirection::Debit->value)->firstOrFail();
+        $this->assertSame($project->id, $debit->project_id);
+        $this->assertSame(
+            0,
+            $entry->lines()->where('direction', AccountDirection::Credit->value)->whereNotNull('project_id')->count(),
+            'The pooled inventory accounts stay untagged.',
+        );
+
+        // The 40 went WIP -> FG -> COGS; 1330 never goes negative. The 100 had
+        // no stock account behind it, so it is taken from the legacy balance.
+        $this->assertSame(0.0, $this->balance('1320'));
+        $this->assertSame(0.0, $this->balance('1330'));
+        $this->assertSame(-100.0, $this->balance('1300'));
+        $this->assertSame(140.0, $this->balance('5070'));
+    }
+
+    public function test_reversing_a_split_closing_mirrors_every_credit_line(): void
+    {
+        $this->seedAccounts();
+        $project = $this->mixedOperation();
+        $closing = $this->service()->close($project, null, User::factory()->create());
+
+        $reversal = $this->service()->reverse($closing, User::factory()->create(), 'wrong operation');
+
+        $entry = $reversal->journalEntry;
+        $this->assertTrue($entry->fresh('lines')->isBalanced());
+        $this->assertEquals(['1330' => 40.0, '1300' => 100.0], $this->sideOf($entry, AccountDirection::Debit));
+        $this->assertSame(['5070' => 140.0], $this->sideOf($entry, AccountDirection::Credit));
+
+        // Every account is back where it was before the closing.
+        $this->assertSame(40.0, $this->balance('1330'));
+        $this->assertSame(0.0, $this->balance('1300'));
+        $this->assertSame(0.0, $this->balance('5070'));
+        $this->assertSame(140.0, $this->service()->unclosedBalance($project));
+    }
+
+    public function test_closing_again_after_a_reversal_takes_the_same_split(): void
+    {
+        $this->seedAccounts();
+        $project = $this->mixedOperation();
+        $first = $this->service()->close($project, null, User::factory()->create());
+        $this->service()->reverse($first);
+
+        // The reversal gave the 100 back to 1300, so it is available again.
+        $second = $this->service()->close($project, null, User::factory()->create());
+
+        $this->assertEquals(
+            ['1330' => 40.0, '1300' => 100.0],
+            $this->sideOf($second->journalEntry, AccountDirection::Credit),
+        );
+        $this->assertSame(0.0, $this->balance('1330'));
+        $this->assertSame(-100.0, $this->balance('1300'));
+        $this->assertSame(140.0, $this->balance('5070'));
+    }
+
+    public function test_a_later_closing_does_not_charge_the_legacy_account_twice_for_the_same_unbooked_cost(): void
+    {
+        $this->seedAccounts();
+        $project = Project::factory()->active()->create(['actual_cost' => 0]);
+        $wo = $this->completedOrderOf($project);
+
+        // 100 of pre-deploy cost, closed entirely against 1300.
+        IssueVoucher::factory()->posted()->create(['work_order_id' => $wo->id, 'total_value' => 100]);
+        $this->activeDeliveryFor($project, 100);
+        $first = $this->service()->close($project, null, User::factory()->create());
+        $this->assertSame(['1300' => 100.0], $this->sideOf($first->journalEntry, AccountDirection::Credit));
+
+        // A late voucher booked through the journals lands on the same operation.
+        $this->bookedIssue($wo, 10, 4);
+
+        $second = $this->service()->close($project, null, User::factory()->create());
+
+        // The 100 unbooked was used up by the first closing: only 1330 is credited.
+        $this->assertEqualsWithDelta(40.0, (float) $second->amount, 0.001);
+        $this->assertSame(['1330' => 40.0], $this->sideOf($second->journalEntry, AccountDirection::Credit));
+        $this->assertSame(-100.0, $this->balance('1300'));
+        $this->assertSame(0.0, $this->balance('1320'));
+        $this->assertSame(0.0, $this->balance('1330'));
+        $this->assertSame(140.0, $this->balance('5070'));
+    }
+
+    public function test_an_unmigrated_chart_still_credits_the_legacy_account_alone(): void
+    {
+        $this->seedAccounts();
+        Account::whereIn('code', ['1310', '1320', '1330'])->delete();
+        $project = $this->mixedOperation();
+
+        $closing = $this->service()->close($project, null, User::factory()->create());
+
+        // No 1330 to split with: the old behaviour, a single credit to 1300.
+        $this->assertSame(['1300' => 140.0], $this->sideOf($closing->journalEntry, AccountDirection::Credit));
     }
 
     // ------------------------------------------------- automatic on delivery
