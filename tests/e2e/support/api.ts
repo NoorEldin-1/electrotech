@@ -1,11 +1,11 @@
-import { expect, type APIRequestContext, type Playwright } from '@playwright/test';
+import { expect, type APIRequestContext, type PlaywrightWorkerArgs } from '@playwright/test';
 import { PASSWORD, USERS, type RoleKey } from './users';
 
 /**
  * A REST API client (api/v1) signed in as a role, with the same Sanctum token
  * flow the mobile app uses.
  */
-export async function apiAs(playwright: Playwright, baseURL: string, role: RoleKey): Promise<APIRequestContext> {
+export async function apiAs(playwright: PlaywrightWorkerArgs['playwright'], baseURL: string, role: RoleKey): Promise<APIRequestContext> {
   const anonymous = await playwright.request.newContext({
     baseURL,
     extraHTTPHeaders: { Accept: 'application/json' },

@@ -1,4 +1,4 @@
-import type { APIRequestContext, Playwright } from '@playwright/test';
+import type { APIRequestContext, PlaywrightWorkerArgs } from '@playwright/test';
 import { apiAs } from '../support/api';
 import { projectId } from '../support/artisan';
 import { open } from '../support/filament';
@@ -34,7 +34,7 @@ async function listFiles(api: APIRequestContext, id: number): Promise<{ status: 
   return { status: 200, files: (await response.json()).data as Listed[] };
 }
 
-async function filesFor(playwright: Playwright, baseURL: string, role: RoleKey, id: number) {
+async function filesFor(playwright: PlaywrightWorkerArgs['playwright'], baseURL: string, role: RoleKey, id: number) {
   const api = await apiAs(playwright, baseURL, role);
   const listed = await listFiles(api, id);
   return { api, ...listed };
