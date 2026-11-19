@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\ProjectResource\Pages;
 
 use App\Enums\AttachmentCategory;
+use App\Filament\Resources\CustomerInteractionResource;
 use App\Filament\Resources\ProjectResource;
 use App\Models\Project;
 use Filament\Actions;
@@ -26,13 +27,15 @@ class ViewProject extends ViewRecord
         return [
             Actions\EditAction::make(),
 
+            CustomerInteractionResource::logCommunicationAction(),
+
             Actions\Action::make('addAttachments')
                 ->label(__('resources.projects.actions.add_attachments'))
                 ->icon('heroicon-o-paper-clip')
                 ->modalWidth('3xl')
                 ->visible(fn (Project $record): bool => (auth()->user()?->can('attachments.upload') ?? false)
                     && ! (auth()->user()?->can('update', $record) ?? false))
-                ->fillForm(fn (Project $record): array => collect(AttachmentCategory::cases())
+                ->fillForm(fn (Project $record): array => collect(AttachmentCategory::viewableFrom(AttachmentCategory::cases()))
                     ->mapWithKeys(fn (AttachmentCategory $category): array => [
                         "attachments_{$category->value}" => $record->attachmentsByCategory($category)->pluck('file_path')->all(),
                     ])
@@ -42,7 +45,7 @@ class ViewProject extends ViewRecord
                     // Add-only: a file cleared from the field here is kept,
                     // since this action is for filing papers, not removing them.
                     $byCategory = [];
-                    foreach (AttachmentCategory::cases() as $category) {
+                    foreach (AttachmentCategory::viewableFrom(AttachmentCategory::cases()) as $category) {
                         $key = "attachments_{$category->value}";
                         if (array_key_exists($key, $data)) {
                             $byCategory[$category->value] = array_values(array_unique([

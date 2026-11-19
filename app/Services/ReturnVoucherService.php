@@ -24,6 +24,7 @@ class ReturnVoucherService
 {
     public function __construct(
         private readonly InventoryService $inventoryService,
+        private readonly InventoryJournalService $inventoryJournals,
     ) {}
 
     /**
@@ -124,6 +125,10 @@ class ReturnVoucherService
                 'signed_by' => Auth::id(),
                 'signed_at' => now(),
             ]);
+
+            // Final_Modifications سلايد 2–3: the mirror of the issue entry —
+            // Dr raw materials / Cr work in progress (tagged to the operation).
+            $this->inventoryJournals->recordReturn($voucher);
         });
     }
 }

@@ -16,6 +16,7 @@ class AdditionVoucherService
 {
     public function __construct(
         private readonly InventoryService $inventoryService,
+        private readonly InventoryJournalService $inventoryJournals,
     ) {}
 
     /**
@@ -71,6 +72,13 @@ class AdditionVoucherService
                     'created_by' => Auth::id(),
                 ]);
             }
+
+            // Final_Modifications سلايد 2–3: the receipt is also booked in the
+            // general ledger — Dr the store account(s) the goods landed in /
+            // Cr the supplier control account. Idempotent per voucher and silent
+            // when the chart lacks the accounts; the supplier sub-ledger row
+            // above is a different ledger, so nothing is counted twice.
+            $this->inventoryJournals->recordAddition($voucher);
 
             // Slides 1 & 7: a voucher tied to a PO closes it automatically by
             // updating received quantities and re-deriving the order status.

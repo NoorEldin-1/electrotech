@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Resources\ProjectResource\Pages;
 
 use App\Enums\AttachmentCategory;
+use App\Enums\ProjectStatus;
+use App\Filament\Resources\CustomerInteractionResource;
 use App\Filament\Resources\ProjectResource;
 use App\Models\Customer;
 use Filament\Actions;
@@ -22,6 +24,7 @@ class EditProject extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            CustomerInteractionResource::logCommunicationAction(),
             Actions\DeleteAction::make(),
         ];
     }
@@ -32,6 +35,12 @@ class EditProject extends EditRecord
         // customer (see CreateProject for the rationale).
         if (! empty($data['customer_id'])) {
             $data['client_name'] = Customer::find($data['customer_id'])?->name ?? ($data['client_name'] ?? '');
+        }
+
+        // The status field is read-only here; a tampered request must never
+        // complete an operation behind the gated OperationLifecycleService.
+        if (($data['status'] ?? null) === ProjectStatus::Completed->value && $this->record->status !== ProjectStatus::Completed) {
+            $data['status'] = $this->record->status?->value;
         }
 
         foreach (AttachmentCategory::cases() as $category) {

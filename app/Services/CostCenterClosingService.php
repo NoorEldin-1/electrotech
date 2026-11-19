@@ -28,10 +28,13 @@ use Illuminate\Support\Facades\DB;
  *
  * The operation is the cost centre. Issue vouchers load material value onto it,
  * return and depreciation vouchers take value back out. Everything that stays
- * is still sitting in the inventory control account even though the goods have
+ * is still sitting in the finished-goods store (1330) even though the goods have
  * physically left for the customer — so on delivery that balance is carried to
  * cost of goods sold with a balanced entry: Dr COGS (tagged to the operation) /
- * Cr inventory.
+ * Cr finished goods. (Before the inventory split it credited the single 1300
+ * account, which is still the fallback on a chart that has not been seeded with
+ * 1330 yet.) Orders still carrying cost in work in progress are settled to
+ * finished goods first, so the credit always has the matching debit behind it.
  *
  * The closing base is deliberately NOT project.actual_cost. That figure is a
  * management number: natural manufacturing loss stays loaded on the operation
@@ -48,6 +51,8 @@ class CostCenterClosingService
 
     public function __construct(
         private readonly JournalEntryService $journals,
+        private readonly InventoryAccounts $inventoryAccounts,
+        private readonly InventoryJournalService $inventoryJournals,
     ) {}
 
     /**
@@ -144,11 +149,17 @@ class CostCenterClosingService
         if ($cogs === null || $inventory === null) {
             throw new \RuntimeException(__('errors.cost_center.accounts_missing', [
                 'cogs' => config('operations.cogs_account_code', '5070'),
-                'inventory' => config('operations.inventory_account_code', '1300'),
+                'inventory' => config('operations.finished_goods_account_code', '1330'),
             ]));
         }
 
         return DB::transaction(function () use ($project, $voucher, $user, $automatic, $amount, $cogs, $inventory) {
+            // Move whatever the operation's orders still carry in work in
+            // progress to finished goods, so the credit below is fully covered
+            // (an order completed without «انتهاء التصنيع» would otherwise
+            // leave 1330 short). A no-op for orders already finished.
+            $this->inventoryJournals->settleOperation($project);
+
             $entry = $this->postJournal(
                 project: $project,
                 amount: $amount,
@@ -204,8 +215,11 @@ class CostCenterClosingService
 
     /**
      * Undo a closing. A posted journal entry is immutable, so the correction is
-     * a reversing entry (Dr inventory / Cr COGS) plus a negative closing row —
+     * a reversing entry (Dr finished goods / Cr COGS) plus a negative closing row —
      * the unclosed balance comes back on its own and the audit trail stays whole.
+     * The debit goes back to the very account the closing credited (read from the
+     * closing's own entry), so a closing booked before the inventory split is
+     * undone on 1300 and a later one on 1330.
      *
      * @throws \RuntimeException if the target is itself a reversal or already reversed
      */
@@ -221,10 +235,18 @@ class CostCenterClosingService
 
         [$cogs, $inventory] = $this->resolveAccounts();
 
+        $creditedId = $closing->journalEntry?->lines()
+            ->where('direction', AccountDirection::Credit->value)
+            ->value('account_id');
+
+        if ($creditedId !== null) {
+            $inventory = Account::find($creditedId) ?? $inventory;
+        }
+
         if ($cogs === null || $inventory === null) {
             throw new \RuntimeException(__('errors.cost_center.accounts_missing', [
                 'cogs' => config('operations.cogs_account_code', '5070'),
-                'inventory' => config('operations.inventory_account_code', '1300'),
+                'inventory' => config('operations.finished_goods_account_code', '1330'),
             ]));
         }
 
@@ -307,13 +329,15 @@ class CostCenterClosingService
     }
 
     /**
-     * @return array{0: ?Account, 1: ?Account} [cogs, inventory]
+     * @return array{0: ?Account, 1: ?Account} [cogs, finished goods]
      */
     private function resolveAccounts(): array
     {
         return [
             Account::where('code', config('operations.cogs_account_code', '5070'))->first(),
-            Account::where('code', config('operations.inventory_account_code', '1300'))->first(),
+            // 1330 — with the legacy 1300 as the fallback for a chart that has
+            // not been seeded with the inventory split yet.
+            $this->inventoryAccounts->finishedGoods() ?? $this->inventoryAccounts->legacy(),
         ];
     }
 

@@ -31,6 +31,8 @@ class CustomerInteractionResource extends JsonResource
             'interacted_at' => $this->interacted_at?->toIso8601String(),
             'site_ready' => (bool) $this->site_ready,
             'notes' => $this->notes,
+            'summary' => $this->summary,
+            'next_follow_up_at' => $this->next_follow_up_at?->toIso8601String(),
             'created_by' => $this->created_by,
 
             'created_at' => $this->created_at?->toIso8601String(),

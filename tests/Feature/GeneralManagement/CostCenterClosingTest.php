@@ -63,9 +63,10 @@ class CostCenterClosingTest extends TestCase
         return Account::where('code', '5070')->firstOrFail();
     }
 
+    /** The finished-goods store (1330): the closing credits it since the inventory split. */
     private function inventoryAccount(): Account
     {
-        return Account::where('code', '1300')->firstOrFail();
+        return Account::where('code', '1330')->firstOrFail();
     }
 
     /** An operation with a delivered voucher and `$issued` of material on it. */

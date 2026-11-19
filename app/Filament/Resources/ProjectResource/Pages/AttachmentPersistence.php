@@ -39,6 +39,14 @@ final class AttachmentPersistence
         $submittalAdded = false;
 
         foreach ($byCategory as $categoryValue => $filePaths) {
+            // Restricted drawings (Task 5 / R3): a user who cannot see a
+            // restricted category can neither add to it nor — because the form
+            // shows them an empty list — wipe it. Enforced here, not only in the
+            // form, so a tampered Livewire payload changes nothing.
+            if (AttachmentCategory::tryFrom((string) $categoryValue)?->isViewableBy() === false) {
+                continue;
+            }
+
             // Move any not-yet-scoped uploads into attachments/{id}/{category}
             // before we compare against what's already stored.
             $resolvedPaths = array_map(

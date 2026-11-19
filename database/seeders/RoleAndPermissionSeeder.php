@@ -108,6 +108,10 @@ class RoleAndPermissionSeeder extends Seeder
             'attachments.upload',
             'attachments.download',
             'attachments.delete',
+            // Restricted drawings (Final_Modifications Task 5 / R3): the
+            // preliminary drawing, executive drawing and site-measurement files
+            // are hidden from everyone without this permission.
+            'attachments.view_restricted_drawings',
             // Staff who follow running operations without the rest of sales:
             // opens the active operations screen and each operation's file
             // while it is in progress, read-only.
@@ -215,6 +219,10 @@ class RoleAndPermissionSeeder extends Seeder
             'income_statement.view',
             'balance_sheet.view',
             'cash_flow_statement.view',
+
+            // Reports — تقييم المخزون: the ledger value of the inventory
+            // accounts (1310/1320/1330) against the stock-card valuation.
+            'reports.inventory_valuation',
 
             // General Management (الإدارة العامة) — operations oversight, cost
             // center, delivery minutes and financial claims.
@@ -557,6 +565,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'income_statement.view',
                 'balance_sheet.view',
                 'cash_flow_statement.view',
+                'reports.inventory_valuation',
                 // General management: the operation cost center and the
                 // financial-claim workflow live with finance.
                 'operations.view_cost',
@@ -612,6 +621,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'income_statement.view',
                 'balance_sheet.view',
                 'cash_flow_statement.view',
+                'reports.inventory_valuation',
                 'transactions.view',
                 // General management permissions (the owning role).
                 'operations.timeline',
@@ -723,6 +733,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'active_operations.view',
                 'attachments.upload',
                 'attachments.download',
+                'attachments.view_restricted_drawings',
                 'dashboard.view',
             ],
 

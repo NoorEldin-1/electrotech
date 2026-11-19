@@ -183,7 +183,9 @@ class DepreciationVoucherController extends ApiController
      *
      * Deducts each positive line from the item's **work-in-progress** balance,
      * carries the value to a loss account with a balanced journal entry, and —
-     * for abnormal loss only — reverses the value off the operation.
+     * for abnormal loss only — reverses the value off the operation. The entry
+     * credits work in progress (1320, tagged to the operation) — or finished
+     * goods (1330) once the order's manufacturing has been finished.
      *
      * Refused if every line is still at zero: there would be nothing to write
      * off, and a "posted" voucher recording no loss is worse than no voucher.

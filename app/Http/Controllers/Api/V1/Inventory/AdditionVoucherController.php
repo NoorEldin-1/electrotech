@@ -172,6 +172,12 @@ class AdditionVoucherController extends ApiController
      * supplier is credited, and a linked purchase order has its received
      * quantities updated and its status re-derived. All in one transaction.
      *
+     * The receipt is also booked in the general ledger at its stock value — Dr
+     * the store account of each line's warehouse (1310 raw materials, 1330 for a
+     * purchased finished good) / Cr suppliers (2010) — as a posted journal entry
+     * whose `source` is this voucher. It is skipped, never an error, when the
+     * chart of accounts lacks those accounts.
+     *
      * Gated by `addition_vouchers.post`, which is not
      * `addition_vouchers.create` — raising a receipt and committing it to the
      * stock ledger and the supplier's account are different acts.

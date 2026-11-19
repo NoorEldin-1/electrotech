@@ -13,6 +13,9 @@ enum InteractionChannel: string implements HasIcon, HasLabel
     case Visit = 'visit';
     case Whatsapp = 'whatsapp';
     case Email = 'email';
+    // التواصل مع العميل (Final_Modifications_Plan 1.1): call / meeting / message.
+    case Meeting = 'meeting';
+    case Message = 'message';
 
     public function getLabel(): string
     {
@@ -26,6 +29,8 @@ enum InteractionChannel: string implements HasIcon, HasLabel
             self::Visit => 'heroicon-o-truck',
             self::Whatsapp => 'heroicon-o-chat-bubble-oval-left',
             self::Email => 'heroicon-o-envelope',
+            self::Meeting => 'heroicon-o-user-group',
+            self::Message => 'heroicon-o-chat-bubble-left-ellipsis',
         };
     }
 }

@@ -31,6 +31,10 @@ class StoreProjectRequest extends FormRequest
 
             'consultant_name' => ['nullable', 'string', 'max:255'],
             'engineer_name' => ['nullable', 'string', 'max:255'],
+            'engineer_phone' => ['nullable', 'string', 'max:50'],
+            'engineer_email' => ['nullable', 'email', 'max:255'],
+            'engineer_office' => ['nullable', 'string', 'max:255'],
+            'engineer_site' => ['nullable', 'string', 'max:255'],
             'project_location' => ['nullable', 'string', 'max:255'],
             'arrival_method' => ['nullable', Rule::enum(ArrivalMethod::class)],
 

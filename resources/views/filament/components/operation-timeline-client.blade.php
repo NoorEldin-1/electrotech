@@ -93,4 +93,39 @@
             </div>
         </template>
     </div>
+
+    {{-- التواصل مع العميل: the customer-communication feed (not a stage). --}}
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-[var(--border-hairline)]">
+        <div class="mb-3 flex items-center justify-between gap-2">
+            <div class="text-sm font-semibold text-gray-950 dark:text-[var(--dark-text)]">{{ __('resources.customer_communication.heading') }}</div>
+            <div class="text-xs tabular-nums text-gray-500 dark:text-[var(--dark-text-muted)]" x-text="current.interactions.total"></div>
+        </div>
+
+        <template x-if="current.interactions.items.length === 0">
+            <div class="text-xs text-gray-500 dark:text-[var(--dark-text-muted)]">{{ __('resources.customer_communication.empty') }}</div>
+        </template>
+
+        <ul class="space-y-3">
+            <template x-for="(item, i) in current.interactions.items" x-bind:key="i">
+                <li class="text-sm">
+                    <div class="flex flex-wrap items-center gap-x-2 text-xs text-gray-500 dark:text-[var(--dark-text-muted)]">
+                        <span class="tabular-nums" x-text="item.at"></span>
+                        <span>·</span>
+                        <span x-text="item.kind"></span>
+                        <template x-if="item.recorded_by">
+                            <span class="contents"><span>·</span><span x-text="item.recorded_by"></span></span>
+                        </template>
+                    </div>
+                    <div class="font-medium text-gray-950 dark:text-[var(--dark-text)]" x-show="item.summary" x-text="item.summary"></div>
+                    <div class="whitespace-pre-line text-gray-700 dark:text-[var(--dark-text-muted)]" x-show="item.notes" x-text="item.notes"></div>
+                    <template x-if="item.next_follow_up_at">
+                        <div class="text-xs text-warning-600 dark:text-warning-400">
+                            {{ __('resources.customer_communication.next_follow_up') }}:
+                            <span class="tabular-nums" x-text="item.next_follow_up_at"></span>
+                        </div>
+                    </template>
+                </li>
+            </template>
+        </ul>
+    </div>
 </div>

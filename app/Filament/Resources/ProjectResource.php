@@ -137,10 +137,6 @@ class ProjectResource extends Resource
                     ->icon('heroicon-o-cog-6-tooth')
                     ->columns(2)
                     ->schema([
-                        Forms\Components\TextInput::make('engineer_name')
-                            ->label(__('resources.projects.fields.engineer_name'))
-                            ->maxLength(255),
-
                         Forms\Components\TextInput::make('electric_current')
                             ->label(__('resources.projects.fields.electric_current'))
                             ->maxLength(255)
@@ -221,6 +217,31 @@ class ProjectResource extends Resource
                         Forms\Components\View::make('filament.components.project-timeline-field'),
                     ]),
 
+                // Final_Modifications Task 3 — engineer contact block, shown
+                // right above the attachments area.
+                Forms\Components\Section::make(__('resources.engineer_details.heading'))
+                    ->icon('heroicon-o-user')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('engineer_name')
+                            ->label(__('resources.projects.fields.engineer_name'))
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('engineer_phone')
+                            ->label(__('resources.engineer_details.phone'))
+                            ->tel()
+                            ->maxLength(50),
+                        Forms\Components\TextInput::make('engineer_email')
+                            ->label(__('resources.engineer_details.email'))
+                            ->email()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('engineer_office')
+                            ->label(__('resources.engineer_details.office'))
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('engineer_site')
+                            ->label(__('resources.engineer_details.site'))
+                            ->maxLength(255),
+                    ]),
+
                 Forms\Components\Section::make(__('resources.projects.sections.attachments'))
                     ->icon('heroicon-o-paper-clip')
                     ->description(__('resources.projects.sections.attachments_description'))
@@ -231,6 +252,18 @@ class ProjectResource extends Resource
                     // OR upload (the upload controls themselves are gated below).
                     ->visible(fn () => (auth()->user()?->can('attachments.download') ?? false)
                         || (auth()->user()?->can('attachments.upload') ?? false)),
+
+                // Final_Modifications_Plan 1.1 — «التواصل مع العميل» sits right
+                // under the attachments: the latest calls / meetings / messages
+                // and the quick log action (CustomerInteraction, not a new model).
+                Forms\Components\Section::make(__('resources.customer_communication.heading'))
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->description(__('resources.customer_communication.description'))
+                    ->visible(fn (string $operation): bool => $operation !== 'create'
+                        && (auth()->user()?->can('customer_interactions.view') ?? false))
+                    ->schema([
+                        Forms\Components\View::make('filament.components.project-customer-communication'),
+                    ]),
 
                 Forms\Components\Section::make(__('resources.projects.sections.description'))
                     ->schema([
@@ -286,8 +319,14 @@ class ProjectResource extends Resource
             ->maxSize(40960) // 40 MB — kept in sync with config/livewire.php temporary_file_upload rules
             ->directory(fn (?Project $record) => 'attachments/'.($record?->id ?? 'new').'/'.$category->value)
             ->disk('public')
+                // Restricted drawings (Task 5 / R3): the upload control for the
+                // preliminary / executive drawing and the site measurements
+                // exists only for holders of the permission. A hidden field is
+                // neither dehydrated nor hydrated, so its files never reach the
+                // browser state of anyone else.
+            ->visible(fn (): bool => $category->isViewableBy())
             ->afterStateHydrated(function (Forms\Components\FileUpload $component, ?Project $record) use ($category) {
-                if ($record === null) {
+                if ($record === null || ! $category->isViewableBy()) {
                     return;
                 }
                 $component->state(
@@ -369,8 +408,16 @@ class ProjectResource extends Resource
                         ->form(fn (Project $r) => [
                             Forms\Components\Select::make('status')
                                 ->label(__('resources.projects.fields.status'))
-                                ->options(ProjectStatus::class)
-                                ->default($r->status?->value)
+                                // "Completed" is deliberately not offered: an
+                                // operation ends only through the gated
+                                // OperationLifecycleService::markCompleted()
+                                // (manufacturing finish + quality sheet +
+                                // deliveries), never by a free status pick.
+                                ->options(collect(ProjectStatus::cases())
+                                    ->reject(fn (ProjectStatus $s) => $s === ProjectStatus::Completed)
+                                    ->mapWithKeys(fn (ProjectStatus $s) => [$s->value => $s->getLabel()])
+                                    ->all())
+                                ->default($r->status === ProjectStatus::Completed ? null : $r->status?->value)
                                 ->required(),
                         ])
                         ->visible(fn () => auth()->user()?->can('projects.change_status') ?? false)

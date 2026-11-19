@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 
 class ActiveProjectResource extends Resource
 {
@@ -119,16 +120,27 @@ class ActiveProjectResource extends Resource
                         ->requiresConfirmation()
                         ->visible(fn () => auth()->user()?->can('operations.complete') ?? false)
                         // The operation ends only after manufacturing finish,
-                        // an approved quality sheet and the deliveries. While
-                        // anything is missing the button stays but is disabled,
-                        // and its tooltip lists what is missing.
-                        ->disabled(fn (Project $record): bool => ! app(OperationLifecycleService::class)->canComplete($record))
-                        ->tooltip(function (Project $record): ?string {
+                        // an approved quality sheet and the deliveries. The
+                        // action stays enabled (a disabled item inside the
+                        // dropdown swallows pointer events, so a tooltip would
+                        // never show): the confirmation modal lists what is
+                        // missing, and markCompleted() refuses with the same
+                        // reasons, surfaced by runLifecycle() as a notification.
+                        ->modalDescription(function (Project $record): string|HtmlString {
                             $blockers = app(OperationLifecycleService::class)->completionBlockers($record);
 
-                            return $blockers === []
-                                ? null
-                                : __('resources.operations.completion_blocked_tooltip').' '.implode(' ', $blockers);
+                            if ($blockers === []) {
+                                return __('filament-actions::modal.confirmation');
+                            }
+
+                            $items = collect($blockers)
+                                ->map(fn (string $reason) => '<li>'.e($reason).'</li>')
+                                ->implode('');
+
+                            return new HtmlString(
+                                e(__('resources.operations.completion_blocked_tooltip'))
+                                .'<ul class="mt-2 list-disc text-start ps-5">'.$items.'</ul>'
+                            );
                         })
                         ->action(fn (Project $record) => static::runLifecycle(
                             fn () => app(OperationLifecycleService::class)->markCompleted($record),

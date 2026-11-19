@@ -1,0 +1,14 @@
+{
+    "name": "electrotech-e2e",
+    "private": true,
+    "description": "Playwright end-to-end suite. Runs only in GitHub Actions (job `e2e` in .github/workflows/tests.yml).",
+    "scripts": {
+        "test": "playwright test",
+        "report": "playwright show-report"
+    },
+    "devDependencies": {
+        "@playwright/test": "1.49.1",
+        "@types/node": "^20.17.0",
+        "typescript": "^5.6.0"
+    }
+}

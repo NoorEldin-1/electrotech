@@ -141,7 +141,21 @@ class ActivityResource extends Resource
         // IN-query per subject_type, hydrating models we never display in
         // the list. We only show `causer.name`, so only eager-load that
         // here. The `view` page can lazy-load `subject` if it needs to.
-        return parent::getEloquentQuery()->with('causer:id,name');
+        $query = parent::getEloquentQuery()->with('causer:id,name');
+
+        // Restricted drawings (Task 5 / R3): the log records an attachment's
+        // file name and category, so the entries about a restricted drawing are
+        // hidden from anyone who may not see the file itself.
+        if (! \App\Enums\AttachmentCategory::userCanViewRestricted()) {
+            $query->where(fn (Builder $q) => $q
+                ->whereNull('subject_type')
+                ->orWhere('subject_type', '!=', \App\Models\Attachment::class)
+                ->orWhereNotIn('subject_id', \App\Models\Attachment::withTrashed()
+                    ->whereIn('category', \App\Enums\AttachmentCategory::restrictedValues())
+                    ->select('id')));
+        }
+
+        return $query;
     }
 
     /**

@@ -91,7 +91,9 @@ class DepreciationVoucherTest extends TestCase
         $this->assertEquals(28, (float) $project->fresh()->actual_cost);
         $this->assertEquals(28, (float) $wo->fresh()->actual_material_cost);
 
-        // Balanced, posted journal: Dr 5060 (loss) / Cr 1300 (inventory), untagged.
+        // Balanced, posted journal: Dr 5060 (loss) / Cr 1320 (work in progress).
+        // The loss debit is untagged (no double count in the cost file); the WIP
+        // credit carries the operation tag like every other WIP line.
         $entry = $voucher->journalEntry;
         $this->assertNotNull($entry);
         $this->assertSame(JournalStatus::Posted, $entry->status);
@@ -100,10 +102,10 @@ class DepreciationVoucherTest extends TestCase
         $debit = $entry->lines->firstWhere('direction', AccountDirection::Debit);
         $credit = $entry->lines->firstWhere('direction', AccountDirection::Credit);
         $this->assertSame('5060', $debit->account->code);
-        $this->assertSame('1300', $credit->account->code);
+        $this->assertSame('1320', $credit->account->code);
         $this->assertEquals(12, (float) $debit->amount);
         $this->assertNull($debit->project_id); // not tagged → no double count
-        $this->assertNull($credit->project_id);
+        $this->assertSame($project->id, $credit->project_id); // per-operation WIP
     }
 
     public function test_natural_loss_keeps_cost_on_operation_and_books_operating_expense(): void
@@ -120,12 +122,12 @@ class DepreciationVoucherTest extends TestCase
         $this->assertEquals(40, (float) $project->fresh()->actual_cost);
         $this->assertEquals(40, (float) $wo->fresh()->actual_material_cost);
 
-        // Journal: Dr 5010 (operating expenses) / Cr 1300 (inventory).
+        // Journal: Dr 5010 (operating expenses) / Cr 1320 (work in progress).
         $entry = $voucher->fresh()->journalEntry;
         $this->assertNotNull($entry);
         $this->assertSame(JournalStatus::Posted, $entry->status);
         $this->assertSame('5010', $entry->lines->firstWhere('direction', AccountDirection::Debit)->account->code);
-        $this->assertSame('1300', $entry->lines->firstWhere('direction', AccountDirection::Credit)->account->code);
+        $this->assertSame('1320', $entry->lines->firstWhere('direction', AccountDirection::Credit)->account->code);
     }
 
     public function test_posting_without_loss_accounts_skips_journal_but_moves_stock(): void

@@ -337,6 +337,70 @@ class OperationTimelineService
             ->all();
     }
 
+    /** How many of the latest customer communications a timeline feed carries. */
+    public const INTERACTION_FEED_LIMIT = 20;
+
+    /**
+     * The customer-communication feed of one operation (latest first) — the
+     * `interactions` part of the timeline payload.
+     *
+     * @return array{total: int, items: Collection<int, array<string, mixed>>}
+     */
+    public function interactionsFor(Project $project, int $limit = self::INTERACTION_FEED_LIMIT): array
+    {
+        return $this->interactionsForMany(collect([$project]), $limit)[$project->getKey()];
+    }
+
+    /**
+     * التواصل مع العميل (Final_Modifications_Plan 1.1) — every logged call,
+     * meeting and message as a separate feed beside the stages. The 18 stage
+     * keys are untouched; this is an addition to the payload, not a stage.
+     *
+     * Two queries for any number of operations (the interactions, then their
+     * authors), grouped here: the newest `$limit` per operation plus the
+     * operation's total.
+     *
+     * @param  Collection<int, Project>  $projects
+     * @return array<int, array{total: int, items: Collection<int, array<string, mixed>>}>
+     */
+    public function interactionsForMany(Collection $projects, int $limit = self::INTERACTION_FEED_LIMIT): array
+    {
+        $ids = $projects->map(fn (Project $p) => $p->getKey())->values()->all();
+
+        $byProject = $ids === [] ? collect() : CustomerInteraction::query()
+            ->whereIn('project_id', $ids)
+            ->with('createdBy:id,name')
+            ->orderByDesc('interacted_at')
+            ->orderByDesc('id')
+            ->get(['id', 'project_id', 'type', 'channel', 'interacted_at', 'site_ready', 'summary', 'notes', 'next_follow_up_at', 'created_by'])
+            ->groupBy('project_id');
+
+        $feeds = [];
+        foreach ($ids as $id) {
+            /** @var Collection<int, CustomerInteraction> $rows */
+            $rows = $byProject->get($id, collect());
+
+            $feeds[$id] = [
+                'total' => $rows->count(),
+                'items' => $rows->take($limit)->map(fn (CustomerInteraction $i): array => [
+                    'id' => $i->id,
+                    'at' => $i->interacted_at,
+                    'type' => $i->type->value,
+                    'type_label' => $i->type->getLabel(),
+                    'channel' => $i->channel?->value,
+                    'channel_label' => $i->channel?->getLabel(),
+                    'summary' => $i->summary,
+                    'notes' => $i->notes,
+                    'next_follow_up_at' => $i->next_follow_up_at,
+                    'site_ready' => (bool) $i->site_ready,
+                    'recorded_by' => $i->createdBy?->name,
+                ])->values(),
+            ];
+        }
+
+        return $feeds;
+    }
+
     private function earliest(?Carbon ...$dates): ?Carbon
     {
         $dates = array_filter($dates);

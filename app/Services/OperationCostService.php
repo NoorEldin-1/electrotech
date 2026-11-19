@@ -110,7 +110,14 @@ class OperationCostService
                 // (سلايد 12), not an input to it: its value is the material
                 // already counted in materialsCost(). Counting the closing
                 // entry here as well would double the operation's total cost.
-                ->where('code', '!=', config('operations.cogs_account_code', '5070')))
+                ->where('code', '!=', config('operations.cogs_account_code', '5070'))
+                // The three inventory stores (1310 / 1320 / 1330) are balance
+                // sheet accounts: material moving between them is a transfer of
+                // value, not a cost. The work-in-progress lines are tagged to the
+                // operation on purpose (per-operation WIP) — they are asset
+                // accounts, so the type filter above already keeps them out, and
+                // this exclusion keeps them out even if a chart ever re-types one.
+                ->whereNotIn('code', array_values(app(InventoryAccounts::class)->codes())))
             ->sum('amount');
     }
 

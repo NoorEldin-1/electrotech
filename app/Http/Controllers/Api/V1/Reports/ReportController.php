@@ -343,11 +343,16 @@ class ReportController extends ApiController
      * the customer's question: where the operation is and how long is left
      * until `expected_delivery` (the operation's end date).
      *
+     * `interactions` is a separate feed beside the stages, not a stage: the
+     * latest 20 customer communications (calls, meetings, messages) logged on
+     * the operation, newest first, with the operation's `total`. It never
+     * changes the eighteen stage keys.
+     *
      * @authenticated
      *
      * @urlParam project integer required The operation id. Example: 4
      *
-     * @response 200 scenario="Success" {"data":{"project_id":4,"project_code":"2026-4","current_stage":{"key":"executive_drawing","label":"Shop Drawing","group":"executive","group_label":"Executive Phase","at":"2026-09-02T10:00:00+00:00"},"summary":{"progress_percent":44,"expected_delivery":"2026-10-30T00:00:00+00:00","delivered_at":null,"days_remaining":19,"days_overdue":null},"stages":[{"key":"sales","label":"Sales","group":"preliminary","at":"2026-08-01T09:00:00+00:00","reached":true,"skipped":false,"detail":"Nile Contracting","days_from_start":0},{"key":"preliminary_mo_created","label":"Manufacturing Order","group":"preliminary","at":null,"reached":false,"skipped":true,"detail":null,"days_from_start":null}]},"meta":{"request_id":"9f1c","api_version":"1"}}
+     * @response 200 scenario="Success" {"data":{"project_id":4,"project_code":"2026-4","current_stage":{"key":"executive_drawing","label":"Shop Drawing","group":"executive","group_label":"Executive Phase","at":"2026-09-02T10:00:00+00:00"},"summary":{"progress_percent":44,"expected_delivery":"2026-10-30T00:00:00+00:00","delivered_at":null,"days_remaining":19,"days_overdue":null},"stages":[{"key":"sales","label":"Sales","group":"preliminary","at":"2026-08-01T09:00:00+00:00","reached":true,"skipped":false,"detail":"Nile Contracting","days_from_start":0},{"key":"preliminary_mo_created","label":"Manufacturing Order","group":"preliminary","at":null,"reached":false,"skipped":true,"detail":null,"days_from_start":null}],"interactions":{"total":1,"items":[{"id":5,"at":"2026-09-01T10:00:00+00:00","type":"contact","type_label":"Customer Contact","channel":"call","channel_label":"Phone Call","summary":"Confirmed the drawing revision","notes":"Customer will reply by Sunday","next_follow_up_at":"2026-09-06T09:00:00+00:00","site_ready":false,"recorded_by":"Sara"}]}},"meta":{"request_id":"9f1c","api_version":"1"}}
      */
     public function operationTimeline(Project $project): JsonResponse
     {
@@ -366,7 +371,36 @@ class ReportController extends ApiController
             'current_stage' => ReportSerializer::normalize($summary['current_stage']),
             'summary' => ReportSerializer::normalize(array_diff_key($summary, ['current_stage' => true])),
             'stages' => ReportSerializer::normalize($timeline->all()),
+            'interactions' => $this->interactionFeed($project),
         ]);
+    }
+
+    /**
+     * The customer-communication feed of an operation, newest first, with
+     * ISO-8601 instants (ReportSerializer would flatten them to dates).
+     *
+     * @return array{total: int, items: list<array<string, mixed>>}
+     */
+    private function interactionFeed(Project $project): array
+    {
+        $feed = $this->timeline->interactionsFor($project);
+
+        return [
+            'total' => $feed['total'],
+            'items' => $feed['items']->map(fn (array $item): array => [
+                'id' => $item['id'],
+                'at' => $item['at']->toIso8601String(),
+                'type' => $item['type'],
+                'type_label' => $item['type_label'],
+                'channel' => $item['channel'],
+                'channel_label' => $item['channel_label'],
+                'summary' => $item['summary'],
+                'notes' => $item['notes'],
+                'next_follow_up_at' => $item['next_follow_up_at']?->toIso8601String(),
+                'site_ready' => $item['site_ready'],
+                'recorded_by' => $item['recorded_by'],
+            ])->values()->all(),
+        ];
     }
 
     /**

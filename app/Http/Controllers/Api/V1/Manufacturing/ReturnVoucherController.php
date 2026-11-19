@@ -149,7 +149,9 @@ class ReturnVoucherController extends ApiController
      *
      * Every line with a positive quantity is transferred out of
      * work-in-progress back into raw stock, and its value is reversed off the
-     * operation and the work order. Lines left at zero are ignored.
+     * operation and the work order. Lines left at zero are ignored. A posted
+     * journal entry mirrors the issue: Dr raw materials (1310) / Cr work in
+     * progress (1320, tagged to the operation).
      *
      * Refused when nothing on the voucher carries a quantity — posting an
      * all-zero voucher would sign a document that did nothing — and refused

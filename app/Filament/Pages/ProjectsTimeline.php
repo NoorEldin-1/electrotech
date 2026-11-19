@@ -44,6 +44,14 @@ class ProjectsTimeline extends Page implements HasTable
      */
     private ?array $timelines = null;
 
+    /**
+     * The customer-communication feed of the same rows, batched with the
+     * timelines above so the payload still needs no query of its own.
+     *
+     * @var array<int, array{total: int, items: Collection<int, array<string, mixed>>}>
+     */
+    private array $interactionFeeds = [];
+
     public static function getNavigationGroup(): ?string
     {
         return __('navigation.groups.technical_office');
@@ -176,7 +184,9 @@ class ProjectsTimeline extends Page implements HasTable
             if (! $collection->contains(fn (Project $p): bool => $p->is($record))) {
                 $collection->push($record);
             }
-            $this->timelines = ($this->timelines ?? []) + app(OperationTimelineService::class)->forMany($collection);
+            $service = app(OperationTimelineService::class);
+            $this->timelines = ($this->timelines ?? []) + $service->forMany($collection);
+            $this->interactionFeeds += $service->interactionsForMany($collection);
         }
 
         return app(OperationTimelineService::class)->summary($record, $this->timelines[$record->getKey()]);
@@ -238,6 +248,18 @@ class ProjectsTimeline extends Page implements HasTable
                         },
                     ])->values()->all(),
                 ], OperationTimelineService::GROUPS),
+                // التواصل مع العميل — a feed beside the stages, never a stage.
+                'interactions' => [
+                    'total' => $this->interactionFeeds[$record->getKey()]['total'],
+                    'items' => $this->interactionFeeds[$record->getKey()]['items']->map(fn (array $item): array => [
+                        'at' => $item['at']->format('Y-m-d H:i'),
+                        'kind' => $item['channel_label'] ?? $item['type_label'],
+                        'summary' => $item['summary'],
+                        'notes' => $item['notes'],
+                        'next_follow_up_at' => $item['next_follow_up_at']?->format('Y-m-d H:i'),
+                        'recorded_by' => $item['recorded_by'],
+                    ])->all(),
+                ],
             ];
         }
 

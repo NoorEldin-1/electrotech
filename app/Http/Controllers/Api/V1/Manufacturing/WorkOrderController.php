@@ -595,7 +595,10 @@ class WorkOrderController extends ApiController
      * **quality sheet** for the QA department (never a second one), and
      * announces to every department that the product is ready.
      *
-     * Deliberately touches neither stock nor cost — that is `complete`.
+     * Deliberately touches neither stock nor the operation's cost — that is
+     * `complete`. The one thing it books is the ledger transfer of the order's
+     * accumulated material cost (issues − returns − write-offs) from work in
+     * progress to finished goods: Dr 1330 / Cr 1320, once per order.
      * Retrying after the first finish is a silent success.
      *
      * @authenticated

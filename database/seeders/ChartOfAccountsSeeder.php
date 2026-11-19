@@ -54,6 +54,7 @@ class ChartOfAccountsSeeder extends Seeder
         }
 
         $this->linkAccumulatedDepreciation();
+        $this->linkInventoryStores();
         $this->markPartyControlAccounts();
     }
 
@@ -88,6 +89,34 @@ class ChartOfAccountsSeeder extends Seeder
 
             if ($contra && $asset && $contra->contra_of_account_id === null) {
                 $contra->forceFill(['contra_of_account_id' => $asset->id])->save();
+            }
+        }
+    }
+
+    /**
+     * تقسيم المخزون — put the three store accounts (1310 / 1320 / 1330) under
+     * the legacy 1300 المخزون so the balance sheet prints one "المخزون" line
+     * that folds its sub-accounts in (سلايد 5), while the trial balance still
+     * lists each store. Idempotent, and never re-parents an account an admin
+     * has already moved by hand.
+     */
+    private function linkInventoryStores(): void
+    {
+        $parent = Account::where('code', config('operations.inventory_account_code', '1300'))->first();
+
+        if ($parent === null) {
+            return;
+        }
+
+        foreach ([
+            config('operations.raw_materials_account_code', '1310'),
+            config('operations.wip_account_code', '1320'),
+            config('operations.finished_goods_account_code', '1330'),
+        ] as $code) {
+            $store = Account::where('code', $code)->first();
+
+            if ($store && $store->parent_id === null && $store->id !== $parent->id) {
+                $store->forceFill(['parent_id' => $parent->id])->save();
             }
         }
     }
@@ -155,6 +184,13 @@ class ChartOfAccountsSeeder extends Seeder
             ['code' => '1250', 'name' => 'أرصدة مدينة أخرى', 'type' => $asset, 'section' => $currentAsset],
             ['code' => '1270', 'name' => 'مصلحة الضرائب على المبيعات - رصيد مدين', 'type' => $asset, 'section' => $currentAsset],
             ['code' => '1300', 'name' => 'المخزون', 'type' => $asset, 'section' => $currentAsset],
+            // تقسيم المخزون (Final_Modifications سلايد 2–3): 1300 يبقى الحساب
+            // الرئيسي، وكل مخزن له حساب فرعي يُرحَّل عليه تلقائياً من الأذون
+            // (InventoryJournalService). نفس بند القائمة (أصول متداولة) فيدخل
+            // ميزان المراجعة والميزانية ضمن «المخزون».
+            ['code' => '1310', 'name' => 'مخزن الخامات', 'type' => $asset, 'section' => $currentAsset],
+            ['code' => '1320', 'name' => 'مخزن تحت التشغيل', 'type' => $asset, 'section' => $currentAsset],
+            ['code' => '1330', 'name' => 'مخزن المنتجات التامة', 'type' => $asset, 'section' => $currentAsset],
             ['code' => '1500', 'name' => 'اعتمادات', 'type' => $asset, 'section' => $currentAsset],
             ['code' => '1510', 'name' => 'اعتمادات تم إقفالها', 'type' => $asset, 'section' => $currentAsset],
             ['code' => '1600', 'name' => 'ا.ت.ص من المنبع', 'type' => $asset, 'section' => $currentAsset],

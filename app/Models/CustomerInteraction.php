@@ -31,6 +31,8 @@ class CustomerInteraction extends Model
         'interacted_at',
         'site_ready',
         'notes',
+        'summary',
+        'next_follow_up_at',
         'created_by',
     ];
 
@@ -40,6 +42,7 @@ class CustomerInteraction extends Model
             'type' => InteractionType::class,
             'channel' => InteractionChannel::class,
             'interacted_at' => 'datetime',
+            'next_follow_up_at' => 'datetime',
             'site_ready' => 'boolean',
         ];
     }
@@ -67,7 +70,7 @@ class CustomerInteraction extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['project_id', 'type', 'channel', 'interacted_at', 'site_ready'])
+            ->logOnly(['project_id', 'type', 'channel', 'interacted_at', 'site_ready', 'summary', 'next_follow_up_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

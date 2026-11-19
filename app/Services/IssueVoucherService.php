@@ -21,6 +21,7 @@ class IssueVoucherService
 {
     public function __construct(
         private readonly InventoryService $inventoryService,
+        private readonly InventoryJournalService $inventoryJournals,
     ) {}
 
     /**
@@ -263,6 +264,10 @@ class IssueVoucherService
                 'excess_approved_by' => Auth::id(),
                 'excess_approved_at' => now(),
             ]));
+
+            // Final_Modifications سلايد 2–3: Dr work in progress (tagged to the
+            // operation) / Cr raw materials, at the value just stored above.
+            $this->inventoryJournals->recordIssue($voucher);
         });
     }
 

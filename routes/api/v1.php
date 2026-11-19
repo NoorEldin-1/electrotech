@@ -58,6 +58,7 @@ use App\Http\Controllers\Api\V1\Platform\SearchController;
 use App\Http\Controllers\Api\V1\Procurement\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\Procurement\StockReservationController;
 use App\Http\Controllers\Api\V1\Reports\DocumentController;
+use App\Http\Controllers\Api\V1\Reports\InventoryValuationController;
 use App\Http\Controllers\Api\V1\Reports\ReportController;
 use App\Http\Controllers\Api\V1\Sales\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\Sales\OfferController;
@@ -920,6 +921,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
                 ->name('reports.cash_flow');
             Route::get('operating-statement', [ReportController::class, 'operatingStatement'])
                 ->name('reports.operating_statement');
+            // تقييم المخزون — ledger (1310/1320/1330) vs stock-card valuation.
+            Route::get('inventory-valuation', InventoryValuationController::class)
+                ->name('reports.inventory_valuation');
         });
 
         Route::get('projects/{project}/cost-breakdown', [ReportController::class, 'operationCost'])

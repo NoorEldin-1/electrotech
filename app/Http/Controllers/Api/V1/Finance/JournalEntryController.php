@@ -102,7 +102,10 @@ class JournalEntryController extends ApiController
      * Show a journal entry
      *
      * Returns the lines three ways: flat, and split into the two columns an
-     * accountant reads.
+     * accountant reads. An entry the system posted for a stock document
+     * (addition, issue, return or depreciation voucher, or a finished work
+     * order) also carries a `source` object: the document `type` and `id`, and
+     * the `event` it booked ('post', 'finish', or 'reversal:<event>').
      *
      * @authenticated
      *

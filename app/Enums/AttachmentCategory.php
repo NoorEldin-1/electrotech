@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Models\User;
 use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Categories for project attachments as listed in Slide 2 of
@@ -129,6 +131,77 @@ enum AttachmentCategory: string implements HasIcon, HasLabel
     public static function additionVoucherCategories(): array
     {
         return [self::AdditionVoucherScan];
+    }
+
+    /**
+     * Permission that unlocks the restricted drawing categories
+     * (Final_Modifications Task 5 / R3).
+     */
+    public const RESTRICTED_PERMISSION = 'attachments.view_restricted_drawings';
+
+    /**
+     * Restricted drawings (Final_Modifications Task 5 / R3): the preliminary
+     * drawing, the executive drawing and the site measurements are visible only
+     * to holders of `attachments.view_restricted_drawings`.
+     */
+    public function isRestricted(): bool
+    {
+        return match ($this) {
+            self::PreliminaryDrawing, self::ExecutiveDrawing, self::SiteMeasurement => true,
+            default => false,
+        };
+    }
+
+    /**
+     * @return array<int, self>
+     */
+    public static function restricted(): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $c): bool => $c->isRestricted()));
+    }
+
+    /**
+     * Stored values of the restricted categories, for query constraints.
+     *
+     * @return array<int, string>
+     */
+    public static function restrictedValues(): array
+    {
+        return array_map(fn (self $c): string => $c->value, self::restricted());
+    }
+
+    /**
+     * Whether the given user (defaults to the signed-in one) may see files of
+     * the restricted categories. A guest or a user without the permission may
+     * not. Admin holds every permission, so it passes implicitly.
+     */
+    public static function userCanViewRestricted(?User $user = null): bool
+    {
+        $user ??= Auth::user();
+
+        return $user !== null && $user->can(self::RESTRICTED_PERMISSION);
+    }
+
+    /**
+     * Whether the given user may see / download / upload a file of this
+     * category. Unrestricted categories are always allowed here — the owner's
+     * own policy and `attachments.*` permissions still apply on top.
+     */
+    public function isViewableBy(?User $user = null): bool
+    {
+        return ! $this->isRestricted() || self::userCanViewRestricted($user);
+    }
+
+    /**
+     * Categories a user may pick when uploading: the restricted ones are left
+     * out for users without the permission.
+     *
+     * @param  array<int, self>  $categories
+     * @return array<int, self>
+     */
+    public static function viewableFrom(array $categories, ?User $user = null): array
+    {
+        return array_values(array_filter($categories, fn (self $c): bool => $c->isViewableBy($user)));
     }
 
     public function getLabel(): string

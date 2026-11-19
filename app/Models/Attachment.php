@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\AttachmentCategory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -46,6 +47,38 @@ class Attachment extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "Attachment '{$this->file_name}' was {$eventName}");
+    }
+
+    /**
+     * Restricted drawings (Final_Modifications Task 5 / R3): leave out the
+     * preliminary / executive drawings and site measurements unless the user
+     * holds `attachments.view_restricted_drawings`. Every query that lists,
+     * counts or serves attachments to a person goes through this scope; system
+     * work with no person behind it (timeline stage dates, observers) queries
+     * the model directly and is deliberately unscoped.
+     *
+     * @param  Builder<Attachment>  $query
+     */
+    public function scopeVisibleTo(Builder $query, ?User $user = null): void
+    {
+        if (! AttachmentCategory::userCanViewRestricted($user)) {
+            $query->whereNotIn($query->qualifyColumn('category'), AttachmentCategory::restrictedValues());
+        }
+    }
+
+    /**
+     * Whether the given user (default: the signed-in one) may see or download
+     * this single attachment.
+     */
+    public function isVisibleTo(?User $user = null): bool
+    {
+        $category = $this->category;
+
+        if (is_string($category)) {
+            $category = AttachmentCategory::tryFrom($category);
+        }
+
+        return $category === null || $category->isViewableBy($user);
     }
 
     public function project(): BelongsTo

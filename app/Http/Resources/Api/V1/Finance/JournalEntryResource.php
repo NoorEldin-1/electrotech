@@ -68,6 +68,17 @@ class JournalEntryResource extends JsonResource
             ],
 
             'notes' => $this->notes,
+
+            // Only on an entry the system posted for a document (an addition,
+            // issue, return or depreciation voucher, or a finished work order):
+            // which one, and what the entry did for it ('post', 'finish', or
+            // 'reversal:<event>'). Absent on an entry typed in by hand.
+            'source' => $this->when($this->source_type !== null, fn () => [
+                'type' => class_basename((string) $this->source_type),
+                'id' => $this->source_id,
+                'event' => $this->source_event,
+            ]),
+
             'created_by' => $this->created_by,
             'posted_by' => $this->posted_by,
             'posted_at' => $this->posted_at?->toIso8601String(),

@@ -139,6 +139,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Split inventory accounts (Final_Modifications سلايد 2–3, ruling R1)
+    |--------------------------------------------------------------------------
+    |
+    | The single "1300 المخزون" account is kept as the PARENT and the stock is
+    | booked to one account per store:
+    |
+    |   raw_materials_account_code   1310 مخزن الخامات
+    |   wip_account_code             1320 مخزن تحت التشغيل
+    |   finished_goods_account_code  1330 مخزن المنتجات التامة
+    |
+    | Addition, issue, return, depreciation, manufacturing finish and delivery
+    | post to these through App\Services\InventoryAccounts /
+    | App\Services\InventoryJournalService. `inventory_account_code` (1300)
+    | stays only as the FALLBACK of the two legacy flows (depreciation and cost
+    | centre closing) for a chart that has not been seeded with the split yet.
+    | `suppliers_account_code` is the payables control credited by an addition
+    | voucher (ruling R5: no cash payment method is recorded, so always 2010).
+    |
+    */
+    'raw_materials_account_code' => '1310',
+    'wip_account_code' => '1320',
+    'finished_goods_account_code' => '1330',
+    'suppliers_account_code' => '2010',
+
+    /*
+    |--------------------------------------------------------------------------
     | Cost centre closing (Financial Department سلايد 12)
     |--------------------------------------------------------------------------
     |

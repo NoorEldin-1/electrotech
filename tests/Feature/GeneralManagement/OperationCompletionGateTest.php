@@ -9,6 +9,7 @@ use App\Enums\ItemType;
 use App\Enums\ProjectStatus;
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\ActiveProjectResource\Pages\ListActiveProjects;
+use App\Filament\Resources\ProjectResource\Pages\ListProjects;
 use App\Models\DeliveryVoucher;
 use App\Models\Item;
 use App\Models\Project;
@@ -335,7 +336,7 @@ class OperationCompletionGateTest extends TestCase
 
     // ----------------------------------------------------------- Filament
 
-    public function test_the_complete_button_is_disabled_with_the_blockers_in_its_tooltip(): void
+    public function test_a_blocked_complete_is_refused_and_the_reasons_are_notified(): void
     {
         $project = Project::factory()->active()->create();
         $order = WorkOrder::factory()->create([
@@ -344,11 +345,15 @@ class OperationCompletionGateTest extends TestCase
             'manufacturing_finished_at' => null,
         ]);
 
+        // The action stays enabled (a disabled dropdown item swallows pointer
+        // events, hiding any tooltip): the modal lists the blockers and the
+        // service refuses, which runLifecycle() reports as a notification.
         Livewire::actingAs($this->userWithRole('General_Manager'))
             ->test(ListActiveProjects::class)
             ->assertTableActionVisible('complete', $project)
-            ->assertTableActionDisabled('complete', $project)
-            ->callTableAction('complete', $project);
+            ->assertTableActionEnabled('complete', $project)
+            ->callTableAction('complete', $project)
+            ->assertNotified(__('resources.common.action_failed'));
 
         $this->assertSame(ProjectStatus::InProgress, $project->fresh()->status);
 
@@ -381,6 +386,37 @@ class OperationCompletionGateTest extends TestCase
         }
 
         $this->assertSame(ProjectStatus::InProgress, $project->fresh()->status);
+    }
+
+    public function test_the_change_status_action_cannot_reach_completed(): void
+    {
+        // Nothing is manufactured or delivered: completing must be impossible
+        // through the free status picker too.
+        $project = Project::factory()->active()->create();
+
+        foreach (['Sales_Officer', 'Sales_Head'] as $role) {
+            $user = $this->userWithRole($role);
+            $this->assertTrue($user->can('projects.change_status'), $role);
+
+            Livewire::actingAs($user)
+                ->test(ListProjects::class)
+                ->callTableAction('change_status', $project, data: ['status' => ProjectStatus::Completed->value])
+                ->assertHasTableActionErrors(['status']);
+
+            $this->assertSame(ProjectStatus::InProgress, $project->fresh()->status, $role);
+        }
+    }
+
+    public function test_the_change_status_action_still_offers_the_other_statuses(): void
+    {
+        $project = Project::factory()->active()->create();
+
+        Livewire::actingAs($this->userWithRole('Sales_Officer'))
+            ->test(ListProjects::class)
+            ->callTableAction('change_status', $project, data: ['status' => ProjectStatus::OnHold->value])
+            ->assertHasNoTableActionErrors();
+
+        $this->assertSame(ProjectStatus::OnHold, $project->fresh()->status);
     }
 
     public function test_the_blocker_texts_exist_in_both_locales(): void

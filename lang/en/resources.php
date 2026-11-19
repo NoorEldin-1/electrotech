@@ -1385,6 +1385,46 @@ return [
         ],
     ],
 
+    // Final_Modifications Task 8 — inventory valuation report.
+    'inventory_valuation' => [
+        'navigation_label' => 'Inventory Valuation',
+        'title' => 'Inventory Valuation',
+        'as_of' => 'As of date',
+        'totals' => 'Total',
+        'legacy_row' => 'Old unclassified stock (parent inventory account)',
+        'missing_accounts' => 'These inventory accounts are missing from the chart of accounts: :codes. Add them to see their balances here.',
+        'cards' => [
+            'total' => 'Total inventory value',
+            'total_hint' => 'From the ledger: the three stores plus any old unclassified balance.',
+        ],
+        'columns' => [
+            'store' => 'Store',
+            'operation' => 'Operation',
+            'ledger' => 'Ledger balance',
+            'stock_card' => 'Stock-card value',
+            'difference' => 'Difference',
+        ],
+        'reconciliation' => [
+            'heading' => 'Ledger vs stock cards',
+            'description' => 'The ledger balance of each store account against the moving weighted-average value of the items in that warehouse.',
+            'matched' => 'Matched',
+            'differs' => 'Difference found',
+            'hint' => 'A difference is usually stock from before the automatic store journals went live, which was never posted to the three store accounts. Finance moves the old parent inventory balance to the three stores with one manual entry, after which the difference disappears.',
+        ],
+        'wip' => [
+            'heading' => 'Work in progress by operation',
+            'description' => 'The ledger balance tagged to each operation against the value of its work-in-progress stock movements.',
+            'empty' => 'There is no work in progress at this date.',
+            'unallocated' => 'Not tied to an operation',
+        ],
+        'help' => [
+            'heading' => 'How to read this report',
+            'ledger' => 'Ledger balance: the posted balance of the raw materials, work in progress and finished goods accounts up to the chosen date.',
+            'stock_card' => 'Stock-card value: the sum of every item in the warehouse at its moving weighted-average value, from the in and out movements up to the same date.',
+            'reclassify' => 'The automatic journals apply only to documents activated after they went live; older documents are not re-posted. The old parent inventory balance is moved to the three stores with one manual entry by Finance.',
+        ],
+    ],
+
     'balance_sheet' => [
         'label' => 'Balance Sheet',
         'plural_label' => 'Balance Sheets',
@@ -1536,6 +1576,32 @@ return [
             'site_ready' => 'Site Ready',
             'notes' => 'Notes',
             'created_by' => 'Recorded By',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customer communication — attachments area and timeline (Final_Modifications_Plan 1.1)
+    |--------------------------------------------------------------------------
+    */
+    'customer_communication' => [
+        'heading' => 'Customer Communication',
+        'description' => 'The latest calls, meetings and messages with the customer on this operation.',
+        'empty' => 'No customer communication logged yet.',
+        'more' => 'and :count older — all of them are in the Customer Follow-up tab.',
+        'next_follow_up' => 'Next follow-up',
+        'fields' => [
+            'kind' => 'Communication type',
+            'summary' => 'Summary',
+            'details' => 'Details',
+            'next_follow_up_at' => 'Next follow-up',
+        ],
+        'actions' => [
+            'log' => 'Log call / note',
+            'log_heading' => 'Log customer communication',
+        ],
+        'notifications' => [
+            'logged' => 'Customer communication logged',
         ],
     ],
 
@@ -2549,6 +2615,7 @@ return [
             'income_statement' => 'Income Statement',
             'balance_sheet' => 'Balance Sheet',
             'cash_flow_statement' => 'Cash Flow Statement',
+            'reports' => 'Reports',
             'operations' => 'Operations (General Management)',
             'delivery_minutes' => 'Delivery Minutes',
             'financial_claims' => 'Financial Claims',
@@ -2593,6 +2660,7 @@ return [
                 'upload' => 'Upload Attachments',
                 'download' => 'Download Attachments',
                 'delete' => 'Delete Attachments',
+                'view_restricted_drawings' => 'View Restricted Drawings (preliminary, executive, site measurements)',
             ],
             'items' => [
                 'view' => 'View Items',
@@ -2719,6 +2787,9 @@ return [
             ],
             'cash_flow_statement' => [
                 'view' => 'View Cash Flow Statement',
+            ],
+            'reports' => [
+                'inventory_valuation' => 'View Inventory Valuation Report',
             ],
             'operations' => [
                 'overview' => 'View Operations Overview',
@@ -2997,6 +3068,8 @@ return [
             'visit' => 'Visit',
             'whatsapp' => 'WhatsApp',
             'email' => 'Email',
+            'meeting' => 'Meeting',
+            'message' => 'Message',
         ],
 
         'work_order_phase' => [
@@ -3215,5 +3288,13 @@ return [
         // Tooltip for the collapsed row-actions (⋮) dropdown trigger shared
         // by every table.
         'actions' => 'Actions',
+    ],
+    // Final_Modifications Task 3 — project engineer contact block.
+    'engineer_details' => [
+        'heading' => 'Engineer Details',
+        'phone' => 'Engineer Phone',
+        'email' => 'Engineer Email',
+        'office' => 'Engineer Office',
+        'site' => 'Engineer Site',
     ],
 ];

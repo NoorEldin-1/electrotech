@@ -30,6 +30,10 @@ class UpdateProjectRequest extends FormRequest
 
             'consultant_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'engineer_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'engineer_phone' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'engineer_email' => ['sometimes', 'nullable', 'email', 'max:255'],
+            'engineer_office' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'engineer_site' => ['sometimes', 'nullable', 'string', 'max:255'],
             'project_location' => ['sometimes', 'nullable', 'string', 'max:255'],
             'arrival_method' => ['sometimes', 'nullable', Rule::enum(ArrivalMethod::class)],
 

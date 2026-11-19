@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\AccountDirection;
-use App\Enums\DocumentType;
-use App\Enums\JournalStatus;
 use App\Enums\LossType;
 use App\Enums\VoucherStatus;
 use App\Enums\WarehouseType;
@@ -16,6 +13,7 @@ use App\Models\JournalEntry;
 use App\Models\WorkOrder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * إذن إهلاك — writes manufacturing loss (هالك) out of work-in-progress and
@@ -24,18 +22,19 @@ use Illuminate\Support\Facades\DB;
  * entry transfers the value to the loss account.
  *
  * The loss_type decides the operation-cost treatment (no double counting in the
- * Operation Cost Center: its journal is NOT tagged to the operation, so it never
+ * Operation Cost Center: the loss debit is NOT tagged to the operation, so it never
  * lands in ledgerExpenses):
  *   - abnormal (غير طبيعي): reversed off the operation (decrement project +
- *     work order) → Dr manufacturing-loss account / Cr inventory.
+ *     work order) → Dr manufacturing-loss account / Cr work in progress (1320).
  *   - natural (طبيعي): kept loaded on the operation (already there via the issue
- *     voucher) → Dr operating expenses / Cr inventory.
+ *     voucher) → Dr operating expenses / Cr work in progress (1320).
+ * The WIP credit is built by InventoryJournalService (Final_Modifications Task 7).
  */
 class DepreciationVoucherService
 {
     public function __construct(
         private readonly InventoryService $inventoryService,
-        private readonly JournalEntryService $journals,
+        private readonly InventoryJournalService $inventoryJournals,
     ) {}
 
     /**
@@ -145,11 +144,17 @@ class DepreciationVoucherService
 
     /**
      * Carry the written-off value to the general ledger: Dr loss account / Cr
-     * inventory. The loss account follows the loss type (abnormal → the
-     * manufacturing-loss account, natural → operating expenses). Lines are NOT
-     * tagged to the operation, so the write-off never double counts in the
-     * Operation Cost Center. Skips silently if the accounts are not in the chart
-     * (same philosophy as OperationPaymentService), leaving the stock move intact.
+     * the work-in-progress store. The loss account follows the loss type
+     * (abnormal → the manufacturing-loss account, natural → operating
+     * expenses). The loss debit is NOT tagged to the operation, so the
+     * write-off never double counts in the Operation Cost Center; the credit is
+     * a WIP line (1320, or 1330 once the order has been finished in the books)
+     * and carries the operation tag like every other WIP line — see
+     * InventoryJournalService::recordWriteOff(), which also falls back to the
+     * legacy 1300 on a chart that has not been seeded with the split yet.
+     *
+     * Skips (and logs) if the loss account is not in the chart, leaving the
+     * stock move intact — same philosophy as OperationPaymentService.
      */
     private function postLossJournal(DepreciationVoucher $voucher, float $total): ?JournalEntry
     {
@@ -157,46 +162,21 @@ class DepreciationVoucherService
             return null;
         }
 
-        $inventory = Account::where('code', config('operations.inventory_account_code', '1300'))->first();
-
         $lossCode = $voucher->loss_type === LossType::Abnormal
             ? config('operations.abnormal_loss_account_code', '5060')
             : config('operations.natural_loss_account_code', '5010');
 
         $loss = Account::where('code', $lossCode)->first();
 
-        if ($inventory === null || $loss === null) {
+        if ($loss === null) {
+            Log::warning('Depreciation journal skipped: loss account missing from the chart.', [
+                'voucher' => $voucher->voucher_number,
+                'missing_account_codes' => [$lossCode],
+            ]);
+
             return null;
         }
 
-        $entry = JournalEntry::create([
-            'entry_number' => JournalEntry::generateEntryNumber(DocumentType::Settlement),
-            'document_type' => DocumentType::Settlement,
-            'document_number' => $voucher->voucher_number,
-            'entry_date' => $voucher->voucher_date ?? now(),
-            'description' => __('resources.depreciation_vouchers.journal_description', [
-                'number' => $voucher->voucher_number,
-                'wo' => $voucher->workOrder->wo_number,
-            ]),
-            'status' => JournalStatus::Draft,
-            'currency' => 'EGP',
-            'created_by' => Auth::id(),
-        ]);
-
-        foreach ([
-            [$loss->id, AccountDirection::Debit],
-            [$inventory->id, AccountDirection::Credit],
-        ] as [$accountId, $direction]) {
-            $entry->lines()->create([
-                'account_id' => $accountId,
-                'project_id' => null,
-                'direction' => $direction,
-                'amount' => $total,
-            ]);
-        }
-
-        $this->journals->post($entry->fresh('lines'));
-
-        return $entry;
+        return $this->inventoryJournals->recordWriteOff($voucher, $loss, $total);
     }
 }

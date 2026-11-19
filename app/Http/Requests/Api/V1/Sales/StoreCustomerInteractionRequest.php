@@ -30,6 +30,8 @@ class StoreCustomerInteractionRequest extends FormRequest
             'interacted_at' => ['nullable', 'date'],
             'site_ready' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string', 'max:5000'],
+            'summary' => ['nullable', 'string', 'max:255'],
+            'next_follow_up_at' => ['nullable', 'date'],
         ];
     }
 }

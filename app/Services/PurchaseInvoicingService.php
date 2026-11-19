@@ -21,6 +21,15 @@ use Illuminate\Support\Facades\DB;
  * Unlike sales, there is no separate invoice table: invoice_value is the very
  * amount AdditionVoucherService::post credits the supplier with, so a parallel
  * table would create a second source of truth for the same money.
+ *
+ * General ledger (Final_Modifications Task 7, ruling R5): this service posts NO
+ * journal entry — it only keeps the supplier SUB-LEDGER row in step. The ledger
+ * leg of a receipt (Dr the store account / Cr supplier control 2010) is booked
+ * once, at posting time, by InventoryJournalService::recordAddition() at the
+ * STOCK value, keyed on the voucher so it can never be booked twice. A later
+ * invoice therefore changes nothing in the ledger: a difference between the
+ * invoice and the receipt (VAT, price) is exactly what invoiceValueMismatch()
+ * flags for the accountant, not something to capitalise into stock silently.
  */
 class PurchaseInvoicingService
 {

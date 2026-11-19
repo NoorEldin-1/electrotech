@@ -170,7 +170,9 @@ class IssueVoucherController extends ApiController
      * The moment the material leaves the store. Every line is transferred from
      * raw materials into work-in-progress, the total is loaded onto the
      * operation (the project is the cost centre) and accrued onto the work
-     * order, and the voucher is signed — all in one transaction.
+     * order, and the voucher is signed — all in one transaction. A posted
+     * journal entry carries the same value in the ledger: Dr work in progress
+     * (1320, tagged to the operation) / Cr raw materials (1310).
      *
      * **The excess flow.** Before any stock moves, the voucher is compared
      * against what the order still needs. If it goes over, the response is

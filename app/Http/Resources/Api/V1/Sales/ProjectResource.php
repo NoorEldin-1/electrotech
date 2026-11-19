@@ -41,6 +41,10 @@ class ProjectResource extends JsonResource
 
             'consultant_name' => $this->consultant_name,
             'engineer_name' => $this->engineer_name,
+            'engineer_phone' => $this->engineer_phone,
+            'engineer_email' => $this->engineer_email,
+            'engineer_office' => $this->engineer_office,
+            'engineer_site' => $this->engineer_site,
             'project_location' => $this->project_location,
             'arrival_method' => EnumPresenter::present($this->arrival_method),
 

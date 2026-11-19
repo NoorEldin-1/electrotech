@@ -24,6 +24,8 @@ class UpdateCustomerInteractionRequest extends FormRequest
             'interacted_at' => ['sometimes', 'date'],
             'site_ready' => ['sometimes', 'boolean'],
             'notes' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'summary' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'next_follow_up_at' => ['sometimes', 'nullable', 'date'],
         ];
     }
 }

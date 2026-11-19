@@ -140,7 +140,9 @@ class WorkOrderService
      * (اعتماد ضمان الجودة) must already be on the record. Neither one alone is
      * enough, and neither can be worked around from the form.
      *
-     * Deliberately touches neither inventory nor cost: that stays in complete().
+     * Deliberately touches neither stock nor the operation's cost: that stays in
+     * complete(). The one thing it does book is the ledger transfer of the
+     * order's material cost from work in progress to finished goods.
      *
      * Idempotent: a retry after the first finish is a silent success.
      *
@@ -165,11 +167,20 @@ class WorkOrderService
 
         $finishedAt = now();
 
-        $workOrder->update([
-            'manufacturing_finished_at' => $finishedAt,
-            'manufacturing_finished_by' => Auth::id(),
-            'manufacturing_duration_minutes' => (int) $workOrder->actual_start_date->diffInMinutes($finishedAt),
-        ]);
+        // The finish stamp and its general-ledger leg are one unit of work: the
+        // moment the order is declared finished its accumulated material cost
+        // moves from work in progress to finished goods (Dr 1330 / Cr 1320,
+        // Final_Modifications سلايد 2–3). Idempotent and silent when the chart
+        // has no split inventory accounts.
+        DB::transaction(function () use ($workOrder, $finishedAt) {
+            $workOrder->update([
+                'manufacturing_finished_at' => $finishedAt,
+                'manufacturing_finished_by' => Auth::id(),
+                'manufacturing_duration_minutes' => (int) $workOrder->actual_start_date->diffInMinutes($finishedAt),
+            ]);
+
+            app(InventoryJournalService::class)->recordManufacturingFinish($workOrder);
+        });
 
         // Open a draft quality sheet for the QA department to fill and print
         // (التصنيع سلايد 2 سفلي: "عند الضغط على زر انتهاء التصنيع... ورقة الجودة").
@@ -368,6 +379,12 @@ class WorkOrderService
             // 2) Consume this WO's work-in-progress materials (best-effort:
             //    only what was actually issued and is still on hand in WIP).
             $this->consumeWorkInProgress($workOrder);
+
+            // 4) Ledger: make sure the order's cost has been moved from work in
+            //    progress to finished goods (Dr 1330 / Cr 1320). A no-op when
+            //    «انتهاء التصنيع» already did it; it covers the order that is
+            //    completed without that button ever being pressed.
+            app(InventoryJournalService::class)->recordManufacturingFinish($workOrder);
 
             $workOrder->update([
                 'status' => WorkOrderStatus::Completed,

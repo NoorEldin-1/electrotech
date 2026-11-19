@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\MasterData;
 
+use App\Enums\AttachmentCategory;
 use App\Http\Api\AttachmentOwner;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Api\V1\MasterData\StoreAttachmentRequest;
@@ -34,6 +35,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * owner's existing policy answers both. That is deliberate: a separate
  * `attachments.*` permission would start out matching the panel and drift the
  * first time somebody changed one and not the other.
+ *
+ * **One exception — restricted drawings.** The categories `upload` (preliminary
+ * drawing), `executive_drawing` and `site_measurement` are visible only to
+ * callers holding the `attachments.view_restricted_drawings` permission. For
+ * everyone else they are left out of the list, naming one in `category` or
+ * uploading / downloading / deleting one returns 403, whatever the owner type.
  */
 class AttachmentController extends ApiController
 {
@@ -76,8 +83,16 @@ class AttachmentController extends ApiController
         $query = AttachmentOwner::relation($owner)->with('uploadedBy:id,name');
 
         if (($category = $request->query('category')) !== null && $category !== '') {
+            // Naming a restricted category without the permission is a direct
+            // access attempt, not an empty filter result.
+            $this->denyRestrictedCategory(AttachmentCategory::tryFrom((string) $category));
+
             $query->where('category', $category);
         }
+
+        // Restricted drawings never appear in a list for someone without the
+        // permission, whatever the owner type.
+        $query->visibleTo($request->user());
 
         return $this->respondCollection(
             AttachmentResource::collection($query->latest('id')->get())->resolve($request),
@@ -114,6 +129,9 @@ class AttachmentController extends ApiController
         $ownerKey = $request->string('owner_type')->toString();
         $category = $request->string('category')->toString();
         $file = $request->file('file');
+
+        // Restricted drawings can be filed only by holders of the permission.
+        $this->denyRestrictedCategory(AttachmentCategory::tryFrom($category));
 
         // Same folder layout the Filament pages use, so a file uploaded from
         // the phone lands where the panel already looks for it.
@@ -166,6 +184,7 @@ class AttachmentController extends ApiController
     public function download(Attachment $attachment): StreamedResponse
     {
         $this->authorizeOwnerOf($attachment, 'view');
+        $this->denyRestrictedAttachment($attachment);
 
         $disk = Storage::disk(self::DISK);
 
@@ -192,12 +211,30 @@ class AttachmentController extends ApiController
     public function destroy(Attachment $attachment): JsonResponse
     {
         $this->authorizeOwnerOf($attachment, 'update');
+        $this->denyRestrictedAttachment($attachment);
 
         Storage::disk(self::DISK)->delete($attachment->file_path);
 
         $attachment->delete();
 
         return $this->respondNoContent();
+    }
+
+    /**
+     * 403 when the signed-in user may not touch the restricted category.
+     * A null category (unknown value) is left to validation / the owner policy.
+     */
+    private function denyRestrictedCategory(?AttachmentCategory $category): void
+    {
+        abort_if($category !== null && ! $category->isViewableBy(Auth::user()), 403);
+    }
+
+    /**
+     * 403 when the attachment is a restricted drawing the user may not see.
+     */
+    private function denyRestrictedAttachment(Attachment $attachment): void
+    {
+        abort_unless($attachment->isVisibleTo(Auth::user()), 403);
     }
 
     /**

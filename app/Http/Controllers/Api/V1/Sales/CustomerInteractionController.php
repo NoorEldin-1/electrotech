@@ -23,6 +23,11 @@ use Illuminate\Http\Request;
  * "Customer Contact", and the first `site_readiness` with `site_ready: true`
  * reaches "Site Readiness". `follow_up` is a plain log entry. The customer is
  * always the operation's customer — it is never sent.
+ *
+ * Customer communication (calls, meetings, messages) is logged as `contact`
+ * entries with channel `call`, `meeting` or `message`, a short `summary`,
+ * free-text `notes` and the date of the `next_follow_up_at`. They also appear
+ * as the `interactions` feed of `GET /projects/{project}/timeline`.
  */
 class CustomerInteractionController extends ApiController
 {
@@ -33,7 +38,7 @@ class CustomerInteractionController extends ApiController
      *
      * @queryParam page integer The page number. Example: 1
      * @queryParam per_page integer Rows per page, max 100. Example: 25
-     * @queryParam search string Matches the notes. Example: drawings
+     * @queryParam search string Matches the summary and notes. Example: drawings
      * @queryParam filter[project] integer Operation id. Example: 4
      * @queryParam filter[customer] integer Customer id. Example: 2
      * @queryParam filter[type] string contact, site_readiness or follow_up. Example: contact
@@ -54,7 +59,7 @@ class CustomerInteractionController extends ApiController
                 'type' => ApiQuery::exact('type'),
                 'interacted_at' => ApiQuery::dateBetween('interacted_at'),
             ])
-            ->allowSearch(['notes'])
+            ->allowSearch(['notes', 'summary'])
             ->allowSorts(['interacted_at', 'created_at'])
             ->allowIncludes(['project'])
             ->defaultSort('-interacted_at')
@@ -89,10 +94,12 @@ class CustomerInteractionController extends ApiController
      *
      * @bodyParam project_id integer required The operation. Example: 4
      * @bodyParam type string required contact, site_readiness or follow_up. Example: contact
-     * @bodyParam channel string optional call, visit, whatsapp or email. Example: call
+     * @bodyParam channel string optional call, meeting, message, visit, whatsapp or email. Example: call
      * @bodyParam interacted_at datetime optional Defaults to now. Example: 2026-09-01 10:00:00
      * @bodyParam site_ready boolean optional Only for site_readiness. Example: true
-     * @bodyParam notes string optional Example: Customer confirmed the site is ready
+     * @bodyParam summary string optional One-line summary of the communication. Example: Confirmed the drawing revision
+     * @bodyParam notes string optional Details. Example: Customer confirmed the site is ready
+     * @bodyParam next_follow_up_at datetime optional When to follow up next. Example: 2026-09-06 09:00:00
      *
      * @response 201 scenario="Created" {"data":{"id":5,"type":"customer_interaction","project_id":4,"interaction_type":{"value":"contact","label":"Customer Contact","color":"info"}},"meta":{"request_id":"9f1c","api_version":"1"}}
      */
@@ -107,6 +114,8 @@ class CustomerInteractionController extends ApiController
             'interacted_at' => $request->input('interacted_at', now()),
             'site_ready' => $request->boolean('site_ready'),
             'notes' => $request->input('notes'),
+            'summary' => $request->input('summary'),
+            'next_follow_up_at' => $request->input('next_follow_up_at'),
         ]);
 
         return $this->respondCreated(new CustomerInteractionResource($interaction->load('project')));
@@ -122,6 +131,8 @@ class CustomerInteractionController extends ApiController
      * @bodyParam type string optional Example: site_readiness
      * @bodyParam site_ready boolean optional Example: true
      * @bodyParam notes string optional Example: Second call — site ready
+     * @bodyParam summary string optional Example: Site confirmed ready
+     * @bodyParam next_follow_up_at datetime optional Example: 2026-09-10 09:00:00
      *
      * @response 200 scenario="Updated" {"data":{"id":5,"type":"customer_interaction","site_ready":true},"meta":{"request_id":"9f1c","api_version":"1"}}
      */

@@ -9,6 +9,7 @@ use App\Enums\WarehouseType;
 use App\Models\InventoryTransaction;
 use App\Models\Item;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * كرت الصنف (Stock Card) — builds the perpetual moving weighted-average
@@ -48,14 +49,23 @@ class StockCardService
      *     totals: array{quantity: float, unit_cost: float, value: float}
      * }
      */
-    public function build(Item $item, ?WarehouseType $warehouse = null): array
-    {
+    public function build(
+        Item $item,
+        ?WarehouseType $warehouse = null,
+        ?Carbon $asOf = null,
+        bool $withDetails = true,
+    ): array {
         $warehouse ??= $item->homeWarehouse();
 
+        // `$asOf` cuts the card off at the end of that day (the inventory
+        // valuation report's date filter); `$withDetails = false` skips the
+        // per-row document label and user lookups, which a valuation that only
+        // needs the totals would otherwise pay for on every item.
         $movements = $item->inventoryTransactions()
             ->where('warehouse_type', $warehouse->value)
             ->whereIn('type', [TransactionType::In->value, TransactionType::Out->value])
-            ->with(['performedBy:id,name', 'reference'])
+            ->when($asOf, fn ($query) => $query->where('created_at', '<=', $asOf->copy()->endOfDay()))
+            ->when($withDetails, fn ($query) => $query->with(['performedBy:id,name', 'reference']))
             ->orderBy('created_at')
             ->orderBy('id')
             ->get();
@@ -70,8 +80,10 @@ class StockCardService
             $row = [
                 'id' => $txn->id,
                 'date' => $txn->created_at,
-                'reference' => $this->describe($txn),
-                'performed_by' => $txn->performedBy?->name,
+                'reference' => $withDetails ? $this->describe($txn) : '',
+                'reference_type' => $txn->reference_type,
+                'reference_id' => $txn->reference_id,
+                'performed_by' => $withDetails ? $txn->performedBy?->name : null,
                 'in_qty' => null,
                 'in_price' => null,
                 'in_value' => null,

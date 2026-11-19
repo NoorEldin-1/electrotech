@@ -7,10 +7,12 @@ namespace App\Models;
 use App\Enums\AccountDirection;
 use App\Enums\DocumentType;
 use App\Enums\JournalStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Cache;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -30,6 +32,12 @@ class JournalEntry extends Model
         'entry_serial',
         'document_number',
         'document_type',
+        // Which document an automatic entry was written for, and what it did
+        // for it (Final_Modifications Task 7). All three stay NULL on a manual
+        // entry. Unique together — see the source-reference migration.
+        'source_type',
+        'source_id',
+        'source_event',
         'entry_date',
         'description',
         'status',
@@ -87,6 +95,31 @@ class JournalEntry extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(JournalEntryLine::class);
+    }
+
+    /**
+     * The document an automatic entry was posted for (an issue voucher, a work
+     * order, ...). NULL for an entry typed in by hand.
+     */
+    public function source(): MorphTo
+    {
+        return $this->morphTo('source');
+    }
+
+    /**
+     * Entries written for one source document, optionally narrowed to one
+     * event ('post', 'finish', 'reversal:post', ...). Backs the idempotency
+     * check of InventoryJournalService.
+     *
+     * @param  Builder<JournalEntry>  $query
+     * @return Builder<JournalEntry>
+     */
+    public function scopeForSource(Builder $query, Model $source, ?string $event = null): Builder
+    {
+        return $query
+            ->where('source_type', $source->getMorphClass())
+            ->where('source_id', $source->getKey())
+            ->when($event !== null, fn (Builder $q) => $q->where('source_event', $event));
     }
 
     public function createdBy(): BelongsTo

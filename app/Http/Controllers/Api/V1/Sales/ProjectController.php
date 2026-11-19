@@ -149,6 +149,10 @@ class ProjectController extends ApiController
      * @bodyParam customer_id integer optional Link to a customer record when one exists. Example: 3
      * @bodyParam consultant_name string optional Example: ECG
      * @bodyParam engineer_name string optional Example: Eng. Mona Said
+     * @bodyParam engineer_phone string optional Example: 01012345678
+     * @bodyParam engineer_email string optional Valid email address. Example: mona@example.com
+     * @bodyParam engineer_office string optional Example: Nile Engineering Office
+     * @bodyParam engineer_site string optional Engineer's site (موقع). Example: New Cairo
      * @bodyParam project_location string optional Example: 6th of October City
      * @bodyParam arrival_method string optional One of the arrival_method enum values. Example: email
      * @bodyParam electric_current string optional Example: 2500A
@@ -191,6 +195,10 @@ class ProjectController extends ApiController
      * @bodyParam customer_id integer optional Example: 3
      * @bodyParam consultant_name string optional Example: ECG
      * @bodyParam engineer_name string optional Example: Eng. Mona Said
+     * @bodyParam engineer_phone string optional Example: 01012345678
+     * @bodyParam engineer_email string optional Valid email address. Example: mona@example.com
+     * @bodyParam engineer_office string optional Example: Nile Engineering Office
+     * @bodyParam engineer_site string optional Engineer's site (موقع). Example: New Cairo
      * @bodyParam project_location string optional Example: 6th of October City
      * @bodyParam arrival_method string optional Example: email
      * @bodyParam estimated_budget number optional Example: 1300000
