@@ -153,6 +153,11 @@ test('the operation file shows the drawings to the PMO coordinator only', async 
 
   const asmaa = await pageAs('asmaa');
   await open(asmaa, `/admin/projects/${id}`);
+  // The file lists are FilePond widgets that Filament loads lazily (x-load="visible"):
+  // they only fetch and render their files once scrolled into view.
+  for (const upload of await asmaa.locator('.fi-fo-file-upload').all()) {
+    await upload.scrollIntoViewIfNeeded();
+  }
   await expect(asmaa.locator('body')).toContainText(RESTRICTED[0]);
 
   for (const role of ['sales', 'generalManager'] as const) {

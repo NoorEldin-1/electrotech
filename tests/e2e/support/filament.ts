@@ -71,15 +71,17 @@ export async function fillField(page: Page, label: RegExp, value: string): Promi
 /** Pick an option in a Filament select (searchable or not) by its text. */
 export async function chooseOption(page: Page, label: RegExp, option: string | RegExp): Promise<void> {
   const wrapper = field(page, label);
-  const native = wrapper.locator('select');
+  const native = wrapper.locator('select').first();
 
-  if (await native.count()) {
+  // A searchable select is a Choices.js widget that keeps an empty, hidden
+  // <select> behind it, so only a visible <select> is a native one.
+  if ((await native.count()) && (await native.isVisible())) {
     const target = await native.locator('option').filter({ hasText: option }).first().getAttribute('value');
     await native.selectOption(target ?? '');
     return;
   }
 
-  await wrapper.locator('button[aria-haspopup="listbox"], .fi-fo-select button').first().click();
+  await wrapper.locator('.choices, button[aria-haspopup="listbox"], .fi-fo-select button').first().click();
 
   const search = wrapper.locator('input[type="search"]');
   if (await search.count()) {
