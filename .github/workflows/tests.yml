@@ -117,6 +117,9 @@ jobs:
           php-version: '8.2'
           extensions: sqlite3, pdo_sqlite, mbstring, intl, gd, zip, bcmath, fileinfo
           coverage: none
+          # The tracing JIT that setup-php enables corrupts memory in a long-running
+          # php -S (see tests/e2e/support/serve.sh); the job has no use for it.
+          ini-values: opcache.jit=disable, opcache.jit_buffer_size=0
 
       - name: Get Composer cache directory
         id: composer-cache

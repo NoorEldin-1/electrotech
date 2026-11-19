@@ -15,12 +15,33 @@ export async function login(page: Page, user: Pick<TestUser, 'email'>, password:
  * error status, Laravel's debug page, or Livewire's error modal.
  */
 export async function open(page: Page, url: string): Promise<Response | null> {
-  const response = await page.goto(url, { waitUntil: 'domcontentloaded' });
+  const response = await gotoSurvivingRestart(page, url);
   expect(response, `no response for ${url}`).not.toBeNull();
   expect(response!.status(), `${url} answered HTTP ${response!.status()}`).toBeLessThan(400);
   await page.waitForLoadState('networkidle');
   await expectHealthyPage(page, url);
   return response;
+}
+
+/**
+ * page.goto that waits out a restart of the application server. The CI server
+ * (support/serve.sh) is restarted within a second if php -S ever dies; a goto
+ * that lands in that gap fails with a connection error, and trying again is
+ * what a user would do. HTTP errors are not retried: those are real answers.
+ */
+async function gotoSurvivingRestart(page: Page, url: string): Promise<Response | null> {
+  const attempts = 4;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await page.goto(url, { waitUntil: 'domcontentloaded' });
+    } catch (error) {
+      const connectionError = /ERR_(CONNECTION_REFUSED|CONNECTION_RESET|EMPTY_RESPONSE)/.test((error as Error).message);
+      if (!connectionError || attempt >= attempts) {
+        throw error;
+      }
+      await page.waitForTimeout(1_500);
+    }
+  }
 }
 
 export async function expectHealthyPage(page: Page, label = page.url()): Promise<void> {

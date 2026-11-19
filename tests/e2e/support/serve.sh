@@ -18,6 +18,19 @@
 # Usage: bash tests/e2e/support/serve.sh [port]
 #   E2E_SERVER_WORKERS  php -S worker processes (default 1; PHP calls >1 experimental)
 #   E2E_SERVER_MEMORY   memory_limit for the server (default 1G)
+#   E2E_OPCACHE=1       keep opcache on (it is off by default, see below)
+#
+# opcache and the JIT are switched off for the server on purpose. The first CI
+# run with this script logged `php -S EXITED with status 139` (SIGSEGV) eight
+# times in three minutes, on unrelated pages (customer-interactions,
+# general-ledger-report, projects, journal-entries, several /livewire/update
+# posts), and just before the first crash Laravel logged "Undefined variable
+# $getFiltersTriggerAction" in a vendor Filament view that defines it a few
+# lines earlier. Random pages, a variable that cannot be undefined: engine-level
+# memory corruption, not a recursion in the application. shivammathur/setup-php
+# enables the tracing JIT (256M buffer) by default; the PHPUnit job survives it,
+# a long-running server does not. Speed is irrelevant here (a screen opens in a
+# few hundred ms either way), so everything that rewrites compiled code is off.
 
 set -u
 
@@ -27,15 +40,27 @@ router="$root/vendor/laravel/framework/src/Illuminate/Foundation/resources/serve
 log="$root/storage/logs/e2e-server.log"
 
 mkdir -p "$root/storage/logs"
-export PHP_CLI_SERVER_WORKERS="${E2E_SERVER_WORKERS:-1}"
+workers="${E2E_SERVER_WORKERS:-1}"
+if [ "$workers" -gt 1 ]; then
+  export PHP_CLI_SERVER_WORKERS="$workers"
+else
+  # php -S prints "number of workers must be larger than 1" for a value of 1.
+  unset PHP_CLI_SERVER_WORKERS
+fi
+
+engine_flags=(-d opcache.jit=disable -d opcache.jit_buffer_size=0)
+if [ "${E2E_OPCACHE:-0}" != "1" ]; then
+  engine_flags+=(-d opcache.enable=0 -d opcache.enable_cli=0)
+fi
 
 # The router script resolves static files against the working directory.
 cd "$root/public" || exit 1
 
 while true; do
-  echo "[$(date -u +%FT%TZ)] e2e-server: starting php -S 127.0.0.1:$port (workers=$PHP_CLI_SERVER_WORKERS)" >> "$log"
+  echo "[$(date -u +%FT%TZ)] e2e-server: starting php -S 127.0.0.1:$port (workers=$workers, opcache=${E2E_OPCACHE:-0})" >> "$log"
 
   php \
+    "${engine_flags[@]}" \
     -d "memory_limit=${E2E_SERVER_MEMORY:-1G}" \
     -d max_execution_time=120 \
     -d log_errors=1 \
