@@ -101,6 +101,38 @@ for (const role of DENIED) {
   });
 }
 
+test('the panel download route streams a restricted drawing to the PMO coordinator and refuses sales', async ({ pageAs }) => {
+  expect(Object.keys(restrictedIds), 'the admin test above collected the restricted ids').toHaveLength(RESTRICTED.length);
+
+  const asmaa = await pageAs('asmaa');
+  for (const [name, id] of Object.entries(restrictedIds)) {
+    const response = await asmaa.request.get(`/attachments/${id}/download`, { failOnStatusCode: false });
+    expect(response.status(), `asmaa downloads ${name} through the panel`).toBe(200);
+    expect(response.headers()['content-disposition'] ?? '', `${name} is sent as an attachment`).toContain('attachment');
+    expect(response.headers()['x-content-type-options']).toBe('nosniff');
+  }
+
+  const sales = await pageAs('sales');
+  for (const [name, id] of Object.entries(restrictedIds)) {
+    const response = await sales.request.get(`/attachments/${id}/download`, { failOnStatusCode: false });
+    expect(response.status(), `sales must not download ${name} through the panel`).toBe(403);
+  }
+});
+
+test('the restricted files have no public /storage URL, while an ordinary one still has', async ({ request }) => {
+  // The seeder keeps all four under attachments/e2e/. The three drawings sit on
+  // the private disk, so the web server has nothing to serve for them.
+  for (const name of RESTRICTED) {
+    const response = await request.get(`/storage/attachments/e2e/${name}`, { failOnStatusCode: false, maxRedirects: 0 });
+    expect(response.status(), `GET /storage/attachments/e2e/${name} must be a 404`).toBe(404);
+  }
+
+  // The same URL shape does work for the unrestricted BOQ, so the 404 above is
+  // the move to the private disk and not a mistyped path.
+  const boq = await request.get(`/storage/attachments/e2e/${OPEN}`, { failOnStatusCode: false });
+  expect(boq.status(), 'the ordinary attachment is still served from /storage').toBe(200);
+});
+
 test('the category filter cannot be used to reach a restricted category', async ({ playwright, baseURL }) => {
   const api = await apiAs(playwright, baseURL!, 'sales');
   const response = await api.get('/api/v1/attachments', {

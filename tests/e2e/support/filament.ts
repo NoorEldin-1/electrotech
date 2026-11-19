@@ -62,7 +62,7 @@ export async function chooseOption(page: Page, label: RegExp, option: string | R
 
   const search = wrapper.locator('input[type="search"]');
   if (await search.count()) {
-    const typed = typeof option === 'string' ? option : option.source.replace(/\/g, '');
+    const typed = typeof option === 'string' ? option : option.source.replace(/\\/g, '');
     await search.first().fill(typed.slice(0, 40));
   }
 
@@ -72,7 +72,7 @@ export async function chooseOption(page: Page, label: RegExp, option: string | R
 /** Submit the page's main form (create / edit / action modal). */
 export async function submitForm(page: Page): Promise<void> {
   await page
-    .locator('form[wire\:submit="save"] button[type="submit"], form[wire\:submit="create"] button[type="submit"]')
+    .locator('form[wire\\:submit="save"] button[type="submit"], form[wire\\:submit="create"] button[type="submit"]')
     .first()
     .click();
 }
@@ -131,6 +131,6 @@ export function normalizeNumbers(text: string): string {
 export function containsAmount(text: string, amount: number): boolean {
   const plain = normalizeNumbers(text);
   const whole = Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
-  const pattern = new RegExp(`(^|[^\d.])${whole.replace('.', '\.')}(\.0+)?(?![\d])`);
+  const pattern = new RegExp(`(^|[^\\d.])${whole.replace('.', '\\.')}(\\.0+)?(?![\\d])`);
   return pattern.test(plain);
 }

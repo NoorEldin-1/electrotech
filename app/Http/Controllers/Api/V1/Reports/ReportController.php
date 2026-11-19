@@ -346,7 +346,9 @@ class ReportController extends ApiController
      * `interactions` is a separate feed beside the stages, not a stage: the
      * latest 20 customer communications (calls, meetings, messages) logged on
      * the operation, newest first, with the operation's `total`. It never
-     * changes the eighteen stage keys.
+     * changes the eighteen stage keys. The feed holds the customer-interactions
+     * log, so it is filled only for callers with the `customer_interactions.view`
+     * permission; for everyone else it is `{"total":0,"items":[]}`.
      *
      * @authenticated
      *
@@ -383,6 +385,13 @@ class ReportController extends ApiController
      */
     private function interactionFeed(Project $project): array
     {
+        // The notes are the customer-interactions log, which has its own
+        // permission: a timeline viewer without `customer_interactions.view`
+        // gets an empty feed (and the query is not even run).
+        if (! (request()->user()?->can('customer_interactions.view') ?? false)) {
+            return ['total' => 0, 'items' => []];
+        }
+
         $feed = $this->timeline->interactionsFor($project);
 
         return [

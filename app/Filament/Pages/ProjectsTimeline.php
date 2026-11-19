@@ -186,7 +186,13 @@ class ProjectsTimeline extends Page implements HasTable
             }
             $service = app(OperationTimelineService::class);
             $this->timelines = ($this->timelines ?? []) + $service->forMany($collection);
-            $this->interactionFeeds += $service->interactionsForMany($collection);
+
+            // The calls and notes are the customer-interactions log: without
+            // `customer_interactions.view` they are neither read nor shipped to
+            // the browser (the payload then carries an empty feed).
+            if ($this->canSeeInteractions()) {
+                $this->interactionFeeds += $service->interactionsForMany($collection);
+            }
         }
 
         return app(OperationTimelineService::class)->summary($record, $this->timelines[$record->getKey()]);
@@ -250,8 +256,8 @@ class ProjectsTimeline extends Page implements HasTable
                 ], OperationTimelineService::GROUPS),
                 // التواصل مع العميل — a feed beside the stages, never a stage.
                 'interactions' => [
-                    'total' => $this->interactionFeeds[$record->getKey()]['total'],
-                    'items' => $this->interactionFeeds[$record->getKey()]['items']->map(fn (array $item): array => [
+                    'total' => $this->interactionFeeds[$record->getKey()]['total'] ?? 0,
+                    'items' => ($this->interactionFeeds[$record->getKey()]['items'] ?? collect())->map(fn (array $item): array => [
                         'at' => $item['at']->format('Y-m-d H:i'),
                         'kind' => $item['channel_label'] ?? $item['type_label'],
                         'summary' => $item['summary'],
@@ -264,6 +270,11 @@ class ProjectsTimeline extends Page implements HasTable
         }
 
         return $payload;
+    }
+
+    private function canSeeInteractions(): bool
+    {
+        return (bool) auth()->user()?->can('customer_interactions.view');
     }
 
     /**

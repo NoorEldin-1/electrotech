@@ -6,7 +6,10 @@
     ViewProject / EditProject.
 --}}
 @php($record = $getRecord())
-@if ($record)
+{{-- The calls and notes are the customer-interactions log: without
+     customer_interactions.view nothing of it is read or shown, whatever section
+     this view ends up in. --}}
+@if ($record && (auth()->user()?->can('customer_interactions.view') ?? false))
     @php($canLog = auth()->user()?->can('customer_interactions.manage') ?? false)
     @php($feed = app(\App\Services\OperationTimelineService::class)->interactionsFor($record, 5))
 

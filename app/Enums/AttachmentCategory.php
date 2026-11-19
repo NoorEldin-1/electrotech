@@ -170,6 +170,38 @@ enum AttachmentCategory: string implements HasIcon, HasLabel
         return array_map(fn (self $c): string => $c->value, self::restricted());
     }
 
+    /** Filesystem disk of ordinary attachments (linked to public/storage). */
+    public const PUBLIC_DISK = 'public';
+
+    /**
+     * Filesystem disk of the restricted drawings: private, no public URL,
+     * readable only through the permission-checked download routes.
+     */
+    public const RESTRICTED_DISK = 'restricted';
+
+    /**
+     * The disk this category's files live on. Restricted drawings are kept off
+     * the public disk, where anyone who guessed `/storage/attachments/...`
+     * could fetch them with no permission check at all.
+     */
+    public function storageDisk(): string
+    {
+        return $this->isRestricted() ? self::RESTRICTED_DISK : self::PUBLIC_DISK;
+    }
+
+    /**
+     * Same as storageDisk() for a stored category value; an unknown or empty
+     * value falls back to the public disk, where legacy rows live.
+     */
+    public static function diskFor(self|string|null $category): string
+    {
+        if (is_string($category)) {
+            $category = self::tryFrom($category);
+        }
+
+        return $category?->storageDisk() ?? self::PUBLIC_DISK;
+    }
+
     /**
      * Whether the given user (defaults to the signed-in one) may see files of
      * the restricted categories. A guest or a user without the permission may

@@ -66,7 +66,9 @@ class CustomerCommunicationApiTest extends ApiTestCase
             'next_follow_up_at' => '2026-09-08 09:00:00',
         ])->assertCreated();
 
-        $response = $this->actingAsApi($this->userWith(['operations.timeline']))
+        // The feed is the customer-interactions log, so reading it takes that
+        // permission on top of the timeline's own.
+        $response = $this->actingAsApi($this->userWith(['operations.timeline', 'customer_interactions.view']))
             ->apiGet(self::BASE."/projects/{$project->id}/timeline");
 
         $response->assertOk();

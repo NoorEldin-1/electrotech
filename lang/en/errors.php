@@ -180,6 +180,8 @@ return [
         'reserve_exceeds_available' => "Cannot reserve :quantity of ':item'. Only :available available in :warehouse.",
         'facility_exceeds_available' => "Cannot allocate :amount from ':facility'. Only :available available on the facility.",
         'completion_blocked' => "The operation ':operation' cannot be completed yet. :reasons",
+        'force_complete_forbidden' => 'You are not allowed to complete an operation by exception.',
+        'force_complete_reason_required' => 'A reason is required to complete an operation by exception.',
         'blockers' => [
             'manufacturing_not_finished' => 'Work order :number has not been marked finished by the factory manager yet.',
             'quality_sheet_not_passed' => 'Work order :number has no approved quality sheet.',

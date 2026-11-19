@@ -8,6 +8,7 @@ use App\Enums\ProjectStatus;
 use App\Filament\Resources\ActiveProjectResource\Pages;
 use App\Models\Project;
 use App\Services\OperationLifecycleService;
+use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -145,6 +146,46 @@ class ActiveProjectResource extends Resource
                         ->action(fn (Project $record) => static::runLifecycle(
                             fn () => app(OperationLifecycleService::class)->markCompleted($record),
                             __('resources.operations.notifications.completed'),
+                        )),
+
+                    // إنهاء استثنائي: for an in-flight operation that has none of
+                    // the manufacturing / quality / delivery records the gate
+                    // asks for (it would stay open forever). General Manager
+                    // and Admin only; a reason is mandatory and is written to
+                    // the activity log together with the blockers it waived.
+                    Tables\Actions\Action::make('force_complete')
+                        ->label(__('resources.operation_force_complete.action'))
+                        ->icon('heroicon-o-shield-exclamation')
+                        ->color('danger')
+                        ->visible(fn () => auth()->user()?->can(OperationLifecycleService::FORCE_COMPLETE_PERMISSION) ?? false)
+                        ->modalHeading(__('resources.operation_force_complete.heading'))
+                        ->modalSubmitActionLabel(__('resources.operation_force_complete.submit'))
+                        ->modalDescription(function (Project $record): HtmlString {
+                            $html = e(__('resources.operation_force_complete.description'));
+                            $blockers = app(OperationLifecycleService::class)->completionBlockers($record);
+
+                            if ($blockers !== []) {
+                                $items = collect($blockers)
+                                    ->map(fn (string $reason) => '<li>'.e($reason).'</li>')
+                                    ->implode('');
+
+                                $html .= '<ul class="mt-2 list-disc text-start ps-5">'.$items.'</ul>';
+                            }
+
+                            return new HtmlString($html);
+                        })
+                        ->form([
+                            Forms\Components\Textarea::make('reason')
+                                ->label(__('resources.operation_force_complete.reason'))
+                                ->helperText(__('resources.operation_force_complete.reason_help'))
+                                ->required()
+                                ->maxLength(1000)
+                                ->rows(3),
+                        ])
+                        ->action(fn (Project $record, array $data) => static::runLifecycle(
+                            fn () => app(OperationLifecycleService::class)
+                                ->forceComplete($record, (string) ($data['reason'] ?? ''), auth()->user()),
+                            __('resources.operation_force_complete.notification'),
                         )),
                 ])
                     ->tooltip(__('resources.common.actions')),

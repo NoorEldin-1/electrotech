@@ -11,8 +11,10 @@ use App\Enums\WorkOrderStatus;
 use App\Models\DeliveryVoucherLine;
 use App\Models\Item;
 use App\Models\Project;
+use App\Models\User;
 use App\Models\WorkOrder;
 use DomainException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * الإدارة العامة — drives the operation lifecycle AFTER activation (سلايد 2:
@@ -32,6 +34,9 @@ class OperationLifecycleService
      * Tolerance when comparing decimal(…,4) quantities.
      */
     private const QUANTITY_EPSILON = 0.0001;
+
+    /** Permission that unlocks forceComplete(): General Manager and Admin. */
+    public const FORCE_COMPLETE_PERMISSION = 'operations.force_complete';
 
     /**
      * Mark an active (or on-hold) operation as completed — supply/installation
@@ -57,6 +62,61 @@ class OperationLifecycleService
 
         $project->status = ProjectStatus::Completed;
         $project->save();
+    }
+
+    /**
+     * إنهاء استثنائي — end an operation WITHOUT passing the completion gate
+     * (ruling G1). It exists for the operations that are already in flight and
+     * have no manufacturing / quality / delivery record to satisfy the three
+     * conditions of completionBlockers(), which would otherwise stay open
+     * forever. It is deliberately heavier than markCompleted():
+     *
+     *   - the acting user must hold `operations.force_complete`
+     *     (General Manager and Admin),
+     *   - a reason is mandatory,
+     *   - the reason, the user and the blockers that were bypassed are written
+     *     to the activity log (event `force_completed`) in the same transaction
+     *     as the status change.
+     *
+     * @throws DomainException if the user may not, the reason is blank, or the
+     *                         operation is not active / on hold
+     */
+    public function forceComplete(Project $project, string $reason, User $by): void
+    {
+        if (! $by->can(self::FORCE_COMPLETE_PERMISSION)) {
+            throw new DomainException(__('errors.operations.force_complete_forbidden'));
+        }
+
+        $reason = trim($reason);
+
+        if ($reason === '') {
+            throw new DomainException(__('errors.operations.force_complete_reason_required'));
+        }
+
+        $this->assertStatus($project, [ProjectStatus::InProgress, ProjectStatus::OnHold]);
+
+        // What the gate would have said — kept as evidence of what was waived.
+        $bypassed = $this->completionBlockers($project);
+        $previous = $project->status;
+
+        DB::transaction(function () use ($project, $reason, $by, $bypassed, $previous): void {
+            $project->status = ProjectStatus::Completed;
+            $project->save();
+
+            activity()
+                ->performedOn($project)
+                ->causedBy($by)
+                ->event('force_completed')
+                ->withProperties([
+                    'old' => ['status' => $previous?->value],
+                    'attributes' => [
+                        'status' => ProjectStatus::Completed->value,
+                        'force_complete_reason' => $reason,
+                    ],
+                    'bypassed_blockers' => $bypassed,
+                ])
+                ->log("Operation '{$project->name}' was completed by exception: {$reason}");
+        });
     }
 
     /**

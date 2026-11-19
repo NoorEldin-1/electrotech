@@ -11,6 +11,7 @@ use App\Enums\ProjectStatus;
 use App\Filament\Resources\ProjectResource\Pages;
 use App\Filament\Support\MoneyInput;
 use App\Filament\Support\PhoneInput;
+use App\Models\Attachment;
 use App\Models\Customer;
 use App\Models\Project;
 use Filament\Forms;
@@ -300,7 +301,7 @@ class ProjectResource extends Resource
 
     protected static function attachmentUpload(AttachmentCategory $category): Forms\Components\FileUpload
     {
-        return Forms\Components\FileUpload::make("attachments_{$category->value}")
+        $upload = Forms\Components\FileUpload::make("attachments_{$category->value}")
             ->label(__('resources.enums.attachment_category.'.$category->value))
             ->multiple()
             ->preserveFilenames()
@@ -318,7 +319,11 @@ class ProjectResource extends Resource
             ->disabled(fn (): bool => ! (auth()->user()?->can('attachments.upload') ?? false))
             ->maxSize(40960) // 40 MB — kept in sync with config/livewire.php temporary_file_upload rules
             ->directory(fn (?Project $record) => 'attachments/'.($record?->id ?? 'new').'/'.$category->value)
-            ->disk('public')
+                // Ordinary categories live on the public disk; the restricted
+                // drawings on the private `restricted` disk (no public URL),
+                // stored with private visibility.
+            ->disk($category->storageDisk())
+            ->visibility($category->isRestricted() ? 'private' : 'public')
                 // Restricted drawings (Task 5 / R3): the upload control for the
                 // preliminary / executive drawing and the site measurements
                 // exists only for holders of the permission. A hidden field is
@@ -335,6 +340,32 @@ class ProjectResource extends Resource
                         ->all()
                 );
             });
+
+        if ($category->isRestricted()) {
+            // A private disk has no URL (and no temporary URL) to hand the
+            // browser, so the download / open buttons point at the
+            // permission-checked route instead. A path with no attachment row
+            // yet (a fresh upload not saved) has nothing to link and is left out.
+            $upload->getUploadedFileUsing(function (string $file) use ($category): ?array {
+                $attachment = Attachment::query()
+                    ->where('category', $category->value)
+                    ->where('file_path', $file)
+                    ->first();
+
+                if ($attachment === null || ! $attachment->isVisibleTo()) {
+                    return null;
+                }
+
+                return [
+                    'name' => $attachment->file_name,
+                    'size' => (int) $attachment->file_size,
+                    'type' => $attachment->file_type,
+                    'url' => route('attachments.download', ['attachment' => $attachment->getKey()]),
+                ];
+            });
+        }
+
+        return $upload;
     }
 
     public static function table(Table $table): Table
@@ -416,6 +447,15 @@ class ProjectResource extends Resource
                                 ->options(collect(ProjectStatus::cases())
                                     ->reject(fn (ProjectStatus $s) => $s === ProjectStatus::Completed)
                                     ->mapWithKeys(fn (ProjectStatus $s) => [$s->value => $s->getLabel()])
+                                    ->all())
+                                // A Select does not check the submitted value
+                                // against its options, so a tampered Livewire
+                                // payload could still send "completed" and slip
+                                // past the gate. Reject anything not offered.
+                                ->in(collect(ProjectStatus::cases())
+                                    ->reject(fn (ProjectStatus $s) => $s === ProjectStatus::Completed)
+                                    ->map(fn (ProjectStatus $s) => $s->value)
+                                    ->values()
                                     ->all())
                                 ->default($r->status === ProjectStatus::Completed ? null : $r->status?->value)
                                 ->required(),

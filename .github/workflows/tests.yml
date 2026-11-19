@@ -83,7 +83,11 @@ jobs:
       contents: read
 
     # Real environment variables win over .env (phpdotenv never overwrites
-    # them), so the run needs no edits to the copied .env.example.
+    # them) for every artisan command. `php artisan serve` is the exception: it
+    # hands its child server only a short allow-list of variables and lets the
+    # rest come from .env, so "Prepare the application" also writes these same
+    # values into .env — otherwise the served app would quietly fall back to
+    # the .env.example values (another database, cache, locale).
     env:
       APP_ENV: local
       APP_DEBUG: 'true'
@@ -135,6 +139,17 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
+      - name: Install Playwright
+        working-directory: tests/e2e
+        run: npm install --no-audit --no-fund
+
+      # Fail fast, before the application is built, migrated and seeded: a typo
+      # or a mangled escape in a spec would otherwise only surface as a cryptic
+      # load failure inside Playwright at the very end of the job.
+      - name: Type-check the E2E suite
+        working-directory: tests/e2e
+        run: npx tsc --noEmit -p .
+
       - name: Build frontend assets
         run: |
           npm ci --no-audit --no-fund
@@ -144,6 +159,16 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
+          # Mirror the job environment into .env (drop the .env.example line of
+          # the same name first, so the served app and the artisan commands
+          # agree on every one of these).
+          for key in APP_ENV APP_DEBUG APP_URL APP_LOCALE APP_FALLBACK_LOCALE \
+                     DB_CONNECTION DB_DATABASE CACHE_STORE PERMISSION_CACHE_STORE \
+                     SESSION_DRIVER QUEUE_CONNECTION MAIL_MAILER BCRYPT_ROUNDS \
+                     NETWORK_RESILIENCE_ENABLED; do
+            sed -i "/^${key}=/d" .env
+            printf '%s=%s\n' "$key" "${!key}" >> .env
+          done
           touch "$DB_DATABASE"
           mkdir -p storage/app/e2e
           php artisan storage:link
@@ -154,10 +179,6 @@ jobs:
         run: |
           php artisan migrate:fresh --seed --force
           php artisan db:seed --class='Database\Seeders\E2eSeeder' --force
-
-      - name: Install Playwright
-        working-directory: tests/e2e
-        run: npm install --no-audit --no-fund
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4

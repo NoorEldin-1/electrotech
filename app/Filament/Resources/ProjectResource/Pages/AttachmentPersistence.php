@@ -35,7 +35,6 @@ final class AttachmentPersistence
      */
     public static function sync(Project $project, array $byCategory): void
     {
-        $disk = Storage::disk('public');
         $submittalAdded = false;
 
         foreach ($byCategory as $categoryValue => $filePaths) {
@@ -46,6 +45,11 @@ final class AttachmentPersistence
             if (AttachmentCategory::tryFrom((string) $categoryValue)?->isViewableBy() === false) {
                 continue;
             }
+
+            // The restricted drawings live on the private `restricted` disk,
+            // everything else on `public` (the FileUpload of each category is
+            // configured with the same disk, so the paths below are on it).
+            $disk = Storage::disk(AttachmentCategory::diskFor((string) $categoryValue));
 
             // Move any not-yet-scoped uploads into attachments/{id}/{category}
             // before we compare against what's already stored.

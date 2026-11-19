@@ -3,7 +3,7 @@ import { apiAs } from '../support/api';
 import { projectId } from '../support/artisan';
 import { chooseOption, confirmModal, fillField, modal, notification, open, submitForm } from '../support/filament';
 import { expect, test } from '../support/fixtures';
-import { hasKey, rxExact } from '../support/lang';
+import { rxExact } from '../support/lang';
 
 /**
  * Final_Modifications Task 4: calls and notes with the customer are logged
@@ -45,14 +45,8 @@ test('a call logged on the customer interactions screen appears on the timeline 
 
   await open(page, '/admin/customer-interactions/create');
   await chooseOption(page, rxExact('resources.customer_interactions.fields.operation'), CODE);
+  await fillField(page, rxExact('resources.customer_communication.fields.summary'), note);
   await fillField(page, rxExact('resources.customer_interactions.fields.notes'), note);
-  if (hasKey('resources.customer_interactions.fields.summary')) {
-    // Task 4 adds a summary next to the notes; fill it when the form has it.
-    const summary = page.locator('.fi-fo-field-wrp').filter({ has: page.locator('label', { hasText: rxExact('resources.customer_interactions.fields.summary') }) });
-    if (await summary.count()) {
-      await summary.last().locator('input, textarea').first().fill(note);
-    }
-  }
   await submitForm(page);
 
   // Saved (the toast survives the redirect), and the new entry is on the list.
@@ -96,8 +90,15 @@ test('the quick log action on the project page records a call that reaches the t
   const dialog = modal(page);
   await expect(dialog).toBeVisible();
 
-  // Details/summary text, whatever the textarea is called.
-  await dialog.locator('textarea').first().fill(note);
+  // The summary is required; the details textarea is optional.
+  const summary = dialog
+    .locator('.fi-fo-field-wrp')
+    .filter({ has: dialog.locator('label', { hasText: rxExact('resources.customer_communication.fields.summary') }) })
+    .locator('input:not([type="hidden"])')
+    .first();
+  await expect(summary).toBeVisible();
+  await summary.fill(note);
+  await dialog.locator('textarea').first().fill(`${note} (details)`);
   await confirmModal(page);
   await expect(dialog).toBeHidden();
 

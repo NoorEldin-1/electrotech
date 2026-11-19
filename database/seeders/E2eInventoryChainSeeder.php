@@ -22,10 +22,10 @@ use App\Services\AdditionVoucherService;
 use App\Services\DeliveryVoucherService;
 use App\Services\IssueVoucherService;
 use App\Services\WorkOrderService;
+use Database\Seeders\Concerns\GuardsE2eEnvironment;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
 
 /**
  * The inventory chain of the Final_Modifications plan (Tasks 6-8), driven
@@ -49,13 +49,14 @@ use RuntimeException;
  */
 class E2eInventoryChainSeeder extends Seeder
 {
+    use GuardsE2eEnvironment;
+
     public const SNAPSHOT = 'e2e/chain.json';
 
     public function run(): void
     {
-        if (app()->isProduction()) {
-            throw new RuntimeException('E2eInventoryChainSeeder must never run in production.');
-        }
+        // Posts real journal entries: local / testing on sqlite only.
+        $this->guardE2eEnvironment();
 
         if (Item::query()->where('sku', 'E2E-RAW-COPPER')->exists()) {
             $this->writeSnapshot();

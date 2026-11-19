@@ -20,7 +20,7 @@ function load(): Dump {
 }
 
 function escapeRegExp(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\]/g, '\$&');
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /** The text of a key in both locales, with `:placeholders` cut off. */

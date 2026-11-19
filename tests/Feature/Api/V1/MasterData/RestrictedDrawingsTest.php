@@ -32,6 +32,8 @@ class RestrictedDrawingsTest extends ApiTestCase
         parent::setUp();
 
         Storage::fake('public');
+        // The three drawings live on their own private disk.
+        Storage::fake('restricted');
     }
 
     // ------------------------------------------------------------------ enum
@@ -190,7 +192,7 @@ class RestrictedDrawingsTest extends ApiTestCase
             ->assertForbidden();
 
         $this->assertNotSoftDeleted('attachments', ['id' => $drawing->id]);
-        Storage::disk('public')->assertExists($drawing->file_path);
+        Storage::disk('restricted')->assertExists($drawing->file_path);
     }
 
     public function test_the_restriction_follows_the_category_on_any_owner_type(): void
@@ -269,7 +271,7 @@ class RestrictedDrawingsTest extends ApiTestCase
             'category' => AttachmentCategory::PreliminaryDrawing->value,
             'file_path' => 'attachments/'.$project->id.'/upload/old.pdf',
         ]);
-        Storage::disk('public')->put($existing->file_path, 'x');
+        Storage::disk('restricted')->put($existing->file_path, 'x');
 
         $this->actingAs($this->userWith(['projects.view', 'attachments.upload', 'attachments.download']));
 
@@ -284,7 +286,7 @@ class RestrictedDrawingsTest extends ApiTestCase
             ->assertHasNoActionErrors();
 
         $this->assertModelExists($existing);
-        Storage::disk('public')->assertExists($existing->file_path);
+        Storage::disk('restricted')->assertExists($existing->file_path);
         $this->assertSame(1, $project->attachments()->where('category', AttachmentCategory::Boq->value)->count());
         $this->assertSame(0, $project->attachments()->where('category', AttachmentCategory::ExecutiveDrawing->value)->count());
     }
@@ -330,7 +332,8 @@ class RestrictedDrawingsTest extends ApiTestCase
                 'category' => $category->value,
                 'uploaded_by' => $uploader->id,
             ]);
-            Storage::disk('public')->put($attachment->file_path, 'bytes-'.$attachment->id);
+            // Each category's file sits on the disk the app itself uses for it.
+            Storage::disk($category->storageDisk())->put($attachment->file_path, 'bytes-'.$attachment->id);
 
             return $attachment;
         };

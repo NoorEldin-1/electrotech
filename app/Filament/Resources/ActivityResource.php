@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ActivityResource\Pages;
+use App\Support\RestrictedActivityFilter;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
@@ -145,17 +146,9 @@ class ActivityResource extends Resource
 
         // Restricted drawings (Task 5 / R3): the log records an attachment's
         // file name and category, so the entries about a restricted drawing are
-        // hidden from anyone who may not see the file itself.
-        if (! \App\Enums\AttachmentCategory::userCanViewRestricted()) {
-            $query->where(fn (Builder $q) => $q
-                ->whereNull('subject_type')
-                ->orWhere('subject_type', '!=', \App\Models\Attachment::class)
-                ->orWhereNotIn('subject_id', \App\Models\Attachment::withTrashed()
-                    ->whereIn('category', \App\Enums\AttachmentCategory::restrictedValues())
-                    ->select('id')));
-        }
-
-        return $query;
+        // hidden from anyone who may not see the file itself. The REST API's
+        // activity log applies the very same filter.
+        return RestrictedActivityFilter::apply($query);
     }
 
     /**

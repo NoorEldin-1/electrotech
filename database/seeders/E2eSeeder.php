@@ -18,10 +18,10 @@ use App\Models\Project;
 use App\Models\QualitySheet;
 use App\Models\User;
 use App\Models\WorkOrder;
+use Database\Seeders\Concerns\GuardsE2eEnvironment;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use RuntimeException;
 
 /**
  * Deterministic data for the Playwright suite in tests/e2e (CI only).
@@ -31,7 +31,8 @@ use RuntimeException;
  * codes, names, quantities and e-mails never depend on faker's random output.
  *
  * Safe to run twice (everything is looked up by a stable key first), and it
- * refuses to run in production: it creates users with a known password.
+ * refuses to run anywhere but a local / testing environment on sqlite (see
+ * GuardsE2eEnvironment): it creates users with a known password.
  *
  * What it leaves behind:
  *  - one user per role the specs need (password: "password"), on top of the
@@ -47,6 +48,8 @@ use RuntimeException;
  */
 class E2eSeeder extends Seeder
 {
+    use GuardsE2eEnvironment;
+
     public const PASSWORD = 'password';
 
     public const CUSTOMER_NAME = 'E2E Customer Co';
@@ -67,9 +70,8 @@ class E2eSeeder extends Seeder
 
     public function run(): void
     {
-        if (app()->isProduction()) {
-            throw new RuntimeException('E2eSeeder creates accounts with a known password and must never run in production.');
-        }
+        // Known password, fixed data: local / testing on sqlite only.
+        $this->guardE2eEnvironment();
 
         // Same random sequence on every run: whatever a factory still draws
         // from faker (descriptions, phone numbers) is identical build to build.
@@ -202,8 +204,11 @@ class E2eSeeder extends Seeder
                 continue;
             }
 
-            // A real (tiny) file, so a permitted download streams something.
-            Storage::disk('public')->put($path, "%PDF-1.4\n% e2e fixture {$name}\n");
+            // A real (tiny) file, so a permitted download streams something. It
+            // goes where the app itself would put this category: the private
+            // `restricted` disk for the three drawings (no public URL), the
+            // public disk for the BOQ.
+            Storage::disk($category->storageDisk())->put($path, "%PDF-1.4\n% e2e fixture {$name}\n");
 
             Attachment::query()->create([
                 'project_id' => $project->id,

@@ -44,11 +44,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class AttachmentController extends ApiController
 {
-    /**
-     * The disk the panel already writes attachments to. Kept in one constant
-     * so the upload, the download and any future move agree by construction.
-     */
-    private const DISK = 'public';
+    // The disk a category's files live on is decided by the category itself
+    // (AttachmentCategory::storageDisk()): ordinary attachments on the public
+    // disk the panel already writes to, the restricted drawings on the private
+    // `restricted` disk that has no public URL. Upload, download and delete all
+    // ask the category, so they agree by construction.
 
     /**
      * List a record's attachments
@@ -149,7 +149,7 @@ class AttachmentController extends ApiController
         // `file_name` for display only.
         $storedName = Str::uuid()->toString().'.'.strtolower((string) $file->getClientOriginalExtension());
 
-        $path = $file->storeAs($directory, $storedName, self::DISK);
+        $path = $file->storeAs($directory, $storedName, AttachmentCategory::diskFor($category));
 
         $attachment = AttachmentOwner::relation($owner)->create([
             'file_name' => $file->getClientOriginalName(),
@@ -168,9 +168,11 @@ class AttachmentController extends ApiController
      *
      * Streams the bytes through this controller after checking the owner's
      * view policy. The raw storage path is never published: the panel keeps
-     * these files on the public disk, so handing out the direct URL would make
-     * every contract readable by anyone who guessed the path, with no
-     * permission check anywhere in the way.
+     * ordinary attachments on the public disk, so handing out the direct URL
+     * would make every contract readable by anyone who guessed the path, with
+     * no permission check anywhere in the way. The restricted drawings are
+     * stricter still — they live on a private disk with no URL at all, so this
+     * endpoint (and the panel's own download route) is the only way to read one.
      *
      * The response is a file body, not the JSON envelope.
      *
@@ -186,14 +188,16 @@ class AttachmentController extends ApiController
         $this->authorizeOwnerOf($attachment, 'view');
         $this->denyRestrictedAttachment($attachment);
 
-        $disk = Storage::disk(self::DISK);
+        $disk = Storage::disk($attachment->storageDisk());
 
         // A row whose file vanished (a manual cleanup, a restore from a
         // partial backup) is a 404 rather than a 500: the record exists, the
         // bytes do not, and the client should treat it as a missing document.
         abort_unless($disk->exists($attachment->file_path), 404);
 
-        return $disk->download($attachment->file_path, $attachment->file_name);
+        return $disk->download($attachment->file_path, $attachment->file_name, [
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     /**
@@ -213,7 +217,7 @@ class AttachmentController extends ApiController
         $this->authorizeOwnerOf($attachment, 'update');
         $this->denyRestrictedAttachment($attachment);
 
-        Storage::disk(self::DISK)->delete($attachment->file_path);
+        Storage::disk($attachment->storageDisk())->delete($attachment->file_path);
 
         $attachment->delete();
 

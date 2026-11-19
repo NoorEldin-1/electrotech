@@ -233,6 +233,10 @@ class RoleAndPermissionSeeder extends Seeder
             'operations.close_cost_center',
             'operations.activate',
             'operations.complete',
+            // إنهاء استثنائي: ends an operation that cannot pass the completion
+            // gate (legacy / in-flight ones with no manufacturing record), with
+            // a mandatory recorded reason. General Manager and Admin only.
+            'operations.force_complete',
             'operations.hold',
             'operations.reserve',
             'delivery_minutes.view',
@@ -631,6 +635,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'operations.close_cost_center',
                 'operations.activate',
                 'operations.complete',
+                'operations.force_complete',
                 'operations.hold',
                 'operations.reserve',
                 'delivery_minutes.view',

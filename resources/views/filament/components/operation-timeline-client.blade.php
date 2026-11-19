@@ -94,7 +94,10 @@
         </template>
     </div>
 
-    {{-- التواصل مع العميل: the customer-communication feed (not a stage). --}}
+    {{-- التواصل مع العميل: the customer-communication feed (not a stage). Only for
+         users who may read the customer-interactions log; the payload carries an
+         empty feed for everyone else, so there is nothing to render either way. --}}
+    @if (auth()->user()?->can('customer_interactions.view'))
     <div class="rounded-lg border border-gray-200 p-4 dark:border-[var(--border-hairline)]">
         <div class="mb-3 flex items-center justify-between gap-2">
             <div class="text-sm font-semibold text-gray-950 dark:text-[var(--dark-text)]">{{ __('resources.customer_communication.heading') }}</div>
@@ -128,4 +131,5 @@
             </template>
         </ul>
     </div>
+    @endif
 </div>

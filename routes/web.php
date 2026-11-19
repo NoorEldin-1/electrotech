@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ApiDocsController;
+use App\Http\Controllers\AttachmentDownloadController;
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\FinancialStatementPdfController;
 use App\Http\Controllers\GeneralLedgerPdfController;
@@ -109,3 +110,12 @@ Route::middleware('auth')
 Route::middleware('auth')
     ->get('work-orders/{workOrder}/material-variance/pdf', WorkOrderMaterialVariancePdfController::class)
     ->name('work_orders.material_variance.pdf');
+
+// Permission-checked attachment download. The restricted drawings (preliminary /
+// executive drawing, site measurements) are stored on the private `restricted`
+// disk with no public URL, so this route is the only way a browser reaches
+// them. Gated inside the controller by the owner's view policy plus the
+// `attachments.view_restricted_drawings` rule for the restricted categories.
+Route::middleware('auth')
+    ->get('attachments/{attachment}/download', AttachmentDownloadController::class)
+    ->name('attachments.download');

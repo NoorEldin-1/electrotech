@@ -47,6 +47,26 @@ return [
             'report' => false,
         ],
 
+        // Restricted drawings (preliminary / executive drawing, site
+        // measurements). Deliberately NOT linked into public/: no `url`, not
+        // served by the web server, and never reachable through /storage. The
+        // only way to read a file is the permission-checked download routes
+        // (`attachments.download` and the API download endpoint).
+        'restricted' => [
+            'driver' => 'local',
+            'root' => storage_path('app/restricted'),
+            'visibility' => 'private',
+            // Owner + group only (the deploy user and the web user share a
+            // group): the migration that moves the old files and the PHP worker
+            // that serves downloads may be different OS users.
+            'permissions' => [
+                'file' => ['public' => 0640, 'private' => 0640],
+                'dir' => ['public' => 0750, 'private' => 0750],
+            ],
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

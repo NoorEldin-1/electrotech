@@ -203,7 +203,7 @@ class CustomerCommunicationTest extends TestCase
         $queries = count(DB::getQueryLog());
         DB::disableQueryLog();
 
-        $this->assertLessThanOrEqual(2, $queries, 'interactions + authors, however many operations');
+        $this->assertLessThanOrEqual(3, $queries, 'totals + ranked interactions + authors, however many operations');
         $this->assertCount(6, $feeds);
         $this->assertSame(3, $feeds[$projects->first()->id]['total']);
         $this->assertSame($author->name, $feeds[$projects->first()->id]['items'][0]['recorded_by']);

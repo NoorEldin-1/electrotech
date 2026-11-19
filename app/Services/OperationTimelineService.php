@@ -15,6 +15,7 @@ use App\Models\Installation;
 use App\Models\Project;
 use App\Models\SiteSurvey;
 use App\Models\WorkOrder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -356,9 +357,14 @@ class OperationTimelineService
      * meeting and message as a separate feed beside the stages. The 18 stage
      * keys are untouched; this is an addition to the payload, not a stage.
      *
-     * Two queries for any number of operations (the interactions, then their
-     * authors), grouped here: the newest `$limit` per operation plus the
-     * operation's total.
+     * A fixed number of queries for any number of operations, and the database
+     * never hands back more than `$limit` rows per operation:
+     *
+     *   1. the totals — one grouped COUNT,
+     *   2. the newest `$limit` entries per operation — ranked in SQL with
+     *      ROW_NUMBER() OVER (PARTITION BY project_id ...), so an operation with
+     *      thousands of logged calls costs no more than one with twenty,
+     *   3. the authors of those entries (eager load).
      *
      * @param  Collection<int, Project>  $projects
      * @return array<int, array{total: int, items: Collection<int, array<string, mixed>>}>
@@ -367,13 +373,39 @@ class OperationTimelineService
     {
         $ids = $projects->map(fn (Project $p) => $p->getKey())->values()->all();
 
-        $byProject = $ids === [] ? collect() : CustomerInteraction::query()
+        $totals = $ids === [] ? [] : CustomerInteraction::query()
             ->whereIn('project_id', $ids)
-            ->with('createdBy:id,name')
-            ->orderByDesc('interacted_at')
-            ->orderByDesc('id')
-            ->get(['id', 'project_id', 'type', 'channel', 'interacted_at', 'site_ready', 'summary', 'notes', 'next_follow_up_at', 'created_by'])
-            ->groupBy('project_id');
+            ->groupBy('project_id')
+            ->selectRaw('project_id, COUNT(*) as total')
+            ->toBase()
+            ->get()
+            ->mapWithKeys(fn (object $row): array => [$row->project_id => (int) $row->total])
+            ->all();
+
+        $byProject = collect();
+
+        if ($ids !== [] && $limit > 0) {
+            $columns = ['id', 'project_id', 'type', 'channel', 'interacted_at', 'site_ready', 'summary', 'notes', 'next_follow_up_at', 'created_by'];
+
+            // Rank each operation's entries newest first (id breaks ties)...
+            $ranked = CustomerInteraction::query()
+                ->whereIn('project_id', $ids)
+                ->select($columns)
+                ->selectRaw('ROW_NUMBER() OVER (PARTITION BY project_id ORDER BY interacted_at DESC, id DESC) as feed_rank');
+
+            // ...and keep the first `$limit` of every operation. Soft-deleted
+            // rows were already left out inside; the outer query reads the
+            // derived table, which has no deleted_at column to scope on.
+            $byProject = CustomerInteraction::query()
+                ->withoutGlobalScope(SoftDeletingScope::class)
+                ->fromSub($ranked, 'customer_interactions')
+                ->where('feed_rank', '<=', $limit)
+                ->with('createdBy:id,name')
+                ->orderBy('project_id')
+                ->orderBy('feed_rank')
+                ->get($columns)
+                ->groupBy('project_id');
+        }
 
         $feeds = [];
         foreach ($ids as $id) {
@@ -381,8 +413,8 @@ class OperationTimelineService
             $rows = $byProject->get($id, collect());
 
             $feeds[$id] = [
-                'total' => $rows->count(),
-                'items' => $rows->take($limit)->map(fn (CustomerInteraction $i): array => [
+                'total' => $totals[$id] ?? 0,
+                'items' => $rows->map(fn (CustomerInteraction $i): array => [
                     'id' => $i->id,
                     'at' => $i->interacted_at,
                     'type' => $i->type->value,

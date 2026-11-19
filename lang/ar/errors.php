@@ -175,6 +175,8 @@ return [
         'reserve_exceeds_available' => "لا يمكن حجز :quantity من الصنف ':item'. المتاح فقط :available في :warehouse.",
         'facility_exceeds_available' => "لا يمكن تخصيص :amount من التسهيل ':facility'. المتاح فقط :available.",
         'completion_blocked' => "لا يمكن إنهاء العملية ':operation' بعد. :reasons",
+        'force_complete_forbidden' => 'لا تملك صلاحية الإنهاء الاستثنائي للعملية.',
+        'force_complete_reason_required' => 'سبب الإنهاء الاستثنائي مطلوب.',
         'blockers' => [
             'manufacturing_not_finished' => 'أمر التصنيع :number لم يضغط مدير المصنع «انتهاء التصنيع» عليه بعد.',
             'quality_sheet_not_passed' => 'أمر التصنيع :number ليس له ورقة جودة معتمدة.',

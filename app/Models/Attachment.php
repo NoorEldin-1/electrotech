@@ -81,6 +81,15 @@ class Attachment extends Model
         return $category === null || $category->isViewableBy($user);
     }
 
+    /**
+     * The filesystem disk holding this attachment's file: the private
+     * `restricted` disk for the restricted drawings, `public` for the rest.
+     */
+    public function storageDisk(): string
+    {
+        return AttachmentCategory::diskFor($this->category);
+    }
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);

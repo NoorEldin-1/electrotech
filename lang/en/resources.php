@@ -1810,6 +1810,19 @@ return [
         ],
     ],
 
+    // Complete by exception (Final_Modifications fix wave B / G1): ending an
+    // operation that cannot pass the completion gate, with a mandatory recorded
+    // reason.
+    'operation_force_complete' => [
+        'action' => 'Complete by exception',
+        'heading' => 'Complete the operation by exception',
+        'description' => 'This bypasses the usual completion conditions (manufacturing finished, approved quality sheet, activated delivery). Use it for in-flight operations that have none of those records. Your reason is recorded under your name in the activity log.',
+        'reason' => 'Reason for completing by exception',
+        'reason_help' => 'Required. It appears in the activity log.',
+        'submit' => 'Complete by exception',
+        'notification' => 'Operation completed by exception.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Stock Reservations (الإدارة العامة — حجز الكمية للعملية)
@@ -2797,6 +2810,7 @@ return [
                 'close_cost_center' => 'Close Operation Cost Center',
                 'activate' => 'Activate Operation',
                 'complete' => 'Complete Operation',
+                'force_complete' => 'Complete Operation by Exception (with a reason)',
                 'hold' => 'Put Operation On Hold',
                 'reserve' => 'Reserve Stock for Operation',
                 'timeline' => 'View Operations Timeline',
@@ -2913,6 +2927,7 @@ return [
             'updated' => 'Updated',
             'deleted' => 'Deleted',
             'restored' => 'Restored',
+            'force_completed' => 'Completed by exception',
         ],
 
         'log_names' => [
@@ -2930,6 +2945,7 @@ return [
         | per-model fields/columns translations don't cover the key.
         */
         'field_labels' => [
+            'force_complete_reason' => 'Reason for completing by exception',
             'name' => 'Name',
             'code' => 'Code',
             'sku' => 'SKU',

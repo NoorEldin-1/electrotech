@@ -1,6 +1,6 @@
 import { apiAs } from '../support/api';
 import { projectId, seed } from '../support/artisan';
-import { confirmModal, menuItem, notification, open, openRowActions, tableRow } from '../support/filament';
+import { confirmModal, menuItem, modal, notification, open, openRowActions, tableRow } from '../support/filament';
 import { expect, test } from '../support/fixtures';
 import { rx } from '../support/lang';
 
@@ -39,19 +39,24 @@ async function completeEntry(page: import('@playwright/test').Page, code: string
   return menuItem(panel, COMPLETE());
 }
 
-/** The tooltip Filament puts on an action (it is an `x-tooltip` attribute on the entry). */
-async function tooltipOf(entry: import('@playwright/test').Locator): Promise<string> {
-  return entry.evaluate((el) => (el.closest('[x-tooltip]') ?? el).getAttribute('x-tooltip') ?? el.outerHTML);
-}
-
-test('an operation with unfinished work cannot be completed: the action is disabled and says why', async ({ pageAs, playwright, baseURL }) => {
+test('an operation with unfinished work cannot be completed: the modal says why and confirming is refused', async ({ pageAs, playwright, baseURL }) => {
   const page = await pageAs('generalManager');
   const entry = await completeEntry(page, 'E2E-GATE-BLOCKED');
 
+  // The action is offered (a disabled entry inside the dropdown could not
+  // explain itself); its confirmation modal lists what is missing.
   await expect(entry).toBeVisible();
-  await expect(entry).toBeDisabled();
-  // The tooltip names the manufacturing order that is still open.
-  expect(await tooltipOf(entry)).toContain('WO-E2E-GATE-BLOCKED');
+  await expect(entry).toBeEnabled();
+  await entry.click();
+
+  const dialog = modal(page);
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('WO-E2E-GATE-BLOCKED');
+  await expect(dialog).toContainText(rx('resources.operations.completion_blocked_tooltip'));
+
+  // Confirming anyway is refused: a danger notification, status unchanged.
+  await confirmModal(page);
+  await expect(notification(page, rx('resources.common.action_failed'))).toBeVisible();
 
   expect(await statusOfOperation(playwright, baseURL!, 'E2E-GATE-BLOCKED')).toBe('in_progress');
 });
@@ -85,17 +90,24 @@ test('a finished, inspected and delivered operation is completed by the general 
 test('blocked until the last delivery is activated, then the factory manager can complete it', async ({ pageAs, playwright, baseURL }) => {
   const page = await pageAs('factory');
 
-  // Still blocked: manufactured and inspected, but only a draft delivery voucher.
+  // Still blocked: manufactured and inspected, but only a draft delivery
+  // voucher. The modal names the missing delivery, and confirming is refused.
   const blocked = await completeEntry(page, 'E2E-GATE-STEP');
-  await expect(blocked).toBeDisabled();
+  await expect(blocked).toBeEnabled();
+  await blocked.click();
+  await expect(modal(page)).toContainText(rx('errors.operations.blockers.no_active_delivery'));
+  await confirmModal(page);
+  await expect(notification(page, rx('resources.common.action_failed'))).toBeVisible();
+  expect(await statusOfOperation(playwright, baseURL!, 'E2E-GATE-STEP')).toBe('in_progress');
 
   // The missing piece happens (the delivery voucher gets activated) ...
   seed('Database\\Seeders\\E2eActivateDeliverySeeder');
 
-  // ... and the very same screen now offers the action.
+  // ... and the very same screen now confirms without listing any blocker.
   const unblocked = await completeEntry(page, 'E2E-GATE-STEP');
   await expect(unblocked).toBeEnabled();
   await unblocked.click();
+  await expect(modal(page)).not.toContainText(rx('errors.operations.blockers.no_active_delivery'));
   await confirmModal(page);
 
   await expect(notification(page, rx('resources.operations.notifications.completed'))).toBeVisible();

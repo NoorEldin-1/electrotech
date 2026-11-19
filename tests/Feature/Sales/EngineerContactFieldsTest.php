@@ -60,7 +60,10 @@ class EngineerContactFieldsTest extends TestCase
 
     public function test_engineer_contact_fields_are_updated_from_the_edit_form(): void
     {
-        $project = Project::factory()->create();
+        // customer_id is a required field of the form, and the factory leaves
+        // it empty: without a customer the save fails on data.customer_id
+        // before the engineer fields are even looked at.
+        $project = Project::factory()->create(['customer_id' => Customer::factory()->create()->id]);
 
         Livewire::test(EditProject::class, ['record' => $project->getRouteKey()])
             ->fillForm([
@@ -83,11 +86,12 @@ class EngineerContactFieldsTest extends TestCase
 
     public function test_engineer_email_must_be_a_valid_email_on_the_form(): void
     {
-        $project = Project::factory()->create();
+        $project = Project::factory()->create(['customer_id' => Customer::factory()->create()->id]);
 
         Livewire::test(EditProject::class, ['record' => $project->getRouteKey()])
             ->fillForm(['engineer_email' => 'not-an-email'])
             ->call('save')
-            ->assertHasFormErrors(['engineer_email']);
+            ->assertHasFormErrors(['engineer_email'])
+            ->assertHasNoFormErrors(['customer_id']);
     }
 }

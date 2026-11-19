@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1\Platform;
 
 use App\Http\Api\ApiQuery;
 use App\Http\Controllers\Api\V1\ApiController;
+use App\Support\RestrictedActivityFilter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\Activitylog\Models\Activity;
@@ -27,6 +28,11 @@ use Spatie\Activitylog\Models\Activity;
  * The log grows without limit, so the index is filtered rather than browsed —
  * `filter[subject_type]` and `filter[subject_id]` together answer "what
  * happened to this record", which is the question that gets asked.
+ *
+ * **One exception to "as written" — restricted drawings.** An entry about a
+ * preliminary drawing, executive drawing or site measurement records the file
+ * name and category, so it is left out of the list for callers without the
+ * `attachments.view_restricted_drawings` permission.
  */
 class ActivityLogController extends ApiController
 {
@@ -52,7 +58,9 @@ class ActivityLogController extends ApiController
     {
         $this->authorizePermission('activity_log.view');
 
-        $activities = ApiQuery::for(Activity::query(), $request)
+        // Entries about a restricted drawing are left out unless the caller may
+        // see the file itself — the same filter the panel's activity log uses.
+        $activities = ApiQuery::for(RestrictedActivityFilter::apply(Activity::query(), $request->user()), $request)
             ->allowFilters([
                 'log_name' => ApiQuery::exact('log_name'),
                 'subject_type' => ApiQuery::exact('subject_type'),
