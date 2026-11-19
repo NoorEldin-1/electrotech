@@ -109,7 +109,8 @@ test('the quick log action on the project page records a call that reaches the t
   // The summary is required; the details textarea is optional.
   const summary = dialog
     .locator('.fi-fo-field-wrp')
-    .filter({ has: dialog.locator('label', { hasText: rxExact('resources.customer_communication.fields.summary') }) })
+    // `has` is evaluated inside each wrapper, so it must be a page-relative locator.
+    .filter({ has: page.locator('label', { hasText: rxExact('resources.customer_communication.fields.summary') }) })
     .locator('input:not([type="hidden"])')
     .first();
   await expect(summary).toBeVisible();
