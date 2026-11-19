@@ -130,7 +130,9 @@ class SalesAlertTest extends TestCase
         $sales->assignRole('Sales');
         $this->actingAs($sales);
 
-        $project = Project::factory()->create();
+        // A pinned status: the factory's random one would make a Tender raise
+        // its own "missing offer" alert on creation and double the count.
+        $project = Project::factory()->active()->create();
         $path = "attachments/{$project->id}/submittal/doc.pdf";
         Storage::disk('public')->put($path, 'PDF');
 

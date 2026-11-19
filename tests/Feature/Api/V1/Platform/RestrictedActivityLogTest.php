@@ -121,6 +121,10 @@ class RestrictedActivityLogTest extends ApiTestCase
         $plain = $this->userWith(['activity_log.view']);
         $allowed = $this->userWith(['activity_log.view', AttachmentCategory::RESTRICTED_PERMISSION]);
 
+        // Creating the two users above logged "created" entries of their own;
+        // drop them so the log again holds exactly the five setUp entries.
+        Activity::query()->where('subject_type', (new User)->getMorphClass())->delete();
+
         $viaHelper = fn (User $user): array => RestrictedActivityFilter::apply(Activity::query(), $user)->pluck('description')->sort()->values()->all();
 
         $this->actingAs($plain);

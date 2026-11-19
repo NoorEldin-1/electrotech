@@ -82,7 +82,7 @@ class ForceCompleteOperationTest extends TestCase
             app()->setLocale($locale);
 
             foreach ([
-                'resources.permissions.operations.force_complete',
+                'resources.roles.permissions.operations.force_complete',
                 'resources.operation_force_complete.action',
                 'resources.operation_force_complete.heading',
                 'resources.operation_force_complete.description',

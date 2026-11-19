@@ -209,6 +209,7 @@ class StaffAccessMatrixTest extends TestCase
     public function test_the_timeline_coordinator_adds_attachments_without_editing_the_project(): void
     {
         Storage::fake('public');
+        Storage::fake('restricted');
         $project = Project::factory()->create(['status' => ProjectStatus::InProgress, 'name' => 'Original name']);
         $user = $this->staff('asmaa.mohamed@electrotech.com');
 
@@ -233,20 +234,23 @@ class StaffAccessMatrixTest extends TestCase
         $attachment = $project->attachments()->sole();
         $this->assertSame(AttachmentCategory::PreliminaryDrawing->value, $attachment->category instanceof AttachmentCategory ? $attachment->category->value : $attachment->category);
         $this->assertSame($user->id, $attachment->uploaded_by);
-        Storage::disk('public')->assertExists($attachment->file_path);
+        // The preliminary drawing is a restricted category: private disk only.
+        Storage::disk('restricted')->assertExists($attachment->file_path);
+        Storage::disk('public')->assertMissing($attachment->file_path);
         $this->assertSame('Original name', $project->fresh()->name);
     }
 
     public function test_adding_attachments_never_removes_the_papers_already_filed(): void
     {
         Storage::fake('public');
+        Storage::fake('restricted');
         $project = Project::factory()->create(['status' => ProjectStatus::InProgress]);
         $existing = \App\Models\Attachment::factory()->create([
             'project_id' => $project->id,
             'category' => AttachmentCategory::PreliminaryDrawing->value,
             'file_path' => 'attachments/'.$project->id.'/preliminary_drawing/old.pdf',
         ]);
-        Storage::disk('public')->put($existing->file_path, 'x');
+        Storage::disk('restricted')->put($existing->file_path, 'x');
         $this->staff('asmaa.mohamed@electrotech.com');
 
         Livewire::test(ViewProject::class, ['record' => $project->getRouteKey()])
@@ -256,7 +260,7 @@ class StaffAccessMatrixTest extends TestCase
             ->assertHasNoActionErrors();
 
         $this->assertModelExists($existing);
-        Storage::disk('public')->assertExists($existing->file_path);
+        Storage::disk('restricted')->assertExists($existing->file_path);
     }
 
     public function test_a_role_changed_by_the_admin_takes_effect_at_once(): void
