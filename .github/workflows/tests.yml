@@ -73,9 +73,9 @@ jobs:
     name: E2E (placeholder)
     needs: phpunit
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('tests/e2e/package.json') != '' }}
     steps:
       - uses: actions/checkout@v4
       # Task 9 fills in the browser E2E harness here.
       - name: E2E placeholder
+        if: ${{ hashFiles('tests/e2e/package.json') != '' }}
         run: echo "E2E harness not configured yet"
