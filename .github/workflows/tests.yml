@@ -1,0 +1,81 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - main
+  workflow_call:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  phpunit:
+    name: PHPUnit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: sqlite3, pdo_sqlite, mbstring, intl, gd, zip, bcmath, fileinfo
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # Some feature tests render full Filament pages whose layout calls @vite,
+      # which needs public/build/manifest.json to exist.
+      - name: Build frontend assets
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # paratest is not in composer.json, so the suite runs serially.
+      - name: Run tests
+        run: |
+          if [ -f vendor/bin/paratest ]; then
+            php artisan test --parallel
+          else
+            php artisan test
+          fi
+
+  e2e:
+    name: E2E (placeholder)
+    needs: phpunit
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('tests/e2e/package.json') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      # Task 9 fills in the browser E2E harness here.
+      - name: E2E placeholder
+        run: echo "E2E harness not configured yet"

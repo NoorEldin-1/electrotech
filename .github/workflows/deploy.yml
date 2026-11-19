@@ -1,9 +1,11 @@
 name: Deploy to Production
 
 on:
-  push:
-    branches:
-      - main
+  # Deploy only after the `tests` workflow has finished green on main.
+  workflow_run:
+    workflows: [tests]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -14,6 +16,13 @@ jobs:
   deploy:
     name: Deploy to CyberPanel server
     runs-on: ubuntu-latest
+    # Manual runs always deploy. Automatic runs need green tests and no
+    # [no-deploy] marker in the tested commit message.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       !contains(github.event.workflow_run.head_commit.message, '[no-deploy]'))
     permissions:
       contents: read
 

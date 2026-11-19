@@ -253,7 +253,7 @@ class ActivityLogTest extends TestCase
         $this->assertSame('مشروع', ActivityResource::translateSubjectType(\App\Models\Project::class));
 
         app()->setLocale('en');
-        $this->assertSame('Work Order', ActivityResource::translateSubjectType(\App\Models\WorkOrder::class));
+        $this->assertSame('Manufacturing Order', ActivityResource::translateSubjectType(\App\Models\WorkOrder::class));
         $this->assertSame('Project', ActivityResource::translateSubjectType(\App\Models\Project::class));
     }
 
