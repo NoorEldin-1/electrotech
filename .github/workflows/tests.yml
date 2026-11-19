@@ -70,8 +70,9 @@ jobs:
           fi
 
   # Browser end-to-end suite (Playwright, tests/e2e). It runs only here: the
-  # app is migrated and seeded into a sqlite FILE database, served with
-  # `php artisan serve` (started by Playwright's webServer), and driven in
+  # app is migrated and seeded into a sqlite FILE database, served by
+  # `php -S` (tests/e2e/support/serve.sh, started in its own step and restarted
+  # if it ever dies), and driven in
   # headless chromium. The deploy workflow waits for the whole `tests`
   # workflow, so a red spec blocks the production deploy like a red PHPUnit.
   e2e:
@@ -83,11 +84,10 @@ jobs:
       contents: read
 
     # Real environment variables win over .env (phpdotenv never overwrites
-    # them) for every artisan command. `php artisan serve` is the exception: it
-    # hands its child server only a short allow-list of variables and lets the
-    # rest come from .env, so "Prepare the application" also writes these same
-    # values into .env — otherwise the served app would quietly fall back to
-    # the .env.example values (another database, cache, locale).
+    # them) for every artisan command and for the php -S server, which inherits
+    # this environment. "Prepare the application" also writes the same values
+    # into .env, so anything that reads .env alone (a tinker session, a later
+    # `php artisan serve`) sees the same database, cache and locale.
     env:
       APP_ENV: local
       APP_DEBUG: 'true'
@@ -190,9 +190,41 @@ jobs:
         working-directory: tests/e2e
         run: npx playwright install --with-deps chromium
 
+      # The server is started here, not by Playwright's webServer option, so
+      # it is not a child of the test runner and its output is kept in
+      # storage/logs/e2e-server.log (uploaded below). serve.sh restarts php -S
+      # if it dies and records the exit status.
+      - name: Start the application server
+        run: |
+          setsid nohup bash tests/e2e/support/serve.sh "$E2E_PORT" > /dev/null 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS -o /dev/null "http://127.0.0.1:${E2E_PORT}/admin/login"; then
+              echo "server is answering"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::the application server did not start"
+          cat storage/logs/e2e-server.log || true
+          exit 1
+
       - name: Run Playwright
         working-directory: tests/e2e
+        env:
+          # Tells playwright.config.ts to use the server started above.
+          E2E_BASE_URL: http://127.0.0.1:8000
         run: npx playwright test
+
+      # A php -S crash would otherwise only show up as ERR_CONNECTION_REFUSED /
+      # ERR_EMPTY_RESPONSE in a spec; the supervisor log says what happened.
+      - name: Report application server crashes
+        if: always()
+        run: |
+          if grep -q "EXITED" storage/logs/e2e-server.log 2>/dev/null; then
+            echo "::warning::php -S exited while the E2E suite was running (the supervisor restarted it)"
+            grep -n -B5 "EXITED" storage/logs/e2e-server.log | grep -v "URI:" | tail -60
+          fi
+          grep -nE "Fatal|Segmentation|Allowed memory|Maximum execution" storage/logs/e2e-server.log 2>/dev/null | tail -20 || true
 
       - name: Upload Playwright report
         if: failure()

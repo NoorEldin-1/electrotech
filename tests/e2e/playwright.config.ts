@@ -41,21 +41,20 @@ export default defineConfig({
 
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
 
-  // Skipped when something already listens on the port (local re-runs).
+  // Skipped when E2E_BASE_URL is set: CI starts the server itself in a step of
+  // its own (before Playwright), so it is not a child of this process. Locally
+  // it is also skipped when something already listens on the port.
+  //
+  // support/serve.sh runs `php -S` directly and restarts it if it ever dies;
+  // `php artisan serve` is avoided on purpose (see the header of that script).
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: `php artisan serve --host=127.0.0.1 --port=${port}`,
+        command: `bash tests/e2e/support/serve.sh ${port}`,
         cwd: repoRoot,
         url: `${baseURL}/admin/login`,
         timeout: 120_000,
         reuseExistingServer: !process.env.CI,
-        env: {
-          // Several workers so a slow Livewire request never stalls the asset
-          // requests that come with it. sqlite waits for its lock (PDO's
-          // default timeout), and the specs themselves run one at a time.
-          PHP_CLI_SERVER_WORKERS: '4',
-        },
         stdout: 'ignore',
         stderr: 'pipe',
       },
