@@ -124,7 +124,9 @@ test('the restricted files have no public /storage URL, while an ordinary one st
   // the private disk, so the web server has nothing to serve for them.
   for (const name of RESTRICTED) {
     const response = await request.get(`/storage/attachments/e2e/${name}`, { failOnStatusCode: false, maxRedirects: 0 });
-    expect(response.status(), `GET /storage/attachments/e2e/${name} must be a 404`).toBe(404);
+    // The server answers 403 or 404 depending on the web server; either way nothing is served.
+    expect([403, 404], `GET /storage/attachments/e2e/${name} must be refused (403/404), got ${response.status()}`).toContain(response.status());
+    expect((await response.body()).subarray(0, 4).toString('latin1'), `${name} must not be served as a PDF`).not.toBe('%PDF');
   }
 
   // The same URL shape does work for the unrestricted BOQ, so the 404 above is

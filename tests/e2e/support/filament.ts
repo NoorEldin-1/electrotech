@@ -98,9 +98,14 @@ export async function submitForm(page: Page): Promise<void> {
     .click();
 }
 
-/** A Filament toast whose text matches. */
+/**
+ * A Filament toast whose text matches. Only rendered (visible) toasts count:
+ * the closed database-notifications panel in the topbar holds hidden
+ * `.fi-no-notification` cards too, and `.first()` would otherwise pick one of
+ * those and wait on it forever.
+ */
 export function notification(page: Page, text: RegExp): Locator {
-  return page.locator('.fi-no-notification').filter({ hasText: text }).first();
+  return page.locator('.fi-no-notification:visible').filter({ hasText: text }).first();
 }
 
 /** The open modal window. */

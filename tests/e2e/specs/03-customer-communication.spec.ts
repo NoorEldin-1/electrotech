@@ -25,17 +25,31 @@ async function timelineOf(api: APIRequestContext, id: number) {
   expect(response.status(), 'GET /projects/{id}/timeline').toBe(200);
   return (await response.json()).data as {
     stages: Array<{ key: string }>;
-    interactions?: unknown[];
+    interactions?: { total: number; items: unknown[] };
   };
 }
 
 test('the timeline starts with its 18 stages and an empty interactions feed', async ({ playwright, baseURL }) => {
+  // Sales holds customer_interactions.view, so this is the real (empty) feed.
   const api = await apiAs(playwright, baseURL!, 'sales');
   const timeline = await timelineOf(api, projectId(CODE));
 
   expect(timeline.stages).toHaveLength(18);
-  expect(Array.isArray(timeline.interactions), 'the payload carries an `interactions` feed').toBe(true);
-  expect(timeline.interactions).toHaveLength(0);
+  // The feed is an object `{ total, items }`, not a bare array.
+  expect(timeline.interactions, 'the payload carries an `interactions` feed').toBeDefined();
+  expect(Array.isArray(timeline.interactions!.items), 'the feed lists its `items`').toBe(true);
+  expect(timeline.interactions!.items).toHaveLength(0);
+  expect(timeline.interactions!.total).toBe(0);
+  await api.dispose();
+});
+
+test('a timeline viewer without the interactions permission gets an empty feed, not the key missing', async ({ playwright, baseURL }) => {
+  // The PMO coordinator reads the timeline but does not hold customer_interactions.view.
+  const api = await apiAs(playwright, baseURL!, 'asmaa');
+  const timeline = await timelineOf(api, projectId(CODE));
+
+  expect(timeline.stages).toHaveLength(18);
+  expect(timeline.interactions).toEqual({ total: 0, items: [] });
   await api.dispose();
 });
 
