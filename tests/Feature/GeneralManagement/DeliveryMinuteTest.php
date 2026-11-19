@@ -48,7 +48,8 @@ class DeliveryMinuteTest extends TestCase
         $tech = User::factory()->create();
         $tech->assignRole('Technical_Office');
 
-        $minute = DeliveryMinute::factory()->create();
+        // An active project: a random status (e.g. Tender) fires its own alerts.
+        $minute = DeliveryMinute::factory()->create(['project_id' => Project::factory()->active()]);
         $service = app(DeliveryMinuteService::class);
 
         $service->distribute($minute);
