@@ -179,6 +179,13 @@ return [
         'claim_before_completion' => 'A financial claim can only be raised after supply and installation are complete.',
         'reserve_exceeds_available' => "Cannot reserve :quantity of ':item'. Only :available available in :warehouse.",
         'facility_exceeds_available' => "Cannot allocate :amount from ':facility'. Only :available available on the facility.",
+        'completion_blocked' => "The operation ':operation' cannot be completed yet. :reasons",
+        'blockers' => [
+            'manufacturing_not_finished' => 'Work order :number has not been marked finished by the factory manager yet.',
+            'quality_sheet_not_passed' => 'Work order :number has no approved quality sheet.',
+            'no_active_delivery' => 'The operation has no activated delivery voucher.',
+            'undelivered' => "Item ':item': :delivered of :ordered delivered.",
+        ],
     ],
 
     'installations' => [

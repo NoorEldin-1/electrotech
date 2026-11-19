@@ -174,6 +174,13 @@ return [
         'claim_before_completion' => 'لا يمكن رفع مطالبة مالية إلا بعد إتمام التوريد والتركيب.',
         'reserve_exceeds_available' => "لا يمكن حجز :quantity من الصنف ':item'. المتاح فقط :available في :warehouse.",
         'facility_exceeds_available' => "لا يمكن تخصيص :amount من التسهيل ':facility'. المتاح فقط :available.",
+        'completion_blocked' => "لا يمكن إنهاء العملية ':operation' بعد. :reasons",
+        'blockers' => [
+            'manufacturing_not_finished' => 'أمر التصنيع :number لم يضغط مدير المصنع «انتهاء التصنيع» عليه بعد.',
+            'quality_sheet_not_passed' => 'أمر التصنيع :number ليس له ورقة جودة معتمدة.',
+            'no_active_delivery' => 'لا يوجد إذن تسليم مفعّل للعملية.',
+            'undelivered' => "الصنف ':item' سُلّم منه :delivered من :ordered.",
+        ],
     ],
 
     'installations' => [

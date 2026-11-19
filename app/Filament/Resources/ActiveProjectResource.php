@@ -118,6 +118,18 @@ class ActiveProjectResource extends Resource
                         ->color('success')
                         ->requiresConfirmation()
                         ->visible(fn () => auth()->user()?->can('operations.complete') ?? false)
+                        // The operation ends only after manufacturing finish,
+                        // an approved quality sheet and the deliveries. While
+                        // anything is missing the button stays but is disabled,
+                        // and its tooltip lists what is missing.
+                        ->disabled(fn (Project $record): bool => ! app(OperationLifecycleService::class)->canComplete($record))
+                        ->tooltip(function (Project $record): ?string {
+                            $blockers = app(OperationLifecycleService::class)->completionBlockers($record);
+
+                            return $blockers === []
+                                ? null
+                                : __('resources.operations.completion_blocked_tooltip').' '.implode(' ', $blockers);
+                        })
                         ->action(fn (Project $record) => static::runLifecycle(
                             fn () => app(OperationLifecycleService::class)->markCompleted($record),
                             __('resources.operations.notifications.completed'),

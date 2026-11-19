@@ -1738,6 +1738,7 @@ return [
             'hold' => 'تعليق العملية',
             'resume' => 'استئناف العملية',
         ],
+        'completion_blocked_tooltip' => 'لا يمكن إنهاء العملية بعد:',
         'notifications' => [
             'completed' => 'تم إنهاء العملية.',
             'held' => 'تم تعليق العملية.',

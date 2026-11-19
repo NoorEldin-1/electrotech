@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature\GeneralManagement;
 
+use App\Enums\DeliveryVoucherStatus;
 use App\Enums\ProjectStatus;
 use App\Events\OperationActivated;
+use App\Models\DeliveryVoucher;
+use App\Models\Item;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\OperationLifecycleService;
@@ -67,6 +70,15 @@ class OperationLifecycleTest extends TestCase
 
         $service->resume($project);
         $this->assertSame(ProjectStatus::InProgress, $project->fresh()->status);
+
+        // A pure-supply operation (no manufacturing orders) ends once its
+        // goods are delivered — completion is gated, see
+        // OperationCompletionGateTest for the full matrix.
+        $voucher = DeliveryVoucher::factory()->create([
+            'project_id' => $project->id,
+            'status' => DeliveryVoucherStatus::Active,
+        ]);
+        $voucher->lines()->create(['item_id' => Item::factory()->create()->id, 'quantity' => 1, 'unit_cost' => 100]);
 
         $service->markCompleted($project);
         $this->assertSame(ProjectStatus::Completed, $project->fresh()->status);

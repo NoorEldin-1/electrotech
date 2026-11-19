@@ -1734,6 +1734,7 @@ return [
             'hold' => 'Put On Hold',
             'resume' => 'Resume Operation',
         ],
+        'completion_blocked_tooltip' => 'The operation cannot be completed yet:',
         'notifications' => [
             'completed' => 'Operation marked as completed.',
             'held' => 'Operation put on hold.',
